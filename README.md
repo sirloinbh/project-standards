@@ -9,7 +9,7 @@
 
 ## 현재 상태
 
-설계 전 단계다. 요구사항은 [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md)에 있고, 에이전트가 설계안을 제시해 승인받은 뒤 골격을 만든다.
+설계 검토 단계다. 요구사항은 [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md), 설계안은 [docs/design.md](docs/design.md)와 [docs/adr/](docs/adr/)에 있다. 설계가 병합되면 골격을 만든다.
 
 ## 시작하기
 
