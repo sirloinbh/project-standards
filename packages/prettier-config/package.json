@@ -1,0 +1,12 @@
+{
+  "name": "@sirloinbh/prettier-config",
+  "version": "1.0.0",
+  "description": "sirloinbh 앱 공통 Prettier 설정",
+  "license": "UNLICENSED",
+  "exports": { ".": "./index.json" },
+  "main": "index.json",
+  "files": ["index.json", "README.md", "CHANGELOG.md"],
+  "repository": { "type": "git", "url": "https://github.com/sirloinbh/project-standards.git", "directory": "packages/prettier-config" },
+  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "peerDependencies": { "prettier": "3.9.10" }
+}
