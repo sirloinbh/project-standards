@@ -1,8 +1,9 @@
 // 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/common/.claude/hooks/에서
-// Claude Code PreToolUse hook (#162, docs/agent-guardrails.md): reads the Bash or PowerShell
-// command, splits it into simple commands, and exits 2 (block) when one of them installs,
-// removes, or runs packages. It complements the permissions.deny prefix rules, which miss
-// `npm --silent install`, `sh -c "npm i"`, and full paths such as `C:\nodejs\npm.cmd install`.
+// Claude Code and Codex PreToolUse hook (#162, #180, docs/agent-guardrails.md): reads the Bash
+// or PowerShell command, splits it into simple commands, and exits 2 (block) when one of them
+// installs, removes, or runs packages. It complements the Claude Code permissions.deny prefix
+// rules and the Codex rules, which miss `npm --silent install`, `sh -c "npm i"`, and full paths
+// such as `C:\nodejs\npm.cmd install`.
 // Node built-ins only. It is a guard against mistakes, not a security boundary.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -337,7 +338,12 @@ export function findInstall(command, depth = 0) {
   return null;
 }
 
-async function main() {
+/**
+ * Reads one PreToolUse event from stdin and exits 2 (reason on stderr) to block it.
+ * Claude Code sends `Bash` or `PowerShell`; Codex sends `Bash` for every shell command,
+ * also on Windows where the command is PowerShell (#180). Both use `tool_input.command`.
+ */
+export async function main() {
   let input = '';
   process.stdin.setEncoding('utf8');
   for await (const chunk of process.stdin) input += chunk;
@@ -359,5 +365,7 @@ async function main() {
   process.exit(2);
 }
 
-// Runs only as a hook (`node <this file>`); tests import the functions above.
+// Claude Code runs this file (`node <this file>`). Codex imports it and calls main() from
+// `node -e` in .codex/hooks.json, because Codex has no project-directory placeholder (#180).
+// Tests import the functions above.
 if (process.argv[1] && path.resolve(process.argv[1]).toLowerCase() === fileURLToPath(import.meta.url).toLowerCase()) await main();

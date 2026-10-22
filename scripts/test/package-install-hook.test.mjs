@@ -132,3 +132,44 @@ test('Claude Code runs the hook for Bash and PowerShell and blocks when it canno
   ]);
   assert.equal(read('.claude/hooks/block-package-installs.mjs'), read(HOOK), 'the central repository uses the same hook it syncs');
 });
+
+// Codex reads .codex/hooks.json (#180). Its loader rejects unknown fields, so only these keys appear.
+const CODEX_HOOKS = 'templates/common/.codex/hooks.json.tmpl';
+
+test('Codex runs the same hook for shell commands from .codex/hooks.json', () => {
+  const config = JSON.parse(read(CODEX_HOOKS));
+  assert.deepEqual(Object.keys(config), ['hooks']);
+  assert.deepEqual(Object.keys(config.hooks), ['PreToolUse']);
+  const [entry, ...rest] = config.hooks.PreToolUse;
+  assert.equal(rest.length, 0);
+  assert.equal(entry.matcher, 'Bash', 'Codex reports every shell command as Bash, also on Windows');
+  assert.equal(entry.hooks.length, 1);
+  const [hook] = entry.hooks;
+  assert.deepEqual(Object.keys(hook).sort(), ['command', 'statusMessage', 'timeout', 'type']);
+  assert.equal(hook.type, 'command');
+  assert.equal(hook.timeout, 10);
+  assert.match(hook.command, /\/\.claude\/hooks\/block-package-installs\.mjs/);
+  // One command string for sh -lc and cmd /C: no characters either shell would expand inside the quotes.
+  assert.doesNotMatch(hook.command.replace(/^node --input-type=commonjs -e "|"$/g, ''), /["$`\\%^]/);
+  assert.equal(read('.codex/hooks.json'), read(CODEX_HOOKS), 'the central repository uses the same Codex hook it syncs');
+});
+
+test('the Codex hook command blocks installs from the repository root and from a subfolder', () => {
+  const { command } = JSON.parse(read(CODEX_HOOKS)).hooks.PreToolUse[0].hooks[0];
+  const env = { ...process.env, PATH: `${path.dirname(process.execPath)}${path.delimiter}${process.env.PATH ?? ''}` };
+  // Same as Codex's command runner: `%COMSPEC% /C "<command>"` (raw) on Windows, `$SHELL -lc <command>` elsewhere.
+  const run = (cwd, shellCommand) => {
+    const input = JSON.stringify({ hook_event_name: 'PreToolUse', tool_name: 'Bash', cwd, tool_input: { command: shellCommand } });
+    return process.platform === 'win32'
+      ? spawnSync(process.env.ComSpec ?? process.env.COMSPEC ?? 'cmd.exe', ['/C', `"${command}"`], { cwd, env, input, encoding: 'utf8', windowsVerbatimArguments: true })
+      : spawnSync(process.env.SHELL || '/bin/sh', ['-lc', command], { cwd, env, input, encoding: 'utf8' });
+  };
+  for (const cwd of [root, path.join(root, 'scripts', 'test')]) {
+    const blocked = run(cwd, 'npm --silent install');
+    assert.equal(blocked.status, 2, blocked.stderr);
+    assert.match(blocked.stderr, /npm install/);
+    assert.equal(run(cwd, '& "C:\\Program Files\\nodejs\\npm.cmd" ci').status, 2);
+    const allowed = run(cwd, 'npm ls');
+    assert.equal(allowed.status, 0, allowed.stderr);
+  }
+});
