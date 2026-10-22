@@ -30,4 +30,5 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.21.0'
+          package-manager-cache: false # lockfile이 없어 setup-node v5+ 자동 캐시가 실패하므로 끈다
       - run: npm run test:agents
