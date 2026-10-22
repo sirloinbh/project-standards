@@ -83,25 +83,35 @@ export function repoStatus({ target, project, read, pulls = [], now = new Date()
 
 const cell = (s) => String(s).replace(/\|/g, '\\|');
 
+const MARK = { fail: '✗', warn: '△ 권장', plan: '— 요금제', unknown: '? 확인 못 함' };
+
+/** One cell for the repository settings column (#22): failures, recommendations, unknowns. */
+function settingsCell(s) {
+  if (!s.settings) return s.settingsError ? '확인 못 함' : '—';
+  const count = (status) => s.settings.filter((r) => r.status === status).length;
+  const parts = [count('fail') && `✗ ${count('fail')}`, count('warn') && `△ ${count('warn')}`, count('unknown') && `? ${count('unknown')}`].filter(Boolean);
+  return parts.length ? parts.join(' ') : '✓';
+}
+
 export function renderCompliance(statuses, { generatedAt, centralSha }) {
   const lines = [
     '# 준수 현황',
     '',
     `<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: ${generatedAt}, 중앙 ${centralSha.slice(0, 7)} -->`,
     '',
-    '| 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example |',
-    '|---|---|---|---|---|---|---|',
+    '| 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example | 리포 설정 |',
+    '|---|---|---|---|---|---|---|---|',
   ];
   for (const s of statuses) {
     if (s.unknown) {
-      lines.push(`| ${s.repo} | 확인 못 함 (${s.unknown}) | — | — | — | — | — |`);
+      lines.push(`| ${s.repo} | 확인 못 함 (${s.unknown}) | — | — | — | — | — | — |`);
       continue;
     }
     const files = !s.synced ? '—' : s.problems.length ? `✗ ${s.problems.length}개 다름` : '✓ 일치';
     const pkgs = !s.packages.length ? '—' : s.packages.every((p) => p.ok) ? '✓' : `✗ ${s.packages.filter((p) => !p.ok).map((p) => `${p.name} ${p.actual ?? '없음'}≠${p.expected}`).join(', ')}`;
     const pr = s.syncPr ? `[#${s.syncPr.number}](${s.syncPr.url}) ${s.syncPr.ageDays}일째` : '없음';
     const env = s.profile !== 'app' ? '—' : s.envProblems.length ? `✗ ${s.envProblems.length}개 다름` : '✓';
-    lines.push(`| ${s.repo} | ${s.synced ? '✓' : '아직 안 됨'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} |`);
+    lines.push(`| ${s.repo} | ${s.synced ? '✓' : '아직 안 됨'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} |`);
   }
   const details = statuses.filter((s) => !s.unknown && (s.problems.length || s.envProblems.length));
   if (details.length) {
@@ -110,6 +120,15 @@ export function renderCompliance(statuses, { generatedAt, centralSha }) {
       lines.push(`### ${s.repo}`, '');
       for (const p of s.problems) lines.push(`- 관리 파일 \`${cell(p)}\``);
       for (const p of s.envProblems) lines.push(`- .env.example: ${cell(p)}`);
+      lines.push('');
+    }
+  }
+  const withSettings = statuses.filter((s) => s.settings?.some((r) => r.status !== 'ok'));
+  if (withSettings.length) {
+    lines.push('', '## 리포 설정', '', '기준과 이유는 [repo-settings.md](repo-settings.md)에 있다. secret·variable은 이름만 비교한다.', '');
+    for (const s of withSettings) {
+      lines.push(`### ${s.repo}`, '', '| 상태 | 항목 | 지금 | 기준 |', '|---|---|---|---|');
+      for (const r of s.settings.filter((x) => x.status !== 'ok')) lines.push(`| ${MARK[r.status]} | ${cell(r.label)} | ${cell(r.actual)} | ${cell(r.expected)} |`);
       lines.push('');
     }
   }

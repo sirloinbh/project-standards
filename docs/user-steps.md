@@ -9,6 +9,7 @@
 | 2 | shared-aws-infrastructure 최신화와 Terraform state 이동 | 15분 | #92 |
 | 3 | GitHub App 만들기와 Actions 공유 설정 | 10분 | #86 |
 | 4 | 공유 패키지 첫 배포와 접근 권한 | 10분 | #88 |
+| 5 | 리포 설정 맞추기 (Dependabot, 병합 방식, workout-memo 보안) | 10분 | #22 |
 
 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0은 순서와 상관없이 언제든 하면 됩니다.
 
@@ -183,3 +184,7 @@ GitHub 프로필 → Packages에서 패키지 4개 각각에 대해 Package sett
 3. 만료일을 캘린더에 적어 두세요. 토큰은 서버 `.env`에만 둡니다.
 
 4-1·4-2가 끝나면 알려 주세요. `versions.json`에 패키지 버전 1.0.0을 넣는 PR은 에이전트가 합니다.
+
+## 5. 리포 설정 맞추기 (#22)
+
+9개 리포 모두 Dependabot 취약점 알림과 보안 업데이트가 꺼져 있고, workout-memo(공개)는 브랜치 보호와 secret scanning도 꺼져 있습니다(2026-10-22 확인). 기준, 이유, 명령은 [repo-settings.md](repo-settings.md)의 "맞추는 법"에 있습니다. workout-memo 브랜치 보호는 첫 동기화(#97) 병합 뒤에 설정합니다.
