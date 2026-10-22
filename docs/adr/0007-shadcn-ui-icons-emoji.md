@@ -33,7 +33,7 @@
 | `tw-animate-css` | 1.4.0 | 2025-09-24 | MIT | github.com/Wombosvideo/tw-animate-css | 0 | 애니메이션 유틸리티 |
 | `sonner` | 2.0.8 | 2026-08-09 | MIT | github.com/emilkowalski/sonner | 0 | 토스트 |
 | `vaul` | 1.1.2 | 2024-12-14 | MIT | github.com/emilkowalski/vaul | 1 | drawer |
-| `lucide-react` | 0.468.0 | 2024 | ISC | github.com/lucide-icons/lucide | 0 | 지금 설치된 버전 유지. 최신 1.x는 메이저 업그레이드라 따로 검토 |
+| `lucide-react` | 1.52.0 | 2026-10-04 | ISC | github.com/lucide-icons/lucide | 0 | 0.468.0에서 올림(#137). 최신 1.53.0 이후는 14일 미경과 |
 | `tailwindcss` | 4.3.3 | 2026-07-16 | MIT | github.com/tailwindlabs/tailwindcss | — | workout-memo와 같음 |
 | `@tailwindcss/vite` | 4.3.3 | 2026-07-16 | MIT | github.com/tailwindlabs/tailwindcss | — | workout-memo와 같음 |
 
