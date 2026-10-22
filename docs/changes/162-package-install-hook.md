@@ -36,4 +36,4 @@
 ## 검증
 
 - `claude -p`(Claude Code 2.1.308, Windows, 이 브랜치)로 실제 확인: Bash `npm --silent install --help`, `sh -c "npm i --help"`, `"/c/Program Files/Volta/npm.exe" install --help`, PowerShell `npm --silent install --help`, `& "C:\Program Files\Volta\npm.cmd" ci --help`가 훅으로 거부됐다. Bash·PowerShell `npm ls --depth=0`, Bash `npm run`은 실행됐다. 설치가 일어나지 않게 `--help`를 붙였다.
-- `npm run check` 통과(origin/main 재기준 후 테스트 186개 중 185개 통과, Codex CLI 실제 판정 1개는 CLI가 없어 건너뜀).
+- `npm run check` 통과(최신 main(#174) 병합 후 테스트 188개 중 187개 통과, Codex CLI 실제 판정 1개는 CLI가 없어 건너뜀).
