@@ -3,7 +3,7 @@
   "title": "도구 버전 원본",
   "description": "템플릿에 주입하는 도구 버전. 범위 버전(^, ~)은 쓰지 않는다. 외부 Action은 커밋 SHA로 고정한다.",
   "type": "object",
-  "required": ["node", "npm", "postgres", "terraform", "images", "actions", "packages"],
+  "required": ["node", "npm", "postgres", "terraform", "images", "runner", "actions", "packages"],
   "additionalProperties": false,
   "properties": {
     "$schema": { "type": "string" },
@@ -28,6 +28,11 @@
         "nginx": { "$ref": "#/$defs/image" },
         "postgres": { "$ref": "#/$defs/image" }
       }
+    },
+    "runner": {
+      "type": "string",
+      "pattern": "^ubuntu-\\d+\\.\\d+$",
+      "description": "워크플로 runs-on에 쓰는 GitHub 호스팅 러너. ubuntu-latest처럼 바뀌는 이름 대신 버전을 고정한다"
     },
     "actions": {
       "type": "object",

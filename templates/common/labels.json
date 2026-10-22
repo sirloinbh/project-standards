@@ -1,0 +1,25 @@
+{
+  "description": "std-backlog 라벨 원본. 동기화(scripts/sync.mjs --apply)가 대상 리포에 같은 이름·색·설명으로 만들거나 고친다. 여기 없는 라벨(GitHub 기본 라벨 등)은 지우지 않는다. 대상 리포에 파일로 복사하지 않는다(templates/index.json의 data).",
+  "labels": [
+    { "name": "priority/P0", "color": "b60205", "description": "최우선: 긴급·보안 또는 사용자가 긴급이라고 명시한 요구사항" },
+    { "name": "priority/P1", "color": "d93f0b", "description": "높음: 다른 작업의 선행 조건이거나 이미 중복된 것 정리" },
+    { "name": "priority/P2", "color": "fbca04", "description": "중간: 보안·운영 기준" },
+    { "name": "priority/P3", "color": "0e8a16", "description": "보통: 곧 필요해질 공통화" },
+    { "name": "priority/P4", "color": "c5def5", "description": "낮음: 문서·규칙 정리" },
+    { "name": "type/feature", "color": "1d76db", "description": "새 기능 또는 새 관리 대상" },
+    { "name": "type/docs", "color": "0075ca", "description": "문서·규칙 작성" },
+    { "name": "type/security", "color": "ee0701", "description": "보안 기준·차단·점검" },
+    { "name": "type/chore", "color": "cfd3d7", "description": "이전·정리·설정 변경" },
+    { "name": "type/research", "color": "d4c5f9", "description": "조사·분석 (코드 변경 없음)" },
+    { "name": "area/templates", "color": "bfdadc", "description": "B안 템플릿 동기화 대상" },
+    { "name": "area/tooling", "color": "bfdadc", "description": "개인 계정·로컬 도구" },
+    { "name": "area/compliance", "color": "bfdadc", "description": "준수 현황·점검" },
+    { "name": "area/registry", "color": "bfdadc", "description": "프로젝트 고정값 레지스트리" },
+    { "name": "area/scaffold", "color": "bfdadc", "description": "신규 프로젝트 스캐폴드" },
+    { "name": "area/ci", "color": "bfdadc", "description": "CI·reusable workflow" },
+    { "name": "area/agent", "color": "bfdadc", "description": "에이전트 지침·스킬·권한" },
+    { "name": "area/deploy", "color": "bfdadc", "description": "배포·운영" },
+    { "name": "origin/added", "color": "f9d0c4", "description": "작업 중 사용자가 추가한 요구사항" },
+    { "name": "needs-user", "color": "5319e7", "description": "사용자가 직접 수행할 단계 포함" }
+  ]
+}

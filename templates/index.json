@@ -12,6 +12,7 @@
       ".standards/blocked-packages.json": "security/blocked-packages.json"
     }
   },
+  "data": { "why": "동기화 스크립트가 읽는 데이터라 대상 리포에 파일로 복사하지 않는다. labels.json은 대상 리포의 이슈 라벨로 반영한다(#40).", "files": ["common/labels.json"] },
   "mirror": [{ "from": "skills/", "to": ".claude/skills/", "why": "Claude Code는 .claude/skills/만 읽는다. 원본 skills/와 같은 내용의 복제본을 함께 관리한다." }],
   "fields": {
     "app": {

@@ -6,7 +6,7 @@
       "templates": ["common", "app"],
       "packages": ["@sirloinbh/eslint-config", "@sirloinbh/prettier-config", "@sirloinbh/tsconfig", "@sirloinbh/design-tokens"],
       "ci": "reusable-app-ci.yml",
-      "featureTemplates": { "ui": "ui" },
+      "featureTemplates": { "ui": "ui", "e2e": "e2e", "vitest": "vitest" },
       "neverTouch": []
     },
     "infra": {

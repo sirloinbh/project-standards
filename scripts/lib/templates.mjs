@@ -60,7 +60,9 @@ function flatten(object, prefix = '') {
 export function renderProfile({ root, profile, folders, vars, readExisting = () => null }) {
   const index = loadIndex(root);
   const section = new Set(index.section);
-  const files = collectTemplates(root, folders).map(({ path: target, source }) => {
+  // Data files such as labels.json are read by the sync script, not copied to the target.
+  const data = new Set((index.data?.files ?? []).map((f) => `templates/${f}`));
+  const files = collectTemplates(root, folders).filter(({ source }) => !data.has(source)).map(({ path: target, source }) => {
     const mode = section.has(target) ? 'section' : 'full';
     const text = fs.readFileSync(path.join(root, source), 'utf8');
     const existing = mode === 'section' ? readExisting(target) : null;

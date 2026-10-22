@@ -25,8 +25,9 @@
 | Administration | Read-only | 준수 현황에서 브랜치 보호·병합 설정 확인 (#22) |
 | Secrets | Read-only | 준수 현황에서 secret **이름**만 확인. 값은 읽을 수 없다 (#22) |
 | Variables | Read-only | 준수 현황에서 variable 이름 확인 (#22) |
+| Issues | Read and write | 이슈 라벨 생성·갱신(`templates/common/labels.json`). 라벨을 지우지 않는다 (#40) |
 
-나머지 권한은 모두 "No access"로 둔다. Issues 쓰기 권한은 라벨 동기화(#40)를 시작할 때 따로 추가한다.
+나머지 권한은 모두 "No access"로 둔다. 이미 App을 만들었다면 아래 "권한을 바꿀 때"대로 Issues 권한을 추가한다.
 
 ## 1. App 만들기 [사용자]
 
@@ -67,6 +68,14 @@
 1. **[사용자]** 중앙 리포 Actions 탭 → `sync` 워크플로 → **Run workflow**(수동 실행). `sync.config.json`의 `maxRollout`이 0이면 PR은 열리지 않고 토큰 발급과 계획 계산만 한다.
 2. 실행 로그에서 "설치 토큰 발급" 단계가 성공했는지 확인한다. 로그에 토큰 값이 나오지 않아야 한다.
 3. 실패하면 다음을 확인한다: App ID 오타, `.pem` 전체가 secret에 들어갔는지, App이 해당 리포에 설치됐는지, 권한 표와 같은지.
+4. `maxRollout` 이하 대상이 있으면 리포마다 `라벨 생성 n, 갱신 n, 그대로 n` 줄이 나온다. `라벨 실패 — ... 403`이면 Issues 권한이 없거나 아직 승인(Accept)되지 않은 것이다. 이때도 동기화 PR은 열리고, 워크플로는 실패로 끝난다.
+
+라벨 변경을 미리 보려면 대상 리포의 라벨을 내보내 dry-run에 넘긴다. 결과는 `plan.json`의 `labels`와 콘솔 줄에 나온다.
+
+```powershell
+ghp label list -R sirloinbh/study-log --json name,color,description --limit 200 | Out-File -Encoding utf8 .local/study-log-labels.json
+node scripts/sync.mjs --dry-run --out .local/sync-preview --target sirloinbh/study-log --labels-from study-log=.local/study-log-labels.json
+```
 
 ## 키 교체 [사용자]
 
