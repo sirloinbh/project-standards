@@ -3,14 +3,18 @@
 //   node scripts/sync.mjs --dry-run --out <folder> [--target <owner/repo>]... [--local <repo-name>=<checkout>]... [--sha <commit>]
 // --dry-run writes what each target would receive into <folder>/<repo-name>/ plus <folder>/plan.json.
 // --local reads a local checkout so project sections and package.json fields merge with real files.
+// --labels-from <repo-name>=<file> reads a target's labels exported with
+// `label list --json name,color,description --limit 200` and adds the planned label changes to plan.json.
 //   node scripts/sync.mjs --apply
-// --apply (sync workflow only) opens or updates sync PRs for targets within maxRollout, using the
-// GitHub App credentials in SYNC_APP_ID and SYNC_APP_PRIVATE_KEY.
+// --apply (sync workflow only) opens or updates sync PRs for targets within maxRollout and creates or
+// updates their issue labels (templates/common/labels.json), using the GitHub App credentials in
+// SYNC_APP_ID and SYNC_APP_PRIVATE_KEY.
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient, getInstallationToken } from './lib/github-app.mjs';
+import { describeLabelPlan, loadLabels, planLabels, syncLabels } from './lib/labels.mjs';
 import { loadAll } from './lib/registry.mjs';
 import { planTarget } from './lib/sync-plan.mjs';
 import { syncTarget } from './lib/sync-pr.mjs';
@@ -25,7 +29,7 @@ export function lastWorkflowCommit(sha) {
 }
 
 function parseArgs(argv) {
-  const args = { dryRun: false, out: null, targets: [], local: {}, sha: null };
+  const args = { dryRun: false, out: null, targets: [], local: {}, labelsFrom: {}, sha: null };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--dry-run') args.dryRun = true;
@@ -35,6 +39,9 @@ function parseArgs(argv) {
     else if (a === '--local') {
       const [name, dir] = argv[++i].split('=');
       args.local[name] = path.resolve(dir);
+    } else if (a === '--labels-from') {
+      const [name, file] = argv[++i].split('=');
+      args.labelsFrom[name] = JSON.parse(fs.readFileSync(path.resolve(file), 'utf8').replace(/^﻿/, ''));
     } else throw new Error(`unknown argument: ${a}`);
   }
   return args;
@@ -46,7 +53,15 @@ const readerFor = (dir) => (rel) => {
   return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
 };
 
-export function dryRun({ data, targets, local, out, centralSha, workflowSha = centralSha }) {
+// Label plan for the dry run; null when the target's current labels were not given.
+const labelSummary = (labels, existing) => {
+  if (!existing) return null;
+  const plan = planLabels(labels, existing);
+  return { create: plan.create.map((l) => l.name), update: plan.update.map((u) => ({ name: u.name, changes: u.changes })), unchanged: plan.unchanged.length, unmanaged: plan.unmanaged };
+};
+
+export function dryRun({ data, targets, local, labelsFrom = {}, out, centralSha, workflowSha = centralSha }) {
+  const labels = loadLabels(root);
   const summary = [];
   for (const target of targets) {
     const name = target.repo.split('/')[1];
@@ -65,17 +80,20 @@ export function dryRun({ data, targets, local, out, centralSha, workflowSha = ce
       files: plan.files.map((f) => ({ path: f.path, mode: f.mode, source: f.source })),
       skipped: plan.skipped,
       fieldsPending: plan.fieldsPending,
+      labels: labelSummary(labels, labelsFrom[name]),
     });
   }
-  fs.writeFileSync(path.join(out, 'plan.json'), `${JSON.stringify({ centralSha, maxRollout: data.sync.maxRollout, targets: summary }, null, 2)}\n`);
+  const overview = { centralSha, maxRollout: data.sync.maxRollout, labels: labels.map((l) => l.name), targets: summary };
+  fs.writeFileSync(path.join(out, 'plan.json'), `${JSON.stringify(overview, null, 2)}\n`);
   return summary;
 }
 
 /**
  * Opens or updates sync PRs for targets within maxRollout. `getToken(repo)` returns an installation
  * token. With no target in rollout it only checks that a token can be issued (docs/github-app.md step 5).
+ * Each target's issue labels are then created or updated; a label failure is reported in `labelsError`.
  */
-export async function apply({ data, targets, centralSha, workflowSha = centralSha, getToken, makeClient, log = console.log }) {
+export async function apply({ data, targets, centralSha, workflowSha = centralSha, getToken, makeClient, labels = loadLabels(root), log = console.log }) {
   const inRollout = targets.filter((t) => t.rollout <= data.sync.maxRollout);
   if (!inRollout.length) {
     await getToken('sirloinbh/project-standards');
@@ -85,14 +103,25 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
   const centralApi = makeClient(await getToken('sirloinbh/project-standards'));
   const results = [];
   for (const target of inRollout) {
+    let api;
     try {
-      const api = makeClient(await getToken(target.repo));
+      api = makeClient(await getToken(target.repo));
       const result = await syncTarget({ root, data, target, centralSha, workflowSha, api, centralApi });
       log(`${target.repo}: ${result.status}${result.pr ? ` ${result.pr}` : ''} (변경 ${result.changes.length}, 삭제 ${result.deletions.length})`);
       results.push({ target: target.repo, ...result });
     } catch (error) {
       log(`${target.repo}: 실패 — ${error.message}`);
       results.push({ target: target.repo, status: 'failed', error: error.message });
+    }
+    if (!api) continue;
+    // Labels are independent of the sync PR, so they are applied even when the PR step failed.
+    const result = results.at(-1);
+    try {
+      result.labels = await syncLabels({ api, repo: target.repo, labels });
+      log(`${target.repo}: ${describeLabelPlan(result.labels)}`);
+    } catch (error) {
+      log(`${target.repo}: 라벨 실패 — ${error.message}`);
+      result.labelsError = error.message;
     }
   }
   return results;
@@ -111,7 +140,7 @@ if (isMain && process.argv.includes('--apply')) {
     getToken: async (repo) => (await getInstallationToken({ ...credentials, repo })).token,
     makeClient: (token) => createClient({ token }),
   })
-    .then((results) => process.exit(results.some((r) => r.status === 'failed') ? 1 : 0))
+    .then((results) => process.exit(results.some((r) => r.status === 'failed' || r.labelsError) ? 1 : 0))
     .catch((error) => {
       console.error(`sync: ${error.message}`);
       process.exit(1);
@@ -126,8 +155,11 @@ if (isMain && process.argv.includes('--apply')) {
     if (args.targets.length && targets.length !== args.targets.length) throw new Error(`unknown target in ${args.targets.join(', ')}`);
     const centralSha = args.sha ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
     fs.mkdirSync(args.out, { recursive: true });
-    for (const t of dryRun({ data, targets, local: args.local, out: path.resolve(args.out), centralSha, workflowSha: args.sha ? args.sha : lastWorkflowCommit(centralSha) })) {
-      const note = [t.inRollout ? '적용 대상' : `대기(rollout ${t.rollout})`, t.skipped.length && `건너뜀 ${t.skipped.length}`, t.fieldsPending.length && `필드 미병합 ${t.fieldsPending.length}`].filter(Boolean).join(', ');
+    for (const name of Object.keys(args.labelsFrom)) {
+      if (!targets.some((t) => t.repo.split('/')[1] === name)) throw new Error(`--labels-from: unknown target ${name}`);
+    }
+    for (const t of dryRun({ data, targets, local: args.local, labelsFrom: args.labelsFrom, out: path.resolve(args.out), centralSha, workflowSha: args.sha ? args.sha : lastWorkflowCommit(centralSha) })) {
+      const note = [t.inRollout ? '적용 대상' : `대기(rollout ${t.rollout})`, t.skipped.length && `건너뜀 ${t.skipped.length}`, t.fieldsPending.length && `필드 미병합 ${t.fieldsPending.length}`, t.labels && describeLabelPlan(t.labels)].filter(Boolean).join(', ');
       console.log(`${t.repo}: 파일 ${t.files.length}개 — ${note}`);
     }
     console.log(`결과: ${path.resolve(args.out)}`);
