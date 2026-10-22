@@ -19,10 +19,8 @@ const { ports, db } = project;
 
 // Files that carry registry values, written the way study-log writes them today.
 const appFiles = {
-  'compose.yaml': `services:\n  db:\n    ports: ['127.0.0.1:${ports.db}:5432']\n  api:\n    environment:\n      PORT: ${ports.api}\n  web:\n    ports: ['127.0.0.1:${ports.web}:80']\n`,
+  'compose.yaml': `services:\n  db:\n    ports: ['127.0.0.1:${ports.db}:5432']\n  api:\n    build: { context: ./backend, secrets: [npm_token] }\n    environment:\n      PORT: ${ports.api}\n  web:\n    build:\n      context: ./frontend\n      secrets:\n        - npm_token\n    ports: ['127.0.0.1:${ports.web}:80']\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`,
   'frontend/vite.config.ts': `export default { server: { port: ${ports.vite}, strictPort: true, proxy: { '/api': 'http://127.0.0.1:${ports.api}' } } };\n`,
-  'frontend/nginx.conf': `server {\n  location /api/ { proxy_pass http://api:${ports.api}; }\n}\n`,
-  'backend/Dockerfile': `FROM node\nEXPOSE ${ports.api}\n`,
   'backend/src/server.ts': `const port = Number(process.env.PORT ?? ${ports.api});\n`,
   '.env.example': `POSTGRES_DB=${db.name}\nDATABASE_URL=postgres://u:p@localhost:${ports.db}/${db.name}\nPORT=${ports.api}\n`,
 };
@@ -120,8 +118,16 @@ test('ports and DB names that differ from the registry fail per file', () => {
   ]);
 });
 
+test('compose must pass the npm_token build secret to every build when Dockerfiles are managed', () => {
+  const result = check(({ write, read }) => write('compose.yaml', read('compose.yaml').replace('build: { context: ./backend, secrets: [npm_token] }', 'build: ./backend').replace(/secrets:\n {2}npm_token:\n {4}environment: NODE_AUTH_TOKEN\n/, '')));
+  assert.deepEqual(result.problems.map((p) => `${p.group}|${p.message}`), [
+    '빌드 secret|최상위 secrets.npm_token.environment: NODE_AUTH_TOKEN이 없습니다',
+    '빌드 secret|build 2개 중 1개만 secrets: [npm_token]을 넘깁니다',
+  ]);
+});
+
 test('the compose form ${WEB_PORT:-8101}:80 is understood', () => {
-  const result = check(({ write }) => write('compose.yaml', `ports: ['\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80']\nports: ['127.0.0.1:\${DB_PORT:-${ports.db}}:5432']\nPORT: ${ports.api}\n`));
+  const result = check(({ write }) => write('compose.yaml', `ports: ['\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80']\nports: ['127.0.0.1:\${DB_PORT:-${ports.db}}:5432']\nPORT: ${ports.api}\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`));
   assert.deepEqual(result.problems, []);
 });
 

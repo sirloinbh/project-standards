@@ -154,12 +154,22 @@ packages/<pkg> 변경 PR (버전·CHANGELOG 포함) → 사용자 병합
 | 분류 | 파일 | 하위에서 수정하면 |
 |---|---|---|
 | A안 패키지 | ESLint·Prettier·tsconfig·디자인 토큰 내용 | 설치 버전이 manifest와 다르면 실패 |
-| B안 전체 관리 | `.editorconfig`, `.gitattributes`, `.nvmrc`, `.node-version`, `.npmrc`(루트·`frontend/`·`backend/`), `eslint.config.mjs`, `.prettierrc.json`, `frontend/tsconfig.json`, `backend/tsconfig.json`, `AGENTS.md`, `CLAUDE.md`, `skills/std-*`, `.claude/skills/std-*`, `.github/ISSUE_TEMPLATE/*`, `.github/pull_request_template.md`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `.standards/check.mjs`, `scripts/claude-skills.mjs` | 해시가 다르면 실패 |
+| B안 전체 관리 | `.editorconfig`, `.gitattributes`, `.nvmrc`, `.node-version`, `.npmrc`(루트·`frontend/`·`backend/`), `eslint.config.mjs`, `.prettierrc.json`, `frontend/tsconfig.json`, `backend/tsconfig.json`, `AGENTS.md`, `CLAUDE.md`, `skills/std-*`, `.claude/skills/std-*`, `.github/ISSUE_TEMPLATE/*`, `.github/pull_request_template.md`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `.standards/check.mjs`, `scripts/claude-skills.mjs`, `frontend/Dockerfile`, `backend/Dockerfile`, `frontend/nginx.conf` | 해시가 다르면 실패 |
 | B안 구간 관리 | `.gitignore`, `.prettierignore`, `.env.example`: `# --- project ---` 줄 위가 중앙 구간, 아래가 프로젝트 구간 | 중앙 구간 해시만 비교 |
 | B안 필드 관리 | `package.json`(루트·`frontend/`·`backend/`)의 `packageManager`, `engines`, `@sirloinbh/*` 버전, `standards:check` 스크립트 | 필드만 비교 |
 | 프로젝트 고정값 | 포트, DB 이름, 리포 이름, 도메인, AWS 접두어 | `compose.yaml`, `vite.config.ts`, `playwright.config.ts`, `backend/src/server.ts`, `frontend/nginx.conf`, Dockerfile `EXPOSE`의 실제 값이 레지스트리와 다르면 실패 |
-| 프로젝트 고유 | `AGENTS.project.md`, `skills/<proj>-*`, 앱 코드, `compose.yaml`, Dockerfile, `docs/changes/` | 검사하지 않음 |
+| 프로젝트 고유 | `AGENTS.project.md`, `skills/<proj>-*`, 앱 코드, `compose.yaml`(빌드 secret 설정은 검사), `docs/changes/` | 검사하지 않음 |
 | 스캐폴드 전용 | `scaffold/app/**` | 기존 리포에는 경고만 (`directory-rules`) |
+
+포트만 다르고 8개 앱에서 같았던 Docker 파일은 B안 전체 관리로 옮겼다(#6). 템플릿에 주입하는 값은 다음과 같다.
+
+| 파일 | 주입 변수 |
+|---|---|
+| `frontend/Dockerfile` | `versions.images.node`, `versions.images.nginx`, `versions.npm` |
+| `backend/Dockerfile` | `versions.images.node`, `versions.npm`, `project.ports.api` |
+| `frontend/nginx.conf` | `project.ports.api` |
+
+두 Dockerfile은 패키지 인증 토큰을 BuildKit secret(`npm_token`)으로만 받는다. 그래서 `compose.yaml`의 각 서비스 `build`에 `secrets: [npm_token]`이 있어야 하고, 최상위 `secrets.npm_token.environment: NODE_AUTH_TOKEN`이 있어야 한다. standards-check가 이를 확인한다.
 
 - 헤더 문구는 `중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/<경로>에서`다. 주석을 쓸 수 있는 파일은 첫 줄에 `#`, `//`, `<!-- -->`로 넣고, `SKILL.md`는 frontmatter 바로 아래에 넣는다. JSON, `.nvmrc`, `.node-version`은 헤더 없이 manifest로만 관리한다.
 - `AGENTS.md`(중앙)는 첫 절에서 `AGENTS.project.md`를 반드시 읽도록 지시한다. Codex는 `AGENTS.md`만 자동으로 읽기 때문이다. `CLAUDE.md`(중앙)는 두 파일을 모두 참조한다.

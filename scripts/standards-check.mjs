@@ -61,6 +61,17 @@ function checkRegistry(registry, read, problems, warnings) {
   if (vite !== null && !/strictPort:\s*true/.test(vite)) warnings.push('frontend/vite.config.ts: strictPort: true가 없어 포트가 겹치면 다른 포트로 넘어갑니다.');
 }
 
+// The managed Dockerfiles read the package token from the BuildKit secret "npm_token", so every
+// compose build must pass it and the secret must come from NODE_AUTH_TOKEN (design.md 5.1).
+export function checkComposeSecrets(text) {
+  const problems = [];
+  const builds = (text.match(/^\s+build:/gm) ?? []).length;
+  const passed = (text.match(/secrets:\s*\[\s*npm_token\s*\]/g) ?? []).length + (text.match(/secrets:\s*\n\s+-\s*npm_token\b/g) ?? []).length;
+  if (!/^secrets:\s*\n\s+npm_token:\s*\n\s+environment:\s*['"]?NODE_AUTH_TOKEN['"]?\s*$/m.test(text)) problems.push('최상위 secrets.npm_token.environment: NODE_AUTH_TOKEN이 없습니다');
+  if (passed < builds) problems.push(`build ${builds}개 중 ${passed}개만 secrets: [npm_token]을 넘깁니다`);
+  return problems;
+}
+
 function checkPackages(packages, read, problems) {
   for (const [name, version] of Object.entries(packages ?? {})) {
     if (version === null) continue;
@@ -94,6 +105,10 @@ export function runCheck(root) {
   }
   checkPackages(manifest.packages, read, problems);
   if (manifest.registry) checkRegistry(manifest.registry, read, problems, warnings);
+  const compose = read('compose.yaml');
+  if (compose !== null && (manifest.files['frontend/Dockerfile'] || manifest.files['backend/Dockerfile'])) {
+    for (const message of checkComposeSecrets(compose)) problems.push({ group: '빌드 secret', path: 'compose.yaml', message });
+  }
   return { problems, warnings, manifest };
 }
 
