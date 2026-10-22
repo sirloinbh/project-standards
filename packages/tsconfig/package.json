@@ -1,0 +1,15 @@
+{
+  "name": "@sirloinbh/tsconfig",
+  "version": "1.0.0",
+  "description": "sirloinbh 앱 공통 TypeScript 설정 (base, react-app, node-api)",
+  "license": "UNLICENSED",
+  "exports": {
+    "./base.json": "./base.json",
+    "./react-app.json": "./react-app.json",
+    "./node-api.json": "./node-api.json"
+  },
+  "files": ["base.json", "react-app.json", "node-api.json", "README.md", "CHANGELOG.md"],
+  "repository": { "type": "git", "url": "https://github.com/sirloinbh/project-standards.git", "directory": "packages/tsconfig" },
+  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "peerDependencies": { "typescript": "5.9.3" }
+}

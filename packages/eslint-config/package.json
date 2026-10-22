@@ -1,0 +1,19 @@
+{
+  "name": "@sirloinbh/eslint-config",
+  "version": "1.0.0",
+  "description": "sirloinbh 앱 공통 ESLint 설정 (플러그인을 인자로 받는 팩토리)",
+  "license": "UNLICENSED",
+  "type": "module",
+  "exports": { ".": "./index.mjs" },
+  "files": ["index.mjs", "README.md", "CHANGELOG.md"],
+  "repository": { "type": "git", "url": "https://github.com/sirloinbh/project-standards.git", "directory": "packages/eslint-config" },
+  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "peerDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "16.5.0",
+    "typescript-eslint": "8.71.2"
+  }
+}

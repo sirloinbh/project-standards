@@ -8,7 +8,7 @@
 
 - 본문·제목: `"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif`
 - 고정폭: `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`
-- Pretendard 1.3.9 (2023-11-05), SIL Open Font License 1.1. Pretendard Variable 동적 서브셋(woff2 + unicode-range)을 @sirloinbh/design-tokens 패키지에 넣어 직접 제공한다. 외부 CDN을 쓰지 않는다(오프라인·PWA 동작, 외부 의존 없음). `font-display: swap`.
+- Pretendard 1.3.9 (2023-11-05), SIL Open Font License 1.1. 공식 릴리스 zip의 PretendardVariable.woff2(가변 폰트 전체, 2.0MB) 하나를 @sirloinbh/design-tokens 패키지에 넣어 직접 제공한다. 외부 CDN을 쓰지 않는다(오프라인·PWA 동작, 외부 의존 없음). 동적 서브셋은 npm 패키지·CDN으로만 배포되어 쓰지 않는다. `font-display: swap`.
 
 ## 글자 크기
 
@@ -143,10 +143,10 @@
 | `--accent` | `oklch(0.97 0 0)` | hover·선택된 메뉴 배경 |
 | `--accent-foreground` | `oklch(0.205 0 0)` | hover·선택된 메뉴 글자 |
 | `--destructive` | `oklch(0.577 0.245 27.325)` | 삭제·오류 |
-| `--success` | `var(--color-green-700)` | 성공·완료 (흰 글자 대비 4.5:1 이상) |
+| `--success` | `oklch(0.527 0.154 150.069)` | 성공·완료 (Tailwind green-700, 흰 글자 대비 4.5:1 이상) |
 | `--success-foreground` | `oklch(1 0 0)` | 성공 색 위의 글자 |
-| `--warning` | `var(--color-amber-400)` | 주의 |
-| `--warning-foreground` | `var(--color-amber-950)` | 주의 색 위의 글자 |
+| `--warning` | `oklch(0.828 0.189 84.429)` | 주의 (Tailwind amber-400) |
+| `--warning-foreground` | `oklch(0.279 0.077 45.635)` | 주의 색 위의 글자 (Tailwind amber-950) |
 | `--border` | `oklch(0.922 0 0)` | 구분선, 카드 테두리 |
 | `--input` | `oklch(0.922 0 0)` | 입력란 테두리 |
 | `--ring` | 앱 테마 | 키보드 포커스 표시 (테마 색 기반) |

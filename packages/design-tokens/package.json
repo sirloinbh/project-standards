@@ -1,0 +1,15 @@
+{
+  "name": "@sirloinbh/design-tokens",
+  "version": "1.0.0",
+  "description": "sirloinbh 앱 공통 디자인 토큰 (CSS 변수, Tailwind CSS 4 테마, Pretendard 글꼴)",
+  "license": "SEE LICENSE IN LICENSE.md",
+  "exports": {
+    "./tokens.css": "./tokens.css",
+    "./tailwind.css": "./tailwind.css",
+    "./fonts/pretendard.css": "./fonts/pretendard.css"
+  },
+  "style": "tokens.css",
+  "files": ["tokens.css", "tailwind.css", "fonts/", "LICENSE.md", "README.md", "CHANGELOG.md"],
+  "repository": { "type": "git", "url": "https://github.com/sirloinbh/project-standards.git", "directory": "packages/design-tokens" },
+  "publishConfig": { "registry": "https://npm.pkg.github.com" }
+}
