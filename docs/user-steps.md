@@ -10,6 +10,7 @@
 | 3 | GitHub App 만들기와 Actions 공유 설정 | 10분 | #86 |
 | 4 | 공유 패키지 첫 배포와 접근 권한 | 10분 | #88 |
 | 5 | 리포 설정 맞추기 (Dependabot, 병합 방식, workout-memo 보안) | 10분 | #22 |
+| 6 | (3을 이미 했다면) GitHub App에 Issues 쓰기 권한 추가 | 3분 | #40 |
 
 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0은 순서와 상관없이 언제든 하면 됩니다.
 
@@ -119,7 +120,7 @@ GitHub에 `sirloinbh`로 로그인한 상태에서 Settings → Developer settin
 | GitHub App name | `project-standards-sync` |
 | Homepage URL | `https://github.com/sirloinbh/project-standards` |
 | Webhook | Active 체크 해제 |
-| Repository permissions | Contents: Read and write / Pull requests: Read and write / Workflows: Read and write / Administration: Read-only / Secrets: Read-only / Variables: Read-only (나머지는 No access, Metadata는 자동) |
+| Repository permissions | Contents: Read and write / Pull requests: Read and write / Workflows: Read and write / Issues: Read and write / Administration: Read-only / Secrets: Read-only / Variables: Read-only (나머지는 No access, Metadata는 자동) |
 | Where can this App be installed? | Only on this account |
 
 Create 후 화면의 **App ID**(숫자)를 적어 둡니다.
@@ -188,3 +189,14 @@ GitHub 프로필 → Packages에서 패키지 4개 각각에 대해 Package sett
 ## 5. 리포 설정 맞추기 (#22)
 
 9개 리포 모두 Dependabot 취약점 알림과 보안 업데이트가 꺼져 있고, workout-memo(공개)는 브랜치 보호와 secret scanning도 꺼져 있습니다(2026-10-22 확인). 기준, 이유, 명령은 [repo-settings.md](repo-settings.md)의 "맞추는 법"에 있습니다. workout-memo 브랜치 보호는 첫 동기화(#97) 병합 뒤에 설정합니다.
+
+## 6. GitHub App에 Issues 쓰기 권한 추가 (#40)
+
+**왜 필요한가요:** 동기화가 9개 리포에 std-backlog 라벨(우선순위·특성 20개)을 만들거나 고치려면 App에 Issues 쓰기 권한이 있어야 합니다. 3번을 아직 하지 않았다면 3-1 표에 이미 들어 있으니 이 단계는 건너뜁니다.
+
+1. GitHub → Settings → Developer settings → GitHub Apps → `project-standards-sync` → Permissions & events.
+2. Repository permissions의 **Issues**를 "Read and write"로 바꾸고 Save changes.
+3. Settings → Applications → Installed GitHub Apps → `project-standards-sync`에서 새 권한 요청을 **Accept**합니다. Accept해야 적용됩니다.
+4. 다음 `sync` 실행 로그에 리포마다 `라벨 생성 n, 갱신 n, 그대로 n` 줄이 나오면 성공입니다. `라벨 실패 — ... 403`이 나오면 3을 다시 확인하세요.
+
+동기화는 라벨을 만들거나 고치기만 하고 지우지 않습니다. 각 리포에만 있는 라벨과 GitHub 기본 라벨(`bug` 등)은 그대로 남습니다.

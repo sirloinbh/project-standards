@@ -10,7 +10,7 @@
 | `scaffold/app/database/README.md` | 실행기 위치, 실패 조건, 되돌리기 정책 |
 | `.github/workflows/reusable-app-ci.yml` | verify·e2e job의 마이그레이션 단계를 같은 스크립트로 통일: psql로 한 번 적용 → `db:migrate`가 있으면 실행기, 없으면 psql로 한 번 더 적용하고 경고 |
 | `scripts/test/workflows.test.mjs`, `scaffold.test.mjs` | 두 job의 스크립트가 같고 psql 단계가 실행기보다 먼저인지, 실행기와 문서의 기록 테이블·잠금 키·이름 규칙이 같은지 확인 |
-| `docs/directory-rules.md`, `README.md` | 실행기 파일 이름과 규칙 문서 링크 |
+| `docs/directory-rules.md`, `README.md` | 실행기 파일 이름과 규칙 문서 링크(`docs/conventions/`의 세 문서) |
 
 ## 결정
 
@@ -19,7 +19,16 @@
 - **CI는 psql로 먼저 한 번 적용한다.** 빈 볼륨의 Docker 초기화 순서(기록 없이 적용 → 실행기가 다시 적용하며 기록)를 그대로 재현해서, 다시 실행해도 안전하다는 규칙을 CI가 확인하게 했다. 실행기가 없는 앱은 psql 두 번이 되며 study-log CI와 같은 확인이다.
 - **이전에는 e2e job이 `npm run db:migrate`를 조건 없이 실행했다.** 실행기가 없는 앱에서 e2e를 켜면 실패했으므로 verify job과 같은 스크립트로 바꿨다.
 - **되돌리기(down) 파일은 쓰지 않는다.** 배포 롤백이 스키마를 되돌리지 않는 기존 런북(`docs/runbooks/deploy.md`)과 맞췄다. 데이터 복구는 배포 직전 덤프로 한다.
-- **문서 위치:** 이슈에 적힌 대로 `docs/conventions/database.md`에 만들었다. 다른 규칙 문서(`docs/git-conventions.md` 등)는 `docs/` 바로 아래에 있다.
+
+## 사용자 결정 (2026-10-22)
+
+- CI는 psql로 한 번 적용한 뒤 실행기를 쓰고, 실행기가 없으면 psql로 한 번 더 적용하며 경고를 남긴다. 실행기가 있는 workout-memo도 이 순서를 따른다.
+- 실행기가 있는지는 루트 `package.json`의 `db:migrate` 스크립트 이름으로 판단한다. 앱별 CI 입력값은 두지 않는다.
+- 문서는 `docs/conventions/database.md`에 둔다. 같은 폴더의 `domain.md`, `ux-audit.md`(#169)와 함께 README 규칙 문서 목록에 링크했다.
+
+## 후속 작업
+
+- 나머지 7개 앱에 실행기를 들이는 작업은 각 앱 리포의 이슈·PR로 따로 한다(문서 8절 절차).
 
 ## 근거
 
@@ -29,7 +38,7 @@
 
 ## 검증
 
-- `npm run check` 통과: 테스트 168개 중 167개 통과·1개 건너뜀(Codex CLI 미설치, 기존), `registry-check: ok`, 생성 문서·토큰 최신, `package-guard: ok`, `check-workflows: ok (8 files)`.
+- `npm run check` 통과: main(#171~#173 포함)에 rebase한 뒤 테스트 182개 중 181개 통과·1개 건너뜀(Codex CLI 미설치, 기존), `registry-check: ok`, 생성 문서·토큰 최신, `package-guard: ok`, `check-workflows: ok (8 files)`.
 - 스캐폴드 실행기를 임시 폴더에 복사하고 workout-memo의 설치된 `node_modules`를 연결해 실행했다(설치 없음).
   - `tsc --noEmit`(공유 `node-api.json` 설정) 통과
   - `tsx --test backend/test/migrations.test.ts` 5개 통과
