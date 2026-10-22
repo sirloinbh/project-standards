@@ -26,7 +26,7 @@ workout-memo 구조를 근거로 한 표준이다. 신규 프로젝트는 그대
 │  │  ├─ routes/<기능>.ts  routes/shared.ts # 기능별 API 모듈, 오류 처리
 │  │  ├─ openapi.ts  openapi-cli.ts         # OpenAPI 문서 생성 (docs/openapi.json)
 │  │  ├─ domain.ts                          # 도메인 규칙·검증
-│  │  ├─ migrate.ts                         # 마이그레이션 실행기 (#27)
+│  │  ├─ migrations.ts  migrate.ts          # 마이그레이션 실행기 규칙·명령 (docs/conventions/database.md)
 │  │  └─ contract.ts                        # shared/contract.ts 복제본
 │  └─ test/
 ├─ database/                                # subtree → <project>-db

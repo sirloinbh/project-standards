@@ -29,6 +29,6 @@
 
 ## 검증
 
-- `npm run check` 통과: origin/main(#173까지) 위로 rebase한 뒤 테스트 185개 중 184개 통과·실패 0개(1개는 기존 건너뜀), `registry-check: ok`, `docs/projects.md`·`design-tokens.md` 최신, `package-guard: ok`, `check-workflows: ok`.
+- `npm run check` 통과: origin/main(#174까지)을 병합한 뒤 테스트 187개 중 186개 통과·실패 0개(1개는 기존 건너뜀), `registry-check: ok`, `docs/projects.md`·`design-tokens.md` 최신, `package-guard: ok`, `check-workflows: ok`.
 - 로컬 8개 앱의 `backend/src`에 `checkApi()`를 돌렸다: workout-memo는 "없는 /api 경로 404" 경고 1개, 나머지 7개는 경고 0개.
 - 실행하지 않음: 렌더링한 스캐폴드의 `tsc`·`prettier --check`·백엔드 테스트·`npm run openapi`. 위 사용자 결정에 따라 첫 신규 프로젝트 설치 때 확인한다. 그래서 `docs/openapi.json`은 `buildOpenApi()`가 만드는 값을 직접 써 두었고, 렌더링 테스트가 `operations`·제목·`JSON.stringify` 형식과 같은지 확인한다. 첫 설치 뒤 `npm run check`의 `openapi.test.ts`가 최종 확인한다.

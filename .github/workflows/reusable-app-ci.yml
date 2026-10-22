@@ -59,13 +59,21 @@ jobs:
       - name: 공급망 점검 (설치 후, node_modules 포함)
         run: node .standards/ioc-scan.mjs
       - name: DB 마이그레이션
-        # db:migrate 스크립트가 있으면 쓰고, 없으면 database/migrations/*.sql을 순서대로 적용한다(#27에서 통일 예정).
+        # 규칙: docs/conventions/database.md (#27). e2e job에도 같은 스크립트가 있다(테스트가 같은지 확인한다).
+        # 1) 빈 볼륨의 Docker 초기화처럼 psql로 모든 파일을 기록 없이 한 번 적용한다(다시 실행해도 안전한지 확인).
+        # 2) 공통 실행기(db:migrate)가 있으면 다시 적용하며 schema_migrations에 기록한다.
+        #    아직 실행기가 없는 앱은 psql로 한 번 더 적용하고 경고만 남긴다(이전 동작과 호환).
         run: |
+          shopt -s nullglob
+          for migration in database/migrations/*.sql; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$migration" || exit 1
+          done
           if node -e "process.exit(require('./package.json').scripts?.['db:migrate'] ? 0 : 1)"; then
             npm run db:migrate
           else
+            echo "::warning title=DB 마이그레이션::db:migrate 실행기가 없어 psql로만 적용합니다. 적용 기록이 남지 않습니다. 중앙 docs/conventions/database.md를 따라 실행기를 추가하세요."
             for migration in database/migrations/*.sql; do
-              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration" || exit 1
+              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$migration" || exit 1
             done
           fi
       - run: npm run check
@@ -88,7 +96,21 @@ jobs:
           cache: npm
       - run: npm install --global "npm@$NPM_VERSION" --ignore-scripts
       - run: npm ci --ignore-scripts
-      - run: npm run db:migrate
+      - name: DB 마이그레이션
+        # verify job의 같은 이름 단계와 같은 스크립트다.
+        run: |
+          shopt -s nullglob
+          for migration in database/migrations/*.sql; do
+            psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$migration" || exit 1
+          done
+          if node -e "process.exit(require('./package.json').scripts?.['db:migrate'] ? 0 : 1)"; then
+            npm run db:migrate
+          else
+            echo "::warning title=DB 마이그레이션::db:migrate 실행기가 없어 psql로만 적용합니다. 적용 기록이 남지 않습니다. 중앙 docs/conventions/database.md를 따라 실행기를 추가하세요."
+            for migration in database/migrations/*.sql; do
+              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -q -f "$migration" || exit 1
+            done
+          fi
       # 러너 이미지(ubuntu-24.04)에 설치된 Google Chrome을 Playwright가 channel 'chrome'으로 쓴다.
       - run: npm run test:e2e
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
