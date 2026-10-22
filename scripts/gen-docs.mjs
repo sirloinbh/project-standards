@@ -17,13 +17,13 @@ export function renderProjects({ projects, platform, sync }) {
     '',
     '## 프로젝트',
     '',
-    '| 슬롯 | 프로젝트 | 분야 | 상태 | DB / 테스트 DB | 서비스 주소 | AWS 접두어 | 적용 단계 |',
-    '|---|---|---|---|---|---|---|---|',
+    '| 슬롯 | 프로젝트 | 이름 | 분야 | 상태 | DB / 테스트 DB | 서비스 주소 | AWS 접두어 | 적용 단계 |',
+    '|---|---|---|---|---|---|---|---|---|',
   ];
   for (const p of [...projects.projects].sort((a, b) => a.slot - b.slot)) {
     const host = p.service.domain ? [p.service.subdomain, p.service.domain].filter(Boolean).join('.') : UNSET;
     lines.push(
-      `| ${String(p.slot).padStart(2, '0')} | ${p.name} | ${p.domain} | ${p.status} | ${p.db.name} / ${p.db.testName} | ${host} | ${p.aws.prefix ?? UNSET} | ${rollout.get(p.name) ?? '-'} |`,
+      `| ${String(p.slot).padStart(2, '0')} | ${p.name} | ${p.title} | ${p.domain} | ${p.status} | ${p.db.name} / ${p.db.testName} | ${host} | ${p.aws.prefix ?? UNSET} | ${rollout.get(p.name) ?? '-'} |`,
     );
   }
   lines.push('', '## 포트', '', '| 프로젝트 | web | api | e2e api | vite | e2e web | db |', '|---|---|---|---|---|---|---|');

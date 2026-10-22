@@ -8,11 +8,11 @@ import { buildManifest, checkManifest } from '../lib/manifest.mjs';
 import { loadAll } from '../lib/registry.mjs';
 import { HEADER_TEXT, PROJECT_MARKER } from '../lib/render.mjs';
 import { collectTemplates, renderProfile } from '../lib/templates.mjs';
+import { buildVars } from '../lib/vars.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const { data } = loadAll(root);
-const studyLog = data.projects.projects.find((p) => p.name === 'study-log');
-const vars = { project: studyLog, versions: data.versions, platform: data.platform };
+const vars = buildVars(data, data.sync.targets.find((t) => t.project === 'study-log'));
 // Snapshot of study-log's files on 2026-10-22, stored as .txt so Git and npm don't read them as config.
 const fixture = (name) => fs.readFileSync(path.join(root, 'scripts/test/fixtures/study-log', `${name}.txt`), 'utf8').replace(/\r\n/g, '\n');
 const withoutHeader = (text) => text.split('\n').filter((line) => !line.includes(HEADER_TEXT)).join('\n');

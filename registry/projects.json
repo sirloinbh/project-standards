@@ -5,7 +5,9 @@
       "slot": 1,
       "status": "active",
       "name": "workout-memo",
+      "title": "운동 기록",
       "domain": "운동",
+      "summary": "나 한 명의 운동 일지를 기록하고, 기간별 훈련량과 점진적 과부하 목표를 확인하는 개인 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
       "repos": {
         "umbrella": "workout-memo",
         "frontend": "workout-memo-frontend",
@@ -47,7 +49,9 @@
       "slot": 2,
       "status": "active",
       "name": "study-log",
+      "title": "공부 기록",
       "domain": "공부",
+      "summary": "공부한 내용과 시간을 기록하고 학습 흐름을 돌아보는 개인 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
       "repos": {
         "umbrella": "study-log",
         "frontend": "study-log-frontend",
@@ -89,7 +93,9 @@
       "slot": 3,
       "status": "active",
       "name": "health-log",
+      "title": "식단·수면·건강 기록",
       "domain": "건강",
+      "summary": "식단, 수면, 건강 상태를 날짜별로 기록하고 변화를 확인하는 개인 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
       "repos": {
         "umbrella": "health-log",
         "frontend": "health-log-frontend",
@@ -131,7 +137,9 @@
       "slot": 4,
       "status": "active",
       "name": "life-journal",
+      "title": "감상문·일기장",
       "domain": "일기",
+      "summary": "독서·영화 감상문, 일기, 연극·콘서트 등 경험을 기록하는 개인 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
       "repos": {
         "umbrella": "life-journal",
         "frontend": "life-journal-frontend",
@@ -173,7 +181,9 @@
       "slot": 5,
       "status": "active",
       "name": "money-ledger",
+      "title": "가계부·자산 포트폴리오",
       "domain": "가계부",
+      "summary": "수입과 지출, 자산 포트폴리오를 기록하고 흐름을 확인하는 개인 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
       "repos": {
         "umbrella": "money-ledger",
         "frontend": "money-ledger-frontend",
@@ -215,7 +225,9 @@
       "slot": 6,
       "status": "active",
       "name": "english-study",
+      "title": "영어 공부",
       "domain": "영어",
+      "summary": "단어장 등 영어 공부를 기록하고 복습하는 개인 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
       "repos": {
         "umbrella": "english-study",
         "frontend": "english-study-frontend",
@@ -257,7 +269,9 @@
       "slot": 7,
       "status": "active",
       "name": "plan-routine",
+      "title": "계획·실천·루틴·피드백",
       "domain": "루틴",
+      "summary": "계획을 세우고 실천과 루틴을 기록하며 피드백으로 개선하는 개인 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
       "repos": {
         "umbrella": "plan-routine",
         "frontend": "plan-routine-frontend",
@@ -299,7 +313,9 @@
       "slot": 8,
       "status": "active",
       "name": "dev-career-portfolio",
+      "title": "개발 커리어 포트폴리오",
       "domain": "커리어",
+      "summary": "개발 경력, 프로젝트, 기술 성장을 정리하는 개인 포트폴리오 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
       "repos": {
         "umbrella": "dev-career-portfolio",
         "frontend": "dev-career-portfolio-frontend",
