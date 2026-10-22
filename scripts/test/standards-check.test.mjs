@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll } from '../lib/registry.mjs';
-import { formatReport, runCheck } from '../standards-check.mjs';
+import { checkApi, formatReport, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -164,4 +164,61 @@ test('the vendored copy runs on its own and exits 0, 1, or 2', () => {
   } finally {
     for (const dir of [good, bad, none]) fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+// API rules (docs/directory-rules.md "API") are warnings only. The scaffold backend is the good example.
+const scaffoldApi = ['app.ts', 'routes/health.ts', 'routes/shared.ts'].map((rel) => ({
+  file: `backend/src/${rel}`,
+  text: fs.readFileSync(path.join(root, 'scaffold/app/backend/src', rel), 'utf8'),
+}));
+const badApp = [
+  "import express from 'express';",
+  'export function createApp() {',
+  '  const app = express();',
+  "  app.get('/health', (_req, res) => res.json({ ok: true }));",
+  "  app.post('/api/userList', (req, res) => res.status(400).json({ message: req.body.name }));",
+  "  app.get('/api/users/:id', (req, res) => res.json({ q: req.query.q }));",
+  '  return app;',
+  '}',
+].join('\n');
+
+test('API rules: the scaffold backend and a repository without app.ts give no warnings', () => {
+  assert.deepEqual(checkApi(scaffoldApi), []);
+  assert.deepEqual(checkApi([{ file: 'backend/src/server.ts', text: 'export {};' }]), []);
+});
+
+test('API rules: health, error handler, 404, paths, error shape, and unvalidated input are warned', () => {
+  assert.deepEqual(checkApi([{ file: 'backend/src/app.ts', text: badApp }]), [
+    'backend/src: GET /api/health가 없습니다. 모든 앱은 DB 연결을 확인하는 상태 확인 API를 둡니다.',
+    'backend/src/app.ts: 오류 처리 미들웨어(app.use(errorHandler))가 없어 오류가 { error } 형식으로 나가지 않습니다.',
+    "backend/src/app.ts: 없는 /api 경로에 404 { error }로 답하는 app.use('/api', notFound)가 없습니다.",
+    'backend/src/app.ts:4: API 경로 /health는 /api로 시작해야 합니다.',
+    'backend/src/app.ts:5: API 경로 /api/userList의 "userList"는 소문자 영어와 하이픈으로 씁니다.',
+    "backend/src/app.ts:5: 400 응답이 { message } 형식입니다. 오류 응답은 { error: '<한국어 메시지>' }로 씁니다.",
+    'backend/src/app.ts:5: req.body.name를 검증 없이 읽습니다. req.body는 Zod 스키마의 parse()로 먼저 검증합니다.',
+    'backend/src/app.ts:6: req.query.q를 검증 없이 읽습니다. req.query는 Zod 스키마의 parse()로 먼저 검증합니다.',
+  ]);
+});
+
+test('API rules: the study-log style (inline error middleware, Routers mounted under /api) passes', () => {
+  const text = [
+    "app.get('/api/health', async (_req, res) => res.json({ ok: true }));",
+    "app.use('/api/study-logs', studyLogRoutes(pool));",
+    "app.get('/api/export/workouts.csv', exportRoute);",
+    "app.post('/api/backup/' + action, restore);",
+    "app.use('/api', (_req, res) => res.status(404).json({ error: '없음' }));",
+    'app.use(',
+    '  (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {});',
+  ].join('\n');
+  assert.deepEqual(checkApi([{ file: 'backend/src/app.ts', text }]), []);
+});
+
+test('API rule warnings reach runCheck without failing it; tests are not scanned', () => {
+  const result = check(({ write }) => {
+    write('backend/src/app.ts', badApp);
+    write('backend/src/app.test.ts', 'req.body.x');
+  });
+  assert.deepEqual(result.problems, []);
+  assert.equal(result.warnings.length, 8);
+  assert.ok(!result.warnings.some((w) => w.includes('app.test.ts')));
 });

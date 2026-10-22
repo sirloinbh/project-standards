@@ -13,6 +13,7 @@ Node.js **{{versions.node}}**, npm **{{versions.npm}}**. 공통 규칙은 중앙
 | `npm run standards:check` | 중앙 관리 파일과 레지스트리 값 확인 |
 | `npm run test:e2e` | Playwright 브라우저 검사 (테스트 DB 필요) |
 | `npm run db:migrate` | DB 마이그레이션 적용 |
+| `npm run openapi` | API를 바꾼 뒤 `docs/openapi.json` 다시 만들기 |
 
 ## 실행
 

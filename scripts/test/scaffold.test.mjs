@@ -61,6 +61,30 @@ test('includes the standard tree, operations docs, managed files and the manifes
   assert.match(byPath.get('.npmrc'), /^ignore-scripts=true$/m);
 });
 
+test('the backend follows the API rules: app.ts, routes/, contract copy, OpenAPI document', () => {
+  for (const file of ['backend/src/app.ts', 'backend/src/routes/shared.ts', 'backend/src/contract.ts', 'backend/src/openapi.ts', 'backend/src/openapi-cli.ts', 'backend/test/openapi.test.ts', 'docs/openapi.json']) assert.ok(byPath.has(file), file);
+  const app = byPath.get('backend/src/app.ts');
+  assert.match(app, /app\.use\('\/api', notFound\);\n\s+app\.use\(errorHandler\);/);
+  assert.match(byPath.get('shared/contract.ts'), /export type ApiError = \{ error: string \};/);
+
+  // docs/openapi.json is what openapi.ts builds: one path per operation, the shared Error schema.
+  const spec = JSON.parse(byPath.get('docs/openapi.json'));
+  assert.equal(spec.info.title, '샘플 API');
+  assert.match(byPath.get('backend/src/openapi.ts'), /title: '샘플 API'/);
+  const operations = [...byPath.get('backend/src/openapi.ts').matchAll(/^ {2}'(GET|POST|PUT|PATCH|DELETE) (\/api\/[^']*)': \{ summary: '([^']+)'/gm)];
+  assert.deepEqual(operations.map((m) => `${m[1]} ${m[2]}`), ['GET /api/health']);
+  assert.deepEqual(Object.keys(spec.paths), ['/api/health']);
+  assert.equal(spec.paths['/api/health'].get.summary, operations[0][3]);
+  assert.deepEqual(spec.components.schemas.Error.required, ['error']);
+  assert.equal(byPath.get('docs/openapi.json'), `${JSON.stringify(spec, null, 2)}\n`, 'written the way openapi-cli.ts writes it');
+
+  // The generated JSON is not reformatted by prettier: it stays in the project section of .prettierignore.
+  const ignore = byPath.get('.prettierignore');
+  assert.ok(ignore.indexOf('docs/openapi.json') > ignore.indexOf('# --- project ---'));
+  assert.equal(JSON.parse(byPath.get('backend/package.json')).scripts.openapi, 'tsx src/openapi-cli.ts');
+  assert.equal(JSON.parse(byPath.get('package.json')).scripts.openapi, 'npm run openapi -w backend');
+});
+
 test('the migration runner keeps the history table and lock key documented in docs/conventions/database.md', () => {
   const runner = byPath.get('backend/src/migrations.ts');
   const doc = fs.readFileSync(path.join(root, 'docs/conventions/database.md'), 'utf8');
