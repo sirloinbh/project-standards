@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   ci:
-    uses: sirloinbh/project-standards/.github/workflows/reusable-app-ci.yml@{{central.sha}}
+    uses: sirloinbh/project-standards/.github/workflows/reusable-app-ci.yml@{{central.workflowSha}}
     with:
       node-version: '{{versions.node}}'
       npm-version: '{{versions.npm}}'

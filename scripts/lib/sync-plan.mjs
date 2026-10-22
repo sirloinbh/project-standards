@@ -41,10 +41,10 @@ export function applyFields(text, fields) {
  * Plans one target. readExisting(path) returns the target repository's current text or null.
  * Returns { target, inRollout, files: [{ path, mode, source, content }], skipped: [{ path, reason }], fieldsPending: [path], manifest }.
  */
-export function planTarget({ root, data, target, centralSha, readExisting = () => null }) {
+export function planTarget({ root, data, target, centralSha, workflowSha = centralSha, readExisting = () => null }) {
   const profile = data.sync.profiles[target.profile];
   if (!profile) throw new Error(`${target.repo}: unknown profile "${target.profile}"`);
-  const vars = buildVars(data, target, { centralSha });
+  const vars = buildVars(data, target, { centralSha, workflowSha });
   const project = vars.project;
   const rendered = renderProfile({ root, profile: target.profile, folders: profile.templates, vars, readExisting });
 
