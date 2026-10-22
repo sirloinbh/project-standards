@@ -37,15 +37,44 @@ test('tags, wrong SHAs, unknown actions, missing comments, and missing permissio
   assert.deepEqual(checkWorkflow('w.yml', 'on: push\n', actions), ['w.yml: top-level permissions are missing']);
 });
 
+test('expressions inside run scripts are rejected; env, with, and if are fine', () => {
+  const text = [
+    'permissions: {}',
+    'env:',
+    '  TAG: ${{ github.ref_name }}',
+    'jobs:',
+    '  a:',
+    '    if: inputs.e2e',
+    '    steps:',
+    "      - run: echo '${{ github.ref_name }}'",
+    '      - run: |',
+    '          tag="$TAG"',
+    '          echo "${{ inputs.version }}"',
+    '      - name: safe',
+    '        with: { node-version: ${{ inputs.node-version }} }',
+    '        run: echo "$TAG"',
+  ].join('\n');
+  assert.deepEqual(checkWorkflow('w.yml', text, actions), [
+    'w.yml:8: ${{ }} inside a run script; pass it through env: instead',
+    'w.yml:11: ${{ }} inside a run script; pass it through env: instead',
+  ]);
+});
+
+test('publish.yml validates the tag format before using it', () => {
+  const text = fs.readFileSync(path.join(root, '.github/workflows/publish.yml'), 'utf8');
+  assert.match(text, /TAG: \$\{\{ github\.ref_name \}\}/);
+  assert.ok(text.indexOf('=~ ^([a-z][a-z0-9-]*)/v') < text.indexOf('actions/checkout'), 'validate before checkout');
+});
+
 test('publish.yml triggers on package tags and checks the tag before publishing', () => {
   const text = fs.readFileSync(path.join(root, '.github/workflows/publish.yml'), 'utf8');
   assert.match(text, /tags: \['\*\/v\*'\]/);
   assert.match(text, /packages: write/);
-  const guard = text.indexOf("package-guard.mjs --tag '${{ github.ref_name }}'");
+  const guard = text.indexOf('package-guard.mjs --tag "$TAG"');
   const publish = text.indexOf('npm publish --ignore-scripts');
   const release = text.indexOf('gh release create');
   assert.ok(guard > 0 && publish > guard && release > publish, 'guard → publish → release order');
-  assert.match(text, /actions\/runs\/\$\{\{ github\.run_id \}\}/, 'release notes link the publish run');
+  assert.match(text, /RUN_URL: .*actions\/runs\/\$\{\{ github\.run_id \}\}/, 'release notes link the publish run');
 });
 
 test('changelogSection returns one version section', () => {

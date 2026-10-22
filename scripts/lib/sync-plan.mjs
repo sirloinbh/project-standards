@@ -44,7 +44,7 @@ export function applyFields(text, fields) {
 export function planTarget({ root, data, target, centralSha, readExisting = () => null }) {
   const profile = data.sync.profiles[target.profile];
   if (!profile) throw new Error(`${target.repo}: unknown profile "${target.profile}"`);
-  const vars = buildVars(data, target);
+  const vars = buildVars(data, target, { centralSha });
   const project = vars.project;
   const rendered = renderProfile({ root, profile: target.profile, folders: profile.templates, vars, readExisting });
 

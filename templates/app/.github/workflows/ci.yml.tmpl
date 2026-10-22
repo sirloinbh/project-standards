@@ -1,0 +1,18 @@
+# 중앙 공통 CI(reusable-app-ci)를 동기화한 중앙 커밋으로 고정해 호출한다. 값은 중앙 레지스트리와 versions.json에서 온다.
+name: ci
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+  packages: read
+
+jobs:
+  ci:
+    uses: sirloinbh/project-standards/.github/workflows/reusable-app-ci.yml@{{central.sha}}
+    with:
+      node-version: '{{versions.node}}'
+      npm-version: '{{versions.npm}}'
+      postgres-image: '{{versions.images.postgres}}'
+      db-name: '{{project.db.testName}}'
+      e2e: {{project.features.e2e}}

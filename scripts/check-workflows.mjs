@@ -38,6 +38,30 @@ export function checkWorkflow(file, text, actions) {
     else if (comment !== expected.version) problems.push(`${where}: add the version comment "# ${expected.version}"`);
   }
   if (!/^permissions:/m.test(text)) problems.push(`${file}: top-level permissions are missing`);
+  problems.push(...expressionsInRun(file, text));
+  return problems;
+}
+
+// `${{ }}` inside a run script is pasted into the shell before it runs, so a tag name, branch
+// name, or input can inject commands. Values must reach scripts through `env:` instead.
+export function expressionsInRun(file, text) {
+  const problems = [];
+  const lines = text.split(/\r?\n/);
+  let blockIndent = -1; // indent of a multi-line `run: |` key while inside its body
+  lines.forEach((line, i) => {
+    const indent = line.length - line.trimStart().length;
+    if (blockIndent >= 0) {
+      if (line.trim() === '' || indent > blockIndent) {
+        if (line.includes('${{')) problems.push(`${file}:${i + 1}: \${{ }} inside a run script; pass it through env: instead`);
+        return;
+      }
+      blockIndent = -1;
+    }
+    const m = /^(\s*)(?:-\s*)?run:\s*(.*)$/.exec(line);
+    if (!m) return;
+    if (/^[|>][-+]?\s*$/.test(m[2])) blockIndent = indent + (line.trimStart().startsWith('-') ? 2 : 0);
+    else if (m[2].includes('${{')) problems.push(`${file}:${i + 1}: \${{ }} inside a run script; pass it through env: instead`);
+  });
   return problems;
 }
 

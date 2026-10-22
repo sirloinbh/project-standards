@@ -1,0 +1,14 @@
+# 중앙 공통 CI(reusable-infra-ci)를 동기화한 중앙 커밋으로 고정해 호출한다. terraform apply는 하지 않는다.
+name: ci
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    uses: sirloinbh/project-standards/.github/workflows/reusable-infra-ci.yml@{{central.sha}}
+    with:
+      terraform-version: '{{versions.terraform.cli}}'
+      node-version: '{{versions.node}}'
