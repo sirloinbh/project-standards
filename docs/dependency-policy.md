@@ -25,6 +25,10 @@ workout-memo `package-lock.json`의 설치 버전 기준(2026-10-22)이다. 앱�
 | vitest | 5 | 5.0.3 | workout-memo |
 | @playwright/test | 1 | 1.63.0 | workout-memo |
 | lucide-react | 0 | 0.468.0 | 1.x 검토는 #137 |
+| radix-ui | 1 | 1.7.0 | 공통 UI 컴포넌트(#123), ADR-0007 |
+| sonner | 2 | 2.0.8 | 토스트, ADR-0007 |
+| vaul | 1 | 1.1.2 | drawer(#124), ADR-0007 |
+| tw-animate-css | 1 | 1.4.0 | 애니메이션 유틸리티, ADR-0007 |
 | PostgreSQL | 17 | postgres:17-alpine | `versions.json` |
 
 ## 버전 쓰는 법

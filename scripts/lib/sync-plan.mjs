@@ -46,7 +46,9 @@ export function planTarget({ root, data, target, centralSha, workflowSha = centr
   if (!profile) throw new Error(`${target.repo}: unknown profile "${target.profile}"`);
   const vars = buildVars(data, target, { centralSha, workflowSha });
   const project = vars.project;
-  const rendered = renderProfile({ root, profile: target.profile, folders: profile.templates, vars, readExisting });
+  // Feature folders (e.g. templates/ui) join only when the project turns the feature on in the registry.
+  const featureFolders = Object.entries(profile.featureTemplates ?? {}).filter(([feature]) => project?.features?.[feature]).map(([, folder]) => folder);
+  const rendered = renderProfile({ root, profile: target.profile, folders: [...profile.templates, ...featureFolders], vars, readExisting });
 
   const allowed = (project?.allowedDifferences ?? []).map((d) => d.path);
   const skipped = [];

@@ -18,7 +18,8 @@
           "templates": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" } },
           "packages": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^@sirloinbh/[a-z][a-z0-9-]*$" } },
           "ci": { "type": "string", "pattern": "^[a-z0-9-]+\\.yml$" },
-          "neverTouch": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 }, "description": "동기화가 절대 바꾸지 않는 경로 패턴" }
+          "neverTouch": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 }, "description": "동기화가 절대 바꾸지 않는 경로 패턴" },
+          "featureTemplates": { "type": "object", "additionalProperties": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" }, "description": "레지스트리 features.<이름>이 true인 프로젝트에만 더하는 템플릿 폴더" }
         }
       }
     },

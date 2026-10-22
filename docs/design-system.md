@@ -17,7 +17,7 @@
 
 ## 컴포넌트
 
-1. 새 화면 요소는 `frontend/src/components/ui/`의 shadcn/ui 컴포넌트를 먼저 쓴다. 이 폴더는 중앙 관리 파일이다(#123).
+1. 새 화면 요소는 `frontend/src/components/ui/`의 shadcn/ui 컴포넌트를 먼저 쓴다. 이 폴더는 중앙 관리 파일이다. 목록과 앱에 켜는 방법은 [공통 UI 컴포넌트](ui-components.md)에 있다(#123).
 2. 공통 컴포넌트에 없는 것이 필요하면 앱 고유 폴더(`frontend/src/components/`)에 만든다. 여러 앱에 필요해지면 중앙 리포에 이슈를 연다.
 3. 레이아웃(상단 메뉴, LNB, footer, 모달, drawer, 메뉴)은 공통 레이아웃(#124)을 쓴다.
 
