@@ -6,4 +6,5 @@ import reactHooks from 'eslint-plugin-react-hooks';
 import prettier from 'eslint-config-prettier';
 import { createConfig } from '@sirloinbh/eslint-config';
 
-export default createConfig({ js, tseslint, globals, reactHooks, prettier });
+// .standards/ holds central scripts copied as they are; the central repository checks them.
+export default createConfig({ js, tseslint, globals, reactHooks, prettier }, { ignores: ['.standards/**'] });
