@@ -7,7 +7,7 @@ import { changelogSection } from '../changelog-section.mjs';
 import { checkAll, checkWorkflow } from '../check-workflows.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const { actions } = JSON.parse(fs.readFileSync(path.join(root, 'versions.json'), 'utf8'));
+const { actions, runner } = JSON.parse(fs.readFileSync(path.join(root, 'versions.json'), 'utf8'));
 const checkout = actions.checkout;
 
 test('all committed workflows pin actions to versions.json SHAs and declare permissions', () => {
@@ -21,7 +21,7 @@ test('tags, wrong SHAs, unknown actions, missing comments, and missing permissio
     '  a:',
     '    steps:',
     '      - uses: actions/checkout@v4',
-    `      - uses: actions/checkout@${'0'.repeat(40)} # v4.4.0`,
+    `      - uses: actions/checkout@${'0'.repeat(40)} # ${checkout.version}`,
     '      - uses: someone/action@abc',
     `      - uses: actions/checkout@${checkout.sha}`,
     `      - uses: actions/checkout@${checkout.sha} # ${checkout.version}`,
@@ -29,12 +29,18 @@ test('tags, wrong SHAs, unknown actions, missing comments, and missing permissio
     '    uses: sirloinbh/project-standards/.github/workflows/reusable-app-ci.yml@abc',
   ].join('\n');
   assert.deepEqual(checkWorkflow('w.yml', text, actions), [
-    `w.yml:5: actions/checkout must be pinned to ${checkout.sha} (v4.4.0), got v4`,
-    `w.yml:6: actions/checkout must be pinned to ${checkout.sha} (v4.4.0), got ${'0'.repeat(40)}`,
+    `w.yml:5: actions/checkout must be pinned to ${checkout.sha} (${checkout.version}), got v4`,
+    `w.yml:6: actions/checkout must be pinned to ${checkout.sha} (${checkout.version}), got ${'0'.repeat(40)}`,
     'w.yml:7: someone/action is not listed in versions.json actions',
-    'w.yml:8: add the version comment "# v4.4.0"',
+    `w.yml:8: add the version comment "# ${checkout.version}"`,
   ]);
   assert.deepEqual(checkWorkflow('w.yml', 'on: push\n', actions), ['w.yml: top-level permissions are missing']);
+});
+
+test('runs-on must use the pinned runner from versions.json', () => {
+  const text = ['permissions: {}', 'jobs:', '  a:', '    runs-on: ubuntu-latest', '  b:', `    runs-on: ${runner}`, '  c:', `    runs-on: '${runner}'`].join('\n');
+  assert.deepEqual(checkWorkflow('w.yml', text, actions, runner), [`w.yml:4: runs-on must be ${runner} (versions.json runner), got ubuntu-latest`]);
+  assert.deepEqual(checkWorkflow('w.yml', text, actions), [], 'no runner given: runs-on is not checked');
 });
 
 test('expressions inside run scripts are rejected; env, with, and if are fine', () => {
