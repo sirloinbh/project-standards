@@ -1,10 +1,12 @@
 {
   "sirloinbh/workout-memo": [
+    "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .codex/rules/package-installs.rules",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/dependabot.yml",
@@ -51,11 +53,13 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/study-log": [
+    "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .codex/rules/package-installs.rules",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/dependabot.yml",
@@ -102,11 +106,13 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/health-log": [
+    "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .codex/rules/package-installs.rules",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/dependabot.yml",
@@ -153,11 +159,13 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/life-journal": [
+    "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .codex/rules/package-installs.rules",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/dependabot.yml",
@@ -204,11 +212,13 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/money-ledger": [
+    "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .codex/rules/package-installs.rules",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/dependabot.yml",
@@ -255,11 +265,13 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/english-study": [
+    "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .codex/rules/package-installs.rules",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/dependabot.yml",
@@ -306,11 +318,13 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/plan-routine": [
+    "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .codex/rules/package-installs.rules",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/dependabot.yml",
@@ -357,11 +371,13 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/dev-career-portfolio": [
+    "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .codex/rules/package-installs.rules",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/dependabot.yml",
@@ -408,9 +424,11 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/shared-aws-infrastructure": [
+    "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
     "full .claude/skills/std-implementation/SKILL.md",
+    "full .codex/rules/package-installs.rules",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/ISSUE_TEMPLATE/task.md",
