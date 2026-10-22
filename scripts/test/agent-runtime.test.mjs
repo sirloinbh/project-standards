@@ -183,6 +183,10 @@ function modelFixture(t, overrides = {}) {
     path.join(scripts, 'agents'),
     { recursive: true },
   );
+  fs.copyFileSync(
+    fileURLToPath(new URL('../../tools/agents.ps1', import.meta.url)),
+    path.join(scripts, 'agents.ps1'),
+  );
   // The fixture checkout doubles as the target repository: a registered origin
   // (served by the fake git below) and a registry next to the copied tools.
   fs.mkdirSync(path.join(root, '.git'));
@@ -302,15 +306,18 @@ console.log(JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 123,
 `,
     'utf8',
   );
-  const invoke = (args, extraEnv = {}) => {
+  const invoke = (args, extraEnv = {}, powershell = false) => {
     const result = spawnSync(
-      process.execPath,
-      [path.join(scripts, 'agents/cli.mjs'), ...args],
+      powershell ? 'powershell.exe' : process.execPath,
+      powershell
+        ? ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(scripts, 'agents.ps1'), '-Root', root, ...args]
+        : [path.join(scripts, 'agents/cli.mjs'), ...args],
       {
         cwd: root,
         env: { ...process.env, TEST_DATABASE_URL: 'fixture-only-db-marker', ...extraEnv },
         encoding: 'utf8',
-        timeout: 15000,
+        // Hosted Windows runners can take over 20 seconds to start the first PowerShell process.
+        timeout: powershell ? 60000 : 15000,
         windowsHide: true,
       },
     );
@@ -598,7 +605,37 @@ test('#24 diagnose identifies a snapshot made stale by a concurrent source edit'
   );
 });
 
-// The PowerShell launcher (agents.ps1) and its boundary tests move with #166.
+// The PowerShell launcher (tools/agents.ps1, #166) passes its parameters to the Node CLI.
+test(
+  '#24 enqueue task kind crosses the PowerShell and Node boundary',
+  { skip: process.platform !== 'win32' ? 'PowerShell wrapper is Windows specific' : false },
+  (t) => {
+    const f = modelFixture(t);
+    fs.rmSync(path.join(f.home, 'jobs/21'), { recursive: true });
+    const result = f.invoke(
+      ['enqueue', '-Issue', '21', '-TaskKind', 'documentation'],
+      { FIXTURE_BRANCH: 'docs/21-simple-documentation-task' },
+      true,
+    );
+    assert.equal(result.status, 0, result.stderr);
+    const saved = readJson(path.join(f.home, 'jobs/21/job.json'));
+    assert.equal(saved.taskKind, 'documentation');
+    assert.equal(saved.branch, 'docs/21-simple-documentation-task');
+    assert.equal(f.calls().length, 0, 'enqueue must not invoke a model');
+  },
+);
+
+test(
+  '#24 diagnose issue crosses the PowerShell and Node boundary',
+  { skip: process.platform !== 'win32' ? 'PowerShell wrapper is Windows specific' : false },
+  (t) => {
+    const f = modelFixture(t);
+    const result = f.invoke(['diagnose', '-Issue', '21'], {}, true);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(f.calls().length, 1);
+    assertModelCall(f.calls()[0], 'debugging', 'read-only');
+  },
+);
 
 test('#24 enqueue persists explicit task and review choices through Node CLI arguments', (t) => {
   const f = modelFixture(t);

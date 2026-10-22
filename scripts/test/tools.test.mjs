@@ -186,13 +186,18 @@ test('launcher keeps another folder\'s GitHub environment and propagates code fa
   }
 });
 
-test('install copies the tools, keeps unchanged files, and backs up replaced ones', { skip: !windows }, () => {
+test('install copies the tools and the agent worker, keeps unchanged files, and backs up replaced ones', { skip: !windows }, () => {
   const f = fixture();
   try {
     const dest = join(f.dir, 'sirloinbh-tools');
     const first = powershell([tool('install.ps1'), '-Destination', dest], f.env);
     assert.equal(first.status, 0, first.stderr);
     for (const name of ['gh-project.ps1', 'project-terminal.ps1', 'open-vscode-account-b.cmd', 'set-credential-helper.ps1']) assert.ok(existsSync(join(dest, name)), name);
+    // #166: the agent worker, its launcher, the registry it checks origins against, and versions.json.
+    const modules = readdirSync(tool('agents')).filter((n) => n.endsWith('.mjs'));
+    assert.ok(modules.includes('cli.mjs'));
+    for (const name of ['agents.ps1', ...modules.map((n) => join('agents', n))]) assert.equal(readFileSync(join(dest, name), 'utf8'), readFileSync(tool(name), 'utf8'), name);
+    for (const name of [join('registry', 'projects.json'), 'versions.json']) assert.equal(readFileSync(join(dest, name), 'utf8'), readFileSync(join(root, name), 'utf8'), name);
     const second = powershell([tool('install.ps1'), '-Destination', dest], f.env);
     assert.match(second.stdout, /unchanged {2}gh-project\.ps1/);
     writeFileSync(join(dest, 'gh-project.ps1'), '# edited\n');
@@ -200,6 +205,11 @@ test('install copies the tools, keeps unchanged files, and backs up replaced one
     assert.match(third.stdout, /backed up {2}gh-project\.ps1 -> gh-project\.ps1\.bak-\d{8}-\d{6}/);
     assert.ok(readdirSync(dest).some((n) => n.startsWith('gh-project.ps1.bak-')));
     assert.equal(readFileSync(join(dest, 'gh-project.ps1'), 'utf8'), readFileSync(tool('gh-project.ps1'), 'utf8'));
+    writeFileSync(join(dest, 'agents', 'cli.mjs'), '// edited\n');
+    const fourth = powershell([tool('install.ps1'), '-Destination', dest], f.env);
+    assert.match(fourth.stdout, /backed up {2}agents\\cli\.mjs -> cli\.mjs\.bak-\d{8}-\d{6}/);
+    assert.match(fourth.stdout, /unchanged {2}agents\\workflow\.mjs/);
+    assert.ok(readdirSync(join(dest, 'agents')).some((n) => n.startsWith('cli.mjs.bak-')));
   } finally {
     f.cleanup();
   }
@@ -244,9 +254,14 @@ test('harness scripts stay ASCII-only and read paths from the environment', () =
 });
 
 test('tools contain no project-specific install path', () => {
-  for (const name of ['gh-project.ps1', 'project-terminal.ps1', 'open-vscode-account-b.cmd', 'install.ps1', 'set-credential-helper.ps1']) {
+  for (const name of ['gh-project.ps1', 'project-terminal.ps1', 'open-vscode-account-b.cmd', 'install.ps1', 'set-credential-helper.ps1', 'agents.ps1']) {
     // Comments may mention the old folder (install.ps1 explains it never touches it); code may not.
     const code = readFileSync(tool(name), 'utf8').split('\n').filter((l) => !/^\s*(#|rem\b)/i.test(l)).join('\n');
     assert.doesNotMatch(code, /gh-workout-memo/, name);
   }
+});
+
+test('PowerShell tools stay ASCII-only for Windows PowerShell 5.1', () => {
+  // A BOM-less .ps1 is read in the ANSI code page, so non-ASCII text would be garbled.
+  for (const name of ['agents.ps1', 'install.ps1']) assert.equal([...readFileSync(tool(name), 'utf8')].find((c) => c.codePointAt(0) > 0x7f), undefined, name);
 });

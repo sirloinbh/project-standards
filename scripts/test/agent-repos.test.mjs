@@ -328,3 +328,69 @@ test('--root must name a Git repository root', (t) => {
   assert.notEqual(empty.status, 0);
   assert.match(empty.stderr, /--root requires/);
 });
+
+// #166: the PowerShell launcher (tools/agents.ps1) takes -Root and keeps each repository's
+// queue in its own .local/agent-workflow. Installs go to a temporary folder only.
+const windowsOnly = {
+  skip: process.platform !== 'win32' ? 'PowerShell launcher is Windows specific' : false,
+};
+const powershell = (script, args) => {
+  const result = spawnSync(
+    'powershell.exe',
+    ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', script, ...args],
+    // Hosted Windows runners can take over 20 seconds to start the first PowerShell process.
+    { cwd: os.tmpdir(), encoding: 'utf8', timeout: 60000, windowsHide: true },
+  );
+  assert.ifError(result.error);
+  return result;
+};
+
+test('installed agents.ps1 -Root <repo> status shows only that repository queue', windowsOnly, (t) => {
+  const dir = temporaryDirectory(t, 'agent-launcher-');
+  const tools = path.join(dir, 'sirloinbh tools');
+  const installed = powershell(path.join(repositoryRoot, 'tools/install.ps1'), ['-Destination', tools]);
+  assert.equal(installed.status, 0, installed.stderr);
+  const queues = { alpha: ['11', '12'], beta: ['21'] };
+  const roots = {};
+  for (const [name, issues] of Object.entries(queues)) {
+    const root = path.join(dir, `${name} repo`);
+    fs.mkdirSync(path.join(root, '.git'), { recursive: true });
+    for (const id of issues) {
+      const file = path.join(root, `.local/agent-workflow/jobs/${id}/job.json`);
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify({ id, stage: 'queued', attempts: 0, history: [] }));
+    }
+    roots[name] = root;
+  }
+  for (const [name, expected] of Object.entries(queues)) {
+    const result = powershell(path.join(tools, 'agents.ps1'), ['-Root', roots[name], 'status']);
+    assert.equal(result.status, 0, result.stderr);
+    const status = JSON.parse(result.stdout);
+    assert.deepEqual(status.jobs.map((job) => job.issue).sort(), expected);
+    assert.equal(status.worker.running, false);
+  }
+});
+
+test('agents.ps1 refuses a folder that is not a Git repository root without creating a queue', windowsOnly, (t) => {
+  const dir = temporaryDirectory(t, 'agent-launcher-');
+  const result = powershell(path.join(repositoryRoot, 'tools/agents.ps1'), ['-Root', dir, 'status']);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Not a Git repository root/);
+  assert.equal(fs.existsSync(path.join(dir, '.local')), false);
+});
+
+test('agents.ps1 passes -Root, -BranchType and -Slug through to enqueue', windowsOnly, (t) => {
+  const f = repositoryFixture(t, { name: 'beta-app' });
+  const launcher = path.join(f.root, 'tools/agents.ps1');
+  fs.copyFileSync(path.join(repositoryRoot, 'tools/agents.ps1'), launcher);
+  const result = powershell(launcher, [
+    '-Root', f.root, 'enqueue', '-Issue', '7', '-BranchType', 'fix', '-Slug', 'csv-encoding',
+  ]);
+  assert.equal(result.status, 0, result.stderr);
+  assert.equal(f.job().branch, 'fix/7-csv-encoding');
+  // The fixture has no versions.json next to the tools, so the version check only warns.
+  assert.match(result.stderr, /Node version was not checked/);
+  const rejected = powershell(launcher, ['-Root', f.root, 'status', '-Slug', 'x']);
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stderr, /require enqueue/);
+});
