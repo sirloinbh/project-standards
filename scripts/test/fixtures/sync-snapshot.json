@@ -1,5 +1,6 @@
 {
   "sirloinbh/workout-memo": [
+    "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
@@ -55,6 +56,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/study-log": [
+    "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
@@ -108,6 +110,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/health-log": [
+    "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
@@ -161,6 +164,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/life-journal": [
+    "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
@@ -214,6 +218,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/money-ledger": [
+    "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
@@ -267,6 +272,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/english-study": [
+    "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
@@ -320,6 +326,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/plan-routine": [
+    "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
@@ -373,6 +380,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/dev-career-portfolio": [
+    "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-foundation/SKILL.md",
@@ -426,6 +434,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/shared-aws-infrastructure": [
+    "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-git-writing/SKILL.md",
