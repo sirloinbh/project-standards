@@ -1,0 +1,11 @@
+{
+  "description": "templates/<폴더>의 파일은 같은 경로로 대상 리포에 렌더링된다. 이름 끝의 .tmpl은 떼고 쓴다(Git·npm·편집기가 중앙 리포에서 그 파일을 실제 설정으로 읽지 않게 하기 위함). 여기 없는 파일은 전체 관리(full)다.",
+  "section": [".gitignore", ".prettierignore"],
+  "fields": {
+    "app": {
+      "package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" } },
+      "frontend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" } },
+      "backend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" } }
+    }
+  }
+}
