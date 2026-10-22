@@ -7,6 +7,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadAll } from './lib/registry.mjs';
+import { renderIcons } from './lib/pwa-icons.mjs';
 import { renderText } from './lib/render.mjs';
 import { planTarget } from './lib/sync-plan.mjs';
 import { TEMPLATE_SUFFIX } from './lib/templates.mjs';
@@ -46,7 +47,7 @@ export function packageVars(centralRoot) {
   );
 }
 
-/** Returns [{ path, content }] for the whole first commit of the project's umbrella repository. */
+/** Returns [{ path, content: string | Buffer }] for the whole first commit of the project's umbrella repository. */
 export function renderScaffold({ root: centralRoot = root, data, project, centralSha, workflowSha = centralSha }) {
   const target = data.sync.targets.find((t) => t.project === project && t.profile === 'app');
   if (!target) throw new Error(`${project}: no app target in sync.config.json. Add the project to the registry and sync.config.json first (docs/design.md 6.6).`);
@@ -62,6 +63,8 @@ export function renderScaffold({ root: centralRoot = root, data, project, centra
     own.set(out, renderText(fs.readFileSync(path.join(centralRoot, 'docs/runbooks', file), 'utf8').replace(/\r\n/g, '\n'), vars, `docs/runbooks/${file}`));
   }
   for (const copy of CONTRACT_COPIES) own.set(copy, own.get('shared/contract.ts'));
+  // Placeholder icons for the web app manifest (Buffers; docs/pwa.md).
+  for (const icon of renderIcons()) own.set(`frontend/public/${icon.path}`, icon.content);
 
   const plan = planTarget({ root: centralRoot, data, target, centralSha, workflowSha, readExisting: (p) => own.get(p) ?? null });
   if (plan.fieldsPending.length) throw new Error(`scaffold/app is missing ${plan.fieldsPending.join(', ')} (managed fields need the file)`);

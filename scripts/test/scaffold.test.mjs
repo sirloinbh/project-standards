@@ -46,7 +46,7 @@ test('the slot 99 project is a valid registry entry', () => {
 
 test('renders without leftover template variables (GitHub ${{ }} expressions stay)', () => {
   // .standards/ holds vendored central scripts, copied without rendering; their source mentions {{ }}.
-  for (const { path: file, content } of files.filter((f) => !f.path.startsWith('.standards/'))) assert.doesNotMatch(content, /(?<!\$)\{\{/, file);
+  for (const { path: file, content } of files.filter((f) => typeof f.content === 'string' && !f.path.startsWith('.standards/'))) assert.doesNotMatch(content, /(?<!\$)\{\{/, file);
   assert.ok(!files.some((f) => f.path.endsWith('.tmpl')));
 });
 
