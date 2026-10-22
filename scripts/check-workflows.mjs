@@ -1,6 +1,6 @@
 // Checks GitHub Actions workflow files without external tools:
 // every `uses:` is pinned to a commit SHA listed in versions.json, and every workflow
-// declares top-level permissions. Covers .github/workflows/ and workflow templates.
+// declares top-level permissions, and every `runs-on:` uses versions.json "runner". Covers .github/workflows/ and workflow templates.
 // Usage: node scripts/check-workflows.mjs
 import fs from 'node:fs';
 import path from 'node:path';
@@ -21,11 +21,16 @@ function workflowFiles(root) {
   return out.sort();
 }
 
-/** Returns problems for one workflow text. `actions` is versions.json "actions". */
-export function checkWorkflow(file, text, actions) {
+/**
+ * Returns problems for one workflow text. `actions` is versions.json "actions";
+ * `runner` is versions.json "runner" (every `runs-on:` must use it when given).
+ */
+export function checkWorkflow(file, text, actions, runner) {
   const problems = [];
   const pinned = new Map(Object.values(actions).map((a) => [a.repo, a]));
   for (const [i, line] of text.split(/\r?\n/).entries()) {
+    const r = /^\s*runs-on:\s*([^\s#]+)/.exec(line);
+    if (r && runner && r[1].replace(/^['"]|['"]$/g, '') !== runner) problems.push(`${file}:${i + 1}: runs-on must be ${runner} (versions.json runner), got ${r[1]}`);
     const m = /^\s*(?:-\s*)?uses:\s*([^\s#]+)(?:\s*#\s*(\S+))?/.exec(line);
     if (!m) continue;
     const [, ref, comment] = m;
@@ -66,8 +71,8 @@ export function expressionsInRun(file, text) {
 }
 
 export function checkAll(root) {
-  const { actions } = JSON.parse(fs.readFileSync(path.join(root, 'versions.json'), 'utf8'));
-  return workflowFiles(root).flatMap((file) => checkWorkflow(file, fs.readFileSync(path.join(root, file), 'utf8'), actions));
+  const { actions, runner } = JSON.parse(fs.readFileSync(path.join(root, 'versions.json'), 'utf8'));
+  return workflowFiles(root).flatMap((file) => checkWorkflow(file, fs.readFileSync(path.join(root, file), 'utf8'), actions, runner));
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
