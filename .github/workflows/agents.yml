@@ -1,0 +1,34 @@
+# 로컬 에이전트 워커(tools/agents) 검증. Linux는 ci.yml의 npm run check가 같은 테스트를 돌리고,
+# 이 워크플로는 실제 사용 환경인 Windows에서 npm run test:agents를 한 번 더 돌린다(#165).
+name: agents
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/**'
+      - 'registry/projects.json'
+      - 'scripts/test/agent-*.test.mjs'
+      - 'package.json'
+      - '.github/workflows/agents.yml'
+  pull_request:
+    paths:
+      - 'tools/**'
+      - 'registry/projects.json'
+      - 'scripts/test/agent-*.test.mjs'
+      - 'package.json'
+      - '.github/workflows/agents.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-2025
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false # lockfile이 없어 setup-node v5+ 자동 캐시가 실패하므로 끈다
+      - run: npm run test:agents

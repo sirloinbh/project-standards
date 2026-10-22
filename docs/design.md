@@ -160,6 +160,8 @@ packages/<pkg> 변경 PR (버전·CHANGELOG 포함) → 사용자 병합
 | 프로젝트 고정값 | 포트, DB 이름, 리포 이름, 도메인, AWS 접두어 | `compose.yaml`, `vite.config.ts`, `playwright.config.ts`, `backend/src/server.ts`, `frontend/nginx.conf`, Dockerfile `EXPOSE`의 실제 값이 레지스트리와 다르면 실패 |
 | 프로젝트 고유 | `AGENTS.project.md`, `skills/<proj>-*`, 앱 코드, `compose.yaml`(빌드 secret 설정은 검사), `docs/changes/` | 검사하지 않음 |
 | 스캐폴드 전용 | `scaffold/app/**` | 기존 리포에는 경고만 (`directory-rules`) |
+| 중앙 도구 | `tools/**`(계정 도구, 로컬 에이전트 워커 `tools/agents/`) | 하위 리포에 복사하지 않는다. PC에 한 번 설치하고 대상 리포를 지정해 실행한다(#19, #165) |
+| 리포 에이전트 설정 | `.agents.json`(에이전트 워커를 쓰는 리포만) | 검사하지 않음. 형식은 워커가 실행할 때 검사한다([tools.md](tools.md#로컬-에이전트-워커-toolsagents)) |
 
 포트만 다르고 8개 앱에서 같았던 Docker 파일은 B안 전체 관리로 옮겼다(#6). 템플릿에 주입하는 값은 다음과 같다.
 
