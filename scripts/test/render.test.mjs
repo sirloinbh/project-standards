@@ -54,7 +54,8 @@ test('section files keep the target project part below the marker', () => {
   const rendered = `node_modules/\n.env\n${PROJECT_MARKER}\n`;
   assert.equal(mergeSection(rendered, `old/\n${PROJECT_MARKER}\r\ntest-results/\r\n`, '.gitignore'), `node_modules/\n.env\n${PROJECT_MARKER}\ntest-results/\n`);
   assert.equal(mergeSection(rendered, null, '.gitignore'), `node_modules/\n.env\n${PROJECT_MARKER}\n`);
-  assert.equal(mergeSection(rendered, 'no marker yet\n', '.gitignore'), `node_modules/\n.env\n${PROJECT_MARKER}\n`);
+  // First sync without a marker: lines the central part lacks move below the marker instead of being lost.
+  assert.equal(mergeSection(rendered, 'node_modules/\r\n.env\r\n\r\ntest-results/\r\nplaywright-report/\r\n', '.gitignore'), `node_modules/\n.env\n${PROJECT_MARKER}\ntest-results/\nplaywright-report/\n`);
   assert.throws(() => mergeSection('node_modules/\n', null, '.gitignore'), /must end with "# --- project ---"/);
 });
 

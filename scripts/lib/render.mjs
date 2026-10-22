@@ -89,8 +89,15 @@ export function mergeSection(rendered, existing, file) {
   const central = rendered.replace(/\s*$/, '');
   if (!central.endsWith(PROJECT_MARKER)) throw new Error(`${file}: section template must end with "${PROJECT_MARKER}"`);
   const normalized = (existing ?? '').replace(/\r\n/g, '\n');
-  const at = normalized.indexOf(`${PROJECT_MARKER}\n`);
-  const project = at >= 0 ? normalized.slice(at + PROJECT_MARKER.length + 1) : '';
+  const at = normalized.lastIndexOf(`${PROJECT_MARKER}\n`);
+  let project;
+  if (at >= 0) project = normalized.slice(at + PROJECT_MARKER.length + 1);
+  else {
+    // First sync of a file without the marker: keep the project's own lines (those the central part
+    // does not already have) below the marker instead of dropping them.
+    const centralLines = new Set(central.split('\n').map((l) => l.trim()));
+    project = normalized.split('\n').filter((l) => l.trim() && !centralLines.has(l.trim())).join('\n');
+  }
   return `${central}\n${project}`.replace(/\n*$/, '\n');
 }
 

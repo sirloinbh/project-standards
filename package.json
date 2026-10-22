@@ -10,6 +10,7 @@
     "registry:check": "node scripts/registry-check.mjs",
     "docs": "node scripts/gen-docs.mjs",
     "docs:check": "node scripts/gen-docs.mjs --check",
+    "sync:preview": "node scripts/sync.mjs --dry-run --out .local/sync-preview",
     "check": "npm run test && npm run registry:check && npm run docs:check"
   }
 }
