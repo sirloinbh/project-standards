@@ -40,7 +40,7 @@ npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 패키지를 �
 
 - **Claude Code 거부 목록:** 명령 글자를 앞에서부터 비교한다. `npm --silent install`처럼 옵션을 하위 명령 앞에 두거나, `sh -c '…'`, 전체 경로(`C:\…\npm.cmd`)로 실행하면 걸리지 않는다(이 형태는 훅이 막는다). `&&`, `;`, `|`로 이어진 명령과 앞에 붙은 환경변수, `timeout`·`nohup` 같은 감싸는 명령은 걸린다. 프로젝트의 deny는 개인 설정의 allow보다 우선하고, `.claude/settings.local.json`으로 풀 수 없다.
 - **Claude Code 훅:** 셸을 완전히 해석하지는 않는다. 변수에 담은 명령(`$c = 'npm'; & $c install`), 큰따옴표 안의 `$( )`, 별칭·함수, `find -exec`, `node -e`로 child_process를 부르는 경우, 스크립트 파일(`bash x.sh`, `pwsh -File x.ps1`) 안의 명령은 보지 못한다. Bash·PowerShell 도구만 검사한다. 훅 설정은 세션을 시작할 때 읽으므로 바꾼 뒤에는 세션을 다시 시작한다.
-- **Codex:** 프로젝트의 `.codex/` 폴더를 사용자가 신뢰(trust)해야 규칙을 읽는다. 리포를 처음 Codex로 열 때 신뢰 여부를 묻는다. 기본 샌드박스(`workspace-write`)는 네트워크를 꺼 두므로 설치가 한 번 더 막힌다. 네트워크를 켜는 설정(`[sandbox_workspace_write] network_access = true`)은 쓰지 않는다. Codex 규칙도 글자 비교라서 훅이 막는 우회 형태와 위 별칭(`u`, `ic` 등)은 Codex에서 걸리지 않는다.
+- **Codex:** 프로젝트의 `.codex/` 폴더를 사용자가 신뢰(trust)해야 규칙을 읽는다. 리포를 처음 Codex로 열 때 신뢰 여부를 묻는다. 기본 샌드박스(`workspace-write`)는 네트워크를 꺼 두므로 설치가 한 번 더 막힌다. 네트워크를 켜는 설정(`[sandbox_workspace_write] network_access = true`)은 쓰지 않는다. Codex 규칙도 글자 비교라서 훅이 막는 우회 형태와 위 별칭(`u`, `ic` 등)은 Codex에서 걸리지 않는다(후속 #178).
 - AGENTS.md의 금지 문장은 두 도구 모두 안내로만 읽는다. 차단은 위 설정 파일이 한다.
 
 ## 바꾸는 법
