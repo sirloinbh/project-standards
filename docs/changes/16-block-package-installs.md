@@ -19,3 +19,7 @@
 - 중앙 리포에서 `npm install --dry-run`(Bash, PowerShell)과 `FOO=1 npx --version`이 거부됐다. `npm run`, `npm ls`는 실행됐다.
 - `codex execpolicy check`(Codex CLI 0.144.4)로 설치 계열 7개 `forbidden`, `npm run check`·`npm ls`·`npm audit`는 규칙에 걸리지 않음을 확인했다.
 - `npm run check` 통과(161개). 동기화 스냅샷: 9개 리포에 파일 2개씩 추가.
+
+## 후속 수정: npm 별칭 추가
+
+자동 보안 검토가 빠진 별칭을 찾았다. npm은 `install`의 줄임·오타 별칭(`ins`, `inst`, `insta`, `instal`, `isnt`, `isnta`, `isntal`), `update`의 오타 별칭 `udpate`, 의존성을 설치하는 `link`(`ln`)도 받아들인다. 세 목록(Bash·PowerShell·Codex)에 추가해 거부 규칙은 86개가 됐다. `npm insta --dry-run`이 거부되는 것과 `codex execpolicy check` 판정을 확인했다. 명령을 해석해서 막는 PreToolUse 훅은 #162에서 검토한다.
