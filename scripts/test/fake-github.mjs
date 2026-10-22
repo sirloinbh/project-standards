@@ -4,7 +4,8 @@ import { gitBlobSha } from '../lib/sync-pr.mjs';
 let counter = 0;
 const newSha = (prefix) => `${prefix}${String(++counter).padStart(40 - prefix.length, '0')}`;
 
-export function fakeRepo(fullName, files) {
+export function fakeRepo(fullName, files, { labels: initialLabels = [] } = {}) {
+  const labels = initialLabels.map((l) => ({ ...l }));
   const blobs = new Map();
   const trees = new Map();
   const commits = new Map();
@@ -70,6 +71,23 @@ export function fakeRepo(fullName, files) {
       Object.assign(pr, body);
       return pr;
     }
+    // Labels: names are case-insensitive, pages hold at most `per_page` labels.
+    if (method === 'GET' && (m = new RegExp(`^${base}/labels\\?per_page=(\\d+)&page=(\\d+)$`).exec(path))) {
+      const size = Number(m[1]);
+      return labels.slice((Number(m[2]) - 1) * size, Number(m[2]) * size).map((l) => ({ ...l }));
+    }
+    const findLabel = (name) => labels.find((l) => l.name.toLowerCase() === name.toLowerCase());
+    if (method === 'POST' && path === `${base}/labels`) {
+      if (findLabel(body.name)) throw new Error(`GitHub API POST ${path} failed: 422 already_exists`);
+      labels.push({ name: body.name, color: body.color, description: body.description });
+      return { ...labels.at(-1) };
+    }
+    if (method === 'PATCH' && (m = new RegExp(`^${base}/labels/(.+)$`).exec(path))) {
+      const label = findLabel(decodeURIComponent(m[1]));
+      if (!label) throw new Error(`GitHub API PATCH ${path} failed: 404`);
+      Object.assign(label, { name: body.new_name ?? label.name, color: body.color ?? label.color, description: body.description ?? label.description });
+      return { ...label };
+    }
     throw new Error(`fake GitHub has no route for ${method} ${path}`);
   }
 
@@ -83,5 +101,5 @@ export function fakeRepo(fullName, files) {
     refs.set('heads/main', refs.get(`heads/${branch}`));
     for (const p of pulls) if (p.head.ref === branch) p.state = 'closed';
   };
-  return { api, calls, pulls, refs, filesAt, merge, commits };
+  return { api, calls, pulls, refs, filesAt, merge, commits, labels };
 }
