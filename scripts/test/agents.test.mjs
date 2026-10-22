@@ -13,7 +13,7 @@ const { data } = loadAll(root);
 // Renders every sync target once; a missing template variable throws here.
 const rendered = data.sync.targets.map((target) => {
   const folders = data.sync.profiles[target.profile].templates;
-  const files = renderProfile({ root, profile: target.profile, folders, vars: buildVars(data, target) });
+  const files = renderProfile({ root, profile: target.profile, folders, vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
   return { target, files: Object.fromEntries(files.map((f) => [f.path, f])) };
 });
 const apps = rendered.filter((r) => r.target.profile === 'app');
@@ -60,6 +60,17 @@ test('project-specific skill text uses the project title and repository', () => 
   assert.match(study['skills/std-testing/SKILL.md'].content, /# 공부 기록 테스트 작성과 실행/);
   assert.match(study['skills/std-foundation/SKILL.md'].content, /# 공부 기록 개발 기반/);
   assert.match(study['skills/std-implementation/SKILL.md'].content, /이 스킬은 `sirloinbh\/study-log` 리포의 변경 작업에 적용한다/);
+});
+
+test('CI callers pin the central workflow to the synced commit and pass registry values', () => {
+  const ci = (project) => apps.find((r) => r.target.project === project).files['.github/workflows/ci.yml'].content;
+  assert.match(ci('workout-memo'), /uses: sirloinbh\/project-standards\/\.github\/workflows\/reusable-app-ci\.yml@abcdef1234567\n/);
+  assert.match(ci('workout-memo'), /db-name: 'workout_test'\n {6}e2e: true\n/);
+  assert.match(ci('study-log'), /db-name: 'study_test'\n {6}e2e: false\n/);
+  assert.match(ci('study-log'), /postgres-image: 'postgres:17-alpine'/);
+  const infra = rendered.find((r) => r.target.profile === 'infra').files['.github/workflows/ci.yml'].content;
+  assert.match(infra, /reusable-infra-ci\.yml@abcdef1234567\n/);
+  assert.match(infra, /terraform-version: '1\.16\.5'/);
 });
 
 test('the infra repository gets the common skills but no app-only files', () => {

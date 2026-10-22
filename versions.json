@@ -3,7 +3,7 @@
   "node": "24.21.0",
   "npm": "11.19.0",
   "postgres": "17",
-  "terraform": { "required": ">= 1.6.0", "cli": null },
+  "terraform": { "required": ">= 1.6.0", "cli": "1.16.5" },
   "images": {
     "node": "node:24.21.0-alpine",
     "nginx": "nginx:1.27-alpine",

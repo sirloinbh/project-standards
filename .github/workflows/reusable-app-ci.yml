@@ -1,0 +1,104 @@
+# 앱 리포 공통 CI. 각 앱의 .github/workflows/ci.yml(중앙 관리 파일)이 커밋 SHA로 고정해 호출한다.
+# 하위 리포가 private 중앙 리포의 이 워크플로를 부르려면 중앙 리포 Settings → Actions → Access 설정이 필요하다(docs/github-app.md 4단계).
+name: reusable-app-ci
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        required: true
+      npm-version:
+        type: string
+        required: true
+      postgres-image:
+        type: string
+        required: true
+      db-name:
+        description: CI에서 쓰는 테스트 DB 이름
+        type: string
+        required: true
+      e2e:
+        description: Playwright 브라우저 테스트 실행 여부 (레지스트리 features.e2e)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  packages: read # @sirloinbh 공유 패키지 설치
+
+env:
+  NODE_AUTH_TOKEN: ${{ github.token }}
+  # inputs는 run 셸에 직접 넣지 않고 환경변수로만 쓴다(스크립트 주입 방지).
+  NPM_VERSION: ${{ inputs.npm-version }}
+  DATABASE_URL: postgres://app:test@localhost:5432/${{ inputs.db-name }}
+  TEST_DATABASE_URL: postgres://app:test@localhost:5432/${{ inputs.db-name }}
+  E2E_DATABASE_URL: postgres://app:test@localhost:5432/${{ inputs.db-name }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: ${{ inputs.postgres-image }}
+        env: { POSTGRES_USER: app, POSTGRES_PASSWORD: test, POSTGRES_DB: '${{ inputs.db-name }}' }
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+      - name: 공급망 점검 (설치 전, lockfile 기준)
+        run: node .standards/ioc-scan.mjs
+      - run: npm install --global "npm@$NPM_VERSION" --ignore-scripts
+      - run: npm ci --ignore-scripts
+      - name: 중앙 표준 검사
+        run: node .standards/check.mjs
+      - name: 공급망 점검 (설치 후, node_modules 포함)
+        run: node .standards/ioc-scan.mjs
+      - name: DB 마이그레이션
+        # db:migrate 스크립트가 있으면 쓰고, 없으면 database/migrations/*.sql을 순서대로 적용한다(#27에서 통일 예정).
+        run: |
+          if node -e "process.exit(require('./package.json').scripts?.['db:migrate'] ? 0 : 1)"; then
+            npm run db:migrate
+          else
+            for migration in database/migrations/*.sql; do
+              psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$migration" || exit 1
+            done
+          fi
+      - run: npm run check
+
+  e2e:
+    if: inputs.e2e
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: ${{ inputs.postgres-image }}
+        env: { POSTGRES_USER: app, POSTGRES_PASSWORD: test, POSTGRES_DB: '${{ inputs.db-name }}' }
+        ports: ['5432:5432']
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env: { CI: 'true' }
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+      - run: npm install --global "npm@$NPM_VERSION" --ignore-scripts
+      - run: npm ci --ignore-scripts
+      - run: npm run db:migrate
+      # ubuntu-latest에 설치된 Google Chrome을 Playwright가 channel 'chrome'으로 쓴다.
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure()
+        with: { name: playwright-report, path: playwright-report, retention-days: 7 }
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      # 패키지 인증 토큰은 BuildKit secret으로만 넘긴다. 이미지 레이어에 남지 않는다.
+      - run: docker build --secret id=npm_token,env=NODE_AUTH_TOKEN ./frontend
+      - run: docker build --secret id=npm_token,env=NODE_AUTH_TOKEN ./backend

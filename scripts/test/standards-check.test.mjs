@@ -30,7 +30,7 @@ const appFiles = {
 // Builds a repository that matches the standard exactly, then lets each test break one thing.
 function makeRepo(edit = () => {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'standards-check-'));
-  const files = renderProfile({ root, profile: 'app', folders: ['common', 'app'], vars: buildVars(data, target) });
+  const files = renderProfile({ root, profile: 'app', folders: ['common', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
   const write = (rel, text) => {
     fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
     fs.writeFileSync(path.join(dir, rel), text);

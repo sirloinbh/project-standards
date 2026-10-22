@@ -12,7 +12,7 @@ import { buildVars } from '../lib/vars.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const { data } = loadAll(root);
-const vars = buildVars(data, data.sync.targets.find((t) => t.project === 'study-log'));
+const vars = buildVars(data, data.sync.targets.find((t) => t.project === 'study-log'), { centralSha: 'abcdef1234567' });
 // Snapshot of study-log's files on 2026-10-22, stored as .txt so Git and npm don't read them as config.
 const fixture = (name) => fs.readFileSync(path.join(root, 'scripts/test/fixtures/study-log', `${name}.txt`), 'utf8').replace(/\r\n/g, '\n');
 const withoutHeader = (text) => text.split('\n').filter((line) => !line.includes(HEADER_TEXT)).join('\n');

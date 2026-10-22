@@ -1,0 +1,22 @@
+# 중앙 리포 자체 검증: 테스트, 레지스트리 충돌, 생성 문서·토큰 CSS 최신 여부, 패키지 규칙, 워크플로 고정.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.21.0'
+      # 외부 npm 의존성이 없으므로 npm ci 없이 바로 검사한다.
+      - run: npm run check
+      - run: node scripts/ioc-scan.mjs

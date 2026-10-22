@@ -1,0 +1,39 @@
+# 인프라 리포(shared-aws-infrastructure) 공통 CI. terraform apply는 하지 않는다(ADR-0005).
+name: reusable-infra-ci
+
+on:
+  workflow_call:
+    inputs:
+      terraform-version:
+        type: string
+        required: true
+      node-version:
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: ${{ inputs.node-version }}
+      - name: 중앙 표준 검사
+        run: node .standards/check.mjs
+      - name: 공급망 점검
+        run: node .standards/ioc-scan.mjs
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_version: ${{ inputs.terraform-version }}
+      - run: terraform fmt -check -recursive
+      - run: terraform init -backend=false -input=false
+      - run: terraform validate
+      - name: 셸 스크립트 문법 검사
+        run: |
+          status=0
+          while IFS= read -r -d '' script; do bash -n "$script" || status=1; done < <(find . -name '*.sh' -not -path './.terraform/*' -print0)
+          exit $status

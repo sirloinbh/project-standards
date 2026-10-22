@@ -1,5 +1,6 @@
 # 공유 패키지 배포. 태그 <패키지>/v<버전>을 push하면 GitHub Packages에 배포하고 Release에 기록을 남긴다.
 # 로컬 publish는 금지한다(ADR-0004). 태그 push는 사용자가 한다(#88).
+# 태그 이름은 셸에 직접 넣지 않는다. 환경변수로만 넘기고 첫 단계에서 형식을 검사한다(스크립트 주입 방지).
 name: publish
 
 on:
@@ -14,10 +15,23 @@ concurrency:
   group: publish-${{ github.ref_name }}
   cancel-in-progress: false
 
+env:
+  TAG: ${{ github.ref_name }}
+
 jobs:
   publish:
     runs-on: ubuntu-latest
     steps:
+      - name: 태그 형식 검사와 패키지·버전 읽기
+        id: tag
+        run: |
+          if [[ ! "$TAG" =~ ^([a-z][a-z0-9-]*)/v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "태그 형식이 <패키지>/v<x.y.z>가 아닙니다: $TAG" >&2
+            exit 1
+          fi
+          echo "package=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+          echo "version=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
@@ -25,17 +39,10 @@ jobs:
           registry-url: 'https://npm.pkg.github.com'
           scope: '@sirloinbh'
 
-      - name: 태그에서 패키지와 버전 읽기
-        id: tag
-        run: |
-          tag='${{ github.ref_name }}'
-          echo "package=${tag%%/v*}" >> "$GITHUB_OUTPUT"
-          echo "version=${tag##*/v}" >> "$GITHUB_OUTPUT"
-
       - name: 중앙 검사 (테스트, 패키지 규칙, 태그와 버전 일치)
         run: |
           npm run check
-          node scripts/package-guard.mjs --tag '${{ github.ref_name }}'
+          node scripts/package-guard.mjs --tag "$TAG"
 
       - name: 배포
         working-directory: packages/${{ steps.tag.outputs.package }}
@@ -46,8 +53,11 @@ jobs:
       - name: Release에 배포 기록 남기기
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PACKAGE: ${{ steps.tag.outputs.package }}
+          VERSION: ${{ steps.tag.outputs.version }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          node scripts/changelog-section.mjs '${{ steps.tag.outputs.package }}' '${{ steps.tag.outputs.version }}' > changes.md
+          node scripts/changelog-section.mjs "$PACKAGE" "$VERSION" > changes.md
           {
             echo "## 변경 내용"
             echo
@@ -55,8 +65,8 @@ jobs:
             echo
             echo "## 배포 기록"
             echo
-            echo "- 패키지: @sirloinbh/${{ steps.tag.outputs.package }}@${{ steps.tag.outputs.version }}"
-            echo "- 커밋: ${{ github.sha }}"
-            echo "- 배포 실행: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "- 패키지: @sirloinbh/$PACKAGE@$VERSION"
+            echo "- 커밋: $GITHUB_SHA"
+            echo "- 배포 실행: $RUN_URL"
           } > notes.md
-          gh release create '${{ github.ref_name }}' --title '@sirloinbh/${{ github.ref_name }}' --notes-file notes.md --verify-tag
+          gh release create "$TAG" --title "@sirloinbh/$TAG" --notes-file notes.md --verify-tag
