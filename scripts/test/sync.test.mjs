@@ -97,7 +97,7 @@ test('the dry-run CLI writes every target and plan.json', () => {
     assert.ok(!fs.existsSync(path.join(out, 'shared-aws-infrastructure', 'AGENTS.md')));
     const rejected = spawnSync(process.execPath, [path.join(root, 'scripts/sync.mjs'), '--out', out], { encoding: 'utf8' });
     assert.equal(rejected.status, 1);
-    assert.match(rejected.stderr, /only --dry-run is available yet/);
+    assert.match(rejected.stderr, /use --dry-run --out <folder> to preview, or --apply in the sync workflow/);
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
   }

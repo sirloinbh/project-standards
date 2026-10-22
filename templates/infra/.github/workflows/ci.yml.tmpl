@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   ci:
-    uses: sirloinbh/project-standards/.github/workflows/reusable-infra-ci.yml@{{central.sha}}
+    uses: sirloinbh/project-standards/.github/workflows/reusable-infra-ci.yml@{{central.workflowSha}}
     with:
       terraform-version: '{{versions.terraform.cli}}'
       node-version: '{{versions.node}}'
