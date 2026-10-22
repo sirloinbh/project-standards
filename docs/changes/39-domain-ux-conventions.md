@@ -14,7 +14,17 @@
 
 - workout-memo: `AGENTS.md`·`AGENTS.project.md`의 날짜·시간대·총중량 kg 규칙, `shared/contract.ts`의 `date` 스키마, `database/migrations/001_initial.sql`의 `date`·`timestamptz`·`numeric(7,2)`, `docs/ux-audit/2026-10-21.md`의 방법·지표·심각도·다시 측정 절차
 - study-log: `backend/src/app.ts`의 `serviceDate()`(`Intl.DateTimeFormat`, `Asia/Seoul`), `studyMinutes()`의 자정 넘김 처리
-- 금액 규칙(원 단위 정수, `bigint`, 방향은 종류 필드)과 주 시작 요일(월요일)은 기존 앱에 근거가 없어 새로 정했다. money-ledger에는 아직 금액 코드가 없다.
+- 금액 규칙과 주 시작 요일은 기존 앱에 근거가 없어 새로 정했다. money-ledger에는 아직 금액 코드가 없다.
+
+## 사용자 결정 (2026-10-22)
+
+PR #169 검토에서 사용자가 정했다.
+
+- 한 주는 **일요일**에 시작한다. 처음 제안한 월요일(ISO 8601)에서 바꿨다.
+- 승인: 금액은 원 단위 정수로 `bigint`에 저장한다.
+- 승인: 수입·지출 방향은 부호 대신 종류 필드(`kind`)로 나타낸다.
+- 승인: 외화·소수 자산은 money-ledger에서 필요해질 때 이슈로 정한다.
+- 참고: workout-memo의 목표 종료일 기본값은 "이번 주 일요일"이다(2026-10-21 UX 점검 시나리오 3). 일요일 시작 주에서는 일요일이 주의 첫날이므로, 이 동작을 공통 규칙에 맞출지는 workout-memo에서 따로 정한다.
 
 ## 8개 앱 AGENTS.md와 충돌 확인
 
