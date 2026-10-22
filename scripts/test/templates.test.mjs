@@ -54,16 +54,18 @@ test('section files keep what the project added below the marker', () => {
 
 test('package.json fields are rendered from versions.json for all three package files', () => {
   const expected = { packageManager: 'npm@11.19.0', 'engines.node': '24.21.0', 'engines.npm': '11.19.0' };
-  for (const p of ['package.json', 'frontend/package.json', 'backend/package.json']) {
+  for (const p of ['frontend/package.json', 'backend/package.json']) {
     assert.deepEqual(byPath[p], { path: p, source: 'templates/index.json', mode: 'fields', fields: expected });
   }
+  assert.deepEqual(byPath['package.json'].fields, { ...expected, 'scripts.standards:check': 'node .standards/check.mjs' });
 });
 
 test('a manifest built from the render accepts the rendered files and catches edits', () => {
   const manifest = buildManifest({ centralSha: 'test', profile: 'app', project: 'study-log', files: rendered });
   const pkg = JSON.stringify({ name: 'study-log', packageManager: 'npm@11.19.0', engines: { node: '24.21.0', npm: '11.19.0' } });
   const repo = Object.fromEntries(rendered.filter((f) => f.content).map((f) => [f.path, f.content]));
-  for (const p of ['package.json', 'frontend/package.json', 'backend/package.json']) repo[p] = pkg;
+  for (const p of ['frontend/package.json', 'backend/package.json']) repo[p] = pkg;
+  repo['package.json'] = JSON.stringify({ ...JSON.parse(pkg), scripts: { 'standards:check': 'node .standards/check.mjs' } });
   assert.deepEqual(checkManifest(manifest, (p) => repo[p] ?? null), []);
   repo['.editorconfig'] = repo['.editorconfig'].replace('indent_size = 2', 'indent_size = 4');
   assert.deepEqual(checkManifest(manifest, (p) => repo[p] ?? null), [{ path: '.editorconfig', reason: 'changed' }]);

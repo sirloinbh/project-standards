@@ -1,7 +1,7 @@
 // Collects the template files of a profile and renders them for one target repository.
 import fs from 'node:fs';
 import path from 'node:path';
-import { renderFile, renderText } from './render.mjs';
+import { addHeader, renderFile, renderText } from './render.mjs';
 
 export const TEMPLATE_SUFFIX = '.tmpl';
 
@@ -66,6 +66,12 @@ export function renderProfile({ root, profile, folders, vars, readExisting = () 
     const existing = mode === 'section' ? readExisting(target) : null;
     return { path: target, source, mode, content: renderFile({ text, file: target, source, vars, mode, existing }) };
   });
+  // Vendored code is copied verbatim (no variable rendering) with only the managed header added.
+  for (const [target, source] of Object.entries(index.vendor?.files ?? {})) {
+    if (files.some((f) => f.path === target)) throw new Error(`${target} is both a template and a vendored file`);
+    const text = fs.readFileSync(path.join(root, source), 'utf8').replace(/\r\n/g, '\n');
+    files.push({ path: target, source, mode: 'full', content: addHeader(text, target, source) });
+  }
   // Copies such as .claude/skills/ get exactly the same content as their source path.
   for (const { from, to } of index.mirror ?? []) {
     for (const f of files.filter((file) => file.path.startsWith(from))) {

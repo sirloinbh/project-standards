@@ -13,13 +13,15 @@ export function buildManifest({ centralSha, profile, project, files, packages = 
   for (const f of [...files].sort((a, b) => a.path.localeCompare(b.path))) {
     if (!MODES.includes(f.mode)) throw new Error(`${f.path}: unknown mode "${f.mode}"`);
     if (entries[f.path]) throw new Error(`${f.path}: listed twice`);
-    if (f.mode === 'full') entries[f.path] = { mode: 'full', sha256: sha256(f.content) };
+    // `source` tells people where to make the change in the central repository.
+    const source = f.source ? { source: f.source } : {};
+    if (f.mode === 'full') entries[f.path] = { mode: 'full', sha256: sha256(f.content), ...source };
     if (f.mode === 'section') {
       const central = centralSection(f.content);
       if (central === null) throw new Error(`${f.path}: section-managed file has no project marker`);
-      entries[f.path] = { mode: 'section', sha256: sha256(central) };
+      entries[f.path] = { mode: 'section', sha256: sha256(central), ...source };
     }
-    if (f.mode === 'fields') entries[f.path] = { mode: 'fields', fields: f.fields };
+    if (f.mode === 'fields') entries[f.path] = { mode: 'fields', fields: f.fields, ...source };
   }
   return { centralSha, profile, project, files: entries, packages, registry };
 }

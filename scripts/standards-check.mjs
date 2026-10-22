@@ -1,0 +1,142 @@
+// Checks a project repository against the central standard recorded in .standards/manifest.json.
+// Copied into each repository as .standards/check.mjs (with .standards/lib/), so it uses only
+// Node built-ins and its sibling lib/ files.
+// Usage: node .standards/check.mjs [--root <repository>]
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { checkManifest, MANIFEST_PATH } from './lib/manifest.mjs';
+
+const CENTRAL = 'sirloinbh/project-standards';
+const INSTALL_SCRIPTS = ['preinstall', 'install', 'postinstall', 'prepare'];
+
+const REASONS = {
+  missing: '파일이 없습니다',
+  changed: '내용이 중앙 원본과 다릅니다',
+  'central section changed': '`# --- project ---` 위의 중앙 구간이 바뀌었습니다',
+  'project marker removed': '`# --- project ---` 줄이 없어졌습니다',
+  'not valid JSON': 'JSON 형식이 깨졌습니다',
+};
+const reasonText = (reason) => REASONS[reason] ?? reason.replace(/^field\(s\) changed: /, '관리 필드가 다릅니다: ');
+
+// Where each registry value appears in an app repository. A file that does not exist is skipped;
+// a file that exists but no longer contains the pattern is reported as a warning.
+export function portRules({ ports, db }) {
+  return [
+    { file: 'compose.yaml', label: '웹 포트', pattern: /(\d{4,5})\}?:80\b/g, expected: ports.web },
+    { file: 'compose.yaml', label: '호스트 DB 포트', pattern: /(\d{4,5})\}?:5432\b/g, expected: ports.db },
+    { file: 'compose.yaml', label: 'API 포트', pattern: /\bPORT:\s*['"]?(\d{4,5})/g, expected: ports.api },
+    { file: 'frontend/vite.config.ts', label: 'Vite 포트', pattern: /\bport:\s*(\d{4,5})/g, expected: ports.vite },
+    { file: 'frontend/vite.config.ts', label: 'API 프록시 포트', pattern: /127\.0\.0\.1:(\d{4,5})/g, expected: ports.api },
+    { file: 'frontend/nginx.conf', label: 'API 프록시 포트', pattern: /proxy_pass\s+http:\/\/api:(\d{4,5})/g, expected: ports.api },
+    { file: 'backend/Dockerfile', label: 'API 포트(EXPOSE)', pattern: /^EXPOSE\s+(\d{4,5})/gm, expected: ports.api },
+    { file: 'backend/src/server.ts', label: 'API 기본 포트', pattern: /PORT\s*\?\?\s*(\d{4,5})/g, expected: ports.api },
+    { file: '.env.example', label: 'API 포트', pattern: /^PORT=(\d{4,5})/gm, expected: ports.api },
+    { file: '.env.example', label: 'DB 포트', pattern: /^DATABASE_URL=.*@localhost:(\d{4,5})\//gm, expected: ports.db },
+    { file: '.env.example', label: 'DB 이름', pattern: /^POSTGRES_DB=(\S+)/gm, expected: db.name },
+    { file: '.env.example', label: 'DATABASE_URL의 DB 이름', pattern: /^DATABASE_URL=.*\/([a-z0-9_]+)\s*$/gm, expected: db.name },
+    { file: 'playwright.config.ts', label: 'e2e API 포트', contains: ports.e2eApi },
+    { file: 'playwright.config.ts', label: 'e2e 웹 포트', contains: ports.e2eWeb },
+  ];
+}
+
+function checkRegistry(registry, read, problems, warnings) {
+  for (const rule of portRules(registry)) {
+    const text = read(rule.file);
+    if (text === null) continue;
+    if (rule.contains !== undefined) {
+      if (!new RegExp(`\\b${rule.contains}\\b`).test(text)) problems.push({ group: '레지스트리 값', path: rule.file, message: `${rule.label} ${rule.contains}이(가) 없습니다` });
+      continue;
+    }
+    const found = [...text.matchAll(rule.pattern)].map((m) => m[1]);
+    if (!found.length) {
+      warnings.push(`${rule.file}: ${rule.label}을(를) 찾지 못했습니다. 형식이 바뀌었다면 중앙 검사 규칙을 갱신해야 합니다.`);
+      continue;
+    }
+    for (const value of new Set(found)) {
+      if (value !== String(rule.expected)) problems.push({ group: '레지스트리 값', path: rule.file, message: `${rule.label}이(가) ${value}입니다. 레지스트리 값은 ${rule.expected}입니다` });
+    }
+  }
+  const vite = read('frontend/vite.config.ts');
+  if (vite !== null && !/strictPort:\s*true/.test(vite)) warnings.push('frontend/vite.config.ts: strictPort: true가 없어 포트가 겹치면 다른 포트로 넘어갑니다.');
+}
+
+function checkPackages(packages, read, problems) {
+  for (const [name, version] of Object.entries(packages ?? {})) {
+    if (version === null) continue;
+    const text = read(`node_modules/${name}/package.json`);
+    if (text === null) {
+      problems.push({ group: '공유 패키지', path: name, message: `설치되어 있지 않습니다(기대 버전 ${version}). npm ci를 먼저 실행하세요` });
+      continue;
+    }
+    const pkg = JSON.parse(text);
+    if (pkg.version !== version) problems.push({ group: '공유 패키지', path: name, message: `설치 버전 ${pkg.version}, 기대 버전 ${version}` });
+    const scripts = INSTALL_SCRIPTS.filter((s) => pkg.scripts?.[s]);
+    if (scripts.length) problems.push({ group: '공유 패키지', path: name, message: `설치 스크립트가 있습니다: ${scripts.join(', ')}` });
+    if (Object.keys(pkg.dependencies ?? {}).length) problems.push({ group: '공유 패키지', path: name, message: 'dependencies가 비어 있지 않습니다' });
+  }
+}
+
+/** Returns { problems: [{ group, path, message }], warnings: [string], manifest }. */
+export function runCheck(root) {
+  const read = (rel) => {
+    const file = path.join(root, rel);
+    return fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
+  };
+  const manifestText = read(MANIFEST_PATH);
+  if (manifestText === null) throw new Error(`${MANIFEST_PATH}가 없습니다. 이 리포는 아직 중앙 표준과 동기화되지 않았습니다.`);
+  const manifest = JSON.parse(manifestText);
+  const problems = [];
+  const warnings = [];
+  for (const { path: file, reason } of checkManifest(manifest, read)) {
+    const source = manifest.files[file].source;
+    problems.push({ group: '관리 파일', path: file, message: `${reasonText(reason)}${source ? ` (중앙 원본: ${source})` : ''}` });
+  }
+  checkPackages(manifest.packages, read, problems);
+  if (manifest.registry) checkRegistry(manifest.registry, read, problems, warnings);
+  return { problems, warnings, manifest };
+}
+
+export function formatReport({ problems, warnings, manifest }) {
+  const lines = [];
+  for (const w of warnings) lines.push(`경고: ${w}`);
+  if (!problems.length) {
+    lines.push(`standards-check: 통과 (중앙 ${CENTRAL}@${String(manifest.centralSha).slice(0, 7)})`);
+    return lines.join('\n');
+  }
+  lines.push(`standards-check: 중앙 표준과 다른 곳 ${problems.length}개`);
+  for (const group of [...new Set(problems.map((p) => p.group))]) {
+    lines.push('', `[${group}]`);
+    for (const p of problems.filter((x) => x.group === group)) lines.push(`  ✗ ${p.path} — ${p.message}`);
+  }
+  lines.push(
+    '',
+    '고치는 방법:',
+    `  1. 중앙 관리 파일·버전·포트는 이 리포가 아니라 ${CENTRAL}에서 고칩니다.`,
+    `       ghp issue create -R ${CENTRAL} --title "<무엇을 바꿀지>"`,
+    '       (project-standards에서) git switch -c fix/<이슈번호>-<영문-요약>',
+    '       위에 적힌 "중앙 원본" 파일을 고친 뒤 PR을 엽니다. 병합되면 이 리포에 동기화 PR이 열립니다.',
+    '  2. 이 프로젝트만 다르게 둬야 한다면 중앙 registry/projects.json의 allowedDifferences에 경로와 사유를 등록하는 PR을 엽니다.',
+    '  3. 이 리포에 열린 동기화 PR(chore/standards-sync-*)이 있으면, 그 PR을 먼저 병합하면 맞춰질 수 있습니다.',
+  );
+  return lines.join('\n');
+}
+
+const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+if (isMain) {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const flag = process.argv.indexOf('--root');
+  const root = flag > 0 ? path.resolve(process.argv[flag + 1]) : path.basename(here) === '.standards' ? path.dirname(here) : process.cwd();
+  try {
+    const result = runCheck(root);
+    const report = formatReport(result);
+    if (result.problems.length) {
+      console.error(report);
+      process.exit(1);
+    }
+    console.log(report);
+  } catch (error) {
+    console.error(`standards-check: ${error.message}`);
+    process.exit(2);
+  }
+}
