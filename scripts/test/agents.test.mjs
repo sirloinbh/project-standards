@@ -26,6 +26,8 @@ test('every app gets AGENTS.md and CLAUDE.md that point to AGENTS.project.md', (
     assert.ok(agents.includes(project.summary), target.repo);
     assert.ok(agents.includes('[AGENTS.project.md](AGENTS.project.md)를 반드시 함께 읽고 따른다'), target.repo);
     assert.ok(agents.includes(`\`sirloinbh/${project.repos.umbrella}\`에 이슈를 등록한다`), target.repo);
+    // Merge rules belong to each project (workout-memo lets the agent merge after CI); default is user-only.
+    assert.ok(agents.includes('PR 리뷰와 병합 규칙은 [AGENTS.project.md](AGENTS.project.md)를 따른다. 거기에 정해져 있지 않으면 **PR 병합은 사용자만 수행한다.**'), target.repo);
     assert.ok(agents.includes(`웹 ${project.ports.web}, API ${project.ports.api}, Vite ${project.ports.vite}, 호스트 DB ${project.ports.db}`), target.repo);
     assert.ok(files['CLAUDE.md'].content.includes('[AGENTS.project.md](AGENTS.project.md)'), target.repo);
   }
