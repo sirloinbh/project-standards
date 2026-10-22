@@ -9,11 +9,11 @@ function fakePool(query: () => Promise<unknown>) {
   return { query } as unknown as Pool;
 }
 
-async function get(pool: Pool, path: string) {
+async function get(pool: Pool, path: string, init?: RequestInit) {
   const server = createApp(pool).listen(0);
   try {
     const { port } = server.address() as AddressInfo;
-    const res = await fetch(`http://127.0.0.1:${port}${path}`);
+    const res = await fetch(`http://127.0.0.1:${port}${path}`, init);
     return { status: res.status, body: (await res.json()) as unknown };
   } finally {
     server.close();
@@ -37,4 +37,25 @@ test('GET /api/health reports a Korean error when the database is down', async (
   );
   assert.equal(res.status, 500);
   assert.deepEqual(res.body, { error: '저장소에 연결할 수 없습니다. 서버 상태를 확인하세요.' });
+});
+
+test('an unknown /api path answers 404 in the shared error shape', async () => {
+  const res = await get(
+    fakePool(async () => ({ rows: [] })),
+    '/api/missing',
+  );
+  assert.deepEqual(res, { status: 404, body: { error: '요청한 API를 찾을 수 없습니다' } });
+});
+
+test('a malformed JSON body answers 400 in the shared error shape', async () => {
+  const init = { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{' };
+  const res = await get(
+    fakePool(async () => ({ rows: [] })),
+    '/api/health',
+    init,
+  );
+  assert.deepEqual(res, {
+    status: 400,
+    body: { error: '요청 본문의 JSON 형식이 올바르지 않습니다' },
+  });
 });

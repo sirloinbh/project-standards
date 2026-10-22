@@ -72,6 +72,49 @@ export function checkComposeSecrets(text) {
   return problems;
 }
 
+// API rules from docs/directory-rules.md "API". Warnings only: the apps grew different layouts
+// (routes/ modules or Routers in src/), so these look for the rules, not for one file layout.
+// sources: [{ file: 'backend/src/…', text }] without tests. Returns warning strings.
+const API_SEGMENT = /^(:\w+|\*\w*|[a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?)$/;
+export function checkApi(sources) {
+  const warnings = [];
+  const app = sources.find((s) => s.file === 'backend/src/app.ts');
+  if (!app) return warnings;
+  const at = (source, index) => `${source.file}:${source.text.slice(0, index).split('\n').length}`;
+  if (!sources.some((s) => /\bapp\.get\(\s*['"`]\/api\/health['"`]/.test(s.text))) warnings.push('backend/src: GET /api/health가 없습니다. 모든 앱은 DB 연결을 확인하는 상태 확인 API를 둡니다.');
+  if (!/\bapp\.use\(\s*(errorHandler\b|\(\s*err\b)/.test(app.text)) warnings.push('backend/src/app.ts: 오류 처리 미들웨어(app.use(errorHandler))가 없어 오류가 { error } 형식으로 나가지 않습니다.');
+  if (!/\bapp\.use\(\s*['"`]\/api['"`]\s*,/.test(app.text)) warnings.push("backend/src/app.ts: 없는 /api 경로에 404 { error }로 답하는 app.use('/api', notFound)가 없습니다.");
+  for (const source of sources) {
+    for (const m of source.text.matchAll(/\bapp\.(get|post|put|patch|delete|use)\(\s*['"]([^'"]+)['"]/g)) {
+      const route = m[2];
+      if (!/^\/api(\/|$)/.test(route)) {
+        warnings.push(`${at(source, m.index)}: API 경로 ${route}는 /api로 시작해야 합니다.`);
+        continue;
+      }
+      const bad = route.split('/').filter(Boolean).find((segment) => !API_SEGMENT.test(segment));
+      if (bad) warnings.push(`${at(source, m.index)}: API 경로 ${route}의 "${bad}"는 소문자 영어와 하이픈으로 씁니다.`);
+    }
+    for (const m of source.text.matchAll(/\.status\(\s*([45]\d\d)\s*\)\s*\.json\(\s*\{\s*(\w+)\s*:/g)) {
+      if (m[2] !== 'error') warnings.push(`${at(source, m.index)}: ${m[1]} 응답이 { ${m[2]} } 형식입니다. 오류 응답은 { error: '<한국어 메시지>' }로 씁니다.`);
+    }
+    for (const m of source.text.matchAll(/\breq\.(body|query)\.\w+/g)) {
+      warnings.push(`${at(source, m.index)}: ${m[0]}를 검증 없이 읽습니다. req.${m[1]}는 Zod 스키마의 parse()로 먼저 검증합니다.`);
+    }
+  }
+  return warnings;
+}
+
+function apiSources(root) {
+  const dir = path.join(root, 'backend/src');
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir, { recursive: true })
+    .map((rel) => String(rel).split(path.sep).join('/'))
+    .filter((rel) => rel.endsWith('.ts') && !/\.(test|d)\.ts$/.test(rel) && !rel.split('/').includes('node_modules'))
+    .sort()
+    .map((rel) => ({ file: `backend/src/${rel}`, text: fs.readFileSync(path.join(dir, rel), 'utf8') }));
+}
+
 function checkPackages(packages, read, problems) {
   for (const [name, version] of Object.entries(packages ?? {})) {
     if (version === null) continue;
@@ -105,6 +148,7 @@ export function runCheck(root) {
   }
   checkPackages(manifest.packages, read, problems);
   if (manifest.registry) checkRegistry(manifest.registry, read, problems, warnings);
+  warnings.push(...checkApi(apiSources(root)));
   const compose = read('compose.yaml');
   if (compose !== null && (manifest.files['frontend/Dockerfile'] || manifest.files['backend/Dockerfile'])) {
     for (const message of checkComposeSecrets(compose)) problems.push({ group: '빌드 secret', path: 'compose.yaml', message });
