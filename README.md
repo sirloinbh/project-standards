@@ -42,7 +42,13 @@
 4. `npm run docs`로 `docs/projects.md`를 다시 만들고 `npm run check`가 통과하는지 확인한 뒤 PR을 연다.
 5. **[사용자]** 우산 리포와 subtree 리포 3개(`<이름>-frontend`, `-backend`, `-db`)를 만든다.
 6. **[사용자]** GitHub App 설치 범위에 새 리포를 추가한다([docs/github-app.md](docs/github-app.md) 3단계).
-7. 스캐폴드로 첫 커밋을 만들고, 동기화로 첫 동기화 PR을 연다.
+7. 스캐폴드로 첫 커밋을 만든다. 표준 트리, 운영 문서, 중앙 관리 파일, manifest가 한 번에 만들어지므로 첫 커밋부터 `standards-check`를 통과한다.
+   ```powershell
+   node scripts/scaffold.mjs <이름> --out ..\<이름>     # 새 폴더 또는 빈 폴더만 허용
+   cd ..\<이름>; git init -b main
+   ```
+8. **[사용자]** 의존성 설치를 승인한다. 버전은 [의존성 정책](docs/dependency-policy.md) 표와 같은 고정 버전이고, `.npmrc`가 설치 스크립트를 막는다. 승인 뒤 `npm install --ignore-scripts`로 lockfile을 만든다.
+9. `npm run format`(문서 표 정렬)과 `npm run check`를 통과시킨 뒤 첫 커밋을 만들고, 우산 리포에 push한다. 이후 규칙 변경은 동기화 PR로 들어온다.
 
 ## 규칙 바꾸기
 

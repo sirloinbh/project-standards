@@ -1,0 +1,45 @@
+services:
+  db:
+    image: {{versions.images.postgres}}
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-{{project.db.name}}}
+      POSTGRES_USER: ${POSTGRES_USER:-{{project.db.name}}}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env and set password}
+      TZ: Asia/Seoul
+    ports: ['127.0.0.1:${DB_PORT:-{{project.ports.db}}}:5432']
+    volumes:
+      - {{project.db.name}}-data:/var/lib/postgresql/data
+      - ./database/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB']
+      interval: 5s
+      timeout: 5s
+      retries: 15
+    restart: unless-stopped
+  api:
+    build:
+      context: ./backend
+      secrets: [npm_token]
+    # Tagged by commit on the server so the previous version can be restarted.
+    image: {{project.db.name}}-backend:${IMAGE_TAG:-local}
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-{{project.db.name}}}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-{{project.db.name}}}
+      PORT: {{project.ports.api}}
+      TZ: Asia/Seoul
+    depends_on:
+      db: { condition: service_healthy }
+    restart: unless-stopped
+  web:
+    build:
+      context: ./frontend
+      secrets: [npm_token]
+    image: {{project.db.name}}-frontend:${IMAGE_TAG:-local}
+    # Local default stays 127.0.0.1:{{project.ports.web}}; the server sets WEB_BIND/WEB_PORT in .env.
+    ports: ['${WEB_BIND:-127.0.0.1}:${WEB_PORT:-{{project.ports.web}}}:80']
+    depends_on: [api]
+    restart: unless-stopped
+secrets:
+  npm_token:
+    environment: NODE_AUTH_TOKEN
+volumes:
+  {{project.db.name}}-data:
