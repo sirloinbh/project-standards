@@ -12,6 +12,7 @@ import { createClient, getInstallationToken } from './lib/github-app.mjs';
 import { MANIFEST_PATH } from './lib/manifest.mjs';
 import { loadAll } from './lib/registry.mjs';
 import { openRemote } from './lib/remote-repo.mjs';
+import { collectSettings, evaluateSettings } from './lib/repo-settings.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CENTRAL = 'sirloinbh/project-standards';
@@ -46,7 +47,14 @@ export async function remoteStatuses({ data, getClient, now = new Date() }) {
       const manifest = repo.read(MANIFEST_PATH) ? JSON.parse(repo.read(MANIFEST_PATH)) : { files: {} };
       await Promise.all([...Object.keys(manifest.files ?? {}), '.env.example', 'package.json'].map(repo.fetchText));
       const pulls = await api('GET', `/repos/${target.repo}/pulls?state=open&per_page=100`);
-      statuses.push(repoStatus({ target, project: projectOf(data, target), read: repo.read, pulls, now }));
+      const status = repoStatus({ target, project: projectOf(data, target), read: repo.read, pulls, now });
+      // Settings are judged separately so a missing permission only blanks this column (#22).
+      try {
+        status.settings = evaluateSettings(await collectSettings(api, target.repo), target);
+      } catch (error) {
+        status.settingsError = error.message;
+      }
+      statuses.push(status);
     } catch (error) {
       statuses.push({ repo: target.repo, profile: target.profile, unknown: error.message });
     }

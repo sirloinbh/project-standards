@@ -34,7 +34,9 @@
           "repo": { "type": "string", "pattern": "^sirloinbh/[a-z][a-z0-9-]*$" },
           "profile": { "type": "string" },
           "project": { "type": ["string", "null"], "description": "app 프로필은 registry 프로젝트 이름, infra 프로필은 null" },
-          "rollout": { "type": "integer", "minimum": 1 }
+          "rollout": { "type": "integer", "minimum": 1 },
+          "secrets": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$" }, "description": "이 리포에 있어야 하는 Actions secret 이름(값은 다루지 않는다). 없으면 빈 목록 (#22)" },
+          "variables": { "type": "array", "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Z_][A-Z0-9_]*$" }, "description": "이 리포에 있어야 하는 Actions variable 이름. 없으면 빈 목록 (#22)" }
         }
       }
     }
