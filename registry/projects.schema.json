@@ -20,13 +20,15 @@
     },
     "project": {
       "type": "object",
-      "required": ["slot", "status", "name", "domain", "repos", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
+      "required": ["slot", "status", "name", "title", "domain", "summary", "repos", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
       "additionalProperties": false,
       "properties": {
         "slot": { "type": "integer", "minimum": 1, "maximum": 99, "description": "은퇴해도 다시 배정하지 않는다" },
         "status": { "enum": ["active", "retired"] },
         "name": { "$ref": "#/$defs/slug" },
+        "title": { "type": "string", "minLength": 1, "description": "문서·지침에 쓰는 한국어 이름 (예: 공부 기록)" },
         "domain": { "type": "string", "minLength": 1, "description": "서비스 분야 설명 (예: 운동)" },
+        "summary": { "type": "string", "minLength": 10, "description": "AGENTS.md 첫 문단에 들어가는 서비스 설명" },
         "repos": {
           "type": "object",
           "required": ["umbrella", "frontend", "backend", "db"],

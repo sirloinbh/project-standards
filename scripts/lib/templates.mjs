@@ -66,6 +66,14 @@ export function renderProfile({ root, profile, folders, vars, readExisting = () 
     const existing = mode === 'section' ? readExisting(target) : null;
     return { path: target, source, mode, content: renderFile({ text, file: target, source, vars, mode, existing }) };
   });
+  // Copies such as .claude/skills/ get exactly the same content as their source path.
+  for (const { from, to } of index.mirror ?? []) {
+    for (const f of files.filter((file) => file.path.startsWith(from))) {
+      const copy = `${to}${f.path.slice(from.length)}`;
+      if (files.some((file) => file.path === copy)) throw new Error(`${copy} is both a template and a mirror of ${f.path}`);
+      files.push({ ...f, path: copy });
+    }
+  }
   for (const [target, fields] of Object.entries(index.fields[profile] ?? {})) {
     if (files.some((f) => f.path === target)) throw new Error(`${target} is both a template file and a fields entry`);
     files.push({ path: target, source: 'templates/index.json', mode: 'fields', fields: flatten(renderFields(fields, vars, `templates/index.json ${target}`)) });
