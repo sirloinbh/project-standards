@@ -12,7 +12,7 @@ const { data } = loadAll(root);
 
 test('lists every project with ports and shows unset values as 미정', () => {
   const text = renderProjects(data);
-  assert.match(text, /\| 01 \| workout-memo \| 운동 기록 \| 운동 \| active \| workout \/ workout_test \| 미정 \| 미정 \| 1 \|/);
+  assert.match(text, /\| 01 \| workout-memo \| 운동 기록 \| FORM · 나의 운동 기록 \| 운동 \| active \| workout \/ workout_test \| 미정 \| 미정 \| 1 \|/);
   assert.match(text, /\| dev-career-portfolio \| 8108 \| 3108 \| 3208 \| 5208 \| 5308 \| 15408 \|/);
   assert.match(text, /\| 루트 도메인 \| 미정 \|/);
   assert.match(text, /\| AWS 리전 \| ap-northeast-2 \|/);

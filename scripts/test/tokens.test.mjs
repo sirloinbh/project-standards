@@ -40,12 +40,35 @@ test('radius steps follow the shadcn/ui base radius', () => {
   assert.deepEqual([px.sm, px.md, px.lg, px.xl], [base - 4, base - 2, base, base + 4]);
 });
 
-test('colors cover every shadcn/ui token and only six vary by app theme', () => {
-  const colors = names(tokens.color.light);
-  assert.equal(new Set(colors).size, colors.length);
+test('light and dark both cover every shadcn/ui token with the same names and no app theme slots', () => {
   const shadcn = ['background', 'foreground', 'card', 'card-foreground', 'popover', 'popover-foreground', 'primary', 'primary-foreground', 'secondary', 'secondary-foreground', 'muted', 'muted-foreground', 'accent', 'accent-foreground', 'destructive', 'border', 'input', 'ring', 'sidebar', 'sidebar-foreground', 'sidebar-primary', 'sidebar-primary-foreground', 'sidebar-accent', 'sidebar-accent-foreground', 'sidebar-border', 'sidebar-ring'];
-  for (const n of shadcn) assert.ok(colors.includes(n), n);
-  assert.deepEqual(tokens.color.light.filter((c) => c.value === 'theme').map((c) => c.name), ['primary', 'primary-foreground', 'ring', 'sidebar-primary', 'sidebar-primary-foreground', 'sidebar-ring']);
+  for (const mode of ['light', 'dark']) {
+    const colors = names(tokens.color[mode]);
+    assert.equal(new Set(colors).size, colors.length, mode);
+    for (const n of shadcn) assert.ok(colors.includes(n), `${mode} ${n}`);
+    assert.ok(tokens.color[mode].every((c) => /^oklch\(/.test(c.value)), `${mode}: every value is a fixed oklch color (ADR-0008)`);
+  }
+  assert.deepEqual(names(tokens.color.dark), names(tokens.color.light));
+});
+
+// WCAG contrast for achromatic oklch colors: with no chroma, linear sRGB = L^3 for all channels.
+const luminance = (value) => {
+  const m = /^oklch\(([\d.]+) 0 0\)$/.exec(value);
+  if (!m) throw new Error(`not an achromatic oklch color: ${value}`);
+  return Number(m[1]) ** 3;
+};
+const contrast = (a, b) => {
+  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x);
+  return (hi + 0.05) / (lo + 0.05);
+};
+
+test('text and background pairs meet WCAG AA in both modes', () => {
+  for (const mode of ['light', 'dark']) {
+    const c = Object.fromEntries(tokens.color[mode].map((x) => [x.name, x.value]));
+    for (const [fg, bg, min] of [['foreground', 'background', 7], ['muted-foreground', 'background', 4.5], ['primary-foreground', 'primary', 4.5], ['card-foreground', 'card', 7], ['sidebar-foreground', 'sidebar', 7], ['secondary-foreground', 'secondary', 4.5]]) {
+      assert.ok(contrast(c[fg], c[bg]) >= min, `${mode} ${fg} on ${bg}: ${contrast(c[fg], c[bg]).toFixed(2)} < ${min}`);
+    }
+  }
 });
 
 test('touch targets and the smallest screen are fixed', () => {

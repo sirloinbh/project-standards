@@ -1,13 +1,19 @@
 # 디자인 시스템 (공통부)
 
-8개 앱이 함께 지키는 화면 규칙이다. 값은 [design-tokens.md](design-tokens.md), 결정 근거는 [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)에 있다. 앱마다 다른 것은 **앱 이름과 테마 색 6개뿐**이다.
+8개 앱이 함께 지키는 화면 규칙이다. 값은 [design-tokens.md](design-tokens.md), 결정 근거는 [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)과 [ADR-0008](adr/0008-neutral-light-dark.md)에 있다. 앱마다 다른 것은 **표시 이름뿐**이다. 색은 8개 앱 모두 같은 흑백이고, 라이트·다크 두 모드를 지원한다.
 
 ## 토큰 쓰는 법
 
 - 앱 메인 CSS에서 `@sirloinbh/design-tokens/tailwind.css`를 불러온다. Tailwind가 없는 앱은 `tokens.css`만 불러온다. 사용 예는 패키지 README에 있다.
 - 색은 토큰 이름으로 쓴다: `bg-primary`, `text-muted-foreground`, `border-border`. 색 코드를 직접 쓰지 않는다.
-- 테마 색 6개(`--primary`, `--primary-foreground`, `--ring`, `--sidebar-primary`, `--sidebar-primary-foreground`, `--sidebar-ring`)만 앱 CSS에서 덮어쓴다. 값은 레지스트리의 앱별 테마 색(#122)에서 온다.
-- 그 밖의 토큰(글꼴, 크기, 간격, 모서리, 그림자)은 앱에서 바꾸지 않는다. 바꿔야 하면 중앙 리포의 `design/tokens.json`을 고친다.
+- 토큰(색, 글꼴, 크기, 간격, 모서리, 그림자)은 앱에서 덮어쓰지 않는다. 바꿔야 하면 중앙 리포의 `design/tokens.json`을 고친다.
+- 다크 모드는 토큰이 처리한다. 색을 모드별로 따로 쓰지 말고 토큰 이름만 쓴다. 꼭 필요할 때만 `dark:` 유틸리티를 쓴다.
+
+## 라이트·다크 모드
+
+- 기본은 시스템 설정(`prefers-color-scheme`)을 따른다.
+- 사용자가 모드를 고르면 그 선택을 저장(`localStorage`)하고 `<html>`에 `light` 또는 `dark` 클래스를 붙인다. 첫 화면에서 색이 바뀌어 깜빡이지 않도록, 클래스를 붙이는 스크립트는 `<head>`에서 가장 먼저 실행한다(#124).
+- 클래스가 없으면 시스템 설정을 따르므로, 스크립트가 꺼져 있어도 맞는 색이 나온다.
 
 ## 컴포넌트
 
