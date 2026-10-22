@@ -36,7 +36,8 @@ test('backup copies the dump file out of the container instead of capturing stdo
 
 test('shared scripts are copied unchanged apart from the managed header', () => {
   for (const file of ['scripts/gh-project.ps1', 'scripts/claude-skills.mjs']) {
-    const source = fs.readFileSync(path.join(root, 'templates/app', file), 'utf8');
+    // *.ps1 is checked out with CRLF (.gitattributes); rendering works in LF, so compare in LF.
+    const source = fs.readFileSync(path.join(root, 'templates/app', file), 'utf8').replace(/\r\n/g, '\n');
     assert.equal(withoutHeader(study[file]), source, file);
     assert.ok(study[file].includes(HEADER_TEXT), `${file} has the managed header`);
   }
