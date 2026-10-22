@@ -27,6 +27,18 @@ export function slugify(title) {
   return words?.length ? words.slice(0, 5).join('-') : 'agent-task';
 }
 
+// Types the worker may open branches with (user decision 2026-10-22, #177).
+// Default follows --task-kind: documentation → docs, code → feat;
+// --branch-type fix|chore|feat|docs overrides it.
+export const workerBranchTypes = ['feat', 'fix', 'docs', 'chore'];
+
+export function branchTypeFor(taskKind = 'code', requested) {
+  if (requested === undefined) return taskKind === 'documentation' ? 'docs' : 'feat';
+  if (!workerBranchTypes.includes(requested))
+    throw new Error(`Branch type must be one of ${workerBranchTypes.join(', ')}.`);
+  return requested;
+}
+
 export function branchName(number, { type = 'feat', slug } = {}) {
   if (!branchTypes.includes(type)) throw new Error(`Invalid branch type: ${type}`);
   if (!slugPattern.test(slug)) throw new Error('Slug must be 1-5 lowercase English words joined by hyphens.');

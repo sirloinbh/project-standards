@@ -6,7 +6,7 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { command } from './process.mjs';
 import { npmCommand as selectNpmCommand } from './npm.mjs';
 import { commandFailureKind } from './failure.mjs';
-import { changeRecord, createJob, runStages, slugify, stages } from './workflow.mjs';
+import { branchTypeFor, changeRecord, createJob, runStages, slugify, stages } from './workflow.mjs';
 import { allowedRepository, findRegistry, loadRepoConfig, registryRepositories } from './config.mjs';
 import { acquireLock, fingerprintFiles, listJobs, readJson, saveJson } from './store.mjs';
 import { modelSelection, stageSelection, modelArguments, validateRouting } from './models.mjs';
@@ -907,7 +907,7 @@ async function ci(job) {
   }
   if (pr.mergeable !== 'MERGEABLE')
     return { pending: true, summary: 'Waiting for GitHub mergeability.' };
-  // Auto-merge is opt-in per repository (.agents.json "autoMerge": true).
+  // Auto-merge is on unless the repository opts out (.agents.json "autoMerge": false).
   if (repoConfig.autoMerge !== true)
     return { summary: 'CI passed; PR is ready for the user to merge.', url: pr.url, merged: false };
   await gh('pr', 'merge', pr.url, '--repo', repo, '--merge', '--match-head-commit', job.commit);
@@ -985,7 +985,7 @@ async function main() {
               '--test-complexity',
               '--require-database',
               '--require-browser',
-              ...(action === 'enqueue' ? ['--slug'] : []),
+              ...(action === 'enqueue' ? ['--slug', '--branch-type'] : []),
             ];
       if (!allowed.includes(flag) || !value || value.startsWith('--') || flags.has(flag))
         throw new Error(`Invalid or unsupported option: ${flag}`);
@@ -1046,7 +1046,7 @@ async function main() {
         const issue = await fetchIssue(id);
         const job = createJob(issue, await git(root, 'rev-parse', 'origin/main'), {
           repo: await repository(),
-          type: routing.taskKind === 'documentation' ? 'docs' : 'feat',
+          type: branchTypeFor(routing.taskKind, flags.get('--branch-type')),
           slug: flags.get('--slug') ?? slugify(issue.title),
         });
         Object.assign(job, routing);
@@ -1328,7 +1328,7 @@ async function main() {
     }
     default:
       throw new Error(
-        'Usage: [--root <repository>] doctor|smoke [--role role]|enqueue <issue> [--task-kind code|documentation] [--review-role review|highRiskReview] [--test-complexity simple|complex] [--require-database true|false] [--require-browser true|false] [--slug english-words]|configure <issue> [routing options]|diagnose <issue>|status|work [--once]|stop|retry <issue>|handoff-tests <issue>|accept-requirements <issue>|cancel <issue>',
+        'Usage: [--root <repository>] doctor|smoke [--role role]|enqueue <issue> [--task-kind code|documentation] [--review-role review|highRiskReview] [--test-complexity simple|complex] [--require-database true|false] [--require-browser true|false] [--slug english-words] [--branch-type feat|fix|docs|chore]|configure <issue> [routing options]|diagnose <issue>|status|work [--once]|stop|retry <issue>|handoff-tests <issue>|accept-requirements <issue>|cancel <issue>',
       );
   }
 }

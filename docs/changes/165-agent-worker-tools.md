@@ -15,21 +15,27 @@
 | `versions.json`, `versions.schema.json`, `scripts/check-workflows.mjs` | 고정 Windows 러너 `windowsRunner: windows-2025`를 추가하고, 워크플로 검사가 `runner`와 함께 이것도 허용한다(#143의 러너 고정 규칙) |
 | `docs/tools.md`, `docs/design.md` | 실행 방법·`.agents.json` 형식, "중앙 도구는 하위 리포에 복사하지 않는다" 분류 |
 
-## 결정
+## 사용자 결정 (2026-10-22)
 
-- **리포 설정 파일:** 리포 루트의 `.agents.json`(커밋)으로 정했다. 자동 병합 허용 여부는 기록으로 남아야 하기 때문이다(#38 권장안). PC별 값(`codexExecutable`, `npmCli`, `browserExecutable`)은 지금처럼 `.local/agent-workflow/config.json`에 둔다.
-- **자동 병합 기본값:** `false`. `autoMerge`가 정확히 `true`일 때만 병합한다. 꺼져 있으면 CI 통과 후 PR을 ready로 바꾸고 작업을 끝낸다.
-- **모르는 키는 실패:** `automerge`처럼 잘못 쓴 키가 조용히 무시되면 정책이 의도와 다르게 적용되므로, 설정 오류면 어떤 명령도 실행하지 않는다.
+PR #177 검토에서 사용자가 정했다. 남은 확인 항목은 없다.
+
+- **리포 설정 파일:** 리포 루트에 커밋하는 `.agents.json`. PC별 값(`codexExecutable`, `npmCli`, `browserExecutable`)은 지금처럼 `.local/agent-workflow/config.json`에 둔다.
+- **자동 병합 기본값:** `true`. CI 통과 후 병합하고, `.agents.json`에 `"autoMerge": false`가 있을 때만 PR을 ready로 바꾸고 병합은 사용자에게 맡긴다. main 병합이 곧 운영 배포인 리포는 `false`로 끌 수 있다.
+- **브랜치 종류:** `feat`, `fix`, `docs`, `chore` 네 가지. `--branch-type`으로 고르고, 없으면 `--task-kind documentation`일 때 `docs`, 그 밖에는 `feat`이다. 영문 요약은 `--slug`로 주고, 없으면 제목의 영문 단어로 만든다. 한글 제목만 있으면 `agent-task`가 된다.
 - **검사 명령:** 셸 명령 대신 npm 스크립트 이름(`checkScript`)만 받는다. 워커는 셸을 거치지 않고 실행하는 원칙을 지킨다.
-- **브랜치 종류:** `--task-kind documentation`이면 `docs`, 아니면 `feat`. 영문 요약은 `--slug`로 주고, 없으면 제목의 영문 단어로 만든다. 한글 제목만 있으면 `agent-task`가 된다.
+- **Windows 러너:** `versions.json`의 `windowsRunner`(`windows-2025`)로 고정한다.
+- **실행기:** `scripts/agents.ps1`과 그 PowerShell 경계 테스트 2개는 #166에서 다시 만든다. 설치본에 레지스트리를 넣는 일도 #166에서 하고, workout-memo 쪽 사본은 #167에서 지운다.
+
+## 구현 메모
+
+- **모르는 키는 실패:** `automerge`처럼 잘못 쓴 키가 조용히 무시되면 정책이 의도와 다르게 적용된다. 그래서 설정 오류가 있으면 어떤 명령도 실행하지 않는다.
 - **이전 작업 호환:** 이미 큐에 있는 작업은 저장된 브랜치와 `docs/changes/<번호>-agent-task.md`를 그대로 쓴다.
 - **CI 검사 이름 `verify`:** 중앙 reusable CI의 작업 이름이라 그대로 두었다.
-- **옮기지 않은 것:** `scripts/agents.ps1`과 그 PowerShell 경계 테스트 2개는 실행기 이슈(#166)에서 다시 만든다. workout-memo 쪽 사본은 #167에서 지운다.
-- **레지스트리 위치:** `tools/agents/` 기준 `../../registry/`(이 리포) 또는 `../registry/`(설치본). 설치본에 레지스트리를 함께 넣는 일은 #166에서 한다.
+- **레지스트리 위치:** `tools/agents/` 기준 `../../registry/`(이 리포) 또는 `../registry/`(설치본).
 
 ## 검증
 
-- `npm run test:agents`(Windows): 185개 모두 통과. Linux에서는 Windows 전용 npm 경로 검사 1개를 건너뛴다.
-- `npm run check`(main 병합 후, Windows): 테스트 365개 중 364개 통과, 1개 건너뜀(기존 OS 전용 검사). 나머지 검사 모두 통과.
-- PR CI: Windows `agents` 작업 통과. 첫 Linux `check`는 main의 러너·Action 고정(#143)과 맞지 않아 실패했고, main을 병합해 고쳤다.
+- `npm run test:agents`(Windows): 190개 모두 통과. Linux에서는 Windows 전용 npm 경로 검사 1개를 건너뛴다.
+- `npm run check`(#175·#176이 들어간 main 병합 후, Windows): 테스트 383개 중 382개 통과, 1개 건너뜀(기존 OS 전용 검사). 나머지 검사 모두 통과.
+- PR CI: 첫 실행은 main의 러너·Action 고정(#143)과 setup-node 자동 캐시(lockfile 없음) 때문에 실패했다. 고친 뒤 Linux `check`, Windows `windows` 모두 통과했다.
 - `grep -rn "workout-memo\|brands" tools/agents`: 0건.

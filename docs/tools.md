@@ -60,7 +60,7 @@ node tools\agents\cli.mjs --root <리포 폴더> work --once
 
 - **대상 리포:** `--root`(없으면 현재 폴더). Git 리포 최상위여야 한다. 큐·잠금·worktree·로그는 그 리포의 `.local/agent-workflow/`에 둔다.
 - **리포 이름:** `origin` 주소에서 읽는다. `sirloinbh` 소유이고 `registry/projects.json`의 `repos`에 있는 리포만 허용한다. 레지스트리는 `tools/agents/` 기준 `../../registry/`(이 리포) 또는 `../registry/`(설치본)에서 찾는다.
-- **브랜치와 변경 기록:** std-git-writing 형식 `<type>/<이슈번호>-<영문-요약>`과 `docs/changes/<이슈번호>-<영문-요약>.md`. `type`은 `--task-kind documentation`이면 `docs`, 아니면 `feat`이다. 영문 요약은 `--slug`로 주고, 없으면 제목의 영문 단어 앞 5개, 그것도 없으면 `agent-task`를 쓴다. #165 이전에 등록된 작업은 저장된 브랜치와 `docs/changes/<번호>-agent-task.md`를 그대로 쓴다.
+- **브랜치와 변경 기록:** std-git-writing 형식 `<type>/<이슈번호>-<영문-요약>`과 `docs/changes/<이슈번호>-<영문-요약>.md`. `type`은 `--branch-type feat|fix|docs|chore`로 고른다. 주지 않으면 `--task-kind documentation`일 때 `docs`, 그 밖에는 `feat`이다. 버그 수정은 `fix`, 설정·정리·이전은 `chore`를 준다(2026-10-22 사용자 결정). 영문 요약은 `--slug`로 주고, 없으면 제목의 영문 단어 앞 5개, 그것도 없으면 `agent-task`를 쓴다. #165 이전에 등록된 작업은 저장된 브랜치와 `docs/changes/<번호>-agent-task.md`를 그대로 쓴다.
 - **GitHub 호출:** Windows에서는 설치 폴더의 `gh-project.ps1`(`tools/agents/../gh-project.ps1`)을 쓴다.
 - **PC별 설정:** `<리포>/.local/agent-workflow/config.json`의 `codexExecutable`, `npmCli`, `browserExecutable`. 커밋하지 않는다.
 
@@ -73,9 +73,11 @@ node tools\agents\cli.mjs --root <리포 폴더> work --once
 | `checkScript` | `"check"` | 호스트 검사로 실행할 npm 스크립트 이름(`npm run <이름>`). 셸 명령은 받지 않는다 |
 | `database.tables` | 없음 | DB 사전검사로 확인할 테이블과 컬럼 `{ "<테이블>": ["<컬럼>", ...] }`. 없으면 스키마 사전검사를 건너뛴다. DB가 필요한 작업은 이때도 전용 `TEST_DATABASE_URL`이 있어야 한다 |
 | `browser.checkArgs` | 없음 | 브라우저 검증 명령 인자. 실행 파일은 PC별 `browserExecutable`. 없으면 예전처럼 PC별 `config.json`의 `browserCheckArgs`를 쓴다 |
-| `autoMerge` | `false` | `true`일 때만 CI 통과 후 워커가 PR을 병합한다. 아니면 PR을 ready로 바꾸고 병합은 사용자가 한다 |
+| `autoMerge` | `true` | CI 통과 후 워커가 PR을 병합한다. `false`면 PR을 ready로 바꾸고 병합은 사용자가 한다 |
 
-workout-memo의 예(#128에서 자동 병합을 허용했다):
+**자동 병합은 기본으로 켜져 있다(2026-10-22 사용자 결정).** main 병합이 곧 운영 배포인 리포처럼 사람이 병합을 확인해야 하는 리포는 `.agents.json`에 `"autoMerge": false`를 넣어 끈다.
+
+workout-memo의 예(DB 사전검사 테이블만 지정하고 자동 병합은 기본값을 쓴다):
 
 ```json
 {
@@ -87,8 +89,7 @@ workout-memo의 예(#128에서 자동 병합을 허용했다):
       "sets": ["id", "workout_id", "exercise", "machine_id", "weight", "reps", "position", "notes"],
       "goals": ["id", "exercise", "target_weight", "target_reps", "start_date", "deadline"]
     }
-  },
-  "autoMerge": true
+  }
 }
 ```
 

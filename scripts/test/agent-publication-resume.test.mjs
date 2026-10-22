@@ -4,6 +4,7 @@ import path from 'node:path';
 import vm from 'node:vm';
 import test from 'node:test';
 import { checkEvidence } from '../../tools/agents/optimization.mjs';
+import { validateRepoConfig } from '../../tools/agents/config.mjs';
 
 // Execute the actual CLI publication entry point with fake IO. No GitHub,
 // filesystem publication or model call is performed by these recovery tests.
@@ -159,19 +160,28 @@ test('ci merges a mergeable PR at the verified head commit after checks pass', a
   assert.equal(result.merged, true);
 });
 
-for (const repoConfig of [{}, { autoMerge: false }]) {
-  test(`ci leaves a passing PR for the user when autoMerge is ${JSON.stringify(repoConfig.autoMerge)}`, async () => {
-    const h = mergeHarness({ mergeable: 'MERGEABLE', mergeStateStatus: 'CLEAN' }, { repoConfig });
-    const result = await h.run();
-    assert.equal(
-      h.calls.some(([tool, action]) => tool === 'gh' && action === 'merge'),
-      false,
-      'merge requires an explicit autoMerge: true',
-    );
-    assert.equal(result.merged, false);
-    assert.equal(result.url, 'https://github.com/fixture/pull/2');
-  });
-}
+// User decision 2026-10-22 (#177): merge by default; "autoMerge": false opts out.
+test('ci merges a passing PR when .agents.json leaves autoMerge at its default', async () => {
+  const repoConfig = validateRepoConfig({});
+  assert.equal(repoConfig.autoMerge, true);
+  const h = mergeHarness({ mergeable: 'MERGEABLE', mergeStateStatus: 'CLEAN' }, { repoConfig });
+  const result = await h.run();
+  assert.ok(h.calls.some(([tool, action]) => tool === 'gh' && action === 'merge'));
+  assert.equal(result.merged, true);
+});
+
+test('ci leaves a passing PR for the user when .agents.json sets autoMerge false', async () => {
+  const repoConfig = validateRepoConfig({ autoMerge: false });
+  const h = mergeHarness({ mergeable: 'MERGEABLE', mergeStateStatus: 'CLEAN' }, { repoConfig });
+  const result = await h.run();
+  assert.equal(
+    h.calls.some(([tool, action]) => tool === 'gh' && action === 'merge'),
+    false,
+    'autoMerge: false must never merge',
+  );
+  assert.equal(result.merged, false);
+  assert.equal(result.url, 'https://github.com/fixture/pull/2');
+});
 
 test('ci waits instead of merging while GitHub mergeability is unknown', async () => {
   const h = mergeHarness({ mergeable: 'UNKNOWN', mergeStateStatus: 'UNKNOWN' });

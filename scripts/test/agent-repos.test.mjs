@@ -15,6 +15,7 @@ import {
   registryRepositories,
   validateRepoConfig,
 } from '../../tools/agents/config.mjs';
+import { branchTypeFor } from '../../tools/agents/workflow.mjs';
 
 const repositoryRoot = fileURLToPath(new URL('../..', import.meta.url));
 const toolSource = path.join(repositoryRoot, 'tools/agents');
@@ -61,14 +62,15 @@ test('only sirloinbh repositories listed in the registry are allowed', (t) => {
   assert.ok(registryRepositories(path.join(repositoryRoot, 'registry/projects.json')).size > 0);
 });
 
-test('repository config defaults keep checks on npm run check and auto-merge off', (t) => {
+test('repository config defaults keep checks on npm run check and auto-merge on', (t) => {
   const root = temporaryDirectory(t, 'agent-config-');
   assert.deepEqual(loadRepoConfig(root), {
     checkScript: 'check',
     databaseTables: null,
     browserCheckArgs: null,
-    autoMerge: false,
+    autoMerge: true,
   });
+  assert.equal(validateRepoConfig({ autoMerge: false }).autoMerge, false);
   fs.writeFileSync(
     path.join(root, '.agents.json'),
     '\uFEFF' +
@@ -76,15 +78,25 @@ test('repository config defaults keep checks on npm run check and auto-merge off
         checkScript: 'verify:all',
         database: { tables: { items: ['id', 'name'] } },
         browser: { checkArgs: ['test:e2e'] },
-        autoMerge: true,
+        autoMerge: false,
       }),
   );
   assert.deepEqual(loadRepoConfig(root), {
     checkScript: 'verify:all',
     databaseTables: { items: ['id', 'name'] },
     browserCheckArgs: ['test:e2e'],
-    autoMerge: true,
+    autoMerge: false,
   });
+});
+
+test('branch type follows the task kind unless --branch-type picks feat, fix, docs or chore', () => {
+  assert.equal(branchTypeFor('code'), 'feat');
+  assert.equal(branchTypeFor(undefined), 'feat');
+  assert.equal(branchTypeFor('documentation'), 'docs');
+  for (const type of ['feat', 'fix', 'docs', 'chore'])
+    assert.equal(branchTypeFor('code', type), type);
+  for (const type of ['refactor', 'ci', 'test', 'hotfix', ''])
+    assert.throws(() => branchTypeFor('code', type), /Branch type must be one of/);
 });
 
 for (const [name, value] of [
@@ -260,6 +272,28 @@ for (const [name, config, checkScript] of [
     assert.ok(!f.lines('commands.jsonl').some(({ args }) => args.includes('push')));
   });
 }
+
+for (const [args, branch] of [
+  [['--branch-type', 'fix', '--slug', 'csv-encoding'], 'fix/7-csv-encoding'],
+  [['--branch-type', 'chore'], 'chore/7-add-csv-export'],
+  [['--task-kind', 'documentation'], 'docs/7-add-csv-export'],
+]) {
+  test(`enqueue ${args.join(' ')} creates ${branch}`, (t) => {
+    const f = repositoryFixture(t, { name: 'beta-app' });
+    const result = f.invoke(['enqueue', '7', ...args]);
+    assert.equal(result.status, 0, result.stderr);
+    assert.equal(f.job().branch, branch);
+    assert.equal(f.job().changeRecord, `docs/changes/7-${branch.split('/7-')[1]}.md`);
+  });
+}
+
+test('enqueue rejects an unsupported branch type before queueing', (t) => {
+  const f = repositoryFixture(t, { name: 'beta-app' });
+  const result = f.invoke(['enqueue', '7', '--branch-type', 'refactor']);
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Branch type must be one of/);
+  assert.equal(fs.existsSync(path.join(f.home, 'jobs/7/job.json')), false);
+});
 
 test('a repository missing from the registry cannot queue work', (t) => {
   const f = repositoryFixture(t, { name: 'unlisted-app' });

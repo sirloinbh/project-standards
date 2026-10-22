@@ -53,7 +53,9 @@ const defaults = Object.freeze({
   checkScript: 'check',
   databaseTables: null,
   browserCheckArgs: null,
-  autoMerge: false,
+  // User decision 2026-10-22 (#177): merge after CI unless a repository opts out
+  // with "autoMerge": false (e.g. where a main merge is a production deploy).
+  autoMerge: true,
 });
 
 // Unknown keys are rejected so a misspelled `autoMerge` cannot silently stay off or on.
