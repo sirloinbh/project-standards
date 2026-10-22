@@ -107,7 +107,7 @@ export function mergeSection(rendered, existing, file) {
  */
 export function renderFile({ text, file, source, vars, mode = 'full', existing = null }) {
   // Work in LF; the target's .gitattributes decides line endings on checkout (e.g. *.ps1 CRLF).
-  const lf = text.replace(/^﻿/, '').replace(/\r\n/g, '\n');
+  const lf = text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
   const filled = addHeader(renderText(lf, vars, source), file, source);
   return mode === 'section' ? mergeSection(filled, existing, file) : filled;
 }

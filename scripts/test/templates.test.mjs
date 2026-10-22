@@ -46,7 +46,29 @@ test('intended differences from study-log: ignore-scripts and the project marker
   assert.equal(withoutHeader(byPath['frontend/.npmrc'].content), withoutHeader(byPath['.npmrc'].content));
   assert.match(byPath['frontend/.npmrc'].content, /templates\/app\/frontend\/에서/);
   assert.equal(withoutHeader(byPath['.gitignore'].content), `${fixture('gitignore')}${PROJECT_MARKER}\n`);
-  assert.equal(withoutHeader(byPath['.prettierignore'].content), `${fixture('prettierignore')}${PROJECT_MARKER}\n`);
+  // study-log's ignore list stays; the managed files are added before the marker (#154).
+  const prettierignore = withoutHeader(byPath['.prettierignore'].content);
+  assert.ok(prettierignore.startsWith(fixture('prettierignore')));
+  assert.ok(prettierignore.endsWith(`${PROJECT_MARKER}\n`));
+});
+
+// Minimal .prettierignore matching for root-anchored patterns: "dir/" covers everything below, "*" stays in one segment.
+function ignoredBy(patterns, file) {
+  return patterns.some((p) => {
+    const body = p.replace(/\/$/, '').replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '[^/]*');
+    return new RegExp(`^${body}${p.endsWith('/') ? '/' : '$'}`).test(file);
+  });
+}
+
+test('every managed file Prettier would format is in .prettierignore, so npm run format keeps the hashes (#154)', () => {
+  const patterns = withoutHeader(byPath['.prettierignore'].content).split('\n').filter((l) => l && !l.startsWith('#'));
+  const formatted = rendered.filter((f) => f.mode === 'full' && /\.(md|json|ya?ml|[cm]?js|tsx?|css|html)$/.test(f.path));
+  assert.ok(formatted.length > 20);
+  assert.deepEqual(formatted.map((f) => f.path).filter((p) => !ignoredBy(patterns, p)), []);
+});
+
+test('the app ESLint config skips the vendored central scripts (#154)', () => {
+  assert.match(byPath['eslint.config.mjs'].content, /ignores: \['\.standards\/\*\*'\]/);
 });
 
 test('section files keep what the project added below the marker', () => {

@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import { PROJECT_MARKER } from './render.mjs';
 
 /** Strips a UTF-8 BOM and converts CRLF to LF. */
-export const normalize = (text) => text.replace(/^﻿/, '').replace(/\r\n/g, '\n');
+export const normalize = (text) => text.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n');
 
 export const sha256 = (text) => crypto.createHash('sha256').update(normalize(text), 'utf8').digest('hex');
 
