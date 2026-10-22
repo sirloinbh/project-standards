@@ -1,0 +1,11 @@
+{
+  "$schema": "./platform.schema.json",
+  "rootDomain": null,
+  "aws": {
+    "region": "ap-northeast-2",
+    "accountAlias": null,
+    "sharedPrefix": null
+  },
+  "portScheme": { "web": 8100, "api": 3100, "e2eApi": 3200, "vite": 5200, "e2eWeb": 5300, "db": 15400, "maxSlot": 99 },
+  "reservedPorts": [3000, 4173, 5173, 5432, 8080]
+}
