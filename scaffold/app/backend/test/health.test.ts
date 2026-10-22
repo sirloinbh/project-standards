@@ -36,7 +36,7 @@ test('GET /api/health reports a Korean error when the database is down', async (
     '/api/health',
   );
   assert.equal(res.status, 500);
-  assert.deepEqual(res.body, { error: '저장소에 연결할 수 없습니다. 서버 상태를 확인하세요.' });
+  assert.deepEqual(res.body, { error: '서버 오류가 발생했습니다' });
 });
 
 test('an unknown /api path answers 404 in the shared error shape', async () => {

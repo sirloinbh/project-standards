@@ -18,12 +18,17 @@
 
 - 경고는 파일 위치가 아니라 규칙을 본다. 앱마다 라우트를 두는 방식(workout-memo `routes/`, study-log `Router`)이 달라서다. 테스트 파일(`*.test.ts`)은 읽지 않는다.
 - 검사 코드는 `standards-check.mjs` 안에 두었다. 하위 리포에 복사되는 파일 목록(`templates/index.json`의 `vendor`)을 늘리지 않기 위해서다.
-- `/api/health` 성공 본문은 스캐폴드 `{ status: 'ok' }`를 기준으로 하되 기존 앱의 `{ ok, service, today }`도 허용한다. 상태 확인 도구는 상태 코드만 본다.
 - 스캐폴드는 기능 라우트 예시를 두지 않았다. 새 프로젝트가 지워야 할 코드를 만들지 않고, #27(마이그레이션 실행기)과 같은 파일을 덜 건드리기 위해서다.
 - OpenAPI 요약은 workout-memo처럼 `docs/api.md`에서 읽지 않고 `operations`에 직접 쓴다. 문서 파일 하나와 파서를 줄인다.
 
+## 사용자 결정 (2026-10-22)
+
+- `/api/health` 성공 본문: 스캐폴드는 `{ status: 'ok' }`를 쓰고, 기존 앱의 `{ ok, service, today }`도 허용한다. 상태 확인 도구는 상태 코드만 본다.
+- 스캐폴드 500 메시지: 7개 앱과 같은 "서버 오류가 발생했습니다"로 바꿨다(workout-memo는 "저장소에 연결할 수 없습니다…").
+- 스캐폴드 TypeScript 검증(`tsc`, `prettier --check`, 백엔드 테스트, `npm run openapi`)은 첫 신규 프로젝트를 설치할 때 한다. workout-memo `node_modules`로 실행하지 않는다.
+
 ## 검증
 
-- `npm run check` 통과: 테스트 171개 중 170개 통과·실패 0개(1개는 기존 건너뜀), `registry-check: ok`, `docs/projects.md`·`design-tokens.md` 최신, `package-guard: ok`, `check-workflows: ok`.
+- `npm run check` 통과: origin/main(#173까지) 위로 rebase한 뒤 테스트 185개 중 184개 통과·실패 0개(1개는 기존 건너뜀), `registry-check: ok`, `docs/projects.md`·`design-tokens.md` 최신, `package-guard: ok`, `check-workflows: ok`.
 - 로컬 8개 앱의 `backend/src`에 `checkApi()`를 돌렸다: workout-memo는 "없는 /api 경로 404" 경고 1개, 나머지 7개는 경고 0개.
-- 실행하지 못함: 렌더링한 스캐폴드의 `tsc`·백엔드 테스트·`npm run openapi`. 다른 리포(workout-memo)의 `node_modules`로 `tsx`를 실행하는 것이 이 작업 환경에서 허용되지 않았다. 그래서 `docs/openapi.json`은 `buildOpenApi()`가 만드는 값을 직접 써 두었고, 렌더링 테스트가 `operations`·제목·`JSON.stringify` 형식과 같은지 확인한다. 첫 설치 뒤 `npm run check`의 `openapi.test.ts`가 최종 확인한다.
+- 실행하지 않음: 렌더링한 스캐폴드의 `tsc`·`prettier --check`·백엔드 테스트·`npm run openapi`. 위 사용자 결정에 따라 첫 신규 프로젝트 설치 때 확인한다. 그래서 `docs/openapi.json`은 `buildOpenApi()`가 만드는 값을 직접 써 두었고, 렌더링 테스트가 `operations`·제목·`JSON.stringify` 형식과 같은지 확인한다. 첫 설치 뒤 `npm run check`의 `openapi.test.ts`가 최종 확인한다.

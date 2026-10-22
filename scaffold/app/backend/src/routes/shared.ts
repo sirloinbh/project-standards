@@ -51,5 +51,5 @@ export function errorHandler(
   }
   // The internal message goes to the log only; the response never exposes it.
   console.error(JSON.stringify({ event: 'request_error', message: error.message }));
-  send(res, 500, '저장소에 연결할 수 없습니다. 서버 상태를 확인하세요.');
+  send(res, 500, '서버 오류가 발생했습니다');
 }
