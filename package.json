@@ -7,6 +7,7 @@
   "engines": { "node": ">=22" },
   "scripts": {
     "test": "node --test scripts/test/*.test.mjs",
+    "test:agents": "node --test scripts/test/agent-models.test.mjs scripts/test/agent-npm.test.mjs scripts/test/agent-optimization.test.mjs scripts/test/agent-preflight-handoff.test.mjs scripts/test/agent-process-output.test.mjs scripts/test/agent-publication-resume.test.mjs scripts/test/agent-recovery.test.mjs scripts/test/agent-repos.test.mjs scripts/test/agent-review-regressions.test.mjs scripts/test/agent-runtime.test.mjs scripts/test/agent-workflow.test.mjs",
     "registry:check": "node scripts/registry-check.mjs",
     "docs": "node scripts/gen-docs.mjs",
     "docs:check": "node scripts/gen-docs.mjs --check",
