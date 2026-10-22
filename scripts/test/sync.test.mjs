@@ -14,6 +14,18 @@ const original = loadAll(root);
 const SNAPSHOT = path.join(root, 'scripts/test/fixtures/sync-snapshot.json');
 const targetOf = (data, project) => data.sync.targets.find((t) => t.project === project);
 
+test('the ui components join a plan only when the project turns features.ui on (#123)', () => {
+  const data = structuredClone(original.data);
+  const ui = (plan) => plan.files.filter((f) => f.path.startsWith('frontend/src/components/ui/')).map((f) => f.path);
+  const off = planTarget({ root, data, target: targetOf(data, 'study-log'), centralSha: 'a'.repeat(40) });
+  assert.deepEqual(ui(off), []);
+  data.projects.projects.find((p) => p.name === 'study-log').features.ui = true;
+  const on = planTarget({ root, data, target: targetOf(data, 'study-log'), centralSha: 'a'.repeat(40) });
+  assert.ok(ui(on).includes('frontend/src/components/ui/button.tsx'));
+  assert.ok(on.files.some((f) => f.path === 'frontend/src/lib/utils.ts' && f.source === 'templates/ui/frontend/src/lib/utils.ts'));
+  assert.ok(on.manifest.files['frontend/src/components/ui/select.tsx']);
+});
+
 test('glob patterns match whole paths with * and **', () => {
   assert.ok(globToRegExp('**/*.tf').test('main.tf'));
   assert.ok(globToRegExp('**/*.tf').test('modules/net/vpc.tf'));

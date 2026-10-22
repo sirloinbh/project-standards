@@ -74,9 +74,14 @@
         },
         "features": {
           "type": "object",
-          "required": ["e2e", "openapi", "contract"],
+          "required": ["e2e", "openapi", "contract", "ui"],
           "additionalProperties": false,
-          "properties": { "e2e": { "type": "boolean" }, "openapi": { "type": "boolean" }, "contract": { "type": "boolean" } }
+          "properties": {
+            "e2e": { "type": "boolean" },
+            "openapi": { "type": "boolean" },
+            "contract": { "type": "boolean" },
+            "ui": { "type": "boolean", "description": "공통 UI 컴포넌트(templates/ui)를 동기화한다. 앱에 radix-ui 등 의존성을 설치한 뒤 켠다(#123, #126)" }
+          }
         },
         "skills": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/slug" }, "description": "프로젝트 고유 스킬. 동기화에서 제외한다" },
         "allowedDifferences": {
