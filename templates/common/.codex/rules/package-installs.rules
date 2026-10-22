@@ -1,0 +1,21 @@
+# 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/common/.codex/rules/에서
+# Blocks package installs and ad-hoc package execution for Codex (npm supply-chain attacks, docs/agent-guardrails.md).
+# Codex reads project rules only after the user trusts this project's .codex/ folder.
+prefix_rule(
+    pattern = ["npm", ["install", "i", "in", "isntall", "add", "ci", "clean-install", "install-test", "it", "install-ci-test", "cit", "update", "up", "upgrade", "uninstall", "un", "remove", "rm", "r", "exec", "x", "create", "init", "rebuild", "dedupe"]],
+    decision = "forbidden",
+    justification = "npm 패키지 설치·삭제·실행은 사용자 승인 후 사용자가 직접 합니다 (docs/dependency-policy.md).",
+    match = [["npm", "install"], ["npm", "i", "react"], ["npm", "ci"]],
+    not_match = [["npm", "run", "check"], ["npm", "ls"]],
+)
+prefix_rule(
+    pattern = ["npm", "audit", "fix"],
+    decision = "forbidden",
+    justification = "npm audit fix는 패키지를 설치합니다.",
+)
+prefix_rule(
+    pattern = [["npx", "pnpm", "pnpx", "yarn", "bun", "bunx", "corepack"]],
+    decision = "forbidden",
+    justification = "다른 패키지 관리자와 npx는 쓰지 않습니다.",
+    match = [["npx", "shadcn"], ["yarn"]],
+)
