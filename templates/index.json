@@ -7,7 +7,9 @@
       ".standards/check.mjs": "scripts/standards-check.mjs",
       ".standards/lib/manifest.mjs": "scripts/lib/manifest.mjs",
       ".standards/lib/hash.mjs": "scripts/lib/hash.mjs",
-      ".standards/lib/render.mjs": "scripts/lib/render.mjs"
+      ".standards/lib/render.mjs": "scripts/lib/render.mjs",
+      ".standards/ioc-scan.mjs": "scripts/ioc-scan.mjs",
+      ".standards/blocked-packages.json": "security/blocked-packages.json"
     }
   },
   "mirror": [{ "from": "skills/", "to": ".claude/skills/", "why": "Claude Code는 .claude/skills/만 읽는다. 원본 skills/와 같은 내용의 복제본을 함께 관리한다." }],
