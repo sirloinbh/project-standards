@@ -1,0 +1,31 @@
+# 매일 하위 리포 상태를 모아 docs/compliance.md, docs/env-matrix.md를 다시 만든다.
+# 내용이 바뀌었을 때만 중앙 리포에 PR(chore/compliance-report)을 열거나 갱신한다.
+# GitHub App이 없으면(vars.SYNC_APP_ID 없음) 건너뛴다.
+name: compliance
+
+on:
+  schedule:
+    - cron: '0 15 * * *' # 매일 00:00 KST
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compliance
+  cancel-in-progress: false
+
+jobs:
+  report:
+    if: vars.SYNC_APP_ID != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: '24.21.0'
+      - name: 준수 현황 수집과 보고서 PR
+        env:
+          SYNC_APP_ID: ${{ vars.SYNC_APP_ID }}
+          SYNC_APP_PRIVATE_KEY: ${{ secrets.SYNC_APP_PRIVATE_KEY }}
+        run: node scripts/compliance.mjs --apply
