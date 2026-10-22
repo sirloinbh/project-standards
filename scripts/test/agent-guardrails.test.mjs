@@ -9,7 +9,7 @@ const root = path.join(import.meta.dirname, '..', '..');
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 const TEMPLATE = 'templates/common/.claude/settings.json.tmpl';
 const RULES = 'templates/common/.codex/rules/package-installs.rules';
-const REQUIRED = ['npm install', 'npm i', 'npm add', 'npm ci', 'npm update', 'npm uninstall', 'npm remove', 'npm rm', 'npm exec', 'npx', 'pnpm', 'yarn', 'bun', 'corepack'];
+const REQUIRED = ['npm install', 'npm i', 'npm in', 'npm ins', 'npm inst', 'npm insta', 'npm instal', 'npm isnt', 'npm isnta', 'npm isntal', 'npm isntall', 'npm udpate', 'npm link', 'npm ln', 'npm add', 'npm ci', 'npm update', 'npm uninstall', 'npm remove', 'npm rm', 'npm exec', 'npx', 'pnpm', 'yarn', 'bun', 'corepack'];
 
 const deny = JSON.parse(read(TEMPLATE)).permissions.deny;
 const commands = (tool) => deny.filter((r) => r.startsWith(`${tool}(`)).map((r) => r.slice(tool.length + 1, -3));

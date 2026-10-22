@@ -2,7 +2,7 @@
 # Blocks package installs and ad-hoc package execution for Codex (npm supply-chain attacks, docs/agent-guardrails.md).
 # Codex reads project rules only after the user trusts this project's .codex/ folder.
 prefix_rule(
-    pattern = ["npm", ["install", "i", "in", "isntall", "add", "ci", "clean-install", "install-test", "it", "install-ci-test", "cit", "update", "up", "upgrade", "uninstall", "un", "remove", "rm", "r", "exec", "x", "create", "init", "rebuild", "dedupe"]],
+    pattern = ["npm", ["install", "i", "in", "ins", "inst", "insta", "instal", "isnt", "isnta", "isntal", "isntall", "add", "ci", "clean-install", "install-test", "it", "install-ci-test", "cit", "update", "up", "upgrade", "udpate", "uninstall", "un", "remove", "rm", "r", "exec", "x", "create", "init", "rebuild", "dedupe", "link", "ln"]],
     decision = "forbidden",
     justification = "npm 패키지 설치·삭제·실행은 사용자 승인 후 사용자가 직접 합니다 (docs/dependency-policy.md).",
     match = [["npm", "install"], ["npm", "i", "react"], ["npm", "ci"]],

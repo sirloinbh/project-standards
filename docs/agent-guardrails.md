@@ -9,7 +9,7 @@ npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 패키지를 �
 
 ## 막는 명령
 
-- `npm` 하위 명령: `install`(`i`, `in`, `isntall`), `add`, `ci`(`clean-install`), `install-test`(`it`), `install-ci-test`(`cit`), `update`(`up`, `upgrade`), `uninstall`(`un`, `remove`, `rm`, `r`), `exec`(`x`), `create`, `init`, `rebuild`, `dedupe`, `audit fix`
+- `npm` 하위 명령: `install`과 npm이 받아들이는 줄임·오타 별칭(`i`, `in`, `ins`, `inst`, `insta`, `instal`, `isnt`, `isnta`, `isntal`, `isntall`), `add`, `ci`(`clean-install`), `install-test`(`it`), `install-ci-test`(`cit`), `update`(`up`, `upgrade`, `udpate`), `uninstall`(`un`, `remove`, `rm`, `r`), `exec`(`x`), `create`, `init`, `rebuild`, `dedupe`, `link`(`ln`), `audit fix`
 - 명령 전체: `npx`, `pnpm`, `pnpx`, `yarn`, `bun`, `bunx`, `corepack`
 
 `npm run`, `npm ls`, `npm view`, `npm outdated`, `npm audit`(보고만)은 막지 않는다.
