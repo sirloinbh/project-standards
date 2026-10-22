@@ -358,7 +358,7 @@ DB 포트가 바뀌면 각 사용자의 로컬 `.env`에 있는 `DATABASE_URL`�
 1. `registry/projects.json`에 다음 슬롯으로 항목을 추가하고 `sync.config.json`에 target을 추가한다.
 2. 충돌 검사와 `docs/projects.md` 재생성까지 통과한 PR을 병합한다.
 3. [사용자] 우산 리포와 subtree 리포 3개를 만들고 App 설치 범위에 추가한다.
-4. `scaffold/app`을 렌더링해 첫 커밋을 만들고, sync로 첫 동기화 PR을 연다.
+4. `node scripts/scaffold.mjs <이름> --out <폴더>`로 첫 커밋을 만든다. `scaffold/app`(프로젝트 소유 시작 파일), `docs/runbooks`(운영 문서), 계약 복제본, 그리고 첫 동기화가 쓸 중앙 관리 파일과 manifest를 함께 렌더링한다. 이후 변경은 동기화 PR로 들어온다.
 
 ## 7. 하위 리포 감지와 안내
 
