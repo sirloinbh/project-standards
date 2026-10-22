@@ -10,7 +10,9 @@
 
 ## 작업 절차
 
-요구사항을 이슈로 등록하거나 다음 작업을 고를 때는 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 스킬을 따른다. 원본은 `templates/common/skills/`이고, `.claude/skills/std-backlog/`는 Claude Code용 복제본이다. 복제본은 직접 고치지 않는다. 동기화 스크립트가 생기기 전까지는 원본을 고친 뒤 복제본에 그대로 복사한다.
+- 요구사항을 이슈로 등록하거나 다음 작업을 고를 때는 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 스킬을 따른다.
+- 이슈·브랜치·커밋·PR을 쓸 때는 [std-git-writing](templates/common/skills/std-git-writing/SKILL.md) 스킬과 `.github/`의 이슈·PR 템플릿을 따른다.
+- 스킬과 템플릿의 원본은 `templates/common/`이다. `.claude/skills/`와 루트 `.github/`의 템플릿은 복제본이므로 직접 고치지 않는다. 동기화 스크립트가 생기기 전까지는 원본을 고친 뒤 복제본에 그대로 복사한다.
 
 1. `sirloinbh/project-standards`에 이슈를 등록한다. 사용자가 지정한 기존 이슈가 있으면 재사용한다.
 2. 이슈 번호를 포함한 브랜치를 만든다: `<type>/<issue-number>-<slug>`.
