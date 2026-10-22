@@ -49,20 +49,124 @@ export function renderProjects({ projects, platform, sync }) {
   return lines.join('\n');
 }
 
+const table = (headers, rows) => [`| ${headers.join(' | ')} |`, `|${headers.map(() => '---').join('|')}|`, ...rows.map((r) => `| ${r.join(' | ')} |`)];
+
+export function renderTokens(t) {
+  const size = Object.fromEntries(t.fontSize.map((s) => [s.name, s]));
+  const weight = Object.fromEntries(t.fontWeight.map((w) => [w.name, w]));
+  const theme = t.color.light.filter((c) => c.value === 'theme').map((c) => `\`${c.name}\``);
+  return [
+    '# 디자인 토큰',
+    '',
+    '<!-- 자동 생성 파일. 수정은 design/tokens.json에서 하고 `npm run docs` 로 다시 생성한다. -->',
+    '',
+    `8개 앱이 함께 쓰는 값이다. 이름은 shadcn/ui와 Tailwind CSS 4 규칙을 따른다([ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)). 앱마다 다른 값은 이름과 테마 색(${theme.join(', ')})뿐이다.`,
+    '',
+    '## 글꼴',
+    '',
+    `- 본문·제목: \`${t.font.sans}\``,
+    `- 고정폭: \`${t.font.mono}\``,
+    `- Pretendard ${t.font.pretendard.version} (${t.font.pretendard.released}), ${t.font.pretendard.license}. ${t.font.pretendard.delivery} \`font-display: ${t.font.pretendard.fontDisplay}\`.`,
+    '',
+    '## 글자 크기',
+    '',
+    ...table(['이름', '크기', '줄 높이', '쓰는 곳'], t.fontSize.map((s) => [`\`text-${s.name}\``, `${s.size} (${s.px}px)`, s.lineHeight, s.use])),
+    '',
+    '## 글자 굵기',
+    '',
+    ...table(['이름', '값', '쓰는 곳'], t.fontWeight.map((w) => [`\`font-${w.name}\``, w.value, w.use])),
+    '',
+    '## 글자 스타일 (제목 단계, 본문, 주석)',
+    '',
+    '모바일 크기가 기본이고, `md`(768px) 이상에서 오른쪽 크기로 커진다.',
+    '',
+    ...table(
+      ['스타일', '요소', '모바일', 'md 이상', '굵기', '자간', '색', '쓰는 곳'],
+      t.textStyles.map((s) => [`\`${s.name}\``, `\`${s.element}\``, `${size[s.size].px}px`, `${size[s.sizeMd].px}px`, weight[s.weight].value, s.tracking, `\`${s.color}\``, s.use]),
+    ),
+    '',
+    '## 간격',
+    '',
+    `- ${t.spacing.rule}`,
+    '',
+    ...table(['이름', '모바일', 'md', 'lg', '쓰는 곳'], t.spacing.layout.map((l) => [`\`${l.name}\``, l.mobile, l.md, l.lg, l.use])),
+    '',
+    '## 모서리 둥글기',
+    '',
+    ...table(['이름', 'CSS 변수', '값', 'px', '쓰는 곳'], t.radius.map((r) => [`\`rounded-${r.name}\``, `\`${r.css}\``, `\`${r.value}\``, r.px, r.use])),
+    '',
+    '## 그림자와 테두리',
+    '',
+    ...table(['이름', '쓰는 곳'], t.shadow.map((s) => [`\`shadow-${s.name}\``, s.use])),
+    '',
+    `- ${t.border.rule}`,
+    '',
+    '## 반응형',
+    '',
+    `- ${t.responsive.approach} 가장 좁은 화면은 ${t.responsive.minWidth}이다.`,
+    `- ${t.responsive.touchRule}`,
+    `- ${t.responsive.safeArea}`,
+    `- ${t.responsive.verify}`,
+    '',
+    ...table(['기준점', '최소 너비', '쓰는 곳'], t.breakpoints.map((b) => [`\`${b.name}\``, `${b.minWidth} (${b.px}px)`, b.use])),
+    '',
+    '## 아이콘 크기',
+    '',
+    ...table(['이름', 'px', '쓰는 곳'], t.icon.map((i) => [`\`${i.name}\``, i.px, i.use])),
+    '',
+    '## 쌓임 순서 (z-index)',
+    '',
+    ...table(['이름', '값', '쓰는 곳'], t.zIndex.map((z) => [`\`${z.name}\``, z.value, z.use ?? ''])),
+    '',
+    '## 움직임',
+    '',
+    `- 빠름 ${t.motion.fast}, 보통 ${t.motion.normal}, 느림 ${t.motion.slow}, easing \`${t.motion.easing}\`.`,
+    `- ${t.motion.rule}`,
+    '',
+    '## 로딩 표시',
+    '',
+    `- 스켈레톤: ${t.loading.skeleton}`,
+    `- 스피너: ${t.loading.spinner}`,
+    `- ${t.loading.rule}`,
+    '',
+    '## 색',
+    '',
+    `값은 ${t.color.format}이다. \`theme\`은 앱별 테마 색에서 만든다. ${t.color.theme}`,
+    '',
+    ...table(['토큰', '값', '쓰는 곳'], t.color.light.map((c) => [`\`--${c.name}\``, c.value === 'theme' ? '앱 테마' : `\`${c.value}\``, c.use])),
+    '',
+    `${t.color.dark}`,
+    '',
+    '## workout-memo 기존 토큰 대응표',
+    '',
+    t.legacy.description,
+    '',
+    ...table(['기존', '새 토큰', '비고'], t.legacy.map.map((m) => [`\`${m.old}\``, m.new, m.note])),
+    '',
+  ].join('\n');
+}
+
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-  const target = path.join(root, 'docs/projects.md');
-  const text = renderProjects(loadAll(root).data);
-  if (process.argv.includes('--check')) {
-    const current = fs.existsSync(target) ? fs.readFileSync(target, 'utf8').replace(/\r\n/g, '\n') : '';
-    if (current !== text) {
-      console.error('docs/projects.md is stale. Run `npm run docs` and commit the result.');
-      process.exit(1);
+  const tokens = JSON.parse(fs.readFileSync(path.join(root, 'design/tokens.json'), 'utf8'));
+  const outputs = [
+    ['docs/projects.md', renderProjects(loadAll(root).data)],
+    ['docs/design-tokens.md', renderTokens(tokens)],
+  ];
+  let stale = false;
+  for (const [rel, text] of outputs) {
+    const target = path.join(root, rel);
+    if (process.argv.includes('--check')) {
+      const current = fs.existsSync(target) ? fs.readFileSync(target, 'utf8').replace(/\r\n/g, '\n') : '';
+      if (current !== text) {
+        console.error(`${rel} is stale. Run \`npm run docs\` and commit the result.`);
+        stale = true;
+      } else console.log(`${rel}: up to date`);
+    } else {
+      fs.writeFileSync(target, text);
+      console.log(`wrote ${rel}`);
     }
-    console.log('docs/projects.md: up to date');
-  } else {
-    fs.writeFileSync(target, text);
-    console.log('wrote docs/projects.md');
   }
+  if (stale) process.exit(1);
 }
