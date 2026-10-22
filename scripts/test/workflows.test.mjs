@@ -89,3 +89,17 @@ test('changelogSection returns one version section', () => {
   assert.equal(changelogSection(text, '1.0.0'), '- 첫 버전');
   assert.equal(changelogSection(text, '2.0.0'), null);
 });
+
+// Both app CI jobs prepare the database the same way (docs/conventions/database.md, #27).
+test('app CI applies migrations with psql first, then the shared runner, in both jobs', () => {
+  const text = fs.readFileSync(path.join(root, '.github/workflows/reusable-app-ci.yml'), 'utf8').replace(/\r\n/g, '\n');
+  const steps = [...text.matchAll(/- name: DB 마이그레이션\n(?: +#.*\n)* +run: \|\n((?: {10}.*\n)+)/g)].map((m) => m[1]);
+  assert.equal(steps.length, 2, 'verify and e2e jobs');
+  assert.equal(steps[0], steps[1]);
+  const script = steps[0];
+  const firstPass = script.indexOf('psql "$DATABASE_URL" -v ON_ERROR_STOP=1');
+  const runner = script.indexOf('npm run db:migrate');
+  assert.ok(firstPass > 0 && runner > firstPass, 'psql pass (Docker init order) before the runner');
+  assert.match(script, /::warning title=DB 마이그레이션::/, 'apps without the runner still pass, with a warning');
+  assert.doesNotMatch(text, /^\s+- run: npm run db:migrate$/m, 'no unconditional runner call');
+});
