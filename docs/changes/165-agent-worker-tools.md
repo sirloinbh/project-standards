@@ -12,6 +12,7 @@
 | `scripts/test/agent-*.test.mjs` | workout-memo 테스트 10개를 옮기고 경로·픽스처를 고쳤다 |
 | `scripts/test/agent-repos.test.mjs` (새 파일) | 설정이 다른 가짜 리포 2개로 큐 등록부터 호스트 검사까지, 미등록 리포 거부, 설정 오류, 소스에 리포 값이 없음 |
 | `package.json`, `.github/workflows/agents.yml` | `test:agents` 추가. Windows CI에서 실행한다(Linux는 `ci.yml`의 `npm run check`가 같은 테스트를 포함) |
+| `versions.json`, `versions.schema.json`, `scripts/check-workflows.mjs` | 고정 Windows 러너 `windowsRunner: windows-2025`를 추가하고, 워크플로 검사가 `runner`와 함께 이것도 허용한다(#143의 러너 고정 규칙) |
 | `docs/tools.md`, `docs/design.md` | 실행 방법·`.agents.json` 형식, "중앙 도구는 하위 리포에 복사하지 않는다" 분류 |
 
 ## 결정
@@ -29,5 +30,6 @@
 ## 검증
 
 - `npm run test:agents`(Windows): 185개 모두 통과. Linux에서는 Windows 전용 npm 경로 검사 1개를 건너뛴다.
-- `npm run check`: 통과(결과는 PR 본문).
+- `npm run check`(main 병합 후, Windows): 테스트 365개 중 364개 통과, 1개 건너뜀(기존 OS 전용 검사). 나머지 검사 모두 통과.
+- PR CI: Windows `agents` 작업 통과. 첫 Linux `check`는 main의 러너·Action 고정(#143)과 맞지 않아 실패했고, main을 병합해 고쳤다.
 - `grep -rn "workout-memo\|brands" tools/agents`: 0건.

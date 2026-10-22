@@ -23,14 +23,16 @@ function workflowFiles(root) {
 
 /**
  * Returns problems for one workflow text. `actions` is versions.json "actions";
- * `runner` is versions.json "runner" (every `runs-on:` must use it when given).
+ * `runner` is versions.json "runner" (every `runs-on:` must use it when given);
+ * `windowsRunner` is the optional pinned Windows runner, also accepted when given.
  */
-export function checkWorkflow(file, text, actions, runner) {
+export function checkWorkflow(file, text, actions, runner, windowsRunner) {
   const problems = [];
   const pinned = new Map(Object.values(actions).map((a) => [a.repo, a]));
+  const runners = [runner, windowsRunner].filter(Boolean);
   for (const [i, line] of text.split(/\r?\n/).entries()) {
     const r = /^\s*runs-on:\s*([^\s#]+)/.exec(line);
-    if (r && runner && r[1].replace(/^['"]|['"]$/g, '') !== runner) problems.push(`${file}:${i + 1}: runs-on must be ${runner} (versions.json runner), got ${r[1]}`);
+    if (r && runner && !runners.includes(r[1].replace(/^['"]|['"]$/g, ''))) problems.push(`${file}:${i + 1}: runs-on must be ${runners.join(' or ')} (versions.json runner), got ${r[1]}`);
     const m = /^\s*(?:-\s*)?uses:\s*([^\s#]+)(?:\s*#\s*(\S+))?/.exec(line);
     if (!m) continue;
     const [, ref, comment] = m;
@@ -71,8 +73,8 @@ export function expressionsInRun(file, text) {
 }
 
 export function checkAll(root) {
-  const { actions, runner } = JSON.parse(fs.readFileSync(path.join(root, 'versions.json'), 'utf8'));
-  return workflowFiles(root).flatMap((file) => checkWorkflow(file, fs.readFileSync(path.join(root, file), 'utf8'), actions, runner));
+  const { actions, runner, windowsRunner } = JSON.parse(fs.readFileSync(path.join(root, 'versions.json'), 'utf8'));
+  return workflowFiles(root).flatMap((file) => checkWorkflow(file, fs.readFileSync(path.join(root, file), 'utf8'), actions, runner, windowsRunner));
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

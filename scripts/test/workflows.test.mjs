@@ -41,6 +41,10 @@ test('runs-on must use the pinned runner from versions.json', () => {
   const text = ['permissions: {}', 'jobs:', '  a:', '    runs-on: ubuntu-latest', '  b:', `    runs-on: ${runner}`, '  c:', `    runs-on: '${runner}'`].join('\n');
   assert.deepEqual(checkWorkflow('w.yml', text, actions, runner), [`w.yml:4: runs-on must be ${runner} (versions.json runner), got ubuntu-latest`]);
   assert.deepEqual(checkWorkflow('w.yml', text, actions), [], 'no runner given: runs-on is not checked');
+  // The pinned Windows runner is accepted only when versions.json names it (#165).
+  const windows = ['permissions: {}', 'jobs:', '  a:', '    runs-on: windows-2025', '  b:', '    runs-on: windows-latest'].join('\n');
+  assert.deepEqual(checkWorkflow('w.yml', windows, actions, runner, 'windows-2025'), [`w.yml:6: runs-on must be ${runner} or windows-2025 (versions.json runner), got windows-latest`]);
+  assert.equal(checkWorkflow('w.yml', windows, actions, runner).length, 2);
 });
 
 test('expressions inside run scripts are rejected; env, with, and if are fine', () => {

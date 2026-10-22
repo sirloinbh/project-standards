@@ -34,6 +34,11 @@
       "pattern": "^ubuntu-\\d+\\.\\d+$",
       "description": "워크플로 runs-on에 쓰는 GitHub 호스팅 러너. ubuntu-latest처럼 바뀌는 이름 대신 버전을 고정한다"
     },
+    "windowsRunner": {
+      "type": "string",
+      "pattern": "^windows-\\d{4}$",
+      "description": "Windows에서만 확인할 수 있는 검사(로컬 에이전트 워커 등)에 쓰는 고정 러너. 중앙 리포 워크플로에만 쓴다"
+    },
     "actions": {
       "type": "object",
       "additionalProperties": {

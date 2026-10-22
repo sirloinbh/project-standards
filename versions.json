@@ -10,6 +10,7 @@
     "postgres": "postgres:17-alpine"
   },
   "runner": "ubuntu-24.04",
+  "windowsRunner": "windows-2025",
   "actions": {
     "checkout": { "repo": "actions/checkout", "version": "v7.0.1", "sha": "3d3c42e5aac5ba805825da76410c181273ba90b1" },
     "setupNode": { "repo": "actions/setup-node", "version": "v7.1.0", "sha": "949feb2413d6458794dcd2491c4babbbce0c15c1" },
