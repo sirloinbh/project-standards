@@ -2,6 +2,18 @@
 /* Tailwind CSS 4 앱용. 앱의 메인 CSS에서 tailwindcss 다음에 import한다. */
 @import './tokens.css';
 
+/* dark: 유틸리티도 tokens.css와 같은 조건: .dark 클래스, 또는 .light가 없을 때 시스템 다크 모드 */
+@custom-variant dark {
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    &:where(:root:not(.light), :root:not(.light) *) {
+      @slot;
+    }
+  }
+}
+
 @theme {
   --text-xs: 0.75rem;
   --text-xs--line-height: 1rem;

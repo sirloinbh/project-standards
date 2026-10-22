@@ -57,6 +57,8 @@ export function checkAll({ data, schemas }, { today = new Date().toISOString().s
 
   duplicates(projects.map((p) => [p.slot, p.name]), 'slot', errors);
   duplicates(projects.map((p) => [p.name, `slot ${p.slot}`]), 'project name', errors);
+  // Apps share one look (ADR-0008), so the display name is the only thing that tells them apart.
+  duplicates(projects.map((p) => [p.displayName, p.name]), 'display name', errors);
   duplicates(
     projects.flatMap((p) => Object.entries(p.repos).map(([kind, repo]) => [repo, `${p.name}.${kind}`])),
     'repository',

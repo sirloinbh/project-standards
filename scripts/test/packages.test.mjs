@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { renderTailwindCss, renderTokensCss, THEME_FALLBACK } from '../build-tokens.mjs';
+import { renderTailwindCss, renderTokensCss } from '../build-tokens.mjs';
 import { checkAll, checkPackage, checkTag } from '../package-guard.mjs';
 import { createConfig } from '../../packages/eslint-config/index.mjs';
 
@@ -87,7 +87,10 @@ test('the design-tokens CSS is generated from design/tokens.json and committed',
   assert.equal(read('packages/design-tokens/tailwind.css'), renderTailwindCss(tokens), 'run `npm run tokens`');
   const css = renderTokensCss(tokens);
   for (const c of tokens.color.light) assert.ok(css.includes(`  --${c.name}: `), c.name);
-  for (const [name, value] of Object.entries(THEME_FALLBACK)) assert.ok(css.includes(`  --${name}: ${value};`), name);
+  // Dark colors apply with <html class="dark">, and with the system setting unless <html class="light">.
+  assert.match(css, /\n\.dark \{\n {2}color-scheme: dark;\n {2}--background: oklch\(0\.145 0 0\);/);
+  assert.match(css, /@media \(prefers-color-scheme: dark\) \{\n {2}:root:not\(\.light\) \{\n {4}color-scheme: dark;/);
+  assert.match(renderTailwindCss(tokens), /@custom-variant dark \{\n {2}&:where\(\.dark, \.dark \*\) \{/);
   const tw = renderTailwindCss(tokens);
   for (const u of ['text-body', 'text-body-sm', 'text-caption', 'text-meta']) assert.ok(tw.includes(`@utility ${u} {`), u);
   assert.match(tw, /@media \(min-width: 48rem\) \{\n {4}h1 \{\n {6}font-size: var\(--text-3xl\);/);

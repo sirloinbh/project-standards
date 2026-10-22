@@ -2,7 +2,7 @@
 
 <!-- 자동 생성 파일. 수정은 design/tokens.json에서 하고 `npm run docs` 로 다시 생성한다. -->
 
-8개 앱이 함께 쓰는 값이다. 이름은 shadcn/ui와 Tailwind CSS 4 규칙을 따른다([ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)). 앱마다 다른 값은 이름과 테마 색(`primary`, `primary-foreground`, `ring`, `sidebar-primary`, `sidebar-primary-foreground`, `sidebar-ring`)뿐이다.
+8개 앱이 함께 쓰는 값이다. 이름은 shadcn/ui와 Tailwind CSS 4 규칙을 따른다([ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)). 앱마다 다른 것은 표시 이름뿐이고, 색은 모든 앱이 같은 흑백을 쓴다([ADR-0008](adr/0008-neutral-light-dark.md)).
 
 ## 글꼴
 
@@ -124,42 +124,42 @@
 
 ## 색
 
-값은 oklch이다. `theme`은 앱별 테마 색에서 만든다. 앱마다 다른 색은 primary, primary-foreground, ring, sidebar-primary, sidebar-primary-foreground, sidebar-ring 6개뿐이다. 값은 레지스트리의 앱별 테마 색(#122)에서 만든다. 나머지 색은 모든 앱이 같다.
+값은 oklch이다. 앱마다 다른 색은 없다. 8개 앱이 모두 같은 흑백(neutral) 색을 쓰고, 앱은 표시 이름으로만 구별한다(ADR-0008).
 
-| 토큰 | 값 | 쓰는 곳 |
-|---|---|---|
-| `--background` | `oklch(1 0 0)` | 페이지 배경 |
-| `--foreground` | `oklch(0.145 0 0)` | 기본 글자 |
-| `--card` | `oklch(1 0 0)` | 카드 배경 |
-| `--card-foreground` | `oklch(0.145 0 0)` | 카드 글자 |
-| `--popover` | `oklch(1 0 0)` | 메뉴·팝오버·모달 배경 |
-| `--popover-foreground` | `oklch(0.145 0 0)` | 메뉴·팝오버 글자 |
-| `--primary` | 앱 테마 | 앱 테마 색. 주 버튼, 링크, 선택 상태 (레지스트리 brand.themeColor, #122) |
-| `--primary-foreground` | 앱 테마 | 테마 색 위의 글자 (레지스트리 brand.onThemeColor, #122) |
-| `--secondary` | `oklch(0.97 0 0)` | 보조 버튼 배경 |
-| `--secondary-foreground` | `oklch(0.205 0 0)` | 보조 버튼 글자 |
-| `--muted` | `oklch(0.97 0 0)` | 비활성·옅은 면 |
-| `--muted-foreground` | `oklch(0.556 0 0)` | 보조·주석 텍스트 (흰 배경 대비 4.5:1 이상) |
-| `--accent` | `oklch(0.97 0 0)` | hover·선택된 메뉴 배경 |
-| `--accent-foreground` | `oklch(0.205 0 0)` | hover·선택된 메뉴 글자 |
-| `--destructive` | `oklch(0.577 0.245 27.325)` | 삭제·오류 |
-| `--success` | `oklch(0.527 0.154 150.069)` | 성공·완료 (Tailwind green-700, 흰 글자 대비 4.5:1 이상) |
-| `--success-foreground` | `oklch(1 0 0)` | 성공 색 위의 글자 |
-| `--warning` | `oklch(0.828 0.189 84.429)` | 주의 (Tailwind amber-400) |
-| `--warning-foreground` | `oklch(0.279 0.077 45.635)` | 주의 색 위의 글자 (Tailwind amber-950) |
-| `--border` | `oklch(0.922 0 0)` | 구분선, 카드 테두리 |
-| `--input` | `oklch(0.922 0 0)` | 입력란 테두리 |
-| `--ring` | 앱 테마 | 키보드 포커스 표시 (테마 색 기반) |
-| `--sidebar` | `oklch(0.985 0 0)` | LNB 배경 |
-| `--sidebar-foreground` | `oklch(0.145 0 0)` | LNB 글자 |
-| `--sidebar-primary` | 앱 테마 | LNB 선택 항목 강조 |
-| `--sidebar-primary-foreground` | 앱 테마 | LNB 선택 항목 글자 |
-| `--sidebar-accent` | `oklch(0.97 0 0)` | LNB hover 배경 |
-| `--sidebar-accent-foreground` | `oklch(0.205 0 0)` | LNB hover 글자 |
-| `--sidebar-border` | `oklch(0.922 0 0)` | LNB 구분선 |
-| `--sidebar-ring` | 앱 테마 | LNB 포커스 표시 |
+- 라이트·다크 두 모드. 기본은 시스템 설정을 따르고, 사용자가 고르면 그 선택을 저장해 <html>에 light 또는 dark 클래스를 붙인다. 클래스가 없으면 prefers-color-scheme을 따른다.
 
-다크 모드는 아직 정하지 않았다. 도입할 때 이 파일에 dark 목록을 추가한다.
+| 토큰 | 라이트 | 다크 | 쓰는 곳 |
+|---|---|---|---|
+| `--background` | `oklch(1 0 0)` | `oklch(0.145 0 0)` | 페이지 배경 |
+| `--foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | 기본 글자 |
+| `--card` | `oklch(1 0 0)` | `oklch(0.205 0 0)` | 카드 배경 |
+| `--card-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | 카드 글자 |
+| `--popover` | `oklch(1 0 0)` | `oklch(0.205 0 0)` | 메뉴·팝오버·모달 배경 |
+| `--popover-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | 메뉴·팝오버 글자 |
+| `--primary` | `oklch(0.205 0 0)` | `oklch(0.922 0 0)` | 주 버튼, 링크, 선택 상태 (모든 앱 공통 검정) |
+| `--primary-foreground` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | 주 버튼 위의 글자 |
+| `--secondary` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | 보조 버튼 배경 |
+| `--secondary-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | 보조 버튼 글자 |
+| `--muted` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | 비활성·옅은 면 |
+| `--muted-foreground` | `oklch(0.556 0 0)` | `oklch(0.708 0 0)` | 보조·주석 텍스트 (흰 배경 대비 4.5:1 이상) |
+| `--accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | hover·선택된 메뉴 배경 |
+| `--accent-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | hover·선택된 메뉴 글자 |
+| `--destructive` | `oklch(0.577 0.245 27.325)` | `oklch(0.704 0.191 22.216)` | 삭제·오류 |
+| `--success` | `oklch(0.527 0.154 150.069)` | `oklch(0.723 0.219 149.579)` | 성공·완료 (Tailwind green-700, 흰 글자 대비 4.5:1 이상) |
+| `--success-foreground` | `oklch(1 0 0)` | `oklch(0.145 0 0)` | 성공 색 위의 글자 |
+| `--warning` | `oklch(0.828 0.189 84.429)` | `oklch(0.828 0.189 84.429)` | 주의 (Tailwind amber-400) |
+| `--warning-foreground` | `oklch(0.279 0.077 45.635)` | `oklch(0.279 0.077 45.635)` | 주의 색 위의 글자 (Tailwind amber-950) |
+| `--border` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` | 구분선, 카드 테두리 |
+| `--input` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 15%)` | 입력란 테두리 |
+| `--ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` | 키보드 포커스 표시 |
+| `--sidebar` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | LNB 배경 |
+| `--sidebar-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | LNB 글자 |
+| `--sidebar-primary` | `oklch(0.205 0 0)` | `oklch(0.922 0 0)` | LNB 선택 항목 강조 |
+| `--sidebar-primary-foreground` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | LNB 선택 항목 글자 |
+| `--sidebar-accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | LNB hover 배경 |
+| `--sidebar-accent-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | LNB hover 글자 |
+| `--sidebar-border` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` | LNB 구분선 |
+| `--sidebar-ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` | LNB 포커스 표시 |
 
 ## workout-memo 기존 토큰 대응표
 
@@ -167,7 +167,7 @@ workout-memo의 기존 토큰(frontend/src/theme.css)이 새 토큰 중 무엇�
 
 | 기존 | 새 토큰 | 비고 |
 |---|---|---|
-| `--color-primary` | --primary | 운동 앱 테마 색이 된다(#122) |
+| `--color-primary` | --primary | 모든 앱 공통 검정. 앱별 테마 색은 없다(ADR-0008) |
 | `--color-on-primary` | --primary-foreground |  |
 | `--color-accent` | --primary (옅게) 또는 차트 색 | shadcn/ui의 accent는 hover 배경이라 의미가 다르다 |
 | `--color-focus` | --ring |  |

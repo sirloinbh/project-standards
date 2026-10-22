@@ -17,13 +17,13 @@ export function renderProjects({ projects, platform, sync }) {
     '',
     '## 프로젝트',
     '',
-    '| 슬롯 | 프로젝트 | 이름 | 분야 | 상태 | DB / 테스트 DB | 서비스 주소 | AWS 접두어 | 적용 단계 |',
-    '|---|---|---|---|---|---|---|---|---|',
+    '| 슬롯 | 프로젝트 | 이름 | 표시 이름 | 분야 | 상태 | DB / 테스트 DB | 서비스 주소 | AWS 접두어 | 적용 단계 |',
+    '|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const p of [...projects.projects].sort((a, b) => a.slot - b.slot)) {
     const host = p.service.domain ? [p.service.subdomain, p.service.domain].filter(Boolean).join('.') : UNSET;
     lines.push(
-      `| ${String(p.slot).padStart(2, '0')} | ${p.name} | ${p.title} | ${p.domain} | ${p.status} | ${p.db.name} / ${p.db.testName} | ${host} | ${p.aws.prefix ?? UNSET} | ${rollout.get(p.name) ?? '-'} |`,
+      `| ${String(p.slot).padStart(2, '0')} | ${p.name} | ${p.title} | ${p.displayName} | ${p.domain} | ${p.status} | ${p.db.name} / ${p.db.testName} | ${host} | ${p.aws.prefix ?? UNSET} | ${rollout.get(p.name) ?? '-'} |`,
     );
   }
   lines.push('', '## 포트', '', '| 프로젝트 | web | api | e2e api | vite | e2e web | db |', '|---|---|---|---|---|---|---|');
@@ -54,13 +54,13 @@ const table = (headers, rows) => [`| ${headers.join(' | ')} |`, `|${headers.map(
 export function renderTokens(t) {
   const size = Object.fromEntries(t.fontSize.map((s) => [s.name, s]));
   const weight = Object.fromEntries(t.fontWeight.map((w) => [w.name, w]));
-  const theme = t.color.light.filter((c) => c.value === 'theme').map((c) => `\`${c.name}\``);
+  const dark = Object.fromEntries(t.color.dark.map((c) => [c.name, c.value]));
   return [
     '# 디자인 토큰',
     '',
     '<!-- 자동 생성 파일. 수정은 design/tokens.json에서 하고 `npm run docs` 로 다시 생성한다. -->',
     '',
-    `8개 앱이 함께 쓰는 값이다. 이름은 shadcn/ui와 Tailwind CSS 4 규칙을 따른다([ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)). 앱마다 다른 값은 이름과 테마 색(${theme.join(', ')})뿐이다.`,
+    `8개 앱이 함께 쓰는 값이다. 이름은 shadcn/ui와 Tailwind CSS 4 규칙을 따른다([ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)). 앱마다 다른 것은 표시 이름뿐이고, 색은 모든 앱이 같은 흑백을 쓴다([ADR-0008](adr/0008-neutral-light-dark.md)).`,
     '',
     '## 글꼴',
     '',
@@ -131,11 +131,11 @@ export function renderTokens(t) {
     '',
     '## 색',
     '',
-    `값은 ${t.color.format}이다. \`theme\`은 앱별 테마 색에서 만든다. ${t.color.theme}`,
+    `값은 ${t.color.format}이다. ${t.color.theme}`,
     '',
-    ...table(['토큰', '값', '쓰는 곳'], t.color.light.map((c) => [`\`--${c.name}\``, c.value === 'theme' ? '앱 테마' : `\`${c.value}\``, c.use])),
+    `- ${t.color.mode}`,
     '',
-    `${t.color.dark}`,
+    ...table(['토큰', '라이트', '다크', '쓰는 곳'], t.color.light.map((c) => [`\`--${c.name}\``, `\`${c.value}\``, `\`${dark[c.name]}\``, c.use])),
     '',
     '## workout-memo 기존 토큰 대응표',
     '',

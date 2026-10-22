@@ -75,6 +75,13 @@ test('rejects reserved ports and a port scheme that would hit them for any slot'
   assert.ok(errors.some((e) => e === 'portScheme.web + slot 3 hits reserved port 8103'));
 });
 
+test('display names must be unique because they are the only difference between apps', () => {
+  const { errors } = fixture((d) => {
+    byName(d, 'health-log').displayName = byName(d, 'study-log').displayName;
+  });
+  assert.ok(errors.includes('display name "공부 기록" is used by study-log, health-log'), errors.join('\n'));
+});
+
 test('db.testName must differ from db.name', () => {
   const { errors } = fixture((d) => {
     byName(d, 'money-ledger').db.testName = 'money';

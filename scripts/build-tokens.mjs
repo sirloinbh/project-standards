@@ -7,38 +7,41 @@ import { fileURLToPath } from 'node:url';
 
 const HEADER = '/* 자동 생성 파일. 수정은 sirloinbh/project-standards의 design/tokens.json에서 하고 `npm run tokens` 로 다시 생성한다. */';
 
-// Neutral fallbacks for the six app-theme slots, used until an app sets its own theme color (#122).
-export const THEME_FALLBACK = {
-  primary: 'oklch(0.205 0 0)',
-  'primary-foreground': 'oklch(0.985 0 0)',
-  ring: 'oklch(0.708 0 0)',
-  'sidebar-primary': 'oklch(0.205 0 0)',
-  'sidebar-primary-foreground': 'oklch(0.985 0 0)',
-  'sidebar-ring': 'oklch(0.708 0 0)',
-};
-
 const byName = (list) => Object.fromEntries(list.map((x) => [x.name, x]));
 
 export function renderTokensCss(t) {
   const layout = t.spacing.layout;
+  const darkColors = (indent) => [`${indent}color-scheme: dark;`, ...t.color.dark.map((c) => `${indent}--${c.name}: ${c.value};`)];
   const lines = [
     HEADER,
-    '/* Tailwind 없이도 쓸 수 있는 CSS 변수. 앱 테마 색 6개는 앱 CSS에서 덮어쓴다. */',
+    '/* Tailwind 없이도 쓸 수 있는 CSS 변수. 모든 앱이 같은 흑백 색을 쓴다(ADR-0008). */',
+    '/* 다크 모드: <html class="dark">, 또는 클래스가 없을 때 시스템 설정(prefers-color-scheme). <html class="light">는 라이트로 고정. */',
     "@import './fonts/pretendard.css';",
     '',
     ':root {',
+    '  color-scheme: light;',
     `  --font-family-sans: ${t.font.sans};`,
     `  --font-family-mono: ${t.font.mono};`,
     `  --radius: ${t.radius.find((r) => r.name === 'base').value};`,
     `  --touch-target: ${t.responsive.touchTarget};`,
     `  --border-width: ${t.border.width};`,
-    ...t.color.light.map((c) => `  --${c.name}: ${c.value === 'theme' ? THEME_FALLBACK[c.name] : c.value};`),
+    ...t.color.light.map((c) => `  --${c.name}: ${c.value};`),
     ...t.zIndex.map((z) => `  --z-${z.name}: ${z.value};`),
     `  --duration-fast: ${t.motion.fast};`,
     `  --duration-normal: ${t.motion.normal};`,
     `  --duration-slow: ${t.motion.slow};`,
     `  --ease-standard: ${t.motion.easing};`,
     ...layout.map((l) => `  --${l.name}: ${l.mobile};`),
+    '}',
+    '',
+    '.dark {',
+    ...darkColors('  '),
+    '}',
+    '',
+    '@media (prefers-color-scheme: dark) {',
+    '  :root:not(.light) {',
+    ...darkColors('    '),
+    '  }',
     '}',
     '',
   ];
@@ -65,6 +68,18 @@ export function renderTailwindCss(t) {
     HEADER,
     '/* Tailwind CSS 4 앱용. 앱의 메인 CSS에서 tailwindcss 다음에 import한다. */',
     "@import './tokens.css';",
+    '',
+    '/* dark: 유틸리티도 tokens.css와 같은 조건: .dark 클래스, 또는 .light가 없을 때 시스템 다크 모드 */',
+    '@custom-variant dark {',
+    '  &:where(.dark, .dark *) {',
+    '    @slot;',
+    '  }',
+    '  @media (prefers-color-scheme: dark) {',
+    '    &:where(:root:not(.light), :root:not(.light) *) {',
+    '      @slot;',
+    '    }',
+    '  }',
+    '}',
     '',
     '@theme {',
     ...t.fontSize.map((s) => `  --text-${s.name}: ${s.size};\n  --text-${s.name}--line-height: ${s.lineHeight};`),

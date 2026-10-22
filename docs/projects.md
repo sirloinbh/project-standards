@@ -4,16 +4,16 @@
 
 ## 프로젝트
 
-| 슬롯 | 프로젝트 | 이름 | 분야 | 상태 | DB / 테스트 DB | 서비스 주소 | AWS 접두어 | 적용 단계 |
-|---|---|---|---|---|---|---|---|---|
-| 01 | workout-memo | 운동 기록 | 운동 | active | workout / workout_test | 미정 | 미정 | 1 |
-| 02 | study-log | 공부 기록 | 공부 | active | study / study_test | 미정 | 미정 | 2 |
-| 03 | health-log | 식단·수면·건강 기록 | 건강 | active | health / health_test | 미정 | 미정 | 2 |
-| 04 | life-journal | 감상문·일기장 | 일기 | active | journal / journal_test | 미정 | 미정 | 2 |
-| 05 | money-ledger | 가계부·자산 포트폴리오 | 가계부 | active | money / money_test | 미정 | 미정 | 2 |
-| 06 | english-study | 영어 공부 | 영어 | active | english / english_test | 미정 | 미정 | 2 |
-| 07 | plan-routine | 계획·실천·루틴·피드백 | 루틴 | active | plan / plan_test | 미정 | 미정 | 2 |
-| 08 | dev-career-portfolio | 개발 커리어 포트폴리오 | 커리어 | active | career / career_test | 미정 | 미정 | 2 |
+| 슬롯 | 프로젝트 | 이름 | 표시 이름 | 분야 | 상태 | DB / 테스트 DB | 서비스 주소 | AWS 접두어 | 적용 단계 |
+|---|---|---|---|---|---|---|---|---|---|
+| 01 | workout-memo | 운동 기록 | FORM · 나의 운동 기록 | 운동 | active | workout / workout_test | 미정 | 미정 | 1 |
+| 02 | study-log | 공부 기록 | 공부 기록 | 공부 | active | study / study_test | 미정 | 미정 | 2 |
+| 03 | health-log | 식단·수면·건강 기록 | 식단·수면·건강 기록 | 건강 | active | health / health_test | 미정 | 미정 | 2 |
+| 04 | life-journal | 감상문·일기장 | 감상문·일기장 | 일기 | active | journal / journal_test | 미정 | 미정 | 2 |
+| 05 | money-ledger | 가계부·자산 포트폴리오 | 가계부·자산 포트폴리오 | 가계부 | active | money / money_test | 미정 | 미정 | 2 |
+| 06 | english-study | 영어 공부 | 영어 공부 | 영어 | active | english / english_test | 미정 | 미정 | 2 |
+| 07 | plan-routine | 계획·실천·루틴·피드백 | 계획·실천·루틴·피드백 | 루틴 | active | plan / plan_test | 미정 | 미정 | 2 |
+| 08 | dev-career-portfolio | 개발 커리어 포트폴리오 | 개발 커리어 포트폴리오 | 커리어 | active | career / career_test | 미정 | 미정 | 2 |
 
 ## 포트
 
