@@ -17,6 +17,10 @@
 | `skeleton.tsx` | `Skeleton`, `SkeletonText`, `SkeletonCard`, `SkeletonList` | 화면 읽기 프로그램에서 숨긴다. 불러오는 영역에 `aria-busy`와 이름을 단다 |
 | `spinner.tsx` | `Spinner`, `spinnerVariants` | `size`: sm(16px), md(24px), lg(32px). `role="status"`, 기본 이름 "불러오는 중" |
 | `empty-state.tsx` | `EmptyState` | 아이콘, 제목, 설명, 다음 행동(버튼). 제목 단계는 `headingLevel` |
+| `dialog.tsx` | `Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`, `DialogClose` | 모달. [공통 레이아웃](layout.md) |
+| `sheet.tsx` | `Sheet`, `SheetTrigger`, `SheetContent`(`side`), `SheetHeader`, `SheetFooter`, `SheetTitle`, `SheetDescription`, `SheetClose` | 가장자리 패널 |
+| `drawer.tsx` | `Drawer`, `DrawerTrigger`, `DrawerContent`, `DrawerHeader`, `DrawerFooter`, `DrawerTitle`, `DrawerDescription`, `DrawerClose` | 아래 패널(vaul). 열면 포커스가 안으로 이동 |
+| `dropdown-menu.tsx` | `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioGroup`, `DropdownMenuRadioItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuGroup` | 버튼 메뉴 |
 | `../lib/utils.ts` | `cn` | 클래스 합치기 (shadcn/ui 관례) |
 
 컴포넌트마다 `*.test.tsx`(Vitest, Testing Library)가 함께 동기화되어 앱의 `npm test`에서 실행된다.
@@ -25,7 +29,7 @@
 
 컴포넌트는 레지스트리에서 `features.ui`가 `true`인 앱에만 동기화한다. 의존성이 없는 앱에 넣으면 빌드가 깨지기 때문이다. 지금은 8개 앱 모두 `false`이고, 디자인 시스템 적용(#126)에서 앱마다 다음 순서로 켠다.
 
-1. **[사용자 승인]** 의존성 설치: `radix-ui@1.7.0 sonner@2.0.8 tw-animate-css@1.4.0` (모두 [의존성 정책](dependency-policy.md) 표의 고정 버전, `--ignore-scripts`). `clsx`, `tailwind-merge`, `class-variance-authority`, `lucide-react`도 있어야 한다.
+1. **[사용자 승인]** 의존성 설치: `radix-ui@1.7.0 sonner@2.0.8 vaul@1.1.2 tw-animate-css@1.4.0` (모두 [의존성 정책](dependency-policy.md) 표의 고정 버전, `--ignore-scripts`). `clsx`, `tailwind-merge`, `class-variance-authority`, `lucide-react`도 있어야 한다.
 2. `frontend/src/index.css`에 `@import 'tw-animate-css';`를 추가한다([디자인 토큰 README](../packages/design-tokens/README.md)).
 3. 앱의 기존 `components/ui/` 파일 중 이름이 겹치는 것은 공통 컴포넌트로 바꾸거나 다른 폴더로 옮긴다. 동기화가 같은 경로를 덮어쓴다.
 4. `registry/projects.json`에서 그 앱의 `features.ui`를 `true`로 바꾸는 PR을 중앙에 연다. 다음 동기화 PR에 컴포넌트가 들어간다.

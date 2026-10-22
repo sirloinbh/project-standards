@@ -1,9 +1,14 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
-import { BrowserRouter, NavLink, Route, Routes } from 'react-router';
-import { cn } from './lib/utils';
+import { HomeIcon } from 'lucide-react';
+import { BrowserRouter, Route, Routes } from 'react-router';
+import { AppShell, type NavItem } from './components/layout/app-shell';
+import { Toaster } from './components/ui/sonner';
 
 // Every page URL lives here (docs/directory-rules.md in the central repository).
 export const pages = { overview: '/' } as const;
+
+// Main menu (LNB) items, in display order.
+const nav: NavItem[] = [{ to: pages.overview, label: '개요', icon: HomeIcon }];
 
 const queryClient = new QueryClient();
 
@@ -16,7 +21,7 @@ async function fetchHealth() {
 function Overview() {
   const health = useQuery({ queryKey: ['health'], queryFn: fetchHealth });
   return (
-    <section aria-labelledby="overview-title">
+    <section aria-labelledby="overview-title" className="flex flex-col gap-2">
       <h1 id="overview-title">개요</h1>
       <p className="text-body text-muted-foreground">{{project.summary}}</p>
       <p role="status" className="text-caption">
@@ -30,21 +35,12 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <header className="border-b border-border p-4">
-          <nav aria-label="주 메뉴">
-            <NavLink
-              to={pages.overview}
-              className={({ isActive }) => cn('font-semibold', isActive && 'underline')}
-            >
-              {{project.displayName}}
-            </NavLink>
-          </nav>
-        </header>
-        <main className="p-4">
+        <AppShell appName="{{project.displayName}}" nav={nav}>
           <Routes>
             <Route path={pages.overview} element={<Overview />} />
           </Routes>
-        </main>
+        </AppShell>
+        <Toaster />
       </BrowserRouter>
     </QueryClientProvider>
   );
