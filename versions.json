@@ -1,0 +1,24 @@
+{
+  "$schema": "./versions.schema.json",
+  "node": "24.21.0",
+  "npm": "11.19.0",
+  "postgres": "17",
+  "terraform": { "required": ">= 1.6.0", "cli": null },
+  "images": {
+    "node": "node:24.21.0-alpine",
+    "nginx": "nginx:1.27-alpine",
+    "postgres": "postgres:17-alpine"
+  },
+  "actions": {
+    "checkout": { "repo": "actions/checkout", "version": "v4.4.0", "sha": "11d5960a326750d5838078e36cf38b85af677262" },
+    "setupNode": { "repo": "actions/setup-node", "version": "v4.4.0", "sha": "49933ea5288caeca8642d1e84afbd3f7d6820020" },
+    "uploadArtifact": { "repo": "actions/upload-artifact", "version": "v4.6.2", "sha": "ea165f8d65b6e75b540449e92b4886f43607fa02" },
+    "setupTerraform": { "repo": "hashicorp/setup-terraform", "version": "v3.1.2", "sha": "b9cd54a3c349d3f38e8881555d616ced269862dd" }
+  },
+  "packages": {
+    "@sirloinbh/eslint-config": null,
+    "@sirloinbh/prettier-config": null,
+    "@sirloinbh/tsconfig": null,
+    "@sirloinbh/design-tokens": null
+  }
+}

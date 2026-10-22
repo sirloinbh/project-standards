@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "도구 버전 원본",
+  "description": "템플릿에 주입하는 도구 버전. 범위 버전(^, ~)은 쓰지 않는다. 외부 Action은 커밋 SHA로 고정한다.",
+  "type": "object",
+  "required": ["node", "npm", "postgres", "terraform", "images", "actions", "packages"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "node": { "$ref": "#/$defs/exact" },
+    "npm": { "$ref": "#/$defs/exact" },
+    "postgres": { "type": "string", "pattern": "^\\d+$", "description": "메이저 버전" },
+    "terraform": {
+      "type": "object",
+      "required": ["required", "cli"],
+      "additionalProperties": false,
+      "properties": {
+        "required": { "type": "string", "minLength": 1, "description": "versions.tf의 required_version" },
+        "cli": { "type": ["string", "null"], "pattern": "^\\d+\\.\\d+\\.\\d+$", "description": "CI에서 설치할 정확한 버전. 미정이면 null" }
+      }
+    },
+    "images": {
+      "type": "object",
+      "required": ["node", "nginx", "postgres"],
+      "additionalProperties": false,
+      "properties": {
+        "node": { "$ref": "#/$defs/image" },
+        "nginx": { "$ref": "#/$defs/image" },
+        "postgres": { "$ref": "#/$defs/image" }
+      }
+    },
+    "actions": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["repo", "version", "sha"],
+        "additionalProperties": false,
+        "properties": {
+          "repo": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+          "version": { "type": "string", "pattern": "^v\\d+\\.\\d+\\.\\d+$" },
+          "sha": { "type": "string", "pattern": "^[0-9a-f]{40}$" }
+        }
+      }
+    },
+    "packages": {
+      "type": "object",
+      "description": "A안 패키지의 배포 버전. 아직 배포 전이면 null",
+      "additionalProperties": { "type": ["string", "null"], "pattern": "^\\d+\\.\\d+\\.\\d+$" }
+    }
+  },
+  "$defs": {
+    "exact": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "image": { "type": "string", "pattern": "^[a-z0-9./-]+:[A-Za-z0-9._-]+$" }
+  }
+}

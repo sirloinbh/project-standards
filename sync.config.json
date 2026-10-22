@@ -1,0 +1,29 @@
+{
+  "$schema": "./sync.config.schema.json",
+  "maxRollout": 0,
+  "profiles": {
+    "app": {
+      "templates": ["common", "app"],
+      "packages": ["@sirloinbh/eslint-config", "@sirloinbh/prettier-config", "@sirloinbh/tsconfig", "@sirloinbh/design-tokens"],
+      "ci": "reusable-app-ci.yml",
+      "neverTouch": []
+    },
+    "infra": {
+      "templates": ["common", "infra"],
+      "packages": [],
+      "ci": "reusable-infra-ci.yml",
+      "neverTouch": ["**/*.tf", "**/*.tfvars", "**/*.tfvars.*", "**/*.sh", ".terraform.lock.hcl"]
+    }
+  },
+  "targets": [
+    { "repo": "sirloinbh/workout-memo", "profile": "app", "project": "workout-memo", "rollout": 1 },
+    { "repo": "sirloinbh/study-log", "profile": "app", "project": "study-log", "rollout": 2 },
+    { "repo": "sirloinbh/health-log", "profile": "app", "project": "health-log", "rollout": 2 },
+    { "repo": "sirloinbh/life-journal", "profile": "app", "project": "life-journal", "rollout": 2 },
+    { "repo": "sirloinbh/money-ledger", "profile": "app", "project": "money-ledger", "rollout": 2 },
+    { "repo": "sirloinbh/english-study", "profile": "app", "project": "english-study", "rollout": 2 },
+    { "repo": "sirloinbh/plan-routine", "profile": "app", "project": "plan-routine", "rollout": 2 },
+    { "repo": "sirloinbh/dev-career-portfolio", "profile": "app", "project": "dev-career-portfolio", "rollout": 2 },
+    { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null, "rollout": 3 }
+  ]
+}

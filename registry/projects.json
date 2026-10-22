@@ -1,0 +1,341 @@
+{
+  "$schema": "./projects.schema.json",
+  "projects": [
+    {
+      "slot": 1,
+      "status": "active",
+      "name": "workout-memo",
+      "domain": "운동",
+      "repos": {
+        "umbrella": "workout-memo",
+        "frontend": "workout-memo-frontend",
+        "backend": "workout-memo-backend",
+        "db": "workout-memo-db"
+      },
+      "ports": {
+        "web": 8101,
+        "api": 3101,
+        "e2eApi": 3201,
+        "vite": 5201,
+        "e2eWeb": 5301,
+        "db": 15401
+      },
+      "db": {
+        "name": "workout",
+        "testName": "workout_test"
+      },
+      "service": {
+        "domain": null,
+        "subdomain": null
+      },
+      "aws": {
+        "prefix": null
+      },
+      "features": {
+        "e2e": true,
+        "openapi": true,
+        "contract": true
+      },
+      "skills": [
+        "workout-foundation",
+        "workout-implementation",
+        "workout-testing"
+      ],
+      "allowedDifferences": []
+    },
+    {
+      "slot": 2,
+      "status": "active",
+      "name": "study-log",
+      "domain": "공부",
+      "repos": {
+        "umbrella": "study-log",
+        "frontend": "study-log-frontend",
+        "backend": "study-log-backend",
+        "db": "study-log-db"
+      },
+      "ports": {
+        "web": 8102,
+        "api": 3102,
+        "e2eApi": 3202,
+        "vite": 5202,
+        "e2eWeb": 5302,
+        "db": 15402
+      },
+      "db": {
+        "name": "study",
+        "testName": "study_test"
+      },
+      "service": {
+        "domain": null,
+        "subdomain": null
+      },
+      "aws": {
+        "prefix": null
+      },
+      "features": {
+        "e2e": false,
+        "openapi": false,
+        "contract": false
+      },
+      "skills": [
+        "study-log-foundation",
+        "study-log-implementation",
+        "study-log-testing"
+      ],
+      "allowedDifferences": []
+    },
+    {
+      "slot": 3,
+      "status": "active",
+      "name": "health-log",
+      "domain": "건강",
+      "repos": {
+        "umbrella": "health-log",
+        "frontend": "health-log-frontend",
+        "backend": "health-log-backend",
+        "db": "health-log-db"
+      },
+      "ports": {
+        "web": 8103,
+        "api": 3103,
+        "e2eApi": 3203,
+        "vite": 5203,
+        "e2eWeb": 5303,
+        "db": 15403
+      },
+      "db": {
+        "name": "health",
+        "testName": "health_test"
+      },
+      "service": {
+        "domain": null,
+        "subdomain": null
+      },
+      "aws": {
+        "prefix": null
+      },
+      "features": {
+        "e2e": false,
+        "openapi": false,
+        "contract": false
+      },
+      "skills": [
+        "health-log-foundation",
+        "health-log-implementation",
+        "health-log-testing"
+      ],
+      "allowedDifferences": []
+    },
+    {
+      "slot": 4,
+      "status": "active",
+      "name": "life-journal",
+      "domain": "일기",
+      "repos": {
+        "umbrella": "life-journal",
+        "frontend": "life-journal-frontend",
+        "backend": "life-journal-backend",
+        "db": "life-journal-db"
+      },
+      "ports": {
+        "web": 8104,
+        "api": 3104,
+        "e2eApi": 3204,
+        "vite": 5204,
+        "e2eWeb": 5304,
+        "db": 15404
+      },
+      "db": {
+        "name": "journal",
+        "testName": "journal_test"
+      },
+      "service": {
+        "domain": null,
+        "subdomain": null
+      },
+      "aws": {
+        "prefix": null
+      },
+      "features": {
+        "e2e": false,
+        "openapi": false,
+        "contract": false
+      },
+      "skills": [
+        "life-journal-foundation",
+        "life-journal-implementation",
+        "life-journal-testing"
+      ],
+      "allowedDifferences": []
+    },
+    {
+      "slot": 5,
+      "status": "active",
+      "name": "money-ledger",
+      "domain": "가계부",
+      "repos": {
+        "umbrella": "money-ledger",
+        "frontend": "money-ledger-frontend",
+        "backend": "money-ledger-backend",
+        "db": "money-ledger-db"
+      },
+      "ports": {
+        "web": 8105,
+        "api": 3105,
+        "e2eApi": 3205,
+        "vite": 5205,
+        "e2eWeb": 5305,
+        "db": 15405
+      },
+      "db": {
+        "name": "money",
+        "testName": "money_test"
+      },
+      "service": {
+        "domain": null,
+        "subdomain": null
+      },
+      "aws": {
+        "prefix": null
+      },
+      "features": {
+        "e2e": false,
+        "openapi": false,
+        "contract": false
+      },
+      "skills": [
+        "money-ledger-foundation",
+        "money-ledger-implementation",
+        "money-ledger-testing"
+      ],
+      "allowedDifferences": []
+    },
+    {
+      "slot": 6,
+      "status": "active",
+      "name": "english-study",
+      "domain": "영어",
+      "repos": {
+        "umbrella": "english-study",
+        "frontend": "english-study-frontend",
+        "backend": "english-study-backend",
+        "db": "english-study-db"
+      },
+      "ports": {
+        "web": 8106,
+        "api": 3106,
+        "e2eApi": 3206,
+        "vite": 5206,
+        "e2eWeb": 5306,
+        "db": 15406
+      },
+      "db": {
+        "name": "english",
+        "testName": "english_test"
+      },
+      "service": {
+        "domain": null,
+        "subdomain": null
+      },
+      "aws": {
+        "prefix": null
+      },
+      "features": {
+        "e2e": false,
+        "openapi": false,
+        "contract": false
+      },
+      "skills": [
+        "english-study-foundation",
+        "english-study-implementation",
+        "english-study-testing"
+      ],
+      "allowedDifferences": []
+    },
+    {
+      "slot": 7,
+      "status": "active",
+      "name": "plan-routine",
+      "domain": "루틴",
+      "repos": {
+        "umbrella": "plan-routine",
+        "frontend": "plan-routine-frontend",
+        "backend": "plan-routine-backend",
+        "db": "plan-routine-db"
+      },
+      "ports": {
+        "web": 8107,
+        "api": 3107,
+        "e2eApi": 3207,
+        "vite": 5207,
+        "e2eWeb": 5307,
+        "db": 15407
+      },
+      "db": {
+        "name": "plan",
+        "testName": "plan_test"
+      },
+      "service": {
+        "domain": null,
+        "subdomain": null
+      },
+      "aws": {
+        "prefix": null
+      },
+      "features": {
+        "e2e": false,
+        "openapi": false,
+        "contract": false
+      },
+      "skills": [
+        "plan-routine-foundation",
+        "plan-routine-implementation",
+        "plan-routine-testing"
+      ],
+      "allowedDifferences": []
+    },
+    {
+      "slot": 8,
+      "status": "active",
+      "name": "dev-career-portfolio",
+      "domain": "커리어",
+      "repos": {
+        "umbrella": "dev-career-portfolio",
+        "frontend": "dev-career-portfolio-frontend",
+        "backend": "dev-career-portfolio-backend",
+        "db": "dev-career-portfolio-db"
+      },
+      "ports": {
+        "web": 8108,
+        "api": 3108,
+        "e2eApi": 3208,
+        "vite": 5208,
+        "e2eWeb": 5308,
+        "db": 15408
+      },
+      "db": {
+        "name": "career",
+        "testName": "career_test"
+      },
+      "service": {
+        "domain": null,
+        "subdomain": null
+      },
+      "aws": {
+        "prefix": null
+      },
+      "features": {
+        "e2e": false,
+        "openapi": false,
+        "contract": false
+      },
+      "skills": [
+        "dev-career-portfolio-foundation",
+        "dev-career-portfolio-implementation",
+        "dev-career-portfolio-testing"
+      ],
+      "allowedDifferences": []
+    }
+  ]
+}

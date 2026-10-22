@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "프로젝트 고정값 레지스트리",
+  "description": "프로젝트마다 다르고 서로 겹치면 안 되는 값. 동기화가 덮어쓰지 않는다. 포트는 registry/platform.json의 portScheme 공식(기준값 + slot)을 따른다.",
+  "type": "object",
+  "required": ["projects"],
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "projects": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/project" } }
+  },
+  "$defs": {
+    "slug": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
+    "port": { "type": "integer", "minimum": 1024, "maximum": 65535 },
+    "dbName": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+    "nullableHost": {
+      "description": "미정이면 null. 정해지면 값만 채운다.",
+      "type": ["string", "null"],
+      "pattern": "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$"
+    },
+    "project": {
+      "type": "object",
+      "required": ["slot", "status", "name", "domain", "repos", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
+      "additionalProperties": false,
+      "properties": {
+        "slot": { "type": "integer", "minimum": 1, "maximum": 99, "description": "은퇴해도 다시 배정하지 않는다" },
+        "status": { "enum": ["active", "retired"] },
+        "name": { "$ref": "#/$defs/slug" },
+        "domain": { "type": "string", "minLength": 1, "description": "서비스 분야 설명 (예: 운동)" },
+        "repos": {
+          "type": "object",
+          "required": ["umbrella", "frontend", "backend", "db"],
+          "additionalProperties": false,
+          "properties": {
+            "umbrella": { "$ref": "#/$defs/slug" },
+            "frontend": { "$ref": "#/$defs/slug" },
+            "backend": { "$ref": "#/$defs/slug" },
+            "db": { "$ref": "#/$defs/slug" }
+          }
+        },
+        "ports": {
+          "type": "object",
+          "required": ["web", "api", "e2eApi", "vite", "e2eWeb", "db"],
+          "additionalProperties": false,
+          "properties": {
+            "web": { "$ref": "#/$defs/port" },
+            "api": { "$ref": "#/$defs/port" },
+            "e2eApi": { "$ref": "#/$defs/port" },
+            "vite": { "$ref": "#/$defs/port" },
+            "e2eWeb": { "$ref": "#/$defs/port" },
+            "db": { "$ref": "#/$defs/port" }
+          }
+        },
+        "db": {
+          "type": "object",
+          "required": ["name", "testName"],
+          "additionalProperties": false,
+          "properties": { "name": { "$ref": "#/$defs/dbName" }, "testName": { "$ref": "#/$defs/dbName" } }
+        },
+        "service": {
+          "type": "object",
+          "required": ["domain", "subdomain"],
+          "additionalProperties": false,
+          "properties": { "domain": { "$ref": "#/$defs/nullableHost" }, "subdomain": { "$ref": "#/$defs/nullableHost" } }
+        },
+        "aws": {
+          "type": "object",
+          "required": ["prefix"],
+          "additionalProperties": false,
+          "properties": { "prefix": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$", "description": "AWS 리소스 이름 접두어. 미정이면 null" } }
+        },
+        "features": {
+          "type": "object",
+          "required": ["e2e", "openapi", "contract"],
+          "additionalProperties": false,
+          "properties": { "e2e": { "type": "boolean" }, "openapi": { "type": "boolean" }, "contract": { "type": "boolean" } }
+        },
+        "skills": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/slug" }, "description": "프로젝트 고유 스킬. 동기화에서 제외한다" },
+        "allowedDifferences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["path", "reason", "until"],
+            "additionalProperties": false,
+            "properties": {
+              "path": { "type": "string", "minLength": 1 },
+              "reason": { "type": "string", "minLength": 5 },
+              "until": { "type": ["string", "null"], "format": "date" }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "project-standards",
+  "private": true,
+  "type": "module",
+  "description": "sirloinbh 앱 포트폴리오 공통 표준. 외부 npm 의존성 없이 Node 내장 모듈만 사용한다.",
+  "packageManager": "npm@11.19.0",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test scripts/test/*.test.mjs",
+    "registry:check": "node scripts/registry-check.mjs",
+    "docs": "node scripts/gen-docs.mjs",
+    "docs:check": "node scripts/gen-docs.mjs --check",
+    "check": "npm run test && npm run registry:check && npm run docs:check"
+  }
+}
