@@ -7,7 +7,7 @@
 - 하위 리포에서 중앙 관리 파일을 고치면 CI가 실패하고 이 리포로 PR을 열도록 안내한다.
 - 포트·도메인처럼 프로젝트마다 달라야 하는 값은 레지스트리로 따로 모아 한눈에 확인한다.
 
-설계는 [docs/design.md](docs/design.md), 결정 근거는 [docs/adr/](docs/adr/), 프로젝트별 값은 [docs/projects.md](docs/projects.md)에 있다.
+설계는 [docs/design.md](docs/design.md), 결정 근거는 [docs/adr/](docs/adr/), 프로젝트별 값은 [docs/projects.md](docs/projects.md)에 있다. 직접 하실 일은 [docs/user-steps.md](docs/user-steps.md)에 모았다.
 
 규칙 문서: [기술 스택](docs/stack.md) · [의존성 정책](docs/dependency-policy.md) · [Git 컨벤션](docs/git-conventions.md) · [디렉토리·라우팅](docs/directory-rules.md) · [디자인 시스템](docs/design-system.md) · [디자인 토큰](docs/design-tokens.md) · [환경변수](docs/env-conventions.md) · [운영 문서 템플릿](docs/runbooks/README.md)
 
