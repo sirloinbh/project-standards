@@ -40,3 +40,11 @@ Codex에도 `PreToolUse` 훅을 넣고, Claude Code 훅 스크립트(`.claude/ho
 - `UPDATE_SNAPSHOT=1 npm test`: 스냅샷 변경은 9개 리포의 `full .codex/hooks.json` 추가뿐이다.
 - `npm run check` 통과(테스트 386개 중 385개 통과, Codex CLI 실제 판정 1개는 CLI가 없어 건너뜀).
 - **하지 못한 것:** 이 PC에 Codex CLI가 없어 실제 Codex 세션에서의 훅 신뢰(`/hooks`)와 차단, #178의 `codex execpolicy check` 판정을 확인하지 못했다. 사용자 PC에서 확인한다(PR "병합 전에 확인해 주세요").
+
+## 추가 검증 (2026-10-23)
+
+중앙 PC에 Codex CLI 0.144.4가 설치되어 PR에서 하지 못한 `codex execpolicy check` 판정을 실행했다.
+
+- `node --test scripts/test/agent-guardrails.test.mjs scripts/test/package-install-hook.test.mjs`: 13개 모두 통과, 건너뜀 0개. Codex CLI 판정 테스트가 처음으로 실제 실행됐다.
+- 수동 판정(`templates/common/.codex/rules/package-installs.rules`): `npm u react`, `npm ic`, `npm sit`, `npm install-clean`, `npm unlink x`, `npm rb`, `npm ddp`, `npm innit`, `npm upd`, `npm uni x`, `npm installTest`는 `forbidden`. `npm run check`, `npm ls`, `npm audit`는 규칙에 걸리지 않음. `npm --silent install`도 걸리지 않음(규칙의 한계, 훅이 보강).
+- **남은 것:** 실제 Codex 세션에서 `/hooks`로 훅을 신뢰한 뒤 `npm --silent install --help`가 막히는지 확인하는 일은 대화형 세션이 필요해 사용자가 한다.
