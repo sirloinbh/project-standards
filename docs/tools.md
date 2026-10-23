@@ -112,6 +112,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File $agents -Root <리포 폴더
 
 **자동 병합은 기본으로 켜져 있다(2026-10-22 사용자 결정).** main 병합이 곧 운영 배포인 리포처럼 사람이 병합을 확인해야 하는 리포는 `.agents.json`에 `"autoMerge": false`를 넣어 끈다.
 
+#### 리포별 자동 병합
+
+기본값 `true`를 유지하고, 자동 병합을 허용하지 않은 리포만 `false`로 끈다(2026-10-23 사용자 결정, #184). 중앙 `AGENTS.md`의 "하위 리포 PR은 사용자에게 먼저 확인" 규칙은 대화형 에이전트에 적용되고, 워커가 여는 PR은 이 표를 따른다. 앱 `AGENTS.md`도 같은 예외를 적는다.
+
+| 리포 | `autoMerge` | 근거 |
+|---|---|---|
+| `workout-memo` | `true` (기본값, 파일에 적지 않음) | #128에서 사용자가 자동 병합을 허용 |
+| `study-log`, `health-log`, `life-journal`, `money-ledger`, `english-study`, `plan-routine`, `dev-career-portfolio` | `false` | main 병합이 곧 운영 배포이고 자동 병합을 허용한 결정이 없다 |
+| `project-standards`, `shared-aws-infrastructure` | 해당 없음 | 레지스트리 `repos`에 없어 워커가 실행되지 않는다. `project-standards`는 중앙 `AGENTS.md`대로 에이전트가 병합한다 |
+
+- **파일이 없으면 자동 병합된다.** 그래서 `false`인 리포는 워커를 도입하는 PR에 `.agents.json`(`{"autoMerge": false}` 이상)을 함께 넣고, 도입 전에 `agents.ps1 -Root <리포> doctor`의 `autoMerge false`를 확인한다.
+- **동기화로 배포하지 않는다.** `.agents.json`은 `checkScript`·`database.tables`처럼 리포마다 다른 값을 담고, 동기화의 JSON 필드 관리(`fields`)는 없는 파일을 만들지 않아 "파일이 없으면 자동 병합" 문제를 풀지 못한다. 리포별 값은 레지스트리가 아니라 이 표가 원본이다.
+- 표의 값을 바꾸려면 사용자 결정을 이슈에 기록하고 이 표와 해당 리포의 `.agents.json`을 함께 고친다.
+
 **DB 사전검사가 없는 리포의 예.** 검사 스크립트 이름만 바꾸고, main 병합이 곧 배포라서 자동 병합을 끈다. 모두 기본값이면 파일을 만들지 않아도 된다.
 
 ```json
