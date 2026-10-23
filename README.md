@@ -13,7 +13,7 @@
 
 ## 현재 상태
 
-중앙 골격을 만드는 단계다. `sync.config.json`의 `maxRollout`이 `0`이라 아직 어느 하위 리포에도 동기화 PR이 열리지 않는다. 진행 순서는 GitHub 이슈의 우선순위 라벨과 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 규칙을 따른다.
+중앙 골격은 만들어졌고, 사용자 단계([docs/user-steps.md](docs/user-steps.md))가 끝나면 workout-memo부터 적용한다. `sync.config.json`의 `maxRollout`이 `0`이라 아직 어느 하위 리포에도 동기화 PR이 열리지 않는다. 진행 순서는 GitHub 이슈의 우선순위 라벨과 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 규칙을 따른다.
 
 ## 시작하기
 
