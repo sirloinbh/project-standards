@@ -2,17 +2,28 @@
 
 에이전트가 대신할 수 없는 단계(비밀값, 원격 계정 설정, 로컬에만 있는 파일)를 모았습니다. 끝낸 항목은 이슈 번호와 함께 채팅으로 알려 주세요. **개인키·토큰 같은 비밀값은 채팅이나 문서에 붙여 넣지 마세요.**
 
-| 순서 | 할 일 | 시간 | 이슈 |
-|---|---|---|---|
-| 0 | 로컬 `.env` 포트 바꾸기 | 5분 | (#95 후속) |
-| 1 | 개인 계정 도구를 새 위치로 설치 | 5분 | #21 |
-| 2 | shared-aws-infrastructure 최신화와 Terraform state 이동 | 15분 | #92 |
-| 3 | GitHub App 만들기와 Actions 공유 설정 | 10분 | #86 |
-| 4 | 공유 패키지 첫 배포와 접근 권한 | 10분 | #88 |
-| 5 | 리포 설정 맞추기 (Dependabot, 병합 방식, workout-memo 보안) | 10분 | #22 |
-| 6 | (3을 이미 했다면) GitHub App에 Issues 쓰기 권한 추가 | 3분 | #40 |
+| 순서 | 할 일 | 시간 | 이슈 | 상태 (2026-10-23 확인) |
+|---|---|---|---|---|
+| 0 | 로컬 `.env` 포트 바꾸기 | 5분 | (#95 후속) | 확인 안 함 (로컬 파일) |
+| 1 | 개인 계정 도구를 새 위치로 설치 | 5분 | #21 | 안 함: `%LOCALAPPDATA%\sirloinbh-tools` 없음 |
+| 2 | shared-aws-infrastructure 최신화와 Terraform state 이동 | 15분 | #92 | 안 함: 인프라 리포 main이 `b4cafc1`(3커밋 뒤, fast-forward 가능), state가 workout-memo에 있음, 백업 폴더 없음 |
+| 3 | GitHub App 만들기와 Actions 공유 설정 | 10분 | #86 | 안 함: `SYNC_APP_ID` 변수·`SYNC_APP_PRIVATE_KEY` secret 없음 |
+| 4 | 공유 패키지 첫 배포와 접근 권한 | 10분 | #88 | 안 함: 패키지 태그·Release 없음 |
+| 5 | 리포 설정 맞추기 (Dependabot, 병합 방식, workout-memo 보안) | 10분 | #22 | 안 함: Dependabot 알림 꺼짐 |
+| 6 | (3을 이미 했다면) GitHub App에 Issues 쓰기 권한 추가 | 3분 | #40 | 3을 아직 안 해서 건너뜀 |
+| 7 | Codex 훅 신뢰와 차단 확인 | 3분 | #180 | 안 함 (Codex CLI 0.144.4 설치됨, 규칙 판정은 PR #185로 기록) |
+| 8 | 작업 PC 점검 (Claude Code 버전, 에이전트 실행기) | 3분 | #183 | 일부: Claude Code 2.1.309 확인. 실행기는 1 이후 |
 
-1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0은 순서와 상관없이 언제든 하면 됩니다.
+**권장 순서는 1 → 2 → 3 → 4입니다.** 2-2에서 1로 설치한 새 도구 경로를 쓰기 때문에 1을 먼저 합니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
+
+단계를 끝내면 "#21 끝"처럼 알려 주세요. 에이전트가 이어서 하는 일:
+
+| 끝난 단계 | 에이전트가 이어서 하는 일 |
+|---|---|
+| 1 (#21) | 8(#183) 확인 안내 |
+| 2 (#92) | #93 인프라 리포 정비 → #94 workout-memo에서 `infrastructure/` 제거 → #36 배포 템플릿 |
+| 4 (#88) | `versions.json`에 패키지 버전 1.0.0을 넣는 PR |
+| 1–4 모두 | #97 workout-memo 첫 동기화 PR (병합 전에 4-3 서버 토큰 필요) |
 
 ## 0. 로컬 `.env` 포트 바꾸기
 
@@ -54,7 +65,7 @@ git subtree split --prefix=infrastructure origin/main
 git push infrastructure 684542aaf1705c8e6835b7e126a47edf31f53e5c:refs/heads/main
 ```
 
-일반 push라서 이력이 갈라져 있으면 거부됩니다. 2026-10-22에 확인했을 때는 fast-forward로 들어갈 수 있는 상태였습니다.
+일반 push라서 이력이 갈라져 있으면 거부됩니다. 2026-10-23에 다시 확인했을 때도 인프라 리포 main(`b4cafc1`)이 `684542a`의 조상이라 fast-forward로 들어갈 수 있는 상태였습니다.
 
 ### 2-2. 새 작업 폴더 만들기 (clone과 개인 계정 인증 설정)
 
@@ -82,7 +93,7 @@ clone할 때 회사 계정 인증 창이 뜨면 취소하고, `ghp repo clone si
 
 ```powershell
 $src = "C:\Users\byunghk\Documents\GitHub\workout-memo\infrastructure"
-$bak = "$HOME\Backups\terraform-20261022"
+$bak = "$HOME\Backups\terraform-$(Get-Date -Format yyyyMMdd)"
 New-Item -ItemType Directory -Force $bak | Out-Null
 Copy-Item "$src\terraform.tfstate*", "$src\terraform.tfvars" $bak
 Get-ChildItem $bak
@@ -200,3 +211,26 @@ GitHub 프로필 → Packages에서 패키지 4개 각각에 대해 Package sett
 4. 다음 `sync` 실행 로그에 리포마다 `라벨 생성 n, 갱신 n, 그대로 n` 줄이 나오면 성공입니다. `라벨 실패 — ... 403`이 나오면 3을 다시 확인하세요.
 
 동기화는 라벨을 만들거나 고치기만 하고 지우지 않습니다. 각 리포에만 있는 라벨과 GitHub 기본 라벨(`bug` 등)은 그대로 남습니다.
+
+## 7. Codex 훅 신뢰와 차단 확인 (#180)
+
+**왜 필요한가요:** Codex는 프로젝트의 훅(`.codex/hooks.json`)을 사용자가 `/hooks`에서 신뢰해야 실행합니다. 신뢰하지 않으면 규칙(`.codex/rules/`)만 남고, 규칙은 `npm --silent install`처럼 옵션을 앞에 둔 형태를 막지 못합니다([agent-guardrails.md](agent-guardrails.md)). 대화형 세션이 필요해서 직접 하셔야 합니다.
+
+1. project-standards 폴더에서 Codex를 엽니다. 프로젝트 `.codex/` 폴더를 신뢰할지 물으면 신뢰합니다.
+2. `/hooks`를 입력하고 "패키지 설치 명령인지 확인" 훅을 검토한 뒤 신뢰합니다.
+3. Codex에게 `npm --silent install --help`를 실행해 달라고 합니다. "패키지 설치·삭제·실행 명령이라 막았습니다"가 나오면 성공입니다.
+4. 같은 방식으로 `npm ls`는 실행되는지 확인합니다.
+
+결과를 #180에 댓글로 남기거나 알려 주시면 이슈를 닫습니다. `.codex/hooks.json`의 훅이 바뀌면 다시 신뢰해야 합니다.
+
+## 8. 작업 PC 점검 (#183)
+
+1을 끝낸 직후에 합니다. 작업 PC가 여러 대면 PC마다 합니다.
+
+```powershell
+claude --version    # 2.1.295 이상이어야 함 (낮으면 업데이트)
+Test-Path "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1"    # True
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1" -Root C:\Users\byunghk\Documents\GitHub\project-standards status
+```
+
+그다음 새로 시작한 Claude Code 세션에서 `npm --silent install --help`가 막히고 `npm ls`는 실행되는지 확인합니다. Claude Code가 2.1.295보다 낮으면 차단 훅이 실패했을 때 명령이 그대로 실행됩니다. 결과(PC 이름, 버전)를 #183에 댓글로 남겨 주세요.
