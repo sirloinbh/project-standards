@@ -1,0 +1,11 @@
+[Unit]
+Description=Check origin/main of {{project.name}} for a new CI-passed commit every 2 minutes
+
+[Timer]
+# The boot delay grows by 10 seconds per registry slot (slot {{project.slot}}) so apps do not all check at once (ADR-0009).
+OnBootSec=3min {{project.slot}}0s
+OnUnitActiveSec=2min
+AccuracySec=15s
+
+[Install]
+WantedBy=timers.target

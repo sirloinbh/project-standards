@@ -23,6 +23,8 @@ test('picks a comment style per file type', () => {
   assert.equal(commentStyle('.editorconfig'), 'hash');
   assert.equal(commentStyle('frontend/Dockerfile'), 'hash');
   assert.equal(commentStyle('.github/workflows/ci.yml'), 'hash');
+  assert.equal(commentStyle('deploy/autodeploy.service'), 'hash');
+  assert.equal(commentStyle('deploy/autodeploy.timer'), 'hash');
   assert.equal(commentStyle('scripts/claude-skills.mjs'), 'slash');
   assert.equal(commentStyle('AGENTS.md'), 'html');
   assert.equal(commentStyle('src/theme.css'), 'css');
