@@ -18,7 +18,7 @@
 2. 이슈 번호를 포함한 브랜치를 만든다: `<type>/<issue-number>-<slug>`.
 3. 구현·테스트·`docs/changes/<issue-number>-<slug>.md` 기록을 함께 커밋한다.
 4. 커밋 전과 PR 생성·갱신 전에 관련 테스트를 실행하고 결과를 docs와 PR에 기록한다.
-5. **이 리포의 PR은 에이전트가 병합한다.** `npm run check`가 통과하고 PR 본문을 템플릿대로 쓴 뒤 merge commit으로 병합하고(`pr merge --merge --delete-branch`), std-backlog 순서에 따라 다음 이슈를 진행한다. 사용자가 2026-10-22에 정한 규칙이다(#128).
+5. **이 리포의 PR은 에이전트가 병합한다.** `npm run check`가 통과하고 PR 본문을 템플릿대로 쓴 뒤 merge commit으로 병합하고(`pr merge --merge`. 로컬 브랜치는 사용자가 Fork 앱에서 정리하므로 `--delete-branch`를 쓰지 않는다), std-backlog 순서에 따라 다음 이슈를 진행한다. 사용자가 2026-10-22에 정한 규칙이다(#128).
    - 다음은 계속 사용자에게 먼저 확인한다: 하위 리포 PR(앱 리포 main 병합은 곧 운영 배포), `[직접]`·`needs-user` 이슈, 사전 승인 범위 밖의 패키지 설치, 이슈에 "사용자 확인"으로 적힌 결정.
    - 병합 전에 확인해 달라고 PR 본문에 적은 항목이 있으면 병합하지 않고 사용자에게 묻는다.
    - 예외: 에이전트 워커(`tools/agents`)가 하위 리포에서 여는 PR은 그 리포 `.agents.json`의 `autoMerge`를 따른다(기본 `true`, 리포별 값은 [docs/tools.md](docs/tools.md#리포별-자동-병합) 표). 표에서 `false`인 리포는 워커를 도입하는 PR에 `.agents.json`을 함께 넣는다(#184).
