@@ -140,8 +140,13 @@ git tag eslint-config/v1.0.0 origin/main
 git tag prettier-config/v1.0.0 origin/main
 git tag tsconfig/v1.0.0 origin/main
 git tag design-tokens/v1.0.0 origin/main
-git push origin eslint-config/v1.0.0 prettier-config/v1.0.0 tsconfig/v1.0.0 design-tokens/v1.0.0
+git push origin eslint-config/v1.0.0
+git push origin prettier-config/v1.0.0
+git push origin tsconfig/v1.0.0
+git push origin design-tokens/v1.0.0
 ```
+
+**태그는 한 번에 하나씩 push합니다.** GitHub는 한 번의 push에 태그가 3개보다 많으면 워크플로를 실행하지 않습니다. 2026-10-24에 4개를 한 번에 push해서 publish가 실행되지 않았습니다(#198). 이미 한꺼번에 push했다면 `git push origin --delete <태그...>`로 원격 태그를 지운 뒤 하나씩 다시 push합니다.
 
 로컬 브랜치는 Fork 앱으로 관리하므로 로컬 main을 바꾸지 않고 `origin/main`에 태그를 답니다. Fork에서 태그를 만들어 push해도 됩니다. Actions에서 publish 실행 4개가 성공하는지, Releases에 4개가 생겼는지 확인합니다. 각 Release 본문의 배포 실행 링크는 동기화가 패키지 출처를 확인하는 근거입니다.
 
