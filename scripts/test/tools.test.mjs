@@ -227,9 +227,31 @@ test('set-credential-helper points only the repository config at the chosen wrap
     // Do not trim: the first helper is intentionally an empty line.
     const helpers = execFileSync('git', ['-C', repo, 'config', '--local', '--get-all', 'credential.https://github.com.helper'], { encoding: 'utf8' }).replace(/\r?\n$/, '').split(/\r?\n/);
     assert.deepEqual(helpers[0], '');
-    assert.match(helpers[1], /^!powershell\.exe -NoProfile -ExecutionPolicy Bypass -File .*\/tools\/gh-project\.ps1 auth git-credential$/);
+    assert.match(helpers[1], /^!powershell\.exe -NoProfile -ExecutionPolicy Bypass -File ".*\/tools\/gh-project\.ps1" auth git-credential$/);
     assert.equal(helpers.length, 2, 'the old helper is replaced, not appended');
     assert.equal(execFileSync('git', ['-C', repo, 'config', '--local', 'credential.https://github.com.username'], { encoding: 'utf8' }).trim(), 'sirloinbh');
+  } finally {
+    f.cleanup();
+  }
+});
+
+test('set-credential-helper run through -File takes comma-separated repositories and defaults to its own folder', { skip: !windows }, () => {
+  // #194: docs/tools.md passed an array (split into extra positional arguments by -File) and
+  // relied on the -ToolsDir default ($PSScriptRoot is empty there in Windows PowerShell 5.1).
+  const f = fixture();
+  try {
+    const installed = join(f.dir, 'some tools folder');
+    mkdirSync(installed);
+    for (const name of ['gh-project.ps1', 'set-credential-helper.ps1']) writeFileSync(join(installed, name), readFileSync(tool(name)));
+    const repos = ['one', 'two'].map((name) => join(f.dir, name));
+    for (const repo of repos) execFileSync('git', ['init', '-q', repo]);
+    const r = powershell([join(installed, 'set-credential-helper.ps1'), '-Repository', repos.join(',')], f.env);
+    assert.equal(r.status, 0, r.stderr);
+    const wrapper = join(installed, 'gh-project.ps1').replaceAll('\\', '/');
+    for (const repo of repos) {
+      const helpers = execFileSync('git', ['-C', repo, 'config', '--local', '--get-all', 'credential.https://github.com.helper'], { encoding: 'utf8' }).replace(/\r?\n$/, '').split(/\r?\n/);
+      assert.equal(helpers[1], `!powershell.exe -NoProfile -ExecutionPolicy Bypass -File "${wrapper}" auth git-credential`, repo);
+    }
   } finally {
     f.cleanup();
   }
@@ -263,5 +285,5 @@ test('tools contain no project-specific install path', () => {
 
 test('PowerShell tools stay ASCII-only for Windows PowerShell 5.1', () => {
   // A BOM-less .ps1 is read in the ANSI code page, so non-ASCII text would be garbled.
-  for (const name of ['agents.ps1', 'install.ps1']) assert.equal([...readFileSync(tool(name), 'utf8')].find((c) => c.codePointAt(0) > 0x7f), undefined, name);
+  for (const name of ['agents.ps1', 'install.ps1', 'set-credential-helper.ps1']) assert.equal([...readFileSync(tool(name), 'utf8')].find((c) => c.codePointAt(0) > 0x7f), undefined, name);
 });
