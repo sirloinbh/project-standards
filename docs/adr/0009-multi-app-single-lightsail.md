@@ -29,3 +29,12 @@
 - 서버가 계속 빌드하므로 공유 패키지를 받으려면 서버 `.env`에 `NODE_AUTH_TOKEN`(`read:packages`)이 필요하다(design.md 4.3). ECR 같은 이미지 레지스트리 비용은 없다.
 - Lightsail은 사양을 제자리에서 바꿀 수 없다. 2 GB로 옮길 때는 스냅샷에서 새 인스턴스를 만들고 고정 IP를 다시 붙인다. 이 단계는 사용자가 한다.
 - 배포 스크립트 템플릿(`templates/app/deploy/`)은 #94 이후에 이 결정대로 만든다.
+
+## 보충 (2026-10-24, #36)
+
+`templates/app/deploy/`를 만들면서 다음을 정했다.
+
+- **timer 이름은 `<DB 이름>-autodeploy`다**(예: `workout-autodeploy`, `study-autodeploy`). 결정 표의 "`<앱 이름>-autodeploy`"와 다르다. 운영 중인 workout-memo 서버의 timer 이름을 바꾸지 않고 동기화하려고 이렇게 정했다. DB 이름도 레지스트리에서 앱마다 겹치지 않는다.
+- **timer 시작 시각:** 부팅 후 `3min <슬롯>0s`에 시작하고, 이후 2분마다 확인한다. 공용 잠금이 이미 잡혀 있으면 그 회차는 건너뛴다.
+- **health 확인 포트:** 서버 `.env`의 `WEB_PORT`를 따르고, 값이 없으면 레지스트리 `ports.web`을 쓴다. workout-memo 서버는 지금 `WEB_PORT=80`이라 동작이 바뀌지 않는다. 8101로 옮기는 것은 방화벽 변경과 함께 따로 한다.
+- **배포 전 덤프:** 서버에 `/usr/local/bin/<DB 이름>-backup`이 있으면 그 명령을 쓴다(workout-memo). 없으면 앱 폴더의 `backups/`에 `pg_dump`로 저장하고 14일 지난 파일을 지운다.

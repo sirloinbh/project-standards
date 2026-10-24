@@ -1,0 +1,14 @@
+[Unit]
+Description={{project.title}} pull-based deployment of origin/main
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=docker
+WorkingDirectory=/opt/{{project.name}}
+# Copied first: the deploy checks out a new commit while this script runs.
+ExecStart=/bin/bash -c 'cp /opt/{{project.name}}/deploy/autodeploy.sh /tmp/{{project.db.name}}-autodeploy.sh && exec /bin/bash /tmp/{{project.db.name}}-autodeploy.sh'
+TimeoutStartSec=45min
+Nice=10
