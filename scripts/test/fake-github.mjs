@@ -103,3 +103,14 @@ export function fakeRepo(fullName, files, { labels: initialLabels = [] } = {}) {
   };
   return { api, calls, pulls, refs, filesAt, merge, commits, labels };
 }
+
+// The central repository as the sync sees it once every shared package was published:
+// each package tag has a Release whose body links a successful publish.yml run.
+export function fakePublishedCentral() {
+  const run = { path: '.github/workflows/publish.yml', conclusion: 'success', html_url: 'https://github.com/sirloinbh/project-standards/actions/runs/7' };
+  return async (method, path) => {
+    if (method === 'GET' && path.includes('/releases/tags/')) return { body: `- 배포 실행: ${run.html_url}` };
+    if (method === 'GET' && path.endsWith('/actions/runs/7')) return run;
+    return null;
+  };
+}

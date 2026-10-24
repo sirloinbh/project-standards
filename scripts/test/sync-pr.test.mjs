@@ -9,7 +9,7 @@ import { pinRanges } from '../lib/pin-ranges.mjs';
 import { loadAll } from '../lib/registry.mjs';
 import { gitBlobSha, syncTarget, verifyPackages } from '../lib/sync-pr.mjs';
 import { apply } from '../sync.mjs';
-import { fakeRepo } from './fake-github.mjs';
+import { fakePublishedCentral, fakeRepo } from './fake-github.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const { data } = loadAll(root);
@@ -160,7 +160,8 @@ test('apply only checks the token while maxRollout is 0, then syncs targets in r
   const rolled = structuredClone(data);
   rolled.sync.maxRollout = 1;
   const repos = { 'sirloinbh/workout-memo': fakeRepo('sirloinbh/workout-memo', { 'package.json': '{"name":"workout-memo"}' }) };
-  const results = await apply({ data: rolled, targets: rolled.sync.targets, centralSha: SHA1, getToken: async (r) => r, makeClient: (r) => repos[r]?.api ?? (async () => null), log: () => {} });
+  const central = fakePublishedCentral();
+  const results = await apply({ data: rolled, targets: rolled.sync.targets, centralSha: SHA1, getToken: async (r) => r, makeClient: (r) => repos[r]?.api ?? central, log: () => {} });
   assert.deepEqual(results.map((r) => `${r.target} ${r.status}`), ['sirloinbh/workout-memo opened']);
 });
 
