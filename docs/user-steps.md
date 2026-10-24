@@ -6,7 +6,7 @@
 |---|---|---|---|---|
 | 0 | 로컬 `.env` 포트 바꾸기 | 5분 | (#95 후속) | 확인 안 함 (로컬 파일) |
 | 1 | 개인 계정 도구를 새 위치로 설치 | 5분 | #21 | 안 함: `%LOCALAPPDATA%\sirloinbh-tools` 없음 |
-| 2 | shared-aws-infrastructure 최신화와 Terraform state 이동 | 15분 | #92 | 안 함: 인프라 리포 main이 `b4cafc1`(3커밋 뒤, fast-forward 가능), state가 workout-memo에 있음, 백업 폴더 없음 |
+| 2 | shared-aws-infrastructure 최신화와 Terraform state 준비 | 끝남 | #92 | 완료(2026-10-24): import로 state 재구성, plan "No changes" |
 | 3 | GitHub App 만들기와 Actions 공유 설정 | 10분 | #86 | 안 함: `SYNC_APP_ID` 변수·`SYNC_APP_PRIVATE_KEY` secret 없음 |
 | 4 | 공유 패키지 첫 배포와 접근 권한 | 10분 | #88 | 안 함: 패키지 태그·Release 없음 |
 | 5 | 리포 설정 맞추기 (Dependabot, 병합 방식, workout-memo 보안) | 10분 | #22 | 안 함: Dependabot 알림 꺼짐 |
@@ -14,14 +14,14 @@
 | 7 | Codex 훅 신뢰와 차단 확인 | 3분 | #180 | 안 함 (Codex CLI 0.144.4 설치됨, 규칙 판정은 PR #185로 기록) |
 | 8 | 작업 PC 점검 (Claude Code 버전, 에이전트 실행기) | 3분 | #183 | 일부: Claude Code 2.1.309 확인. 실행기는 1 이후 |
 
-**권장 순서는 1 → 2 → 3 → 4입니다.** 2-2에서 1로 설치한 새 도구 경로를 쓰기 때문에 1을 먼저 합니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
+**남은 권장 순서는 1 → 3 → 4입니다.** 2는 끝났습니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
 
 단계를 끝내면 "#21 끝"처럼 알려 주세요. 에이전트가 이어서 하는 일:
 
 | 끝난 단계 | 에이전트가 이어서 하는 일 |
 |---|---|
 | 1 (#21) | 8(#183) 확인 안내 |
-| 2 (#92) | #93 인프라 리포 정비 → #94 workout-memo에서 `infrastructure/` 제거 → #36 배포 템플릿 |
+| 2 (#92) | 끝남: #93 인프라 리포 정비, #94 workout-memo에서 `infrastructure/` 제거. 다음은 #36 배포 템플릿 |
 | 4 (#88) | `versions.json`에 패키지 버전 1.0.0을 넣는 PR |
 | 1–4 모두 | #97 workout-memo 첫 동기화 PR (병합 전에 4-3 서버 토큰 필요) |
 
@@ -48,75 +48,43 @@
 
 절차는 [tools.md](tools.md)의 "옮기는 절차" 1–4단계입니다. 설치(`tools\install.ps1`), 10개 리포의 Git 인증 경로 변경(`set-credential-helper.ps1`), 확인, 바탕화면 실행기 교체 순서입니다. **첫 동기화(#97)보다 먼저** 해야 합니다. 동기화가 VS Code 터미널 설정을 새 위치로 바꾸기 때문입니다.
 
-## 2. shared-aws-infrastructure 최신화와 Terraform state 이동 (#92)
+## 2. shared-aws-infrastructure 최신화와 Terraform state 준비 (#92, 완료)
 
-**왜 필요한가요:** 인프라 원본을 workout-memo에서 shared-aws-infrastructure로 옮기기 전에 두 가지를 해야 합니다. 원격 push와 Git에 올라가지 않는 파일이라 직접 하셔야 합니다.
+**2026-10-24에 끝났습니다.** 처음 apply한 PC에 접근할 수 없어 state를 잃었고, 지금 작업 PC에서 import로 다시 만들었습니다. 결과는 다음과 같습니다.
 
-- shared-aws-infrastructure가 workout-memo 쪽보다 커밋 3개 뒤처져 있어 이를 맞춥니다.
-- 로컬에만 있는 Terraform state를 새 위치로 옮깁니다.
+- shared-aws-infrastructure main을 workout-memo의 최신 `infrastructure/`로 fast-forward했습니다(`684542a`).
+- AWS provider를 v6.68.0으로 올렸습니다(sirloinbh/shared-aws-infrastructure#2). v5는 고정 IP를 import할 수 없습니다.
+- 4개를 import하고 3개를 새로 만든 뒤 `terraform plan` 결과가 "No changes"입니다. 고정 IP 주소는 그대로입니다.
+- 이후 인프라 원본 정비(#93)와 workout-memo의 `infrastructure/` 제거(#94)도 끝났습니다.
 
-### 2-1. 뒤처진 커밋 3개 반영 (fast-forward push)
+### 다른 PC에서 인프라를 다룰 때
 
-```powershell
-cd C:\Users\byunghk\Documents\GitHub\workout-memo
-git fetch origin; git fetch infrastructure
-git subtree split --prefix=infrastructure origin/main
-# 마지막 줄이 684542aaf1705c8e6835b7e126a47edf31f53e5c 인지 확인
-git push infrastructure 684542aaf1705c8e6835b7e126a47edf31f53e5c:refs/heads/main
-```
+절차의 원본은 shared-aws-infrastructure의 `docs/operations.md`입니다. 상황별로 아래 장을 따릅니다.
 
-일반 push라서 이력이 갈라져 있으면 거부됩니다. 2026-10-23에 다시 확인했을 때도 인프라 리포 main(`b4cafc1`)이 `684542a`의 조상이라 fast-forward로 들어갈 수 있는 상태였습니다.
+| 상황 | `docs/operations.md` |
+|---|---|
+| 새 PC 준비: Terraform·AWS CLI 설치, Terraform 전용 IAM 사용자와 최소 권한 정책(루트 키를 만들지 않음), SSH 키, `terraform.tfvars` | 1장 |
+| state 백업과 다른 PC로 옮기기 | 3장 |
+| state를 잃었을 때 import로 다시 만들기 | 4장 |
+| 새 PC의 SSH 키를 서버에 추가하기(브라우저 SSH 잠깐 허용) | 5장 |
 
-### 2-2. 새 작업 폴더 만들기 (clone과 개인 계정 인증 설정)
+순서를 정할 때 알아 둘 점:
 
-```powershell
-cd C:\Users\byunghk\Documents\GitHub
-git clone https://github.com/sirloinbh/shared-aws-infrastructure.git
-cd shared-aws-infrastructure
-git log --oneline -1   # 684542a 이어야 함
-```
+1. **state가 어디 있는지 먼저 확인합니다.** 있으면 백업한 파일을 새 PC로 복사하고 plan이 "No changes"인지 봅니다. 없으면 4장의 import 절차로 갑니다. state 없이 apply하면 리소스가 중복으로 생깁니다.
+2. **import할 수 없는 리소스가 둘 있습니다.** SSH 키 쌍은 콘솔에서 지운 뒤 다시 만들고, 방화벽 규칙은 apply가 같은 값으로 덮어씁니다. 그래서 import 직후 plan은 "4 to import, 3 to add, 0 to change, 0 to destroy"가 정상입니다. 교체(`-/+`)나 삭제가 보이면 apply하지 않습니다.
+3. **provider 버전을 올렸다면 PR을 먼저 병합하고 apply합니다.** apply하면 state가 새 형식으로 저장되어 되돌릴 수 없습니다.
+4. **허용 IP를 확인합니다.** 새 PC의 공인 IP가 `allowed_cidrs`에 없으면 SSH와 웹 접속이 막힙니다.
 
-clone할 때 회사 계정 인증 창이 뜨면 취소하고, `ghp repo clone sirloinbh/shared-aws-infrastructure`로 받습니다. 그다음 개인 계정 인증을 설정합니다.
+### PowerShell 5.1에서 명령을 붙여 넣을 때
 
-- 1번(#21)을 이미 했다면:
-  ```powershell
-  powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh-tools\set-credential-helper.ps1" -Repository C:\Users\byunghk\Documents\GitHub\shared-aws-infrastructure
-  ```
-- 아직이면(예전 도구 위치):
-  ```powershell
-  git config --local credential.https://github.com.username sirloinbh
-  git config --local --add credential.https://github.com.helper ""
-  git config --local --add credential.https://github.com.helper "!powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:/Users/byunghk/AppData/Local/gh-workout-memo/gh-project.ps1 auth git-credential"
-  ```
+#92를 진행하면서 실제로 겪은 문제입니다.
 
-### 2-3. state를 리포 밖에 백업
-
-```powershell
-$src = "C:\Users\byunghk\Documents\GitHub\workout-memo\infrastructure"
-$bak = "$HOME\Backups\terraform-$(Get-Date -Format yyyyMMdd)"
-New-Item -ItemType Directory -Force $bak | Out-Null
-Copy-Item "$src\terraform.tfstate*", "$src\terraform.tfvars" $bak
-Get-ChildItem $bak
-```
-
-`terraform.tfvars`(개인 AWS 프로필과 계정 ID가 들어 있는 설정)도 Git이 무시하는 파일이라 함께 옮깁니다.
-
-### 2-4. 새 폴더로 복사하고 확인 (apply는 하지 않습니다)
-
-```powershell
-$dst = "C:\Users\byunghk\Documents\GitHub\shared-aws-infrastructure"
-Copy-Item "$src\terraform.tfstate*", "$src\terraform.tfvars" $dst
-cd $dst
-git status          # state·tfvars가 목록에 나오지 않아야 함(무시 대상)
-terraform init
-terraform plan
-```
-
-결과가 "No changes. Your infrastructure matches the configuration."이면 성공입니다. 무언가를 바꾸겠다고 나오면 멈추고 알려 주세요.
-
-### 2-5. 마무리
-
-plan 결과가 변경 없음이면 workout-memo 쪽 원본(`infrastructure\terraform.tfstate*`, `terraform.tfvars`)을 지워 원본을 하나로 만듭니다. 백업은 2-3에 있습니다. 그다음 "#92 끝"이라고 알려 주시면 #93(인프라 리포 정비)과 #94(workout-memo에서 infrastructure 제거)를 진행합니다.
+- **명령은 한 줄로 붙여 넣습니다.** 줄이 끊기면(`>>` 표시) 따옴표 안에 줄바꿈이 들어갑니다. `ssh-keygen -C` 주석이 두 줄이 되거나, `git config` 값이 두 항목으로 나뉘어 저장되었습니다.
+- **빈 문자열 인수(`""`)는 실행 파일에 넘어가지 않습니다.** `git config --add credential.https://github.com.helper ""`를 PowerShell에서 실행하면 빈 helper 줄이 저장되지 않습니다. 인증 설정은 [tools.md](tools.md)의 `set-credential-helper.ps1`로 하고, 결과는 `git config --local --get-all credential.https://github.com.helper`로 확인합니다(첫 줄이 비어 있어야 함).
+- **`<` 입력 리디렉션이 없습니다.** 파일 내용을 명령에 넘길 때는 웹 화면을 쓰거나 `Get-Content -Raw`를 씁니다.
+- **파일은 BOM 없는 UTF-8로 씁니다.** `Set-Content`·`Out-File` 대신 `[IO.File]::WriteAllText(<경로>, <내용>, (New-Object Text.UTF8Encoding $false))`를 씁니다.
+- **`ssh-keygen`은 `.ssh` 폴더를 만들지 않습니다.** 먼저 `New-Item -ItemType Directory -Force "$HOME\.ssh"`를 실행합니다.
+- **AWS CLI가 처음 실행될 때 AI 에이전트용 스킬과 MCP 서버 설치를 묻습니다.** 필요하지 않으면 `n`으로 답합니다. `y`로 답하면 모든 프로젝트에 스킬 24개와 버전이 고정되지 않은 MCP 서버(`@latest`)가 등록됩니다.
 
 ## 3. GitHub App 만들기와 Actions 공유 설정 (#86)
 
@@ -140,13 +108,12 @@ Create 후 화면의 **App ID**(숫자)를 적어 둡니다.
 
 App 화면 아래 Generate a private key를 누르면 `.pem` 파일이 내려받아집니다.
 
-```powershell
-ghp secret set SYNC_APP_PRIVATE_KEY -R sirloinbh/project-standards < "$HOME\Downloads\project-standards-sync.<날짜>.private-key.pem"
-ghp variable set SYNC_APP_ID -R sirloinbh/project-standards --body "<App ID 숫자>"
-Remove-Item "$HOME\Downloads\project-standards-sync.*.private-key.pem"
-```
+project-standards → Settings → Secrets and variables → Actions에서 등록합니다.
 
-`.pem` 파일은 등록 직후 지웁니다. 다시 필요하면 새로 만들면 됩니다. 웹에서는 project-standards → Settings → Secrets and variables → Actions에서 등록합니다.
+- **Secrets** 탭 → New repository secret: 이름 `SYNC_APP_PRIVATE_KEY`, 값은 `.pem` 파일을 메모장으로 열어 `-----BEGIN`부터 `END-----`까지 전체를 붙여 넣습니다.
+- **Variables** 탭 → New repository variable: 이름 `SYNC_APP_ID`, 값은 App ID 숫자입니다.
+
+`.pem` 파일은 등록 직후 지웁니다. 다시 필요하면 새로 만들면 됩니다. PowerShell에는 `<` 입력 리디렉션이 없어서 명령줄 대신 웹 화면을 씁니다.
 
 ### 3-3. 설치
 
@@ -167,16 +134,16 @@ project-standards → Actions → sync → Run workflow, 또는 `ghp workflow ru
 ### 4-1. 태그 4개 push (배포 시작)
 
 ```powershell
-cd C:\Users\byunghk\Documents\GitHub\project-standards
-git switch main; git pull
-git tag eslint-config/v1.0.0
-git tag prettier-config/v1.0.0
-git tag tsconfig/v1.0.0
-git tag design-tokens/v1.0.0
+cd <project-standards 폴더>
+git fetch origin
+git tag eslint-config/v1.0.0 origin/main
+git tag prettier-config/v1.0.0 origin/main
+git tag tsconfig/v1.0.0 origin/main
+git tag design-tokens/v1.0.0 origin/main
 git push origin eslint-config/v1.0.0 prettier-config/v1.0.0 tsconfig/v1.0.0 design-tokens/v1.0.0
 ```
 
-Actions에서 publish 실행 4개가 성공하는지, Releases에 4개가 생겼는지 확인합니다. 각 Release 본문의 배포 실행 링크는 동기화가 패키지 출처를 확인하는 근거입니다.
+로컬 브랜치는 Fork 앱으로 관리하므로 로컬 main을 바꾸지 않고 `origin/main`에 태그를 답니다. Fork에서 태그를 만들어 push해도 됩니다. Actions에서 publish 실행 4개가 성공하는지, Releases에 4개가 생겼는지 확인합니다. 각 Release 본문의 배포 실행 링크는 동기화가 패키지 출처를 확인하는 근거입니다.
 
 ### 4-2. 패키지 접근 권한
 
@@ -230,7 +197,7 @@ GitHub 프로필 → Packages에서 패키지 4개 각각에 대해 Package sett
 ```powershell
 claude --version    # 2.1.295 이상이어야 함 (낮으면 업데이트)
 Test-Path "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1"    # True
-powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1" -Root C:\Users\byunghk\Documents\GitHub\project-standards status
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1" -Root <project-standards 폴더> status
 ```
 
 그다음 새로 시작한 Claude Code 세션에서 `npm --silent install --help`가 막히고 `npm ls`는 실행되는지 확인합니다. Claude Code가 2.1.295보다 낮으면 차단 훅이 실패했을 때 명령이 그대로 실행됩니다. 결과(PC 이름, 버전)를 #183에 댓글로 남겨 주세요.
