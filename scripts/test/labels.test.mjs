@@ -9,7 +9,7 @@ import { LABELS_PATH, loadLabels, planLabels, syncLabels } from '../lib/labels.m
 import { loadAll } from '../lib/registry.mjs';
 import { planTarget } from '../lib/sync-plan.mjs';
 import { apply } from '../sync.mjs';
-import { fakeRepo } from './fake-github.mjs';
+import { fakePublishedCentral, fakeRepo } from './fake-github.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const { data } = loadAll(root);
@@ -123,8 +123,9 @@ test('apply syncs labels of targets in rollout and reports label failures separa
   const rolled = structuredClone(data);
   rolled.sync.maxRollout = 1;
   const repo = fakeRepo(REPO, { 'package.json': '{"name":"workout-memo"}' });
+  const central = fakePublishedCentral();
   const logs = [];
-  const results = await apply({ data: rolled, targets: rolled.sync.targets, centralSha: SHA1, getToken: async (r) => r, makeClient: (r) => (r === REPO ? repo.api : async () => null), log: (l) => logs.push(l) });
+  const results = await apply({ data: rolled, targets: rolled.sync.targets, centralSha: SHA1, getToken: async (r) => r, makeClient: (r) => (r === REPO ? repo.api : central), log: (l) => logs.push(l) });
   assert.equal(results[0].status, 'opened');
   assert.equal(results[0].labels.create.length, labels.length);
   assert.equal(repo.labels.length, labels.length);
@@ -136,7 +137,7 @@ test('apply syncs labels of targets in rollout and reports label failures separa
     if (method === 'POST' && p.endsWith('/labels')) throw new Error(`GitHub API POST ${p} failed: 403 Resource not accessible by integration`);
     return denied.api(method, p, body);
   };
-  const failed = await apply({ data: rolled, targets: rolled.sync.targets, centralSha: SHA1, getToken: async (r) => r, makeClient: (r) => (r === REPO ? api : async () => null), log: () => {} });
+  const failed = await apply({ data: rolled, targets: rolled.sync.targets, centralSha: SHA1, getToken: async (r) => r, makeClient: (r) => (r === REPO ? api : central), log: () => {} });
   assert.equal(failed[0].status, 'opened');
   assert.match(failed[0].labelsError, /403/);
 });

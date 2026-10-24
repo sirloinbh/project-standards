@@ -18,9 +18,9 @@
     "setupTerraform": { "repo": "hashicorp/setup-terraform", "version": "v4.0.1", "sha": "dfe3c3f87815947d99a8997f908cb6525fc44e9e" }
   },
   "packages": {
-    "@sirloinbh/eslint-config": null,
-    "@sirloinbh/prettier-config": null,
-    "@sirloinbh/tsconfig": null,
-    "@sirloinbh/design-tokens": null
+    "@sirloinbh/eslint-config": "1.0.0",
+    "@sirloinbh/prettier-config": "1.0.0",
+    "@sirloinbh/tsconfig": "1.0.0",
+    "@sirloinbh/design-tokens": "1.0.0"
   }
 }

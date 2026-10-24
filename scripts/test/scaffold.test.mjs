@@ -100,6 +100,12 @@ test('the rendered repository passes standards-check with no problems or warning
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scaffold-'));
   try {
     writeScaffold(files, dir);
+    // A real repository gets the shared packages from npm ci; stand in for that install here.
+    for (const [name, version] of Object.entries(loadAll(root).data.versions.packages)) {
+      if (!version) continue;
+      fs.mkdirSync(path.join(dir, 'node_modules', name), { recursive: true });
+      fs.writeFileSync(path.join(dir, 'node_modules', name, 'package.json'), JSON.stringify({ name, version }));
+    }
     const { problems, warnings } = runCheck(dir);
     assert.deepEqual(problems, []);
     assert.deepEqual(warnings, []);
