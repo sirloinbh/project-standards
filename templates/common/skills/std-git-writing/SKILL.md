@@ -60,6 +60,16 @@ Git과 GitHub에 남기는 글은 나중에 사람이 다시 읽는 기록이다
 | `chore/95-fix` | `chore/95-workout-memo-port-reassign` |
 | `feat/44-add-json-schema-validator-and-registry-and-versions-files` | `feat/44-registry-files` |
 
+### 로컬 브랜치 관리 (Fork 앱)
+
+사용자는 모든 프로젝트의 로컬 브랜치를 Git GUI 앱 [Fork](https://git-fork.com/)로 관리한다. 에이전트는 작업에 필요한 만큼만 브랜치를 다루고, 정리는 사용자에게 맡긴다.
+
+- 에이전트가 하는 일: 작업 브랜치 만들기, 커밋, 작업 브랜치 push, PR 만들기·갱신.
+- 새 브랜치는 로컬 main을 건드리지 않고 원격 main에서 만든다: `git fetch origin` 뒤 `git switch -c <브랜치> origin/main`.
+- 시작 전에 현재 브랜치와 작업 트리를 확인한다. 사용자가 Fork에서 다른 브랜치를 체크아웃해 두었거나 커밋하지 않은 변경이 있으면, 바꾸기 전에 사용자에게 알린다.
+- 에이전트가 하지 않는 일: 병합 후 로컬 정리(main 전환, pull, 로컬 브랜치 삭제), `stash`, `reset`, `rebase`, 원격 브랜치 강제 덮어쓰기. 에이전트가 병합하는 리포에서도 `pr merge`에 `--delete-branch`를 붙이지 않는다(로컬 브랜치까지 지운다). 원격 브랜치는 리포 설정 "병합 후 브랜치 자동 삭제"가 지운다.
+- 사용자에게 정리를 안내할 때는 명령어 대신 Fork 기준으로 쓴다: "Fork에서 main을 체크아웃해 Pull하고, 병합된 `<브랜치>`를 삭제해 주세요."
+
 ## 4. 커밋 메시지
 
 ```
