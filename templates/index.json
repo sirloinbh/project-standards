@@ -16,9 +16,9 @@
   "mirror": [{ "from": "skills/", "to": ".claude/skills/", "why": "Claude Code는 .claude/skills/만 읽는다. 원본 skills/와 같은 내용의 복제본을 함께 관리한다." }],
   "fields": {
     "app": {
-      "package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "scripts": { "standards:check": "node .standards/check.mjs" } },
-      "frontend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" } },
-      "backend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" } }
+      "package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "scripts": { "standards:check": "node .standards/check.mjs" }, "devDependencies": { "@sirloinbh/eslint-config": "{{versions.packages.@sirloinbh/eslint-config}}", "@sirloinbh/prettier-config": "{{versions.packages.@sirloinbh/prettier-config}}" } },
+      "frontend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "devDependencies": { "@sirloinbh/tsconfig": "{{versions.packages.@sirloinbh/tsconfig}}" } },
+      "backend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "devDependencies": { "@sirloinbh/tsconfig": "{{versions.packages.@sirloinbh/tsconfig}}" } }
     }
   }
 }

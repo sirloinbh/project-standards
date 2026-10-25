@@ -82,17 +82,26 @@ test('section files keep what the project added below the marker', () => {
 test('package.json fields are rendered from versions.json for all three package files', () => {
   const expected = { packageManager: 'npm@11.19.0', 'engines.node': '24.21.0', 'engines.npm': '11.19.0' };
   for (const p of ['frontend/package.json', 'backend/package.json']) {
-    assert.deepEqual(byPath[p], { path: p, source: 'templates/index.json', mode: 'fields', fields: expected });
+    assert.deepEqual(byPath[p], { path: p, source: 'templates/index.json', mode: 'fields', fields: { ...expected, 'devDependencies.@sirloinbh/tsconfig': '1.0.0' } });
   }
-  assert.deepEqual(byPath['package.json'].fields, { ...expected, 'scripts.standards:check': 'node .standards/check.mjs' });
+  assert.deepEqual(byPath['package.json'].fields, {
+    ...expected,
+    'scripts.standards:check': 'node .standards/check.mjs',
+    'devDependencies.@sirloinbh/eslint-config': '1.0.0',
+    'devDependencies.@sirloinbh/prettier-config': '1.0.0',
+  });
 });
 
 test('a manifest built from the render accepts the rendered files and catches edits', () => {
   const manifest = buildManifest({ centralSha: 'test', profile: 'app', project: 'study-log', files: rendered });
-  const pkg = JSON.stringify({ name: 'study-log', packageManager: 'npm@11.19.0', engines: { node: '24.21.0', npm: '11.19.0' } });
+  const pkg = { name: 'study-log', packageManager: 'npm@11.19.0', engines: { node: '24.21.0', npm: '11.19.0' } };
   const repo = Object.fromEntries(rendered.filter((f) => f.content).map((f) => [f.path, f.content]));
-  for (const p of ['frontend/package.json', 'backend/package.json']) repo[p] = pkg;
-  repo['package.json'] = JSON.stringify({ ...JSON.parse(pkg), scripts: { 'standards:check': 'node .standards/check.mjs' } });
+  for (const p of ['frontend/package.json', 'backend/package.json']) repo[p] = JSON.stringify({ ...pkg, devDependencies: { '@sirloinbh/tsconfig': '1.0.0' } });
+  repo['package.json'] = JSON.stringify({
+    ...pkg,
+    scripts: { 'standards:check': 'node .standards/check.mjs' },
+    devDependencies: { '@sirloinbh/eslint-config': '1.0.0', '@sirloinbh/prettier-config': '1.0.0' },
+  });
   assert.deepEqual(checkManifest(manifest, (p) => repo[p] ?? null), []);
   repo['.editorconfig'] = repo['.editorconfig'].replace('indent_size = 2', 'indent_size = 4');
   assert.deepEqual(checkManifest(manifest, (p) => repo[p] ?? null), [{ path: '.editorconfig', reason: 'changed' }]);
