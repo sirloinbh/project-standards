@@ -1,6 +1,8 @@
 // Deploy script templates (#36, ADR-0009): one Lightsail server, one compose project per app.
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -71,6 +73,26 @@ test('the docker image tag format survives rendering as a Go template', () => {
   const text = rendered['study-log']['deploy/remote-deploy.sh'];
   assert.match(text, /tag_format='\{''\{\.Tag\}\}'/);
   if (has('bash')) assert.equal(spawnSync('bash', ['-c', `${text.match(/tag_format=.*$/m)[0]}; printf %s "$tag_format"`], { encoding: 'utf8' }).stdout, '{{.Tag}}');
+});
+
+test('remote-deploy exports the server .env package token for the compose build secret', { skip: !has('bash') && 'bash not found' }, () => {
+  const text = rendered['study-log']['deploy/remote-deploy.sh'];
+  const block = text.match(/^if \[ -z "\$\{NODE_AUTH_TOKEN:-\}" \]; then\n[\s\S]*?^export NODE_AUTH_TOKEN=.*$/m)[0];
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'remote-deploy-'));
+  // A child process sees the value only when it was exported.
+  const run = (env, extra = {}) => {
+    fs.writeFileSync(path.join(dir, '.env'), env);
+    const r = spawnSync('bash', ['-c', `${block}\nbash -c 'printf %s "$NODE_AUTH_TOKEN"'`], { cwd: dir, encoding: 'utf8', env: { ...process.env, NODE_AUTH_TOKEN: '', ...extra } });
+    return r.stdout;
+  };
+  try {
+    assert.equal(run('POSTGRES_PASSWORD=x\nNODE_AUTH_TOKEN=dummy-a\n'), 'dummy-a');
+    assert.equal(run('NODE_AUTH_TOKEN="dummy-b"\r\nWEB_PORT=8101\r\n'), 'dummy-b');
+    assert.equal(run('POSTGRES_PASSWORD=x\n'), '');
+    assert.equal(run('NODE_AUTH_TOKEN=from-file\n', { NODE_AUTH_TOKEN: 'from-env' }), 'from-env');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test('rendered shell scripts pass bash -n', { skip: !has('bash') && 'bash not found' }, () => {
