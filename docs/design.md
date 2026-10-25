@@ -173,7 +173,7 @@ packages/<pkg> 변경 PR (버전·CHANGELOG 포함) → 사용자 병합
 
 두 Dockerfile은 패키지 인증 토큰을 BuildKit secret(`npm_token`)으로만 받는다. 그래서 `compose.yaml`의 각 서비스 `build`에 `secrets: [npm_token]`이 있어야 하고, 최상위 `secrets.npm_token.environment: NODE_AUTH_TOKEN`이 있어야 한다. standards-check가 이를 확인한다.
 
-- 헤더 문구는 `중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/<경로>에서`다. 주석을 쓸 수 있는 파일은 첫 줄에 `#`, `//`, `<!-- -->`로 넣고, `SKILL.md`는 frontmatter 바로 아래에 넣는다. JSON, `.nvmrc`, `.node-version`은 헤더 없이 manifest로만 관리한다.
+- 헤더 문구는 `중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/<경로>에서`다. 주석을 쓸 수 있는 파일은 첫 줄에 `#`, `//`, `<!-- -->`로 넣고, `SKILL.md`는 frontmatter 바로 아래에 넣는다. JSON, `.nvmrc`, `.node-version`은 헤더 없이 manifest로만 관리한다. `.ps1`은 Windows PowerShell 5.1이 BOM 없는 파일을 ANSI로 읽으므로 ASCII 문구 `Managed file. Edit it in sirloinbh/project-standards templates/<경로>/`를 쓴다(#213).
 - `AGENTS.md`(중앙)는 첫 절에서 `AGENTS.project.md`를 반드시 읽도록 지시한다. Codex는 `AGENTS.md`만 자동으로 읽기 때문이다. `CLAUDE.md`(중앙)는 두 파일을 모두 참조한다.
 - 템플릿 변수는 `{{project.name}}`, `{{ports.web}}`, `{{versions.node}}`, `{{actions.checkout}}` 같은 형식이다. 정의되지 않은 변수가 남으면 렌더링이 실패한다.
 
