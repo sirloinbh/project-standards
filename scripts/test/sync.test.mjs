@@ -69,6 +69,27 @@ test('package.json fields merge into an existing file when the target is readabl
   assert.deepEqual(plan.fieldsPending, ['backend/package.json', 'frontend/package.json']);
 });
 
+test('shared packages go into devDependencies of the package.json that uses them, at versions.json versions (#97)', () => {
+  const existing = {
+    'package.json': JSON.stringify({ name: 'study-log', devDependencies: { eslint: '10.12.0' } }),
+    'frontend/package.json': JSON.stringify({ name: 'frontend' }),
+    'backend/package.json': JSON.stringify({ name: 'backend' }),
+  };
+  const plan = planTarget({ root, data: original.data, target: targetOf(original.data, 'study-log'), centralSha: 'x', readExisting: (p) => existing[p] ?? null });
+  const dev = (p) => JSON.parse(plan.files.find((f) => f.path === p).content).devDependencies;
+  const v = original.data.versions.packages;
+  assert.deepEqual(dev('package.json'), { eslint: '10.12.0', '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] });
+  assert.deepEqual(dev('frontend/package.json'), { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] });
+  assert.deepEqual(dev('backend/package.json'), { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] });
+  assert.match(v['@sirloinbh/tsconfig'], /^\d+\.\d+\.\d+$/, 'an exact version, not a ^ range');
+});
+
+test('an unpublished shared package (null version) stops the plan instead of writing null', () => {
+  const data = structuredClone(original.data);
+  data.versions.packages['@sirloinbh/tsconfig'] = null;
+  assert.throws(() => planTarget({ root, data, target: targetOf(data, 'study-log'), centralSha: 'x' }), /undefined template variable\(s\): versions\.packages\.@sirloinbh\/tsconfig/);
+});
+
 test('allowedDifferences skips a file and leaves it out of the manifest', () => {
   const copy = structuredClone(original);
   copy.data.projects.projects.find((p) => p.name === 'study-log').allowedDifferences.push({ path: '.github/dependabot.yml', reason: '시험용 예외', until: null });
