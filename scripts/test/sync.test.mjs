@@ -56,7 +56,7 @@ test('a plan includes the manifest with central SHA, packages, and the registry 
   assert.equal(manifest.project, 'study-log');
   assert.deepEqual(manifest.registry.ports, original.data.projects.projects.find((p) => p.name === 'study-log').ports);
   assert.deepEqual(Object.keys(manifest.packages), ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig', '@sirloinbh/design-tokens']);
-  assert.equal(plan.inRollout, false, 'maxRollout is 0, so nothing is in rollout yet');
+  assert.equal(plan.inRollout, false, 'study-log is rollout 2, after workout-memo');
   assert.deepEqual(plan.fieldsPending, ['backend/package.json', 'frontend/package.json', 'package.json']);
 });
 

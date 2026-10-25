@@ -5,8 +5,8 @@
 ## 현재 단계: 적용 준비
 
 - 설계는 승인되어 [docs/design.md](docs/design.md)와 [docs/adr/](docs/adr/)가 원본이다. 요구사항 원본은 [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md)다.
-- 중앙 골격(레지스트리, 템플릿, 동기화, 공유 패키지, 공통 CI, 준수 현황)은 만들어져 있다. `sync.config.json`의 `maxRollout`이 `0`이라 아직 어느 하위 리포에도 동기화 PR이 열리지 않는다.
-- 다음 단계는 사용자 단계([docs/user-steps.md](docs/user-steps.md))가 끝난 뒤 workout-memo 첫 동기화(#97)다. 단계별 계획은 design.md "12. 단계별 적용 계획"을 따른다.
+- 중앙 골격(레지스트리, 템플릿, 동기화, 공유 패키지, 공통 CI, 준수 현황)은 만들어져 있다. `sync.config.json`의 `maxRollout`이 `1`이라 workout-memo에만 동기화 PR이 열린다(#97, 2026-10-25 사용자 승인).
+- 지금은 workout-memo 첫 동기화 PR을 검토·병합하는 단계(#97, #98)다. 나머지 앱 7개(`maxRollout` 2)는 그 뒤다. 단계별 계획은 design.md "12. 단계별 적용 계획"을 따른다.
 - 하위 리포 적용이 끝나면(#116) 이 절을 운영 단계 기준으로 고친다.
 
 ## 작업 절차
