@@ -67,5 +67,11 @@ test('section files keep the target project part below the marker', () => {
 
 test('renderFile normalizes CRLF templates, fills variables, and adds the header', () => {
   const out = renderFile({ text: '﻿param()\r\nWrite-Host {{project.name}}\r\n', file: 'scripts/x.ps1', source: 'templates/app/scripts/x.ps1', vars });
-  assert.equal(out, '# 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/app/scripts/에서\nparam()\nWrite-Host study-log\n');
+  assert.equal(out, '# Managed file. Edit it in sirloinbh/project-standards templates/app/scripts/\nparam()\nWrite-Host study-log\n');
+});
+
+test('.ps1 headers stay ASCII for Windows PowerShell 5.1 and are not added twice', () => {
+  const once = addHeader('param()\n', 'scripts/x.ps1', 'templates/app/scripts/x.ps1');
+  assert.ok([...once].every((ch) => ch.charCodeAt(0) < 128), once);
+  assert.equal(addHeader(once, 'scripts/x.ps1', 'templates/app/scripts/x.ps1'), once);
 });

@@ -4,7 +4,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { loadAll } from '../lib/registry.mjs';
-import { HEADER_TEXT } from '../lib/render.mjs';
+import { hasHeader } from '../lib/render.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -15,7 +15,7 @@ const render = (project) => {
   const files = renderProfile({ root, profile: 'app', folders: ['common', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
   return Object.fromEntries(files.map((f) => [f.path, f.content]));
 };
-const withoutHeader = (text) => text.split('\n').filter((l) => !l.includes(HEADER_TEXT)).join('\n');
+const withoutHeader = (text) => text.split('\n').filter((l) => !hasHeader(l)).join('\n');
 const study = render('study-log');
 
 test('push-repositories pushes the three subtree repositories named in the registry', () => {
@@ -39,6 +39,15 @@ test('shared scripts are copied unchanged apart from the managed header', () => 
     // *.ps1 is checked out with CRLF (.gitattributes); rendering works in LF, so compare in LF.
     const source = fs.readFileSync(path.join(root, 'templates/app', file), 'utf8').replace(/\r\n/g, '\n');
     assert.equal(withoutHeader(study[file]), source, file);
-    assert.ok(study[file].includes(HEADER_TEXT), `${file} has the managed header`);
+    assert.ok(hasHeader(study[file]), `${file} has the managed header`);
+  }
+});
+
+test('rendered PowerShell scripts are ASCII only (Windows PowerShell 5.1 reads them as ANSI)', () => {
+  const scripts = Object.keys(study).filter((file) => file.endsWith('.ps1'));
+  assert.ok(scripts.length > 0);
+  for (const file of scripts) {
+    const bad = [...study[file]].find((ch) => ch.charCodeAt(0) > 0x7f);
+    assert.equal(bad, undefined, `${file} must stay ASCII-only`);
   }
 });
