@@ -1,6 +1,6 @@
 {
   "$schema": "./sync.config.schema.json",
-  "maxRollout": 0,
+  "maxRollout": 1,
   "profiles": {
     "app": {
       "templates": ["common", "app"],

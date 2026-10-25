@@ -153,7 +153,9 @@ test('apply only checks the token while maxRollout is 0, then syncs targets in r
     tokens.push(repo);
     return 'token';
   };
-  assert.deepEqual(await apply({ data, targets: data.sync.targets, centralSha: SHA1, getToken, makeClient: () => null, log: (l) => logs.push(l) }), []);
+  const off = structuredClone(data);
+  off.sync.maxRollout = 0;
+  assert.deepEqual(await apply({ data: off, targets: off.sync.targets, centralSha: SHA1, getToken, makeClient: () => null, log: (l) => logs.push(l) }), []);
   assert.deepEqual(tokens, ['sirloinbh/project-standards']);
   assert.match(logs[0], /설치 토큰 발급 확인\. maxRollout 0/);
 
