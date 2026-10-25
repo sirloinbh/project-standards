@@ -67,5 +67,7 @@ test('section files keep the target project part below the marker', () => {
 
 test('renderFile normalizes CRLF templates, fills variables, and adds the header', () => {
   const out = renderFile({ text: '﻿param()\r\nWrite-Host {{project.name}}\r\n', file: 'scripts/x.ps1', source: 'templates/app/scripts/x.ps1', vars });
-  assert.equal(out, '# 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/app/scripts/에서\nparam()\nWrite-Host study-log\n');
+  // .ps1 gets the ASCII header: Windows PowerShell 5.1 reads a BOM-less script as ANSI (#214).
+  assert.equal(out, '# Managed by sirloinbh/project-standards. Edit in templates/app/scripts/\nparam()\nWrite-Host study-log\n');
+  assert.equal(addHeader(out, 'scripts/x.ps1', 'templates/app/scripts/x.ps1'), out, 'no second header');
 });

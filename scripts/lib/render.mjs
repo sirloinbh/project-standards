@@ -4,6 +4,11 @@ import path from 'node:path';
 
 export const PROJECT_MARKER = '# --- project ---';
 export const HEADER_TEXT = '중앙 관리 파일. 수정은 sirloinbh/project-standards의';
+// Windows PowerShell 5.1 reads a BOM-less .ps1 in the ANSI code page, so .ps1 gets an ASCII header (#214).
+export const HEADER_TEXT_ASCII = 'Managed by sirloinbh/project-standards. Edit in';
+
+/** True when a line is a managed header in either language. */
+export const isHeaderLine = (line) => line.includes(HEADER_TEXT) || line.includes(HEADER_TEXT_ASCII);
 
 // `${{ ... }}` is GitHub Actions syntax, so a `$` right before `{{` keeps it literal.
 // `@` and `/` let a key be an npm package name, e.g. {{versions.packages.@sirloinbh/tsconfig}}.
@@ -45,7 +50,8 @@ export function commentStyle(file) {
 
 /** Header line pointing back to the template source, e.g. templates/common/.editorconfig. */
 export function headerLine(file, source) {
-  const text = `${HEADER_TEXT} ${path.posix.dirname(source)}/에서`;
+  const dir = path.posix.dirname(source);
+  const text = path.posix.extname(file) === '.ps1' ? `${HEADER_TEXT_ASCII} ${dir}/` : `${HEADER_TEXT} ${dir}/에서`;
   switch (commentStyle(file)) {
     case 'hash': return `# ${text}`;
     case 'slash': return `// ${text}`;
@@ -73,7 +79,7 @@ function leadingLines(file, lines) {
 /** Adds the managed header unless the format has no comments or the header is already there. */
 export function addHeader(text, file, source) {
   const header = headerLine(file, source);
-  if (!header || text.includes(HEADER_TEXT)) return text;
+  if (!header || text.split('\n').some(isHeaderLine)) return text;
   const lines = text.split('\n');
   const at = leadingLines(file, lines);
   // Keep a blank line between Markdown frontmatter and the header comment.
