@@ -1,60 +1,139 @@
 # 준수 현황
 
-<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-22 03:24 UTC, 중앙 local -->
+<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-25 18:15 UTC, 중앙 523d533 -->
 
-| 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example |
-|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | 아직 안 됨 | — | — | — | 없음 | ✗ 2개 다름 |
-| sirloinbh/study-log | 아직 안 됨 | — | — | — | 없음 | ✗ 2개 다름 |
-| sirloinbh/health-log | 아직 안 됨 | — | — | — | 없음 | ✗ 2개 다름 |
-| sirloinbh/life-journal | 아직 안 됨 | — | — | — | 없음 | ✗ 2개 다름 |
-| sirloinbh/money-ledger | 아직 안 됨 | — | — | — | 없음 | ✗ 2개 다름 |
-| sirloinbh/english-study | 아직 안 됨 | — | — | — | 없음 | ✗ 2개 다름 |
-| sirloinbh/plan-routine | 아직 안 됨 | — | — | — | 없음 | ✗ 2개 다름 |
-| sirloinbh/dev-career-portfolio | 아직 안 됨 | — | — | — | 없음 | ✗ 2개 다름 |
-| sirloinbh/shared-aws-infrastructure | 확인 못 함 (로컬 클론 없음) | — | — | — | — | — |
+| 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example | 리포 설정 |
+|---|---|---|---|---|---|---|---|
+| sirloinbh/workout-memo | ✓ | `523d533` | ✓ 일치 | ✗ @sirloinbh/tsconfig 없음≠1.0.0 | 없음 | ✓ | ✗ 5 △ 3 |
+| sirloinbh/study-log | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/health-log | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/life-journal | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/money-ledger | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/english-study | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/plan-routine | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/dev-career-portfolio | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/shared-aws-infrastructure | 아직 안 됨 | — | — | — | 없음 | — | ✗ 2 △ 3 |
 
-## 다른 곳
+## 리포 설정
+
+기준과 이유는 [repo-settings.md](repo-settings.md)에 있다. secret·variable은 이름만 비교한다.
 
 ### sirloinbh/workout-memo
 
-- .env.example: PORT 3001 ≠ 레지스트리 api 3101
-- .env.example: DATABASE_URL 포트 55432 ≠ 레지스트리 db 15401
+| 상태 | 항목 | 지금 | 기준 |
+|---|---|---|---|
+| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
+| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
+| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
+| ✗ | main 브랜치 보호 | 없음 | 켬 |
+| ✗ | secret scanning | disabled | enabled |
+| ✗ | push protection (secret 차단) | disabled | enabled |
+| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
+| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/study-log
 
-- .env.example: PORT 3012 ≠ 레지스트리 api 3102
-- .env.example: DATABASE_URL 포트 55442 ≠ 레지스트리 db 15402
+| 상태 | 항목 | 지금 | 기준 |
+|---|---|---|---|
+| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
+| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
+| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
+| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
+| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
+| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/health-log
 
-- .env.example: PORT 3013 ≠ 레지스트리 api 3103
-- .env.example: DATABASE_URL 포트 55443 ≠ 레지스트리 db 15403
+| 상태 | 항목 | 지금 | 기준 |
+|---|---|---|---|
+| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
+| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
+| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
+| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
+| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
+| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/life-journal
 
-- .env.example: PORT 3014 ≠ 레지스트리 api 3104
-- .env.example: DATABASE_URL 포트 55444 ≠ 레지스트리 db 15404
+| 상태 | 항목 | 지금 | 기준 |
+|---|---|---|---|
+| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
+| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
+| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
+| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
+| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
+| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/money-ledger
 
-- .env.example: PORT 3015 ≠ 레지스트리 api 3105
-- .env.example: DATABASE_URL 포트 55445 ≠ 레지스트리 db 15405
+| 상태 | 항목 | 지금 | 기준 |
+|---|---|---|---|
+| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
+| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
+| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
+| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
+| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
+| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/english-study
 
-- .env.example: PORT 3016 ≠ 레지스트리 api 3106
-- .env.example: DATABASE_URL 포트 55446 ≠ 레지스트리 db 15406
+| 상태 | 항목 | 지금 | 기준 |
+|---|---|---|---|
+| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
+| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
+| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
+| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
+| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
+| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/plan-routine
 
-- .env.example: PORT 3017 ≠ 레지스트리 api 3107
-- .env.example: DATABASE_URL 포트 55447 ≠ 레지스트리 db 15407
+| 상태 | 항목 | 지금 | 기준 |
+|---|---|---|---|
+| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
+| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
+| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
+| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
+| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
+| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/dev-career-portfolio
 
-- .env.example: PORT 3018 ≠ 레지스트리 api 3108
-- .env.example: DATABASE_URL 포트 55448 ≠ 레지스트리 db 15408
+| 상태 | 항목 | 지금 | 기준 |
+|---|---|---|---|
+| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
+| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
+| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
+| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
+| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
+| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
+
+### sirloinbh/shared-aws-infrastructure
+
+| 상태 | 항목 | 지금 | 기준 |
+|---|---|---|---|
+| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
+| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
+| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
+| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
+| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
+| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
+| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 
 고치는 방법은 [README](../README.md)의 "하위 리포에서 standards-check가 실패했을 때"를 따른다.
