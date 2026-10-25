@@ -49,6 +49,22 @@ test('applyFields sets dotted fields and keeps the rest of package.json', () => 
   assert.ok(out.endsWith('}\n') && out.includes('\n  "name": "a"'));
 });
 
+test('applyFields puts a new shared package in npm sort order', () => {
+  const text = JSON.stringify({ devDependencies: { '@types/node': '24.19.2', typescript: '5.9.3', '@eslint/js': '10.0.1' } });
+  const out = applyFields(text, { 'devDependencies.@sirloinbh/tsconfig': '1.0.0' });
+  assert.deepEqual(Object.keys(JSON.parse(out).devDependencies), ['@eslint/js', '@sirloinbh/tsconfig', '@types/node', 'typescript']);
+});
+
+test('app package.json files get the shared packages pinned to versions.json', () => {
+  const data = structuredClone(original.data);
+  const plan = planTarget({ root, data, target: targetOf(data, 'workout-memo'), centralSha: 'a'.repeat(40), readExisting: (p) => (p.endsWith('package.json') ? '{}' : null) });
+  const deps = (p) => JSON.parse(plan.files.find((f) => f.path === p).content).devDependencies;
+  const v = data.versions.packages;
+  assert.deepEqual(deps('package.json'), { '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] });
+  assert.deepEqual(deps('frontend/package.json'), { '@sirloinbh/design-tokens': v['@sirloinbh/design-tokens'], '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] });
+  assert.deepEqual(deps('backend/package.json'), { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] });
+});
+
 test('a plan includes the manifest with central SHA, packages, and the registry snapshot', () => {
   const plan = planTarget({ root, data: original.data, target: targetOf(original.data, 'study-log'), centralSha: 'abc1234' });
   const manifest = JSON.parse(plan.files.find((f) => f.path === MANIFEST_PATH).content);

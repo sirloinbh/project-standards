@@ -34,6 +34,10 @@ export function applyFields(text, fields) {
     for (const key of keys.slice(0, -1)) node = node[key] && typeof node[key] === 'object' ? node[key] : (node[key] = {});
     node[keys.at(-1)] = value;
   }
+  // npm keeps dependency lists sorted; a newly added package goes where npm would put it.
+  for (const list of ['dependencies', 'devDependencies']) {
+    if (json[list] && typeof json[list] === 'object') json[list] = Object.fromEntries(Object.entries(json[list]).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)));
+  }
   return `${JSON.stringify(json, null, 2)}\n`;
 }
 

@@ -6,7 +6,8 @@ export const PROJECT_MARKER = '# --- project ---';
 export const HEADER_TEXT = '중앙 관리 파일. 수정은 sirloinbh/project-standards의';
 
 // `${{ ... }}` is GitHub Actions syntax, so a `$` right before `{{` keeps it literal.
-const VARIABLE = /(?<!\$)\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}/g;
+// `@` and `/` allow scoped package names as keys: {{versions.packages.@sirloinbh/tsconfig}}.
+const VARIABLE = /(?<!\$)\{\{\s*([A-Za-z0-9_.@/-]+)\s*\}\}/g;
 
 function lookup(vars, dotted) {
   return dotted.split('.').reduce((node, key) => (node === null || node === undefined ? undefined : node[key]), vars);

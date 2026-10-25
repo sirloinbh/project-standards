@@ -81,18 +81,20 @@ test('section files keep what the project added below the marker', () => {
 
 test('package.json fields are rendered from versions.json for all three package files', () => {
   const expected = { packageManager: 'npm@11.19.0', 'engines.node': '24.21.0', 'engines.npm': '11.19.0' };
-  for (const p of ['frontend/package.json', 'backend/package.json']) {
-    assert.deepEqual(byPath[p], { path: p, source: 'templates/index.json', mode: 'fields', fields: expected });
-  }
-  assert.deepEqual(byPath['package.json'].fields, { ...expected, 'scripts.standards:check': 'node .standards/check.mjs' });
+  const pkg = (name) => ({ [`devDependencies.@sirloinbh/${name}`]: '1.0.0' });
+  assert.deepEqual(byPath['frontend/package.json'], { path: 'frontend/package.json', source: 'templates/index.json', mode: 'fields', fields: { ...expected, ...pkg('design-tokens'), ...pkg('tsconfig') } });
+  assert.deepEqual(byPath['backend/package.json'], { path: 'backend/package.json', source: 'templates/index.json', mode: 'fields', fields: { ...expected, ...pkg('tsconfig') } });
+  assert.deepEqual(byPath['package.json'].fields, { ...expected, 'scripts.standards:check': 'node .standards/check.mjs', ...pkg('eslint-config'), ...pkg('prettier-config') });
 });
 
 test('a manifest built from the render accepts the rendered files and catches edits', () => {
   const manifest = buildManifest({ centralSha: 'test', profile: 'app', project: 'study-log', files: rendered });
   const pkg = JSON.stringify({ name: 'study-log', packageManager: 'npm@11.19.0', engines: { node: '24.21.0', npm: '11.19.0' } });
   const repo = Object.fromEntries(rendered.filter((f) => f.content).map((f) => [f.path, f.content]));
-  for (const p of ['frontend/package.json', 'backend/package.json']) repo[p] = pkg;
-  repo['package.json'] = JSON.stringify({ ...JSON.parse(pkg), scripts: { 'standards:check': 'node .standards/check.mjs' } });
+  const shared = (...names) => Object.fromEntries(names.map((n) => [`@sirloinbh/${n}`, '1.0.0']));
+  repo['frontend/package.json'] = JSON.stringify({ ...JSON.parse(pkg), devDependencies: shared('design-tokens', 'tsconfig') });
+  repo['backend/package.json'] = JSON.stringify({ ...JSON.parse(pkg), devDependencies: shared('tsconfig') });
+  repo['package.json'] = JSON.stringify({ ...JSON.parse(pkg), scripts: { 'standards:check': 'node .standards/check.mjs' }, devDependencies: shared('eslint-config', 'prettier-config') });
   assert.deepEqual(checkManifest(manifest, (p) => repo[p] ?? null), []);
   repo['.editorconfig'] = repo['.editorconfig'].replace('indent_size = 2', 'indent_size = 4');
   assert.deepEqual(checkManifest(manifest, (p) => repo[p] ?? null), [{ path: '.editorconfig', reason: 'changed' }]);

@@ -8,6 +8,11 @@ test('fills dotted variables with or without spaces', () => {
   assert.equal(renderText('{{project.name}}:{{ ports.web }} node {{versions.node}} e2e={{features.e2e}}', vars), 'study-log:8102 node 24.21.0 e2e=false');
 });
 
+test('fills scoped package names as variable keys', () => {
+  const pkgVars = { versions: { packages: { '@sirloinbh/tsconfig': '1.0.0' } } };
+  assert.equal(renderText('"{{versions.packages.@sirloinbh/tsconfig}}"', pkgVars), '"1.0.0"');
+});
+
 test('leaves GitHub Actions ${{ }} expressions untouched', () => {
   const yml = 'image: node:{{versions.node}}\nref: ${{ github.sha }}\ntoken: ${{secrets.NODE_AUTH_TOKEN}}';
   assert.equal(renderText(yml, vars), 'image: node:24.21.0\nref: ${{ github.sha }}\ntoken: ${{secrets.NODE_AUTH_TOKEN}}');

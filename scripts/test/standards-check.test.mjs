@@ -35,9 +35,10 @@ function makeRepo(edit = () => {}) {
   };
   for (const f of files) if (f.content !== undefined) write(f.path, f.content);
   const pkgFields = { packageManager: 'npm@11.19.0', engines: { node: '24.21.0', npm: '11.19.0' } };
-  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs' } }));
-  write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields }));
-  write('backend/package.json', JSON.stringify({ name: 'backend', ...pkgFields }));
+  const shared = (...names) => ({ devDependencies: Object.fromEntries(names.map((n) => [`@sirloinbh/${n}`, '1.0.0'])) });
+  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs' }, ...shared('eslint-config', 'prettier-config') }));
+  write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, ...shared('design-tokens', 'tsconfig') }));
+  write('backend/package.json', JSON.stringify({ name: 'backend', ...pkgFields, ...shared('tsconfig') }));
   for (const [rel, text] of Object.entries(appFiles)) write(rel, text);
   write('node_modules/@sirloinbh/tsconfig/package.json', JSON.stringify({ name: '@sirloinbh/tsconfig', version: '1.0.0' }));
   const manifest = buildManifest({
@@ -88,7 +89,7 @@ test('CRLF line endings from a Windows checkout still pass', () => {
 test('a removed managed file and a changed package.json field fail', () => {
   const result = check(({ dir, write }) => {
     fs.rmSync(path.join(dir, '.nvmrc'));
-    write('backend/package.json', JSON.stringify({ name: 'backend', packageManager: 'npm@11.19.0', engines: { node: '22.0.0', npm: '11.19.0' } }));
+    write('backend/package.json', JSON.stringify({ name: 'backend', packageManager: 'npm@11.19.0', engines: { node: '22.0.0', npm: '11.19.0' }, devDependencies: { '@sirloinbh/tsconfig': '1.0.0' } }));
   });
   assert.deepEqual(result.problems.map((p) => p.message), [
     '파일이 없습니다 (중앙 원본: templates/app/.nvmrc.tmpl)',
