@@ -1,4 +1,5 @@
 // Computes what a sync would write into one target repository, without any network access.
+import { APP_CI, inlineAppCi, REUSABLE_APP_CI } from './inline-ci.mjs';
 import { buildManifest, MANIFEST_PATH } from './manifest.mjs';
 import { renderProfile } from './templates.mjs';
 import { buildVars } from './vars.mjs';
@@ -49,6 +50,11 @@ export function planTarget({ root, data, target, centralSha, workflowSha = centr
   // Feature folders (e.g. templates/ui) join only when the project turns the feature on in the registry.
   const featureFolders = Object.entries(profile.featureTemplates ?? {}).filter(([feature]) => project?.features?.[feature]).map(([, folder]) => folder);
   const rendered = renderProfile({ root, profile: target.profile, folders: [...profile.templates, ...featureFolders], vars, readExisting });
+  // A public app cannot call the private central reusable workflow, so its ci.yml gets the workflow itself (#209).
+  if (project?.public) {
+    const ci = rendered.find((f) => f.path === APP_CI);
+    if (ci) Object.assign(ci, { source: REUSABLE_APP_CI, content: inlineAppCi(root, ci.content) });
+  }
 
   const allowed = (project?.allowedDifferences ?? []).map((d) => d.path);
   const skipped = [];

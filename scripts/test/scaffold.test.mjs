@@ -23,6 +23,7 @@ function withSlot99() {
     displayName: '샘플 · 스캐폴드 확인용',
     domain: '샘플',
     summary: '스캐폴드 렌더링을 확인하는 가상 프로젝트.',
+    public: false,
     repos: { umbrella: 'sample-app', frontend: 'sample-app-frontend', backend: 'sample-app-backend', db: 'sample-app-db' },
     ports: { web: 8199, api: 3199, e2eApi: 3299, vite: 5299, e2eWeb: 5399, db: 15499 },
     db: { name: 'sample', testName: 'sample_test' },

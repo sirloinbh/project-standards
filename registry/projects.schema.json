@@ -20,7 +20,7 @@
     },
     "project": {
       "type": "object",
-      "required": ["slot", "status", "name", "title", "displayName", "domain", "summary", "repos", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
+      "required": ["slot", "status", "name", "title", "displayName", "domain", "summary", "repos", "public", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
       "additionalProperties": false,
       "properties": {
         "slot": { "type": "integer", "minimum": 1, "maximum": 99, "description": "은퇴해도 다시 배정하지 않는다" },
@@ -30,6 +30,7 @@
         "displayName": { "type": "string", "minLength": 1, "description": "화면 헤더·탭 제목·PWA 이름에 쓰는 앱 표시 이름. 앱은 이 이름으로만 구별되므로 겹치면 안 된다(ADR-0008)" },
         "domain": { "type": "string", "minLength": 1, "description": "서비스 분야 설명 (예: 운동)" },
         "summary": { "type": "string", "minLength": 10, "description": "AGENTS.md 첫 문단에 들어가는 서비스 설명" },
+        "public": { "type": "boolean", "description": "우산 리포가 public이다. public 리포는 private 중앙 리포의 재사용 워크플로를 부를 수 없어서 ci.yml에 공통 CI를 펼쳐 넣는다(#209)" },
         "repos": {
           "type": "object",
           "required": ["umbrella", "frontend", "backend", "db"],
