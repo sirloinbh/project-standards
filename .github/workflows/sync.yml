@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # 패키지 Release에 적힌 publish.yml 실행을 확인한다. App에는 Actions 권한이 없다(#205)
 
 # 동기화는 한 번에 하나씩, 순서대로 실행한다(진행 중인 실행을 취소하지 않는다).
 concurrency:
@@ -33,4 +34,5 @@ jobs:
         env:
           SYNC_APP_ID: ${{ vars.SYNC_APP_ID }}
           SYNC_APP_PRIVATE_KEY: ${{ secrets.SYNC_APP_PRIVATE_KEY }}
+          GITHUB_TOKEN: ${{ github.token }} # 중앙 리포 읽기 전용(Release, 배포 실행)
         run: node scripts/sync.mjs --apply

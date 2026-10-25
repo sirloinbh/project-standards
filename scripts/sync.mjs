@@ -92,15 +92,17 @@ export function dryRun({ data, targets, local, labelsFrom = {}, out, centralSha,
  * Opens or updates sync PRs for targets within maxRollout. `getToken(repo)` returns an installation
  * token. With no target in rollout it only checks that a token can be issued (docs/github-app.md step 5).
  * Each target's issue labels are then created or updated; a label failure is reported in `labelsError`.
+ * `centralToken` reads the central repo's releases and publish runs. The workflow passes its own
+ * GITHUB_TOKEN (actions: read) because the App has no Actions permission (#205).
  */
-export async function apply({ data, targets, centralSha, workflowSha = centralSha, getToken, makeClient, labels = loadLabels(root), log = console.log }) {
+export async function apply({ data, targets, centralSha, workflowSha = centralSha, getToken, makeClient, centralToken, labels = loadLabels(root), log = console.log }) {
   const inRollout = targets.filter((t) => t.rollout <= data.sync.maxRollout);
   if (!inRollout.length) {
     await getToken('sirloinbh/project-standards');
     log(`설치 토큰 발급 확인. maxRollout ${data.sync.maxRollout}이라 동기화할 대상이 없습니다.`);
     return [];
   }
-  const centralApi = makeClient(await getToken('sirloinbh/project-standards'));
+  const centralApi = makeClient(centralToken ?? (await getToken('sirloinbh/project-standards')));
   const results = [];
   for (const target of inRollout) {
     let api;
@@ -132,6 +134,10 @@ if (isMain && process.argv.includes('--apply')) {
   const { data } = loadAll(root);
   const centralSha = process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   const credentials = { appId: process.env.SYNC_APP_ID, privateKey: process.env.SYNC_APP_PRIVATE_KEY };
+  if (!process.env.GITHUB_TOKEN) {
+    console.error('sync: GITHUB_TOKEN is missing (sync.yml passes github.token to read releases and publish runs)');
+    process.exit(1);
+  }
   apply({
     data,
     targets: data.sync.targets,
@@ -139,6 +145,7 @@ if (isMain && process.argv.includes('--apply')) {
     workflowSha: lastWorkflowCommit(centralSha),
     getToken: async (repo) => (await getInstallationToken({ ...credentials, repo })).token,
     makeClient: (token) => createClient({ token }),
+    centralToken: process.env.GITHUB_TOKEN,
   })
     .then((results) => process.exit(results.some((r) => r.status === 'failed' || r.labelsError) ? 1 : 0))
     .catch((error) => {

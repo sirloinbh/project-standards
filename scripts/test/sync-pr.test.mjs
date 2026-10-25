@@ -167,6 +167,27 @@ test('apply only checks the token while maxRollout is 0, then syncs targets in r
   assert.deepEqual(results.map((r) => `${r.target} ${r.status}`), ['sirloinbh/workout-memo opened']);
 });
 
+test('apply reads the central repo with centralToken, not an App token (#205)', async () => {
+  const rolled = structuredClone(data);
+  rolled.sync.maxRollout = 1;
+  const tokens = [];
+  const clients = [];
+  const repos = { 'sirloinbh/workout-memo': fakeRepo('sirloinbh/workout-memo', { 'package.json': '{"name":"workout-memo"}' }) };
+  const central = fakePublishedCentral();
+  const results = await apply({
+    data: rolled,
+    targets: rolled.sync.targets,
+    centralSha: SHA1,
+    getToken: async (r) => (tokens.push(r), r),
+    makeClient: (token) => (clients.push(token), token === 'workflow-token' ? central : repos[token].api),
+    centralToken: 'workflow-token',
+    log: () => {},
+  });
+  assert.deepEqual(results.map((r) => r.status), ['opened']);
+  assert.deepEqual(tokens, ['sirloinbh/workout-memo'], 'App tokens are issued only for target repositories');
+  assert.equal(clients[0], 'workflow-token');
+});
+
 test('the App JWT is RS256-signed with the App ID and a short lifetime', () => {
   const { privateKey, publicKey } = crypto.generateKeyPairSync('rsa', { modulusLength: 2048, privateKeyEncoding: { type: 'pkcs1', format: 'pem' }, publicKeyEncoding: { type: 'spki', format: 'pem' } });
   const jwt = createAppJwt({ appId: 12345, privateKey, now: 1_000_000 });
