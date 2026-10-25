@@ -21,12 +21,13 @@
     },
     "images": {
       "type": "object",
-      "required": ["node", "nginx", "postgres"],
+      "required": ["node", "nginx", "postgres", "playwright"],
       "additionalProperties": false,
       "properties": {
         "node": { "$ref": "#/$defs/image" },
         "nginx": { "$ref": "#/$defs/image" },
-        "postgres": { "$ref": "#/$defs/image" }
+        "postgres": { "$ref": "#/$defs/image" },
+        "playwright": { "$ref": "#/$defs/pinnedImage", "description": "화면 비교(features.e2eVisual)용 Playwright 컨테이너. 태그를 다시 push해도 글꼴·브라우저가 바뀌지 않게 digest로 고정한다. 버전은 앱의 @playwright/test와 같아야 한다" }
       }
     },
     "runner": {
@@ -60,6 +61,7 @@
   },
   "$defs": {
     "exact": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
-    "image": { "type": "string", "pattern": "^[a-z0-9./-]+:[A-Za-z0-9._-]+$" }
+    "image": { "type": "string", "pattern": "^[a-z0-9./-]+:[A-Za-z0-9._-]+$" },
+    "pinnedImage": { "type": "string", "pattern": "^[a-z0-9./-]+:[A-Za-z0-9._-]+@sha256:[0-9a-f]{64}$" }
   }
 }

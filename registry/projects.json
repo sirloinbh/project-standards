@@ -36,6 +36,7 @@
       },
       "features": {
         "e2e": true,
+        "e2eVisual": true,
         "openapi": true,
         "contract": true,
         "ui": false,
@@ -83,6 +84,7 @@
       },
       "features": {
         "e2e": false,
+        "e2eVisual": false,
         "openapi": false,
         "contract": false,
         "ui": false,
@@ -130,6 +132,7 @@
       },
       "features": {
         "e2e": false,
+        "e2eVisual": false,
         "openapi": false,
         "contract": false,
         "ui": false,
@@ -177,6 +180,7 @@
       },
       "features": {
         "e2e": false,
+        "e2eVisual": false,
         "openapi": false,
         "contract": false,
         "ui": false,
@@ -224,6 +228,7 @@
       },
       "features": {
         "e2e": false,
+        "e2eVisual": false,
         "openapi": false,
         "contract": false,
         "ui": false,
@@ -271,6 +276,7 @@
       },
       "features": {
         "e2e": false,
+        "e2eVisual": false,
         "openapi": false,
         "contract": false,
         "ui": false,
@@ -318,6 +324,7 @@
       },
       "features": {
         "e2e": false,
+        "e2eVisual": false,
         "openapi": false,
         "contract": false,
         "ui": false,
@@ -365,6 +372,7 @@
       },
       "features": {
         "e2e": false,
+        "e2eVisual": false,
         "openapi": false,
         "contract": false,
         "ui": false,

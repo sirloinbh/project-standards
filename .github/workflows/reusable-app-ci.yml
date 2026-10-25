@@ -22,6 +22,14 @@ on:
         description: Playwright 브라우저 테스트 실행 여부 (레지스트리 features.e2e)
         type: boolean
         default: false
+      e2e-visual:
+        description: e2e를 고정 Playwright 컨테이너에서 E2E_VISUAL=1로 실행해 스크린샷까지 비교 (레지스트리 features.e2eVisual)
+        type: boolean
+        default: false
+      playwright-image:
+        description: 화면 비교용 Playwright 이미지, digest 고정 (versions.json images.playwright)
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -77,9 +85,13 @@ jobs:
             done
           fi
       - run: npm run check
+      - name: 배포 스크립트 문법 검사
+        run: |
+          shopt -s nullglob
+          for f in deploy/*.sh; do bash -n "$f" || exit 1; done
 
   e2e:
-    if: inputs.e2e
+    if: inputs.e2e && !inputs.e2e-visual
     runs-on: ubuntu-24.04
     services:
       postgres:
@@ -116,6 +128,53 @@ jobs:
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with: { name: playwright-report, path: playwright-report, retention-days: 7 }
+
+  # 화면 비교: 글꼴과 Chromium이 고정된 컨테이너에서만 스크린샷 기준 이미지와 비교한다.
+  e2e-visual:
+    if: inputs.e2e && inputs.e2e-visual
+    runs-on: ubuntu-24.04
+    container:
+      image: ${{ inputs.playwright-image }}
+      options: --ipc=host
+    services:
+      postgres:
+        image: ${{ inputs.postgres-image }}
+        env: { POSTGRES_USER: app, POSTGRES_PASSWORD: test, POSTGRES_DB: '${{ inputs.db-name }}' }
+        options: --health-cmd pg_isready --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      CI: 'true'
+      E2E_VISUAL: '1'
+      # 컨테이너 안에서는 서비스 이름으로 DB에 접속한다.
+      DATABASE_URL: postgres://app:test@postgres:5432/${{ inputs.db-name }}
+      TEST_DATABASE_URL: postgres://app:test@postgres:5432/${{ inputs.db-name }}
+      E2E_DATABASE_URL: postgres://app:test@postgres:5432/${{ inputs.db-name }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+      - run: npm install --global "npm@$NPM_VERSION" --ignore-scripts
+      - run: npm ci --ignore-scripts
+      # Playwright 이미지에는 psql이 없다. 다시 실행해도 안전한지는 verify job이 psql로 확인한다.
+      - name: DB 마이그레이션
+        run: npm run db:migrate
+      - run: npm run test:e2e
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+      # 없거나 의도적으로 바뀐 화면의 기준 이미지 후보. playwright-report에서 차이를 확인한 뒤
+      # 이 artifact를 e2e/__screenshots__에 커밋한다.
+      - if: failure()
+        run: npx playwright test --update-snapshots=changed --retries=0 || true
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: failure()
+        with: { name: visual-baselines, path: e2e/__screenshots__, retention-days: 7 }
 
   docker-build:
     runs-on: ubuntu-24.04

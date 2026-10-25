@@ -9,6 +9,7 @@ workout-memo의 테스트 설정을 중앙 관리 파일로 만든 것이다(#33
 
 - 포트는 [ADR-0006](adr/0006-port-slot-allocation.md)의 슬롯 공식으로 정한 레지스트리 값이다. 개발 서버(`api`, `vite`)와 겹치지 않아서 개발 서버를 켠 채로 e2e를 돌릴 수 있다.
 - `features.e2e`는 CI의 e2e 작업도 켠다(`reusable-app-ci.yml`).
+- `features.e2eVisual`을 함께 켜면 CI가 e2e를 `versions.json`의 `images.playwright`(digest 고정) 컨테이너에서 `E2E_VISUAL=1`로 실행해 스크린샷까지 비교한다(#203). 실패하면 `playwright-report`와 기준 이미지 후보 `visual-baselines` artifact를 올린다. 이 컨테이너에는 `psql`이 없으므로 `db:migrate` 실행기가 있어야 한다. 이미지 버전은 앱의 `@playwright/test` 버전과 맞춘다. 지금은 workout-memo만 켜져 있다.
 - 두 파일 모두 `.prettierignore`의 중앙 구간에 들어 있다. 앱에서 포맷하면 해시 검사가 실패하기 때문이다(#154).
 - 지금은 workout-memo만 두 플래그가 켜져 있다. 스캐폴드로 만드는 새 프로젝트는 처음부터 두 플래그를 켜고 등록한다. 스캐폴드의 `package.json`에 아래 의존성과 e2e 시작 파일이 들어 있다.
 
