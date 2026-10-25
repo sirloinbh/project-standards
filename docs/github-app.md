@@ -29,6 +29,8 @@
 
 나머지 권한은 모두 "No access"로 둔다. 이미 App을 만들었다면 아래 "권한을 바꿀 때"대로 Issues 권한을 추가한다.
 
+Actions 권한은 주지 않는다. 동기화가 공유 패키지의 배포 기록(Release와 `publish.yml` 실행)을 확인할 때는 App 토큰 대신 `sync.yml`의 `GITHUB_TOKEN`(`actions: read`)으로 중앙 리포만 읽는다(#205).
+
 ## 1. App 만들기 [사용자]
 
 1. GitHub에서 개인 계정 `sirloinbh`로 로그인했는지 확인한다.
