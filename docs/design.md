@@ -369,6 +369,7 @@ DB 포트가 바뀌면 각 사용자의 로컬 `.env`에 있는 `DATABASE_URL`�
   → .github/workflows/ci.yml (관리 파일)
   → uses: sirloinbh/project-standards/.github/workflows/reusable-app-ci.yml@<중앙 SHA>
       jobs: verify(lint·typecheck·test·deploy/*.sh 문법), e2e(features.e2e일 때. e2eVisual이면 고정 컨테이너 e2e-visual), docker-build, standards-check
+      (레지스트리 public 앱은 private 중앙 리포의 재사용 워크플로를 부를 수 없어 ci.yml에 이 내용을 펼쳐 넣는다, #209)
   → standards-check: node .standards/check.mjs
       ├─ full·section 파일 해시 비교
       ├─ package.json 필드, 설치된 @sirloinbh/* 버전, 설치 스크립트 없음, dependencies 0개
