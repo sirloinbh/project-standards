@@ -22,7 +22,7 @@ export async function collectSettings(api, repo) {
   const [workflow, protection, alerts, fixes, secrets, variables] = await Promise.all([
     safe(() => api('GET', `${base}/actions/permissions/workflow`)),
     safe(() => api('GET', `${base}/branches/${branch}/protection`)),
-    // 204 when enabled, 404 (null) when disabled.
+    // 204 when enabled (the client returns ''), 404 (null) when disabled.
     safe(async () => (await api('GET', `${base}/vulnerability-alerts`)) !== null),
     safe(() => api('GET', `${base}/automated-security-fixes`)),
     safe(() => api('GET', `${base}/actions/secrets?per_page=100`)),

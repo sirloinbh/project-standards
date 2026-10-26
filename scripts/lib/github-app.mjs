@@ -37,7 +37,9 @@ export function createClient({ token, fetchImpl = fetch, baseUrl = 'https://api.
       } catch {}
       throw new Error(`GitHub API ${method} ${path} failed: ${response.status} ${message}`);
     }
-    return text ? JSON.parse(text) : null;
+    // A GET that succeeds with no body (204, e.g. vulnerability-alerts enabled) returns '' so it never reads as a 404 null.
+    if (!text) return method === 'GET' ? '' : null;
+    return JSON.parse(text);
   };
 }
 
