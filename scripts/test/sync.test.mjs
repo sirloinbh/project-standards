@@ -57,7 +57,9 @@ test('a plan includes the manifest with central SHA, packages, and the registry 
   assert.deepEqual(manifest.registry.ports, original.data.projects.projects.find((p) => p.name === 'study-log').ports);
   // design-tokens joins when an app package.json installs it (#126); the check requires every listed package installed.
   assert.deepEqual(Object.keys(manifest.packages), ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig']);
-  assert.equal(plan.inRollout, false, 'study-log is rollout 2, after workout-memo');
+  assert.equal(plan.inRollout, true, 'study-log is rollout 2, opened with maxRollout 2 (#113)');
+  const infra = original.data.sync.targets.find((t) => t.profile === 'infra');
+  assert.equal(planTarget({ root, data: original.data, target: infra, centralSha: 'abc1234' }).inRollout, false, 'infra is rollout 3, after the apps');
   assert.deepEqual(plan.fieldsPending, ['backend/package.json', 'frontend/package.json', 'package.json']);
 });
 

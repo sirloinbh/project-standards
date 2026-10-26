@@ -13,7 +13,7 @@
 
 ## 현재 상태
 
-중앙 골격은 만들어졌고, 사용자 단계([docs/user-steps.md](docs/user-steps.md))를 마쳐 workout-memo부터 적용하고 있다. `sync.config.json`의 `maxRollout`이 `1`이라 지금은 workout-memo에만 동기화 PR이 열린다. 진행 순서는 GitHub 이슈의 우선순위 라벨과 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 규칙을 따른다.
+중앙 골격은 만들어졌고, 사용자 단계([docs/user-steps.md](docs/user-steps.md))를 마쳐 workout-memo에 먼저 적용했다. `sync.config.json`의 `maxRollout`이 `2`라 지금은 앱 8개에 동기화 PR이 열리고, 인프라 리포는 아직 아니다. 진행 순서는 GitHub 이슈의 우선순위 라벨과 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 규칙을 따른다.
 
 ## 시작하기
 
