@@ -1,18 +1,18 @@
 # 준수 현황
 
-<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-26 05:29 UTC, 중앙 519222e -->
+<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-26 05:53 UTC, 중앙 cf4c506 -->
 
 | 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example | 리포 설정 |
 |---|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | ✓ | `523d533` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 5 △ 3 |
-| sirloinbh/study-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/health-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/life-journal | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/money-ledger | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/english-study | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/plan-routine | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/dev-career-portfolio | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/shared-aws-infrastructure | 아직 안 됨 | — | — | — | [#5](https://github.com/sirloinbh/shared-aws-infrastructure/pull/5) 0일째 | — | ✗ 2 △ 3 |
+| sirloinbh/workout-memo | ✓ | `523d533` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 3 |
+| sirloinbh/study-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/health-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/life-journal | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/money-ledger | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/english-study | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/plan-routine | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/dev-career-portfolio | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/shared-aws-infrastructure | ✓ | `271db28` | ✓ 일치 | — | 없음 | — | ✓ |
 
 ## 리포 설정
 
@@ -22,118 +22,73 @@
 
 | 상태 | 항목 | 지금 | 기준 |
 |---|---|---|---|
-| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
-| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
-| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
 | ✗ | main 브랜치 보호 | 없음 | 켬 |
 | ✗ | secret scanning | disabled | enabled |
 | ✗ | push protection (secret 차단) | disabled | enabled |
-| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
-| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/study-log
 
 | 상태 | 항목 | 지금 | 기준 |
 |---|---|---|---|
-| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
-| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
-| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
 | — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
 | — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
 | — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
-| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/health-log
 
 | 상태 | 항목 | 지금 | 기준 |
 |---|---|---|---|
-| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
-| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
-| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
 | — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
 | — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
 | — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
-| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/life-journal
 
 | 상태 | 항목 | 지금 | 기준 |
 |---|---|---|---|
-| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
-| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
-| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
 | — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
 | — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
 | — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
-| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/money-ledger
 
 | 상태 | 항목 | 지금 | 기준 |
 |---|---|---|---|
-| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
-| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
-| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
 | — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
 | — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
 | — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
-| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/english-study
 
 | 상태 | 항목 | 지금 | 기준 |
 |---|---|---|---|
-| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
-| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
-| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
 | — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
 | — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
 | — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
-| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/plan-routine
 
 | 상태 | 항목 | 지금 | 기준 |
 |---|---|---|---|
-| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
-| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
-| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
 | — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
 | — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
 | — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
-| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/dev-career-portfolio
 
 | 상태 | 항목 | 지금 | 기준 |
 |---|---|---|---|
-| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
-| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
-| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
 | — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
 | — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
 | — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
-| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 ### sirloinbh/shared-aws-infrastructure
 
 | 상태 | 항목 | 지금 | 기준 |
 |---|---|---|---|
-| △ 권장 | squash 병합 | 켬 | 끔 (권장) |
-| △ 권장 | rebase 병합 | 켬 | 끔 (권장) |
-| △ 권장 | 병합 후 브랜치 자동 삭제 | 끔 | 켬 (권장) |
 | — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
 | — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
 | — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| ✗ | Dependabot 취약점 알림 | 끔 | 켬 |
-| ✗ | Dependabot 보안 업데이트 | 끔 | 켬 |
 
 
 고치는 방법은 [README](../README.md)의 "하위 리포에서 standards-check가 실패했을 때"를 따른다.
