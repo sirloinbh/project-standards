@@ -2,12 +2,13 @@
 
 이 리포지토리는 `sirloinbh` 개인 앱 포트폴리오(앱 8개 + `shared-aws-infrastructure`)의 공통 표준(설정·컨벤션·스킬·프로젝트 고정값)을 관리하는 중앙 리포다.
 
-## 현재 단계: 적용 준비
+## 현재 단계: 운영
 
-- 설계는 승인되어 [docs/design.md](docs/design.md)와 [docs/adr/](docs/adr/)가 원본이다. 요구사항 원본은 [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md)다.
-- 중앙 골격(레지스트리, 템플릿, 동기화, 공유 패키지, 공통 CI, 준수 현황)은 만들어져 있다. `sync.config.json`의 `maxRollout`이 `3`이라 앱 8개와 인프라 리포 모두에 동기화 PR이 열린다(#115, 2026-10-26 사용자 승인).
-- 앱 8개 동기화는 끝났다(#97, #98, #113, #114). 지금은 인프라 리포 동기화 PR을 검토·병합하는 단계(#115)다. 단계별 계획은 design.md "12. 단계별 적용 계획"을 따른다.
-- 하위 리포 적용이 끝나면(#116) 이 절을 운영 단계 기준으로 고친다.
+- 설계는 [docs/design.md](docs/design.md)와 [docs/adr/](docs/adr/)가 원본이다. 요구사항 원본은 [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md)다.
+- design.md "12. 단계별 적용 계획"은 끝났다(#116). `sync.config.json`의 `maxRollout`이 `3`이라 앱 8개와 인프라 리포 모두가 동기화 대상이다.
+- 지금부터 표준을 바꾸는 순서: 이 리포의 원본을 고친다 → `npm run check` → 이 리포 PR 병합(에이전트) → `sync.yml`이 하위 리포 동기화 PR을 열거나 갱신 → 에이전트가 동기화 PR을 검토해 이슈에 기록 → 사용자가 병합.
+- 동기화 PR에 직접 커밋을 더해야 할 때(공유 패키지가 늘어 lockfile 갱신이 필요한 경우 등)는, 그 PR이 병합될 때까지 이 리포 main에 병합하지 않는다. main에 새 병합이 들어가면 동기화 브랜치가 다시 만들어져 직접 커밋이 사라진다(#114).
+- 매일 오는 준수 현황 PR(`chore/compliance-report`)은 에이전트가 병합한다. 새로 생긴 `✗` 항목은 해당 리포 또는 이 리포에 이슈로 등록한다.
 
 ## 작업 절차
 
@@ -56,7 +57,7 @@
 - **동기화:** 중앙 main에 병합되면 `sync.yml`이 `rollout ≤ maxRollout`인 리포마다 동기화 PR(`chore/standards-sync-*`)을 열거나 갱신한다. GitHub App 변수(`SYNC_APP_ID`)가 없으면 건너뛴다. `maxRollout`은 사용자 승인 후에만 올린다.
 - **공유 패키지:** 태그(`<패키지>/v<버전>`) push로만 배포한다(`publish.yml`). 태그 push는 사용자 단계다. 배포 후 `versions.json`의 패키지 버전을 올리는 PR은 에이전트가 한다.
 - **준수 현황:** `compliance.yml`이 매일 하위 리포 상태를 모아 `docs/compliance.md`, `docs/env-matrix.md` 갱신 PR을 연다. App 변수가 없으면 건너뛴다.
-- **앱 배포:** 앱 리포의 main 병합이 곧 운영 배포다. 하위 리포의 동기화 PR은 사용자가 병합한다.
+- **앱 배포:** 서버에 배포된 앱(지금은 workout-memo)은 main 병합이 곧 운영 배포다(서버의 pull 방식 autodeploy). 나머지 앱 7개는 아직 서버에 없다. 처음 배포할 때 서버 `/opt/<앱>/.env`에 `NODE_AUTH_TOKEN`(read:packages)이 있어야 Docker 빌드가 공유 패키지를 받는다. 하위 리포의 동기화 PR은 사용자가 병합한다.
 
 ## 금지 사항
 
@@ -69,7 +70,7 @@
 
 ## 계정과 보안
 
-- GitHub 작업은 개인 계정 `sirloinbh`로 한다. `ghp` 함수 또는 `gh-project.ps1` 래퍼를 쓴다. 위치는 `%LOCALAPPDATA%\sirloinbh-tools\`(#21 이후)이고, 설치 전에는 예전 위치 `%LOCALAPPDATA%\gh-workout-memo\`다([docs/tools.md](docs/tools.md)).
+- GitHub 작업은 개인 계정 `sirloinbh`로 한다. `ghp` 함수 또는 `gh-project.ps1` 래퍼를 쓴다. 위치는 `%LOCALAPPDATA%\sirloinbh-tools\`다([docs/tools.md](docs/tools.md)). 예전 위치 `%LOCALAPPDATA%\gh-workout-memo\`는 쓰지 않는다(삭제는 사용자 단계).
 - Git 인증은 리포 로컬 credential helper(`gh-project.ps1 auth git-credential`)가 담당한다. 커밋 작성자는 `~/.gitconfig-personal`이 원격 URL 기준으로 자동 적용한다.
 
 ## 응답
