@@ -13,7 +13,7 @@
 
 ## 현재 상태
 
-중앙 골격은 만들어졌고, 사용자 단계([docs/user-steps.md](docs/user-steps.md))를 마쳐 앱 8개에 적용했다. `sync.config.json`의 `maxRollout`이 `3`이라 지금은 앱 8개와 인프라 리포 모두에 동기화 PR이 열린다. 진행 순서는 GitHub 이슈의 우선순위 라벨과 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 규칙을 따른다.
+운영 단계다. 앱 8개와 인프라 리포 모두가 동기화 대상이고(`sync.config.json`의 `maxRollout` 3), 중앙 main에 병합되면 하위 리포에 동기화 PR이 열린다. 하위 리포 상태는 매일 갱신되는 [준수 현황](docs/compliance.md)에서 본다. 진행 순서는 GitHub 이슈의 우선순위 라벨과 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 규칙을 따른다.
 
 ## 시작하기
 
