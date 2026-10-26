@@ -1,18 +1,18 @@
 # 준수 현황
 
-<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-25 18:15 UTC, 중앙 523d533 -->
+<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-26 05:29 UTC, 중앙 519222e -->
 
 | 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example | 리포 설정 |
 |---|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | ✓ | `523d533` | ✓ 일치 | ✗ @sirloinbh/tsconfig 없음≠1.0.0 | 없음 | ✓ | ✗ 5 △ 3 |
-| sirloinbh/study-log | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/health-log | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/life-journal | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/money-ledger | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/english-study | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/plan-routine | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/dev-career-portfolio | 아직 안 됨 | — | — | — | 없음 | ✓ | ✗ 2 △ 3 |
-| sirloinbh/shared-aws-infrastructure | 아직 안 됨 | — | — | — | 없음 | — | ✗ 2 △ 3 |
+| sirloinbh/workout-memo | ✓ | `523d533` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 5 △ 3 |
+| sirloinbh/study-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/health-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/life-journal | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/money-ledger | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/english-study | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/plan-routine | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/dev-career-portfolio | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 2 △ 3 |
+| sirloinbh/shared-aws-infrastructure | 아직 안 됨 | — | — | — | [#5](https://github.com/sirloinbh/shared-aws-infrastructure/pull/5) 0일째 | — | ✗ 2 △ 3 |
 
 ## 리포 설정
 
