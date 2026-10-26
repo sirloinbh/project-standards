@@ -33,6 +33,10 @@
 
 기본 브랜치, 병합 커밋, Actions 토큰 권한(`read`)과 PR 승인(끔)은 9개 모두 기준과 같다. secret·variable은 9개 모두 없다.
 
+## 2026-10-26 맞춘 결과
+
+사용자가 아래 "맞추는 법"대로 9개 리포의 Dependabot 알림·보안 업데이트와 병합 방식을 맞추고, workout-memo의 secret scanning·push protection과 main 브랜치 보호(필수 검사 `verify`, `docker-build`)를 켰다. 같은 날 준수 현황(#230)에서 9개 리포의 리포 설정이 모두 ✓다. 이후 상태는 [compliance.md](compliance.md)에서 본다.
+
 ## 맞추는 법 [사용자]
 
 설정 변경은 사용자가 한다. 아래 명령은 개인 계정(`ghp`)으로 실행한다. `<리포>`에 리포 이름을 넣는다.
