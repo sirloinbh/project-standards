@@ -65,6 +65,32 @@ test('repository status covers manifest files, packages, and the sync PR age', (
   assert.equal(unsynced.synced, false);
 });
 
+test('packages are also found in workspace package.json files the manifest manages', () => {
+  const field = (name) => ({ mode: 'fields', fields: { [`devDependencies.${name}`]: '1.0.0' } });
+  const manifest = buildManifest({
+    centralSha: 'c0ffee1', profile: 'app', project: 'study-log',
+    files: [{ path: 'package.json', ...field('@sirloinbh/eslint-config') }, { path: 'frontend/package.json', ...field('@sirloinbh/tsconfig') }, { path: 'backend/package.json', ...field('@sirloinbh/tsconfig') }],
+    packages: { '@sirloinbh/eslint-config': '1.0.0', '@sirloinbh/tsconfig': '1.0.0', '@sirloinbh/design-tokens': '1.0.0' },
+  });
+  const deps = (d) => JSON.stringify({ devDependencies: d });
+  const repo = {
+    [MANIFEST_PATH]: JSON.stringify(manifest),
+    'package.json': deps({ '@sirloinbh/eslint-config': '1.0.0' }),
+    'frontend/package.json': deps({ '@sirloinbh/tsconfig': '1.0.0' }),
+    'backend/package.json': deps({ '@sirloinbh/tsconfig': '0.9.0' }),
+  };
+  const status = repoStatus({ target: studyTarget, project: study, read: (p) => repo[p] ?? null });
+  assert.deepEqual(status.packages, [
+    { name: '@sirloinbh/eslint-config', expected: '1.0.0', actual: '1.0.0', ok: true },
+    // One workspace with the wrong version is reported even if another matches.
+    { name: '@sirloinbh/tsconfig', expected: '1.0.0', actual: '0.9.0', ok: false },
+    { name: '@sirloinbh/design-tokens', expected: '1.0.0', actual: null, ok: false },
+  ]);
+  repo['backend/package.json'] = deps({ '@sirloinbh/tsconfig': '1.0.0' });
+  const fixed = repoStatus({ target: studyTarget, project: study, read: (p) => repo[p] ?? null });
+  assert.equal(fixed.packages.find((p) => p.name === '@sirloinbh/tsconfig').ok, true);
+});
+
 test('reports never contain secret values', () => {
   const status = repoStatus({ target: studyTarget, project: study, read: (p) => (p === '.env.example' ? annotated + '\nDATABASE_URL=postgres://u:topsecret@localhost:1/x\n' : null) });
   const { 'docs/compliance.md': compliance, 'docs/env-matrix.md': matrix } = renderReports([status, { repo: 'sirloinbh/x', profile: 'app', unknown: '로컬 클론 없음' }], meta);
