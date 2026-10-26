@@ -50,7 +50,11 @@ workout-memo(공개)는 추가로 secret scanning과 브랜치 보호를 켠다.
 
 ```powershell
 # secret scanning, push protection
-'{"security_and_analysis":{"secret_scanning":{"status":"enabled"},"secret_scanning_push_protection":{"status":"enabled"}}}' | ghp api -X PATCH repos/sirloinbh/workout-memo --input -
+# 래퍼는 파이프 입력을 받지 않으므로 JSON을 임시 파일로 넘긴다(#228)
+$f = Join-Path $env:TEMP 'workout-memo-security.json'
+'{"security_and_analysis":{"secret_scanning":{"status":"enabled"},"secret_scanning_push_protection":{"status":"enabled"}}}' | Set-Content -Encoding ascii $f
+ghp api -X PATCH repos/sirloinbh/workout-memo --input $f --jq '.security_and_analysis'
+Remove-Item $f
 ```
 
 브랜치 보호는 웹에서 설정하는 것이 쉽다: workout-memo → Settings → Branches → Add branch protection rule(`main`) → "Require status checks to pass"에서 CI 검사 선택, "Allow force pushes"·"Allow deletions"는 끈다.
