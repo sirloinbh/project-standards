@@ -216,3 +216,9 @@ test('the installation token is limited to the one target repository and errors 
   const failing = createClient({ token: 'ghs_secret', fetchImpl: async () => new Response(JSON.stringify({ message: 'Bad credentials' }), { status: 401 }) });
   await assert.rejects(failing('POST', '/x', {}), (error) => error.message === 'GitHub API POST /x failed: 401 Bad credentials' && !error.message.includes('ghs_secret'));
 });
+
+test('a GET answered 204 with no body is told apart from a 404 (#226)', async () => {
+  const api = createClient({ token: 't', fetchImpl: async (url) => new Response(null, { status: url.endsWith('/on') ? 204 : 404 }) });
+  assert.equal(await api('GET', '/on'), '', 'vulnerability-alerts answers 204 when enabled');
+  assert.equal(await api('GET', '/off'), null);
+});
