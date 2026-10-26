@@ -57,10 +57,13 @@ export function repoStatus({ target, project, read, pulls = [], now = new Date()
   const problems = manifest ? checkManifest(manifest, read).map((p) => `${p.path}: ${p.reason}`) : [];
   const packages = [];
   if (manifest) {
-    const pkg = read('package.json') ? JSON.parse(read('package.json')) : {};
+    // Sync puts some packages in workspace package.json files (frontend/, backend/), not the root.
+    const pkgPaths = ['package.json', ...Object.keys(manifest.files ?? {}).filter((p) => p.endsWith('/package.json'))];
+    const pkgs = pkgPaths.map((p) => read(p)).filter(Boolean).map((text) => JSON.parse(text));
     for (const [name, expected] of Object.entries(manifest.packages ?? {})) {
       if (!expected) continue;
-      const actual = pkg.devDependencies?.[name] ?? pkg.dependencies?.[name] ?? null;
+      const found = pkgs.map((pkg) => pkg.devDependencies?.[name] ?? pkg.dependencies?.[name]).filter((v) => v !== undefined);
+      const actual = found.find((v) => v !== expected) ?? found[0] ?? null;
       packages.push({ name, expected, actual, ok: actual === expected });
     }
   }
