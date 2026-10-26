@@ -151,9 +151,12 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
     else keptRemoved.push(path);
   }
 
-  // Only the manifest changed (e.g. a new central SHA with identical files): nothing to propose.
+  // Only the central SHA in the manifest changed: nothing to propose. A manifest that lists other
+  // files, packages or registry values is proposed even when every file already matches (#234).
   const meaningful = changes.filter((c) => c.path !== MANIFEST_PATH);
-  if (!meaningful.length && !deletions.length) return { status: 'unchanged', changes: [], deletions: [] };
+  const withoutSha = (manifest) => JSON.stringify({ ...manifest, centralSha: null });
+  const manifestMoved = withoutSha(previous) !== withoutSha(plan.manifest);
+  if (!meaningful.length && !deletions.length && !manifestMoved) return { status: 'unchanged', changes: [], deletions: [] };
 
   const newTree = await api('POST', `${repoPath}/git/trees`, {
     base_tree: baseCommit.tree.sha,

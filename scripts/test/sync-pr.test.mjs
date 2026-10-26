@@ -98,6 +98,32 @@ test('after the PR is merged, a central commit that changes no synced file propo
   assert.equal(JSON.parse(repo.filesAt(third.branch)[MANIFEST_PATH]).centralSha, SHA2);
 });
 
+// #234: workout-memo#160 added the common UI files before the registry turned features.ui on,
+// so every file already matched and only the manifest's file list grew.
+test('a manifest that lists new managed files is proposed even when every file already matches', async () => {
+  const withUi = structuredClone(data);
+  withUi.projects.projects.find((p) => p.name === 'study-log').features.ui = true;
+  const synced = async (d) => {
+    const repo = studyRepo();
+    const result = await syncTarget({ root, data: d, target: studyTarget, centralSha: SHA1, workflowSha: SHA1, api: repo.api });
+    repo.merge(result.branch);
+    return repo.filesAt('main');
+  };
+  const before = await synced(data);
+  const app = await synced(withUi);
+  // The app holds the UI files, but its manifest is still the one from before features.ui.
+  const repo = fakeRepo('sirloinbh/study-log', { ...app, [MANIFEST_PATH]: before[MANIFEST_PATH] });
+  const result = await syncTarget({ root, data: withUi, target: studyTarget, centralSha: SHA1, workflowSha: SHA1, api: repo.api });
+  assert.equal(result.status, 'opened');
+  assert.deepEqual(result.changes, [], 'only the manifest is committed');
+  const manifest = JSON.parse(repo.filesAt(result.branch)[MANIFEST_PATH]);
+  assert.ok(manifest.files['frontend/src/components/ui/button.tsx'], 'the UI files are now managed');
+  // A newer central commit alone still proposes nothing.
+  repo.merge(result.branch);
+  const again = await syncTarget({ root, data: withUi, target: studyTarget, centralSha: SHA2, workflowSha: SHA1, api: repo.api });
+  assert.equal(again.status, 'unchanged');
+});
+
 test('files dropped from the standard are deleted only if untouched', async () => {
   const repo = studyRepo();
   const first = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, api: repo.api });
