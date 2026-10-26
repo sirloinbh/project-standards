@@ -89,8 +89,8 @@
         "e2eVisual": false,
         "openapi": false,
         "contract": false,
-        "ui": false,
-        "vitest": false
+        "ui": true,
+        "vitest": true
       },
       "skills": [
         "study-log-foundation",
@@ -138,8 +138,8 @@
         "e2eVisual": false,
         "openapi": false,
         "contract": false,
-        "ui": false,
-        "vitest": false
+        "ui": true,
+        "vitest": true
       },
       "skills": [
         "health-log-foundation",
@@ -187,8 +187,8 @@
         "e2eVisual": false,
         "openapi": false,
         "contract": false,
-        "ui": false,
-        "vitest": false
+        "ui": true,
+        "vitest": true
       },
       "skills": [
         "life-journal-foundation",
@@ -236,8 +236,8 @@
         "e2eVisual": false,
         "openapi": false,
         "contract": false,
-        "ui": false,
-        "vitest": false
+        "ui": true,
+        "vitest": true
       },
       "skills": [
         "money-ledger-foundation",
@@ -285,8 +285,8 @@
         "e2eVisual": false,
         "openapi": false,
         "contract": false,
-        "ui": false,
-        "vitest": false
+        "ui": true,
+        "vitest": true
       },
       "skills": [
         "english-study-foundation",
@@ -334,8 +334,8 @@
         "e2eVisual": false,
         "openapi": false,
         "contract": false,
-        "ui": false,
-        "vitest": false
+        "ui": true,
+        "vitest": true
       },
       "skills": [
         "plan-routine-foundation",
@@ -383,8 +383,8 @@
         "e2eVisual": false,
         "openapi": false,
         "contract": false,
-        "ui": false,
-        "vitest": false
+        "ui": true,
+        "vitest": true
       },
       "skills": [
         "dev-career-portfolio-foundation",

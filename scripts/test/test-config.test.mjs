@@ -62,8 +62,10 @@ test('the configs join a sync plan only when the registry turns features.e2e / f
       .map((f) => f.path)
       .sort();
   assert.deepEqual(testFiles('workout-memo'), ['frontend/vitest.config.ts', 'playwright.config.ts']);
-  assert.deepEqual(testFiles('study-log'), []);
   const studyLog = data.projects.projects.find((p) => p.name === 'study-log');
+  // study-log turned vitest on in #126; start from both off to see each one join.
+  Object.assign(studyLog.features, { vitest: false, e2e: false });
+  assert.deepEqual(testFiles('study-log'), []);
   studyLog.features.vitest = true;
   assert.deepEqual(testFiles('study-log'), ['frontend/vitest.config.ts']);
   studyLog.features.e2e = true;

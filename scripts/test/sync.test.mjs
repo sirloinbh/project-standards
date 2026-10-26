@@ -16,6 +16,8 @@ const targetOf = (data, project) => data.sync.targets.find((t) => t.project === 
 
 test('the ui components join a plan only when the project turns features.ui on (#123)', () => {
   const data = structuredClone(original.data);
+  // Every app has it on since #126; turn it off to see the difference.
+  data.projects.projects.find((p) => p.name === 'study-log').features.ui = false;
   const ui = (plan) => plan.files.filter((f) => f.path.startsWith('frontend/src/components/ui/')).map((f) => f.path);
   const off = planTarget({ root, data, target: targetOf(data, 'study-log'), centralSha: 'a'.repeat(40) });
   assert.deepEqual(ui(off), []);
@@ -55,8 +57,8 @@ test('a plan includes the manifest with central SHA, packages, and the registry 
   assert.equal(manifest.centralSha, 'abc1234');
   assert.equal(manifest.project, 'study-log');
   assert.deepEqual(manifest.registry.ports, original.data.projects.projects.find((p) => p.name === 'study-log').ports);
-  // design-tokens joins when an app package.json installs it (#126); the check requires every listed package installed.
-  assert.deepEqual(Object.keys(manifest.packages), ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig']);
+  // design-tokens joined again once all 8 apps installed it (#126); the check requires every listed package installed.
+  assert.deepEqual(Object.keys(manifest.packages), ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig', '@sirloinbh/design-tokens']);
   assert.equal(plan.inRollout, true, 'study-log is rollout 2, opened with maxRollout 2 (#113)');
   const infra = original.data.sync.targets.find((t) => t.profile === 'infra');
   const infraPlan = planTarget({ root, data: original.data, target: infra, centralSha: 'abc1234' });

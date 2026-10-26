@@ -109,7 +109,9 @@ test('a manifest that lists new managed files is proposed even when every file a
     repo.merge(result.branch);
     return repo.filesAt('main');
   };
-  const before = await synced(data);
+  const withoutUi = structuredClone(data);
+  withoutUi.projects.projects.find((p) => p.name === 'study-log').features.ui = false;
+  const before = await synced(withoutUi);
   const app = await synced(withUi);
   // The app holds the UI files, but its manifest is still the one from before features.ui.
   const repo = fakeRepo('sirloinbh/study-log', { ...app, [MANIFEST_PATH]: before[MANIFEST_PATH] });
