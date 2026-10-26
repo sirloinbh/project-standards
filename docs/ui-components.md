@@ -27,7 +27,7 @@
 
 ## 앱에 켜기
 
-컴포넌트는 레지스트리에서 `features.ui`가 `true`인 앱에만 동기화한다. 의존성이 없는 앱에 넣으면 빌드가 깨지기 때문이다. 지금은 8개 앱 모두 `false`이고, 디자인 시스템 적용(#126)에서 앱마다 다음 순서로 켠다.
+컴포넌트는 레지스트리에서 `features.ui`가 `true`인 앱에만 동기화한다. 의존성이 없는 앱에 넣으면 빌드가 깨지기 때문이다. 지금은 workout-memo만 `true`다(workout-memo#159). 나머지 앱은 디자인 시스템 적용(#126)에서 앱마다 다음 순서로 켠다.
 
 1. **[사용자 승인]** 의존성 설치: `radix-ui@1.7.0 sonner@2.0.8 vaul@1.1.2 tw-animate-css@1.4.0` (모두 [의존성 정책](dependency-policy.md) 표의 고정 버전, `--ignore-scripts`). `clsx`, `tailwind-merge`, `class-variance-authority`, `lucide-react`도 있어야 한다.
 2. `frontend/src/index.css`에 `@import 'tw-animate-css';`를 추가한다([디자인 토큰 README](../packages/design-tokens/README.md)).

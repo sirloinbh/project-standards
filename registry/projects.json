@@ -40,7 +40,7 @@
         "e2eVisual": true,
         "openapi": true,
         "contract": true,
-        "ui": false,
+        "ui": true,
         "vitest": true
       },
       "skills": [

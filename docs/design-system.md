@@ -48,4 +48,10 @@
 
 ## 기존 앱 전환
 
-workout-memo의 기존 토큰(`--color-ink` 등)이 새 토큰 중 무엇에 해당하는지는 [design-tokens.md](design-tokens.md)의 대응표에 있다. 전환은 #126에서 앱별로 한다.
+workout-memo의 기존 토큰(`--color-ink` 등)이 새 토큰 중 무엇에 해당하는지는 [design-tokens.md](design-tokens.md)의 대응표에 있다. 전환은 #126에서 앱별로 한다. workout-memo(workout-memo#159)에서 정한 방법은 다음과 같다. 다른 앱도 같은 순서를 따른다.
+
+1. **공통 파일:** 중앙에서 그 앱의 `features.ui`를 켠 상태로 `node scripts/sync.mjs --dry-run --out <폴더> --target sirloinbh/<앱> --local <앱>=<checkout>`을 돌려 나온 `components/`, `lib/`, `theme-init.js`를 앱 PR에 그대로 넣는다. 앱 PR이 병합된 뒤 중앙 `features.ui` PR을 병합하면 동기화 PR에는 manifest만 남는다.
+2. **기존 CSS:** `index.css`에서 `@import './style.css' layer(components);`로 불러와 공통 컴포넌트의 유틸리티가 이기게 한다. 셸 규칙(사이드바·헤더·footer·모달 틀)은 지우고, 요소 규칙(`button`, `p`, `h1`)은 `:where(.legacy)` 안으로 한정한 뒤 페이지 본문과 모달 내용에 `legacy` 클래스를 단다. 직접 쓴 색은 모두 토큰으로 바꾼다.
+3. **대비:** `--muted` 바탕 위 `--muted-foreground` 글자는 라이트 모드에서 4.35:1로 AA(4.5:1)에 못 미친다. 그런 바탕의 글자는 전경색을 더 섞거나 `--foreground`를 쓴다. 상태 배지는 바탕에만 `--success`·`--warning`을 옅게 쓰고 글자는 `--foreground`로 둔다.
+4. **모달:** 공통 Dialog는 열려 있는 동안 뒤쪽 화면을 막는다. 모달을 연 채 뒤쪽을 조작하던 테스트는 실제 흐름(닫고 조작)으로 고친다.
+5. **브라우저 테스트:** 메뉴 이름은 '주 메뉴'이고, 768px 미만에서는 "메뉴 열기"로 Sheet를 연다. 접근성·화면 비교 검사는 모달과 Sheet의 등장 애니메이션이 끝난 뒤에 한다(반투명 중간 프레임에서는 뒤 화면 색이 섞여 대비가 잘못 측정된다).
