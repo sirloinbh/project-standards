@@ -1,10 +1,10 @@
 # 준수 현황
 
-<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-26 05:53 UTC, 중앙 cf4c506 -->
+<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-26 06:29 UTC, 중앙 d40b8ee -->
 
 | 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example | 리포 설정 |
 |---|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | ✓ | `523d533` | ✓ 일치 | ✓ | 없음 | ✓ | ✗ 3 |
+| sirloinbh/workout-memo | ✓ | `523d533` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
 | sirloinbh/study-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
 | sirloinbh/health-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
 | sirloinbh/life-journal | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
@@ -17,14 +17,6 @@
 ## 리포 설정
 
 기준과 이유는 [repo-settings.md](repo-settings.md)에 있다. secret·variable은 이름만 비교한다.
-
-### sirloinbh/workout-memo
-
-| 상태 | 항목 | 지금 | 기준 |
-|---|---|---|---|
-| ✗ | main 브랜치 보호 | 없음 | 켬 |
-| ✗ | secret scanning | disabled | enabled |
-| ✗ | push protection (secret 차단) | disabled | enabled |
 
 ### sirloinbh/study-log
 
