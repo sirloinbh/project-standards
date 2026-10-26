@@ -59,7 +59,9 @@ test('a plan includes the manifest with central SHA, packages, and the registry 
   assert.deepEqual(Object.keys(manifest.packages), ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig']);
   assert.equal(plan.inRollout, true, 'study-log is rollout 2, opened with maxRollout 2 (#113)');
   const infra = original.data.sync.targets.find((t) => t.profile === 'infra');
-  assert.equal(planTarget({ root, data: original.data, target: infra, centralSha: 'abc1234' }).inRollout, false, 'infra is rollout 3, after the apps');
+  const infraPlan = planTarget({ root, data: original.data, target: infra, centralSha: 'abc1234' });
+  assert.equal(infraPlan.inRollout, true, 'infra is rollout 3, opened with maxRollout 3 (#115)');
+  assert.deepEqual(infraPlan.files.filter((f) => /\.(tf|tfvars|sh)$|\.tfvars\.|\.terraform\.lock\.hcl$/.test(f.path)), [], 'infra sync never writes Terraform or shell files');
   assert.deepEqual(plan.fieldsPending, ['backend/package.json', 'frontend/package.json', 'package.json']);
 });
 
