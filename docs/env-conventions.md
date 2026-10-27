@@ -51,3 +51,15 @@ CI가 매번 `secret-scan`으로 커밋 대상 파일에 토큰·키가 있는�
 - 이력 검사: `node .standards/secret-scan.mjs --history`는 모든 브랜치의 커밋에서 추가된 줄을 검사한다. CI에서는 쓰지 않고, 처음 도입할 때와 유출이 의심될 때 실행한다.
 - 외부 도구(gitleaks 등)를 쓰지 않고 Node 내장 모듈로 만들었다. 새 공급망 위험을 들이지 않고, 오탐이 적은 모양만 검사해서 발견하면 바로 실패시키기 위해서다. 더 넓은 공급자 목록은 GitHub secret scanning이 맡는다([repo-settings.md](repo-settings.md)).
 - 발견하면: 진짜 값이면 먼저 그 키를 폐기·교체하고, 커밋에서 지운 뒤 사용자에게 알린다. 이력에서 지우는 일(강제 push)은 사용자가 정한다.
+
+## 공통 키: Claude API (#264)
+
+Claude API를 쓰는 앱은 아래 이름을 쓴다. 키 값의 원본은 AWS SSM Parameter Store `/sirloinbh/anthropic-api-key` 한 곳이다([ADR-0010](adr/0010-claude-api-key-ssm.md)).
+
+| 키 | 태그 | 설명 |
+|---|---|---|
+| `ANTHROPIC_API_KEY` | `@secret @used=backend` | Claude API 키. 서버에서는 배포 스크립트가 SSM에서 읽어 넘기므로 서버 `.env`에 쓰지 않는다. 로컬에서는 중앙 명령이 넣는다 |
+| `CLAUDE_MODEL` | `@used=backend` | 모델 이름. 코드에 하드코딩하지 않는다. 기본값은 `claude-sonnet-5-5` |
+
+- 프런트엔드(`VITE_` 접두어)로 Claude API 키를 넘기지 않는다. 브라우저에 노출된다. 호출은 백엔드에서만 한다.
+- CI에는 실제 키를 두지 않는다. 테스트는 API 호출을 가짜로 바꾼다.
