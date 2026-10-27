@@ -29,6 +29,7 @@
 | `NODE_AUTH_TOKEN` | [사용자] 직접 입력 | GitHub Packages 읽기용 classic PAT(`read:packages`만). 비밀값 |
 | `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION` | [사용자] 직접 입력 | DB 덤프 S3 사본 버킷과 리전. 없으면 서버에만 보관([백업·복구](backup-restore.md)) |
 | `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | [사용자] 직접 입력 | 버킷에 올리기만 되는 키. 비밀값 |
+| `SECRETS_AWS_ACCESS_KEY_ID`, `SECRETS_AWS_SECRET_ACCESS_KEY` | [사용자] 직접 입력 (Claude API를 쓰는 앱만) | SSM의 `/sirloinbh/anthropic-api-key` 하나만 읽을 수 있는 키. 비밀값. 있으면 배포 스크립트가 배포할 때마다 SSM에서 `ANTHROPIC_API_KEY`를 읽어 앱에 넘깁니다([ADR-0010](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0010-claude-api-key-ssm.md)). 이 키가 있으면 서버 `.env`의 `ANTHROPIC_API_KEY`는 지워도 됩니다 |
 
 `IMAGE_TAG`는 배포 스크립트가 커밋으로 정하므로 `.env`에 두지 않습니다.
 

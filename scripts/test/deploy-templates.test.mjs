@@ -33,6 +33,7 @@ const DEPLOY_FILES = [
   'deploy/remote-deploy.sh',
   'deploy/restore-check.service',
   'deploy/restore-check.timer',
+  'deploy/ssm-get.sh',
 ];
 
 test('every app gets the same deploy files with no unfilled variable', () => {
@@ -240,5 +241,80 @@ test('backup timers run nightly and weekly in Seoul time and the units copy the 
     assert.ok(files['deploy/backup.service'].includes(`cp /opt/${name}/deploy/backup.sh /tmp/${db}-backup.sh && exec /bin/bash /tmp/${db}-backup.sh dump`), name);
     assert.ok(files['deploy/restore-check.service'].includes(`/tmp/${db}-restore-check.sh verify`), name);
     assert.match(files['deploy/install-backup.sh'], new RegExp(`^db=${db}$`, 'm'), name);
+  }
+});
+
+// python3 parses the SSM response on the server. Windows PCs often have only `python`.
+const python = has('python3') ? 'python3' : has('python') ? 'python' : null;
+
+// Runs the rendered ssm-get.sh with a fake curl that answers like SSM GetParameter.
+function ssmRun(args, { env = '', response = '{"Parameter":{"Name":"/sirloinbh/anthropic-api-key","Value":"value-from-ssm"}}' } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ssm-'));
+  const bin = path.join(dir, 'bin');
+  const app = path.join(dir, 'app');
+  for (const d of [bin, app]) fs.mkdirSync(d);
+  const posix = (p) => p.split(path.sep).join('/');
+  const tool = (name, lines) => fs.writeFileSync(path.join(bin, name), ['#!/bin/bash', ...lines, ''].join('\n'), { mode: 0o755 });
+  tool('curl', ['echo "$*" >> "$FAKE_LOG.curl-args"', 'cat >> "$FAKE_LOG.curl-stdin"', 'printf "%s" "$RESPONSE"']);
+  if (python !== 'python3') tool('python3', [`exec ${python} "$@"`]);
+  fs.writeFileSync(path.join(app, '.env'), env);
+  const script = rendered['study-log']['deploy/ssm-get.sh'].replace('cd /opt/study-log', `cd '${posix(app)}'`).replace(/^#!.*\n/, '');
+  const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+  const log = path.join(dir, 'log');
+  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'ssm-get.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log), RESPONSE: response } });
+  const read = (suffix) => (fs.existsSync(log + suffix) ? fs.readFileSync(log + suffix, 'utf8') : '');
+  const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, curlArgs: read('.curl-args'), curlStdin: read('.curl-stdin') };
+  fs.rmSync(dir, { recursive: true, force: true });
+  return result;
+}
+const SECRETS_ENV = 'SECRETS_AWS_ACCESS_KEY_ID=fake-reader-id\nSECRETS_AWS_SECRET_ACCESS_KEY=fake-reader-secret\n';
+
+test('ssm-get signs a GetParameter call and prints only the value', { skip: !(has('bash') && python) && 'bash or python not found' }, () => {
+  const r = ssmRun(['/sirloinbh/anthropic-api-key'], { env: SECRETS_ENV });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, 'value-from-ssm');
+  assert.match(r.curlArgs, /--aws-sigv4 aws:amz:ap-northeast-2:ssm /);
+  assert.match(r.curlArgs, /X-Amz-Target: AmazonSSM\.GetParameter/);
+  assert.match(r.curlArgs, /--data \{"Name":"\/sirloinbh\/anthropic-api-key","WithDecryption":true\} https:\/\/ssm\.ap-northeast-2\.amazonaws\.com\/$/m);
+  assert.ok(!r.curlArgs.includes('fake-reader-secret'), 'the secret must not be a curl argument');
+  assert.equal(r.curlStdin, 'user = "fake-reader-id:fake-reader-secret"\n');
+  assert.equal(r.stderr, '');
+});
+
+test('ssm-get refuses odd names and reports a missing key pair with exit 3', { skip: !(has('bash') && python) && 'bash or python not found' }, () => {
+  const odd = ssmRun(['/x","WithDecryption":false,"a":"'], { env: SECRETS_ENV });
+  assert.equal(odd.status, 2);
+  assert.equal(odd.curlArgs, '');
+  const missing = ssmRun(['/sirloinbh/anthropic-api-key']);
+  assert.equal(missing.status, 3);
+  assert.match(missing.stderr, /SECRETS_AWS_ACCESS_KEY_ID or SECRETS_AWS_SECRET_ACCESS_KEY is missing/);
+  assert.equal(missing.stdout, '');
+});
+
+test('remote-deploy reads the Claude key from SSM only for apps with features.claude', { skip: !has('bash') && 'bash not found' }, () => {
+  for (const [name, files] of Object.entries(rendered)) {
+    assert.match(files['deploy/remote-deploy.sh'], new RegExp(`^if \\[ "${project(name).features.claude}" = true \\] && grep -q`, 'm'), name);
+  }
+  const text = rendered['study-log']['deploy/remote-deploy.sh'];
+  const block = text.match(/^if \[ "true" = true \] && grep -q[\s\S]*?^fi$/m)[0];
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-key-'));
+  fs.mkdirSync(path.join(dir, 'deploy'));
+  const run = (env, fake) => {
+    fs.writeFileSync(path.join(dir, '.env'), env);
+    fs.writeFileSync(path.join(dir, 'deploy/ssm-get.sh'), fake);
+    return spawnSync('bash', ['-c', `set -euo pipefail\n${block}\nbash -c 'printf %s "\${ANTHROPIC_API_KEY:-unset}"'`], { cwd: dir, encoding: 'utf8', env: { ...process.env, ANTHROPIC_API_KEY: '' } });
+  };
+  try {
+    const ok = run(SECRETS_ENV, 'printf %s key-from-ssm');
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.equal(ok.stdout, 'key-from-ssm');
+    const failed = run(SECRETS_ENV, 'exit 1');
+    assert.equal(failed.status, 0, 'a failed SSM read must not stop the deploy');
+    assert.match(failed.stderr, /could not read the Claude API key from SSM/);
+    const noPair = run('ANTHROPIC_API_KEY=from-env-file\n', 'echo should-not-run; exit 9');
+    assert.equal(noPair.status, 0);
+    assert.equal(noPair.stdout, 'unset', 'without the key pair compose keeps reading .env');
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });

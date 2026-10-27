@@ -14,6 +14,7 @@
 | 7 | Codex 훅 신뢰와 차단 확인 | 3분 | #180 | 안 함 (Codex CLI 0.144.4 설치됨, 규칙 판정은 PR #185로 기록) |
 | 8 | 작업 PC 점검 (Claude Code 버전, 에이전트 실행기) | 3분 | #183 | 일부: Claude Code 2.1.309 확인. 실행기는 1 이후 |
 | 9 | 리포 11개 secret scanning·push protection·CodeQL 켜기, App에 Code scanning 읽기 권한 추가 | 15분 | #261 | 안 함 (2026-10-27 추가) |
+| 10 | Claude API 키 발급·지출 한도, SSM에 넣기, 서버 읽기 키 넣기 | 15분 | #266 | 안 함 (2026-10-27 추가) |
 
 **남은 권장 순서는 1 → 3 → 4입니다.** 2는 끝났습니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
 
@@ -215,3 +216,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 1. 동기화 App 권한 추가: GitHub → Settings → Developer settings → GitHub Apps → `project-standards-sync` → Permissions & events → Repository permissions의 **Code scanning alerts**를 "Read-only"로 바꾸고 저장합니다. Settings → Applications → Installed GitHub Apps에서 새 권한을 **Accept**합니다.
 2. 리포 11개(`project-standards`, `shared-aws-infrastructure`, 앱 8개, `file-control`)마다 secret scanning·push protection과 CodeQL 기본 설정을 켭니다. 명령은 [repo-settings.md](repo-settings.md)의 "맞추는 법"에 있습니다.
 3. 켠 뒤 처음 나온 code scanning·secret scanning 알림 **수**를 #261에 댓글로 남겨 주세요(내용은 쓰지 않음). 다음 준수 현황에서 세 항목이 모두 ✓이면 끝입니다.
+
+## 10. Claude API 키를 SSM 한 곳에 넣기 (#266)
+
+**왜 필요한가요:** Claude API 키의 원본을 AWS SSM 한 곳에 두고, 서버와 PC가 거기서 받아 씁니다([ADR-0010](adr/0010-claude-api-key-ssm.md)). 키 발급·결제·AWS 키 만들기는 사용자 계정으로만 할 수 있습니다. **키 값은 채팅이나 문서에 붙여 넣지 마세요.**
+
+1. sirloinbh/shared-aws-infrastructure#8(SSM 파라미터·읽기 전용 IAM 사용자) PR을 병합하고 `terraform apply`합니다.
+2. Anthropic Console에서 workspace를 하나 정하고 지출 한도를 겁니다. 그 workspace에서 API 키를 하나 만듭니다.
+3. 키를 복사한 상태에서 project-standards 폴더에서 실행합니다:
+   ```powershell
+   $env:SIRLOINBH_AWS_PROFILE = '<개인 AWS 프로필>'
+   Get-Clipboard | node tools/app-secrets.mjs set
+   node tools/app-secrets.mjs pull
+   node tools/app-secrets.mjs check     # 모두 "있음"이면 성공
+   ```
+4. AWS 콘솔에서 읽기 전용 IAM 사용자의 액세스 키를 만들고, 서버 `/opt/study-log/.env`에 `SECRETS_AWS_ACCESS_KEY_ID`, `SECRETS_AWS_SECRET_ACCESS_KEY`를 넣습니다. 다음 배포부터 서버가 SSM에서 키를 읽습니다. 그 뒤 서버 `.env`의 `ANTHROPIC_API_KEY` 줄은 지워도 됩니다.
+5. 예전 키가 있으면 Console에서 폐기합니다. 끝나면 #266에 "끝"이라고 댓글을 남겨 주세요(값은 쓰지 않음).
+
