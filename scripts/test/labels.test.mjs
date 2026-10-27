@@ -1,161 +1,128 @@
+// tools/labels.mjs (#277): app repository issues moved to the central standard labels.
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { LABELS_PATH, loadLabels, planLabels, syncLabels } from '../lib/labels.mjs';
-import { loadAll } from '../lib/registry.mjs';
-import { planTarget } from '../lib/sync-plan.mjs';
-import { apply } from '../sync.mjs';
-import { fakePublishedCentral, fakeRepo } from './fake-github.mjs';
+import { buildPlan, planIssue, priorityOf, run, targetRepos } from '../../tools/labels.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
-const { data } = loadAll(root);
-const labels = loadLabels(root);
-const REPO = 'sirloinbh/workout-memo';
-const SHA1 = 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678';
-const writes = (repo) => repo.calls.filter((c) => !c.startsWith('GET '));
 
-test('labels.json has every label the std-backlog skill names', () => {
-  const skill = fs.readFileSync(path.join(root, 'templates/common/skills/std-backlog/SKILL.md'), 'utf8');
-  const names = new Set(labels.map((l) => l.name));
-  const expected = [
-    ...['P0', 'P1', 'P2', 'P3', 'P4'].map((p) => `priority/${p}`),
-    ...['feature', 'docs', 'security', 'chore', 'research'].map((t) => `type/${t}`),
-    ...['templates', 'tooling', 'compliance', 'registry', 'scaffold', 'ci', 'deploy', 'agent'].map((a) => `area/${a}`),
-    'needs-user',
-    'origin/added',
-  ];
-  for (const name of expected) {
-    assert.ok(names.has(name), name);
-    assert.ok(skill.includes(`\`${name.split('/').at(-1)}\``) || skill.includes(`\`${name}\``), `${name} is in the skill`);
-  }
-  assert.equal(labels.length, expected.length, 'no label outside the skill');
+// Label shapes seen in the app repositories on 2026-10-27.
+const SEARCH = [
+  { repository: { nameWithOwner: 'sirloinbh/plan-routine' }, number: 5, title: 'a', labels: [{ name: 'enhancement' }, { name: 'P1 높음' }] },
+  { repository: { nameWithOwner: 'sirloinbh/study-log' }, number: 5, title: 'b', labels: [{ name: '우선순위: P0' }, { name: 'enhancement' }] },
+  { repository: { nameWithOwner: 'sirloinbh/workout-memo' }, number: 140, title: 'c', labels: [{ name: 'priority:P2' }] },
+  { repository: { nameWithOwner: 'sirloinbh/workout-memo' }, number: 101, title: 'd', labels: [] },
+  { repository: { nameWithOwner: 'sirloinbh/workout-memo' }, number: 148, title: 'e', labels: [{ name: 'priority/P2' }, { name: 'type/security' }] },
+  { repository: { nameWithOwner: 'sirloinbh/BH_Portfolio' }, number: 1, title: 'other project', labels: [] },
+  { repository: { nameWithOwner: 'sirloinbh/project-standards' }, number: 240, title: 'central', labels: [] },
+  { repository: { nameWithOwner: 'sirloinbh/plan-routine' }, number: 3, title: 'done', state: 'CLOSED', labels: [{ name: 'P2 보통' }] },
+  { repository: { nameWithOwner: 'sirloinbh/plan-routine' }, number: 2, title: 'done, no priority', state: 'CLOSED', labels: [] },
+];
+
+test('existing priority label names map to the standard ones', () => {
+  for (const [from, to] of [
+    ['P0 긴급', 'priority/P0'],
+    ['P3 매우 후순위', 'priority/P3'],
+    ['우선순위: P1', 'priority/P1'],
+    ['priority:P2', 'priority/P2'],
+    ['priority/P4', 'priority/P4'],
+  ])
+    assert.equal(priorityOf(from), to, from);
+  for (const none of ['API', 'enhancement', '특성: API', 'P5', 'type:tracking']) assert.equal(priorityOf(none), null, none);
 });
 
-test('labels.json is sync data, not a file copied into target repositories', () => {
-  for (const target of data.sync.targets) {
-    const plan = planTarget({ root, data, target, centralSha: SHA1 });
-    assert.ok(!plan.files.some((f) => f.path === 'labels.json' || f.source === LABELS_PATH), target.repo);
-  }
+test('an issue gets one priority and one obvious type; standard labels already there are kept', () => {
+  assert.deepEqual(planIssue(['enhancement', 'P1 높음']).map((a) => a.label), ['priority/P1', 'type/feature']);
+  assert.deepEqual(planIssue(['priority/P2', 'type/security']), []);
+  assert.deepEqual(planIssue([]).map((a) => a.label), ['priority/P3']);
+  assert.deepEqual(planIssue([], { defaultP3: false }), []);
+  assert.deepEqual(planIssue(['documentation']).map((a) => a.label), ['priority/P3', 'type/docs']);
 });
 
-test('loadLabels rejects bad colors, long descriptions, and duplicate names', () => {
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'labels-'));
-  const write = (list) => {
-    fs.mkdirSync(path.join(tmp, 'templates/common'), { recursive: true });
-    fs.writeFileSync(path.join(tmp, LABELS_PATH), JSON.stringify({ labels: list }));
-  };
+test('only portfolio repositories are planned, and unlabeled issues can be left alone per repository', () => {
+  assert.ok(targetRepos(root).has('sirloinbh/file-control'));
+  assert.ok(!targetRepos(root).has('sirloinbh/BH_Portfolio'));
+  const issues = SEARCH.filter((i) => !i.state)
+    .map((i) => ({ repo: i.repository.nameWithOwner, number: i.number, state: 'open', labels: i.labels.map((l) => l.name) }))
+    .filter((i) => targetRepos(root).has(i.repo));
+  assert.deepEqual(buildPlan(issues).map((p) => `${p.repo}#${p.number}`), ['sirloinbh/plan-routine#5', 'sirloinbh/study-log#5', 'sirloinbh/workout-memo#140', 'sirloinbh/workout-memo#101']);
+  assert.deepEqual(buildPlan(issues, { keepUnlabeled: ['workout-memo'] }).map((p) => p.number), [5, 5, 140]);
+});
+
+function fakeGh(dir) {
+  const script = path.join(dir, 'fake-gh.mjs');
+  fs.writeFileSync(
+    script,
+    `import fs from 'node:fs';
+const args = process.argv.slice(2);
+fs.appendFileSync(${JSON.stringify(path.join(dir, 'gh.log'))}, JSON.stringify(args) + '\\n');
+if (args[0] === 'api') process.stdout.write('sirloinbh\\n');
+else if (args[0] === 'search') {
+  const state = args.includes('--state') ? args[args.indexOf('--state') + 1] : 'all';
+  const all = ${JSON.stringify(SEARCH)};
+  process.stdout.write(JSON.stringify(state === 'all' ? all : all.filter((i) => (i.state ?? 'OPEN') === 'OPEN')));
+}
+`,
+  );
+  return script;
+}
+async function withGh(fn) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'labels-'));
+  const before = process.env.LABELS_GH;
+  process.env.LABELS_GH = fakeGh(dir);
   try {
-    write([{ name: 'a', color: '#ffffff', description: '' }]);
-    assert.throws(() => loadLabels(tmp), /color must be 6 lowercase hex digits/);
-    write([{ name: 'a', color: 'ffffff', description: 'x'.repeat(101) }]);
-    assert.throws(() => loadLabels(tmp), /at most 100 characters/);
-    write([{ name: 'a', color: 'ffffff', description: '' }, { name: 'A', color: 'ffffff', description: '' }]);
-    assert.throws(() => loadLabels(tmp), /duplicate name/);
+    const calls = () => fs.readFileSync(path.join(dir, 'gh.log'), 'utf8').trim().split('\n').map((l) => JSON.parse(l));
+    return await fn({ calls });
   } finally {
-    fs.rmSync(tmp, { recursive: true, force: true });
+    if (before === undefined) delete process.env.LABELS_GH;
+    else process.env.LABELS_GH = before;
+    fs.rmSync(dir, { recursive: true, force: true });
   }
-});
+}
 
-test('planLabels finds labels to create and update, and leaves unknown labels alone', () => {
-  const desired = [
-    { name: 'priority/P1', color: 'd93f0b', description: '높음' },
-    { name: 'type/docs', color: '0075ca', description: '문서' },
-    { name: 'needs-user', color: '5319e7', description: '사용자 단계' },
-    { name: 'area/ci', color: 'bfdadc', description: 'CI' },
-  ];
-  const existing = [
-    { name: 'Priority/P1', color: 'd93f0b', description: '높음' },
-    { name: 'type/docs', color: '0075CA', description: '문서' },
-    { name: 'needs-user', color: '000000', description: null },
-    { name: 'bug', color: 'd73a4a', description: "Something isn't working" },
-  ];
-  const plan = planLabels(desired, existing);
-  assert.deepEqual(plan.create.map((l) => l.name), ['area/ci']);
-  assert.deepEqual(plan.update.map((u) => [u.name, u.changes]), [
-    ['Priority/P1', ['name']],
-    ['needs-user', ['color', 'description']],
-  ]);
-  assert.deepEqual(plan.unchanged, ['type/docs'], 'color case does not count as a change');
-  assert.deepEqual(plan.unmanaged, ['bug']);
-});
+test('plan only reads; apply asks, creates the needed standard labels and only adds labels', () =>
+  withGh(async ({ calls }) => {
+    const lines = [];
+    assert.equal(await run(['plan'], { root, log: (l) => lines.push(l) }), 0);
+    assert.match(lines[0], /^\| workout-memo \| 3 \| 2 \| `priority\/P2` 1, `priority\/P3` 1 \| #101 \|$/m);
+    assert.match(lines[0], /^\| 우선순위: P0 \| `priority\/P0` \|$/m);
+    assert.ok(calls().every((c) => !['issue', 'label'].includes(c[0])), 'plan does not write');
 
-test('syncLabels dry run only reads; a real run creates and updates, then has nothing to do', async () => {
-  const repo = fakeRepo(REPO, {}, {
-    labels: [
-      { name: 'bug', color: 'd73a4a', description: "Something isn't working" },
-      { name: 'Priority/P0', color: 'ffffff', description: 'old' },
-      { name: 'my-project-label', color: '123456', description: '이 리포만 쓰는 라벨' },
-    ],
-  });
-  const preview = await syncLabels({ api: repo.api, repo: REPO, labels, dryRun: true });
-  assert.equal(preview.create.length, labels.length - 1);
-  assert.deepEqual(preview.update.map((u) => [u.name, u.changes]), [['Priority/P0', ['name', 'color', 'description']]]);
-  assert.deepEqual(preview.unmanaged, ['bug', 'my-project-label']);
-  assert.deepEqual(writes(repo), [], 'dry run writes nothing');
+    assert.equal(await run(['apply'], { root, log: () => {}, ask: async () => false }), 1);
+    assert.ok(calls().every((c) => !['issue', 'label'].includes(c[0])), 'declining writes nothing');
 
-  await syncLabels({ api: repo.api, repo: REPO, labels });
-  assert.ok(repo.calls.includes(`PATCH /repos/${REPO}/labels/Priority%2FP0`));
-  assert.ok(!repo.calls.some((c) => c.startsWith('DELETE ')), 'labels are never deleted');
-  for (const label of labels) assert.deepEqual(repo.labels.find((l) => l.name === label.name), label, label.name);
-  assert.ok(repo.labels.some((l) => l.name === 'bug') && repo.labels.some((l) => l.name === 'my-project-label'), 'unknown labels stay');
+    assert.equal(await run(['apply', '--yes', '--keep-unlabeled', 'workout-memo'], { root, log: () => {} }), 0);
+    const edits = calls().filter((c) => c[0] === 'issue');
+    assert.deepEqual(edits.map((c) => [c[2], c[4], ...c.slice(5)]), [
+      ['5', 'sirloinbh/plan-routine', '--add-label', 'priority/P1', '--add-label', 'type/feature'],
+      ['5', 'sirloinbh/study-log', '--add-label', 'priority/P0', '--add-label', 'type/feature'],
+      ['140', 'sirloinbh/workout-memo', '--add-label', 'priority/P2'],
+    ]);
+    assert.ok(calls().every((c) => !c.includes('--remove-label') && !(c[0] === 'label' && c[1] === 'delete')), 'old labels stay');
+    const created = calls().filter((c) => c[0] === 'label' && c[1] === 'create');
+    assert.ok(created.some((c) => c[2] === 'priority/P0' && c[4] === 'sirloinbh/study-log' && c.includes('--force')));
+  }));
 
-  const before = writes(repo).length;
-  const again = await syncLabels({ api: repo.api, repo: REPO, labels });
-  assert.equal(again.unchanged.length, labels.length);
-  assert.equal(writes(repo).length, before, 'a second run writes nothing');
-});
-
-test('syncLabels reads every page of a repository with many labels', async () => {
-  const many = Array.from({ length: 150 }, (_, i) => ({ name: `extra-${i}`, color: 'ededed', description: '' }));
-  const repo = fakeRepo(REPO, {}, { labels: [...many, ...labels] });
-  const plan = await syncLabels({ api: repo.api, repo: REPO, labels });
-  assert.equal(plan.create.length, 0, 'labels on page 2 are found');
-  assert.equal(plan.unchanged.length, labels.length);
-  assert.equal(plan.unmanaged.length, 150);
-  assert.deepEqual(writes(repo), []);
-});
-
-test('apply syncs labels of targets in rollout and reports label failures separately', async () => {
-  const rolled = structuredClone(data);
-  rolled.sync.maxRollout = 1;
-  const repo = fakeRepo(REPO, { 'package.json': '{"name":"workout-memo"}' });
-  const central = fakePublishedCentral();
-  const logs = [];
-  const results = await apply({ data: rolled, targets: rolled.sync.targets, centralSha: SHA1, getToken: async (r) => r, makeClient: (r) => (r === REPO ? repo.api : central), log: (l) => logs.push(l) });
-  assert.equal(results[0].status, 'opened');
-  assert.equal(results[0].labels.create.length, labels.length);
-  assert.equal(repo.labels.length, labels.length);
-  assert.ok(logs.some((l) => l === `${REPO}: 라벨 생성 ${labels.length}, 갱신 0, 그대로 0`), logs.join('\n'));
-
-  // Without the Issues write permission GitHub answers 403; the sync PR result is kept.
-  const denied = fakeRepo(REPO, { 'package.json': '{"name":"workout-memo"}' });
-  const api = async (method, p, body) => {
-    if (method === 'POST' && p.endsWith('/labels')) throw new Error(`GitHub API POST ${p} failed: 403 Resource not accessible by integration`);
-    return denied.api(method, p, body);
-  };
-  const failed = await apply({ data: rolled, targets: rolled.sync.targets, centralSha: SHA1, getToken: async (r) => r, makeClient: (r) => (r === REPO ? api : central), log: () => {} });
-  assert.equal(failed[0].status, 'opened');
-  assert.match(failed[0].labelsError, /403/);
-});
-
-test('the dry-run CLI adds the label plan of targets whose labels were exported', () => {
-  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'sync-labels-'));
-  try {
-    const exported = path.join(out, 'study-log-labels.json');
-    fs.writeFileSync(exported, `﻿${JSON.stringify([{ name: 'bug', color: 'd73a4a', description: '' }, { ...labels[0], color: '000000' }])}`);
-    const run = spawnSync(process.execPath, [path.join(root, 'scripts/sync.mjs'), '--dry-run', '--out', out, '--sha', 'cli0001', '--target', 'sirloinbh/study-log', '--labels-from', `study-log=${exported}`], { encoding: 'utf8' });
-    assert.equal(run.status, 0, run.stderr);
-    assert.match(run.stdout, new RegExp(`라벨 생성 ${labels.length - 1}, 갱신 1, 그대로 0, 관리 밖 1\\(지우지 않음\\)`));
-    const plan = JSON.parse(fs.readFileSync(path.join(out, 'plan.json'), 'utf8'));
-    assert.equal(plan.labels.length, labels.length);
-    assert.deepEqual(plan.targets[0].labels.update, [{ name: labels[0].name, changes: ['color'] }]);
-    assert.deepEqual(plan.targets[0].labels.unmanaged, ['bug']);
-    assert.ok(!fs.existsSync(path.join(out, 'study-log', 'labels.json')));
-  } finally {
-    fs.rmSync(out, { recursive: true, force: true });
-  }
-});
+test('overrides set priorities, and --remove-old relabels closed issues before deleting old labels', () =>
+  withGh(async ({ calls }) => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'labels-overrides-'));
+    const file = path.join(dir, 'overrides.json');
+    fs.writeFileSync(file, JSON.stringify({ 'workout-memo#101': 'priority/P1' }));
+    try {
+      assert.equal(await run(['apply', '--yes', '--remove-old', '--overrides', file], { root, log: () => {} }), 0);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+    const edits = calls().filter((c) => c[0] === 'issue').map((c) => `${c[4]}#${c[2]} ${c.filter((x, i) => c[i - 1] === '--add-label').join(',')}`);
+    assert.ok(edits.includes('sirloinbh/workout-memo#101 priority/P1'), 'override instead of P3');
+    assert.ok(edits.includes('sirloinbh/plan-routine#3 priority/P2'), 'closed issue keeps its priority as a standard label');
+    assert.ok(!edits.some((e) => e.startsWith('sirloinbh/plan-routine#2 ')), 'a closed issue without a priority gets none');
+    const deletes = calls().filter((c) => c[0] === 'label' && c[1] === 'delete').map((c) => `${c[4]} ${c[2]}`).sort();
+    assert.deepEqual(deletes, ['sirloinbh/plan-routine P1 높음', 'sirloinbh/plan-routine P2 보통', 'sirloinbh/plan-routine enhancement', 'sirloinbh/study-log enhancement', 'sirloinbh/study-log 우선순위: P0', 'sirloinbh/workout-memo priority:P2']);
+    const lastEdit = calls().findLastIndex((c) => c[0] === 'issue');
+    const firstDelete = calls().findIndex((c) => c[0] === 'label' && c[1] === 'delete');
+    assert.ok(lastEdit < firstDelete, 'labels are added everywhere before any old label is deleted');
+  }));
