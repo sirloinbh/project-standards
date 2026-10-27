@@ -38,3 +38,9 @@
 - **timer 시작 시각:** 부팅 후 `3min <슬롯>0s`에 시작하고, 이후 2분마다 확인한다. 공용 잠금이 이미 잡혀 있으면 그 회차는 건너뛴다.
 - **health 확인 포트:** 서버 `.env`의 `WEB_PORT`를 따르고, 값이 없으면 레지스트리 `ports.web`을 쓴다. workout-memo 서버는 지금 `WEB_PORT=80`이라 동작이 바뀌지 않는다. 8101로 옮기는 것은 방화벽 변경과 함께 따로 한다.
 - **배포 전 덤프:** 서버에 `/usr/local/bin/<DB 이름>-backup`이 있으면 그 명령을 쓴다(workout-memo). 없으면 앱 폴더의 `backups/`에 `pg_dump`로 저장하고 14일 지난 파일을 지운다.
+
+## 보충 (2026-10-27, #262)
+
+- **DB 덤프를 앱마다 매일 한다.** 위 "배포 전 덤프" 규칙은 바뀌었다. 이전에는 workout-memo만 인프라 user-data의 cron으로 매일 덤프했고, 나머지 앱은 배포할 때만 덤프했다. 이제 `deploy/backup.sh`가 매일 덤프(`<DB 이름>-backup.timer`, 03:30)와 배포 전 덤프를 같은 폴더 `/var/backups/<DB 이름>`에 만든다. 앱들은 `/run/lock/apps-backup.lock`을 차례로 잡는다.
+- **서버 밖 사본은 S3다.** 사용자가 S3를 골랐다(#262). 서버에는 버킷에 올리기만 되는 키를 두고, 업로드는 `curl --aws-sigv4`로 해서 서버에 AWS CLI를 설치하지 않는다. 버킷과 키는 shared-aws-infrastructure가 만든다.
+- **매주 복구를 확인한다.** `<DB 이름>-restore-check.timer`(일요일 04:30)가 최신 덤프를 임시 postgres 컨테이너에 복구하고, 덤프할 때 저장한 테이블별 행 수와 비교한다.

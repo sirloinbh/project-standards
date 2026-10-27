@@ -1,0 +1,11 @@
+[Unit]
+Description=Restore the newest {{project.name}} dump into a throwaway database every week
+
+[Timer]
+# Sunday 04:30 Seoul, after the nightly dumps. The result is in journalctl -u {{project.db.name}}-restore-check.
+OnCalendar=Sun *-*-* 04:30:00 Asia/Seoul
+Persistent=true
+AccuracySec=5min
+
+[Install]
+WantedBy=timers.target

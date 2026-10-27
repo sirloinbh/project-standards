@@ -27,6 +27,8 @@
 | `WEB_BIND` | user-data | `0.0.0.0` |
 | `WEB_PORT` | user-data | `{{project.ports.web}}`. 방화벽에 이 포트가 열려 있어야 합니다(shared-aws-infrastructure) |
 | `NODE_AUTH_TOKEN` | [사용자] 직접 입력 | GitHub Packages 읽기용 classic PAT(`read:packages`만). 비밀값 |
+| `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION` | [사용자] 직접 입력 | DB 덤프 S3 사본 버킷과 리전. 없으면 서버에만 보관([백업·복구](backup-restore.md)) |
+| `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | [사용자] 직접 입력 | 버킷에 올리기만 되는 키. 비밀값 |
 
 `IMAGE_TAG`는 배포 스크립트가 커밋으로 정하므로 `.env`에 두지 않습니다.
 

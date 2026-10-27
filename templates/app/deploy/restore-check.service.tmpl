@@ -1,0 +1,13 @@
+[Unit]
+Description={{project.title}} weekly restore check of the newest database dump
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=docker
+WorkingDirectory=/opt/{{project.name}}
+ExecStart=/bin/bash -c 'cp /opt/{{project.name}}/deploy/backup.sh /tmp/{{project.db.name}}-restore-check.sh && exec /bin/bash /tmp/{{project.db.name}}-restore-check.sh verify'
+TimeoutStartSec=30min
+Nice=10
