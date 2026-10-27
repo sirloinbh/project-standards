@@ -170,6 +170,20 @@ node tools/app-secrets.mjs pull                    # 앱 .env에 넣기 (--app s
 - 운영 서버는 이 명령을 쓰지 않는다. 배포 스크립트(`deploy/ssm-get.sh`)가 배포할 때마다 SSM에서 읽는다([배포 runbook](runbooks/deploy.md)).
 - 키를 바꾼 뒤: 서버는 다음 배포부터 새 키를 쓴다. PC는 `pull`을 다시 실행한다.
 
+## 리포 일괄 명령과 VS Code 작업공간 (tools/repos.mjs)
+
+이 리포와 `sync.config.json`의 대상 리포(앱 8개, shared-aws-infrastructure)를 한 번에 다룬다(#276). 클론은 이 리포의 상위 폴더에 있다고 보고, 다르면 `--base <폴더>`를 붙인다.
+
+```powershell
+node tools/repos.mjs status            # 브랜치, 커밋 안 한 변경, origin/main보다 뒤/앞 (--fetch로 먼저 fetch)
+node tools/repos.mjs pull              # main에 있고 깨끗한 클론만 fast-forward. 나머지는 이유를 보여 주고 건너뜀
+node tools/repos.mjs run -- git log -1 --oneline    # 리포마다 같은 명령 (패키지 설치·삭제·npx는 거부)
+node tools/repos.mjs workspace         # .local/sirloinbh.code-workspace를 만든다. VS Code에서 열면 리포가 한 창에 모인다
+```
+
+- 브랜치를 바꾸거나 지우지 않는다. 브랜치 정리는 Fork 앱에서 한다.
+- 작업공간 파일은 PC마다 경로가 달라 `.local/`(git 제외)에 만든다. 폴더마다 그 리포의 `.vscode/settings.json`(개인 계정 터미널)이 그대로 적용된다.
+
 ## 의존성 PR 현황과 일괄 닫기 (tools/dependency-prs.mjs)
 
 sirloinbh 리포 전체에 열린 Dependabot PR을 패키지·목표 버전별로 묶어 보여 주고, 고른 묶음을 확인 질문 뒤에 이유 댓글과 함께 닫는다(#268). **병합은 하지 않는다.** 앱 PR 병합은 곧 운영 배포라 사용자가 한다.
@@ -186,6 +200,7 @@ node tools/dependency-prs.mjs close --package body-parser --repo study-log --rea
 ## 검증
 
 - 에이전트 워커: `npm run test:agents`. `npm test`(따라서 `npm run check`)에도 포함된다. Windows에서는 `.github/workflows/agents.yml`이 한 번 더 돌린다. 가짜 git·gh·npm·Codex와 임시 리포만 쓴다. 실행기 검사(임시 폴더에 설치한 `agents.ps1 -Root <폴더> status`가 가짜 리포 두 곳에서 각자의 큐만 보여 줌, `-Root`·`-BranchType`·`-Slug` 전달, PowerShell→Node 경계 2개)는 Windows에서만 돈다.
+- 리포 일괄 명령: `node --test scripts/test/repos.test.mjs`. 임시 git 리포만 쓴다.
 - 의존성 PR 명령: `node --test scripts/test/dependency-prs.test.mjs`. 가짜 gh(`DEPENDENCY_PRS_GH`)만 쓰고, 닫기 전 확인과 병합하지 않음을 확인한다.
 - 공용 Claude API 키: `node --test scripts/test/app-secrets.test.mjs`. 가짜 AWS CLI(`APP_SECRETS_AWS`)만 쓰고, 값이 출력·인자에 나오지 않는지 확인한다.
 - 계정 도구: `node --test scripts/test/tools.test.mjs` (Windows 전용 검사는 다른 OS에서 건너뛴다). 설치 검사는 워커·레지스트리·`versions.json`이 설치되고 바뀐 워커 파일이 백업되는지도 본다. 가짜 `gh`·`code`, 임시 사용자 폴더, 합성 토큰만 쓰며 실제 인증·설치본·VS Code는 건드리지 않는다.
