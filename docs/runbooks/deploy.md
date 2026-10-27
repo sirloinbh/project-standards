@@ -118,6 +118,7 @@ rm /opt/{{project.name}}/.autodeploy-failed                        # 건너뛴 �
 
 - 설치: `sudo bash /opt/{{project.name}}/deploy/install-backup.sh` (백업·복구 확인·health timer). `.env`에 주소를 나중에 넣어도 다시 실행할 필요가 없습니다.
 - 수동 확인: `bash /opt/{{project.name}}/deploy/notify.sh health` (주소는 출력하지 않습니다)
+- 매일 보고(#285, 04:00): `memory=..% disk=..% deployed=<커밋> containers: <컨테이너> <메모리>` 한 줄이 report 체크 기록에 남습니다. 서버 메모리 사용률이 `REPORT_MEMORY_PERCENT`(기본 85) 또는 디스크가 `REPORT_DISK_PERCENT`(기본 90)를 넘으면 실패 신호로 보내 메일이 옵니다. 지금 값만 보려면 `bash /opt/{{project.name}}/deploy/report.sh line`.
 - 신호 본문(덤프 이름, 실패 이유)은 healthchecks.io의 체크 기록에 남습니다. 비밀값은 넣지 않습니다.
 
 ## 5. 접속

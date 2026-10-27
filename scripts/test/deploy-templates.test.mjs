@@ -34,6 +34,9 @@ const DEPLOY_FILES = [
   'deploy/install-backup.sh',
   'deploy/notify.sh',
   'deploy/remote-deploy.sh',
+  'deploy/report.service',
+  'deploy/report.sh',
+  'deploy/report.timer',
   'deploy/restore-check.service',
   'deploy/restore-check.timer',
   'deploy/ssm-get.sh',
@@ -407,6 +410,53 @@ test('autodeploy signals every decision and the health timer runs every 5 minute
     for (const s of ['signal ok "up to date at $sha"', 'signal fail "$sha failed before', 'signal ok "waiting for CI of $sha"', 'signal fail "CI failed for $sha"', 'signal ok "deployed $sha"', 'signal fail "deploy of $sha failed"']) assert.ok(auto.includes(s), `${name}: ${s}`);
     assert.match(files['deploy/health.timer'], /^OnUnitActiveSec=5min$/m, name);
     assert.ok(files['deploy/health.service'].includes(`/tmp/${project(name).db.name}-notify.sh health`), name);
-    assert.match(files['deploy/install-backup.sh'], /^for unit in backup restore-check health; do$/m, name);
+    assert.match(files['deploy/install-backup.sh'], /^for unit in backup restore-check health report; do$/m, name);
+  }
+});
+
+// Runs the rendered report.sh with fake free, df and docker and a recording deploy/notify.sh (#285).
+function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, failed = null } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'report-'));
+  const bin = path.join(dir, 'bin');
+  const app = path.join(dir, 'app');
+  for (const d of [bin, app, path.join(app, 'deploy')]) fs.mkdirSync(d, { recursive: true });
+  const posix = (p) => p.split(path.sep).join('/');
+  const tool = (name, lines) => fs.writeFileSync(path.join(bin, name), ['#!/bin/bash', ...lines, ''].join('\n'), { mode: 0o755 });
+  // 2000 MB total; "available" is total minus the used amount the test asks for.
+  tool('free', ['echo "               total        used        free      shared  buff/cache   available"', `echo "Mem:            2000         700         300          10        1000        ${2000 - usedMb}"`]);
+  tool('df', ['echo "Filesystem     1024-blocks    Used Available Capacity Mounted on"', `echo "/dev/root         40000000 1600000  2400000      ${diskPercent}% /"`]);
+  tool('docker', ['case "$1 $2" in', '  "compose ps") echo id1; echo id2 ;;', '  "stats --no-stream") echo "study-log-api-1 120.5MiB / 1.9GiB"; echo "study-log-db-1 45MiB / 1.9GiB" ;;', 'esac']);
+  fs.writeFileSync(path.join(app, 'deploy/notify.sh'), 'printf "%s|" "$@" >> "$FAKE_LOG.notify"; echo >> "$FAKE_LOG.notify"\n');
+  fs.writeFileSync(path.join(app, '.env'), env);
+  fs.writeFileSync(path.join(app, '.deployed'), 'abc123def456');
+  if (failed) fs.writeFileSync(path.join(app, '.autodeploy-failed'), failed);
+  const script = rendered['study-log']['deploy/report.sh'].replace('cd /opt/study-log', `cd '${posix(app)}'`).replace(/^#!.*\n/, '');
+  const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+  const log = path.join(dir, 'log');
+  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'report.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log) } });
+  const notify = fs.existsSync(log + '.notify') ? fs.readFileSync(log + '.notify', 'utf8') : '';
+  fs.rmSync(dir, { recursive: true, force: true });
+  return { status: r.status, stdout: r.stdout, stderr: r.stderr, notify };
+}
+
+test('the daily report is one line with memory, disk, deployed commit and container memory', { skip: !has('bash') && 'bash not found' }, () => {
+  const r = reportRun(['line']);
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, 'memory=45% disk=41% deployed=abc123def456 containers: study-log-api-1 120.5MiB, study-log-db-1 45MiB\n');
+  assert.equal(r.notify, '', 'line only prints');
+  const failed = reportRun(['line'], { failed: 'fff000' });
+  assert.match(failed.stdout, /deployed=abc123def456 autodeploy-failed=fff000 containers:/);
+});
+
+test('the report sends ok, and fail over the memory or disk threshold', { skip: !has('bash') && 'bash not found' }, () => {
+  const ok = reportRun([]);
+  assert.equal(ok.status, 0, ok.stderr);
+  assert.equal(ok.notify, 'ping|report|ok|memory=45% disk=41% deployed=abc123def456 containers: study-log-api-1 120.5MiB, study-log-db-1 45MiB|\n');
+  assert.match(reportRun([], { usedMb: 1800 }).notify, /^ping\|report\|fail\|memory=90%/);
+  assert.match(reportRun([], { diskPercent: 95 }).notify, /^ping\|report\|fail\|/);
+  assert.match(reportRun([], { usedMb: 1800, env: 'REPORT_MEMORY_PERCENT=95\n' }).notify, /^ping\|report\|ok\|/, 'the threshold comes from .env');
+  for (const [name, files] of Object.entries(rendered)) {
+    assert.match(files['deploy/report.timer'], /^OnCalendar=\*-\*-\* 04:00:00 Asia\/Seoul$/m, name);
+    assert.match(files['deploy/install-backup.sh'], /^for unit in backup restore-check health report; do$/m, name);
   }
 });
