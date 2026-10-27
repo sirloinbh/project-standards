@@ -1,0 +1,14 @@
+[Unit]
+Description={{project.title}} daily database dump (and S3 copy when configured)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=docker
+WorkingDirectory=/opt/{{project.name}}
+# Copied first: a deploy may check out a new commit while this script runs.
+ExecStart=/bin/bash -c 'cp /opt/{{project.name}}/deploy/backup.sh /tmp/{{project.db.name}}-backup.sh && exec /bin/bash /tmp/{{project.db.name}}-backup.sh dump'
+TimeoutStartSec=30min
+Nice=10

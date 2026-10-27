@@ -1,0 +1,12 @@
+[Unit]
+Description=Dump the {{project.name}} database every night
+
+[Timer]
+# 03:30 Seoul, after the 03:00 Lightsail snapshot. Apps take turns through /run/lock/apps-backup.lock.
+OnCalendar=*-*-* 03:30:00 Asia/Seoul
+# Runs at the next boot when the server was off at that time.
+Persistent=true
+AccuracySec=1min
+
+[Install]
+WantedBy=timers.target
