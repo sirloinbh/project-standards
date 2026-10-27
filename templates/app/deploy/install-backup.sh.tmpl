@@ -1,12 +1,12 @@
 #!/bin/bash
-# Installs and starts the nightly dump, weekly restore check and 5-minute health signal timers
-# (#262, #284). Run once as root on the server; adding HEALTHCHECK_URL_* to .env later needs no rerun:
+# Installs and starts the nightly dump, weekly restore check, 5-minute health and daily report timers
+# (#262, #284, #285). Run once as root on the server; adding HEALTHCHECK_URL_* to .env later needs no rerun:
 #   sudo bash /opt/{{project.name}}/deploy/install-backup.sh
 set -euo pipefail
 dir=$(cd "$(dirname "$0")" && pwd)
 db={{project.db.name}}
 install -d -o ubuntu -g ubuntu -m 700 "/var/backups/$db"
-for unit in backup restore-check health; do
+for unit in backup restore-check health report; do
   install -m 644 "$dir/$unit.service" "/etc/systemd/system/$db-$unit.service"
   install -m 644 "$dir/$unit.timer" "/etc/systemd/system/$db-$unit.timer"
 done
@@ -17,5 +17,5 @@ if [ -f "/etc/cron.d/$db-backup" ]; then
   echo "removed /etc/cron.d/$db-backup (replaced by $db-backup.timer)"
 fi
 systemctl daemon-reload
-systemctl enable --now "$db-backup.timer" "$db-restore-check.timer" "$db-health.timer"
-systemctl list-timers "$db-backup.timer" "$db-restore-check.timer" "$db-health.timer" --no-pager
+systemctl enable --now "$db-backup.timer" "$db-restore-check.timer" "$db-health.timer" "$db-report.timer"
+systemctl list-timers "$db-backup.timer" "$db-restore-check.timer" "$db-health.timer" "$db-report.timer" --no-pager
