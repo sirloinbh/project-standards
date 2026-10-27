@@ -42,3 +42,15 @@ test('API port comes from the registry in the backend Dockerfile and nginx', () 
   assert.match(workout['frontend/nginx.conf'], /proxy_pass http:\/\/api:3101;/);
   assert.match(study['frontend/nginx.conf'], /add_header X-Content-Type-Options nosniff always;/);
 });
+
+test('nginx limits API requests per client IP and answers 429 above the limit (#291)', () => {
+  const conf = study['frontend/nginx.conf'];
+  // The zone lives outside server {}: the file is included inside the http block.
+  const zone = conf.indexOf('limit_req_zone $binary_remote_addr zone=api:1m rate=10r/s;');
+  assert.ok(zone >= 0 && zone < conf.indexOf('server {'), 'zone declared before the server block');
+  const api = conf.match(/location \/api\/ \{([\s\S]*?)\n {2}\}/)[1];
+  assert.match(api, /limit_req zone=api burst=40 nodelay;/);
+  assert.match(api, /limit_req_status 429;/);
+  assert.match(api, /proxy_pass http:\/\/api:3102;/);
+  assert.doesNotMatch(conf.replace(api, ''), /limit_req zone=/, 'only the API is limited, not the static files');
+});
