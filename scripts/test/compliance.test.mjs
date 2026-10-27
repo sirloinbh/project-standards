@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { envMismatches, parseEnvExample, renderCompliance, renderEnvMatrix, repoStatus } from '../lib/compliance.mjs';
+import { cell, envMismatches, parseEnvExample, renderCompliance, renderEnvMatrix, repoStatus } from '../lib/compliance.mjs';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll } from '../lib/registry.mjs';
 import { publishReports, remoteStatuses, renderReports, withoutStamp } from '../compliance.mjs';
@@ -128,4 +128,15 @@ test('the report PR opens once, then only updates when the content (not the time
   const later = renderReports([status], { ...meta, generatedAt: '2026-10-23 00:00 UTC' });
   assert.equal((await publishReports({ api: central.api, reports: later, centralSha: 'abcdef1234567' })).status, 'unchanged');
   assert.equal(withoutStamp(later['docs/compliance.md']), withoutStamp(renderReports([status], meta)['docs/compliance.md']));
+});
+
+test('table cells escape backslashes before pipes so a trailing backslash cannot break the table (#290)', () => {
+  const bs = '\\'; // one backslash
+  assert.equal(cell('a|b'), `a${bs}|b`);
+  assert.equal(cell(`C:${bs}path${bs}`), `C:${bs}${bs}path${bs}${bs}`);
+  // A value ending in a backslash, then the cell separator: the separator must stay a separator.
+  const row = `| ${cell(`x${bs}`)} | y |`;
+  assert.equal(row, `| x${bs}${bs} | y |`);
+  assert.equal(cell(`p${bs}|q`), `p${bs}${bs}${bs}|q`, 'an escaped pipe in the value stays escaped');
+  assert.equal(cell(42), '42');
 });
