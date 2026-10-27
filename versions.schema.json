@@ -21,12 +21,13 @@
     },
     "images": {
       "type": "object",
-      "required": ["node", "nginx", "postgres", "playwright"],
+      "required": ["node", "nginx", "postgres", "playwright", "devcontainerNode"],
       "additionalProperties": false,
       "properties": {
         "node": { "$ref": "#/$defs/image" },
         "nginx": { "$ref": "#/$defs/image" },
         "postgres": { "$ref": "#/$defs/image" },
+        "devcontainerNode": { "$ref": "#/$defs/pinnedImage", "description": "Dev Container(features.devcontainer)의 Node 이미지. git이 있는 bookworm을 쓰고 digest로 고정한다. Node 버전은 node와 같아야 한다(#282)" },
         "playwright": { "$ref": "#/$defs/pinnedImage", "description": "화면 비교(features.e2eVisual)용 Playwright 컨테이너. 태그를 다시 push해도 글꼴·브라우저가 바뀌지 않게 digest로 고정한다. 버전은 앱의 @playwright/test와 같아야 한다" }
       }
     },

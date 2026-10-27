@@ -1,0 +1,19 @@
+{
+  "name": "{{project.name}}",
+  "dockerComposeFile": ["../compose.yaml", "compose.yaml"],
+  "service": "dev",
+  "runServices": ["db", "dev"],
+  "workspaceFolder": "/workspaces/{{project.repos.umbrella}}",
+  "shutdownAction": "stopCompose",
+  "remoteUser": "node",
+  "forwardPorts": [{{project.ports.vite}}, {{project.ports.api}}],
+  "portsAttributes": {
+    "{{project.ports.vite}}": { "label": "vite" },
+    "{{project.ports.api}}": { "label": "api" }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": ["dbaeumer.vscode-eslint", "esbenp.prettier-vscode", "EditorConfig.EditorConfig"]
+    }
+  }
+}
