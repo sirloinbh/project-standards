@@ -121,6 +121,13 @@ rm /opt/{{project.name}}/.autodeploy-failed                        # 건너뛴 �
 - 매일 보고(#285, 04:00): `memory=..% disk=..% deployed=<커밋> containers: <컨테이너> <메모리>` 한 줄이 report 체크 기록에 남습니다. 서버 메모리 사용률이 `REPORT_MEMORY_PERCENT`(기본 85) 또는 디스크가 `REPORT_DISK_PERCENT`(기본 90)를 넘으면 실패 신호로 보내 메일이 옵니다. 지금 값만 보려면 `bash /opt/{{project.name}}/deploy/report.sh line`.
 - 신호 본문(덤프 이름, 실패 이유)은 healthchecks.io의 체크 기록에 남습니다. 비밀값은 넣지 않습니다.
 
+## 4-2. API 요청 횟수 제한
+
+웹 컨테이너의 nginx(`frontend/nginx.conf`, 중앙 관리 파일)가 `/api/` 요청을 클라이언트 IP마다 초당 평균 10개로 제한합니다. 한 번에 40개까지는 바로 통과하고, 넘는 요청은 `429`를 받습니다(#291). API 서버 자체에는 제한이 없습니다.
+
+- 정상 사용(화면 하나가 API 몇 개를 동시에 부름)에서는 걸리지 않습니다. 화면에서 429가 보이면 그 화면이 API를 반복 호출하는지 먼저 확인합니다.
+- 나중에 서버 앞에 리버스 프록시를 두면(도메인 작업 #251) 모든 요청이 프록시 IP로 보입니다. 그때 nginx에 `real_ip`(프록시가 넘긴 실제 IP 사용) 설정을 함께 넣습니다.
+
 ## 5. 접속
 
 - **브라우저:** `http://<static_ip>:<WEB_PORT>` (허용 IP에서만)
