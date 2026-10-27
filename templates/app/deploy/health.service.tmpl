@@ -1,0 +1,12 @@
+[Unit]
+Description={{project.title}} health check signal for healthchecks.io
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+WorkingDirectory=/opt/{{project.name}}
+# Copied first: a deploy may check out a new commit while this script runs.
+ExecStart=/bin/bash -c 'cp /opt/{{project.name}}/deploy/notify.sh /tmp/{{project.db.name}}-notify.sh && exec /bin/bash /tmp/{{project.db.name}}-notify.sh health'
+TimeoutStartSec=2min

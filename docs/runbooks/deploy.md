@@ -30,6 +30,7 @@
 | `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION` | [사용자] 직접 입력 | DB 덤프 S3 사본 버킷과 리전. 없으면 서버에만 보관([백업·복구](backup-restore.md)) |
 | `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | [사용자] 직접 입력 | 버킷에 올리기만 되는 키. 비밀값 |
 | `SECRETS_AWS_ACCESS_KEY_ID`, `SECRETS_AWS_SECRET_ACCESS_KEY` | [사용자] 직접 입력 (Claude API를 쓰는 앱만) | SSM의 `/sirloinbh/anthropic-api-key` 하나만 읽을 수 있는 키. 비밀값. 있으면 배포 스크립트가 배포할 때마다 SSM에서 `ANTHROPIC_API_KEY`를 읽어 앱에 넘깁니다([ADR-0010](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0010-claude-api-key-ssm.md)). 이 키가 있으면 서버 `.env`의 `ANTHROPIC_API_KEY`는 지워도 됩니다 |
+| `HEALTHCHECK_URL_HEALTH`, `HEALTHCHECK_URL_DEPLOY`, `HEALTHCHECK_URL_BACKUP`, `HEALTHCHECK_URL_RESTORE`, `HEALTHCHECK_URL_REPORT` | [사용자] 직접 입력 | healthchecks.io 체크별 신호 주소. 주소에 비밀 UUID가 들어 있어 비밀값으로 다룹니다. 없는 키의 신호는 보내지 않습니다(아래 "알림") |
 
 `IMAGE_TAG`는 배포 스크립트가 커밋으로 정하므로 `.env`에 두지 않습니다.
 
@@ -102,6 +103,22 @@ sudo systemctl stop {{project.db.name}}-autodeploy.timer           # 일시 중�
 sudo systemctl start {{project.db.name}}-autodeploy.timer          # 재개
 rm /opt/{{project.name}}/.autodeploy-failed                        # 건너뛴 커밋 다시 시도
 ```
+
+## 4-1. 알림 (healthchecks.io)
+
+방화벽이 허용 IP에서만 열려 있어 바깥 감시 서비스가 서버에 들어올 수 없습니다. 그래서 서버가 바깥으로 신호를 보내고, 신호가 끊기거나 실패 신호가 오면 healthchecks.io가 메일을 보냅니다(#284). 서버가 통째로 멈춰도 신호가 끊기므로 알 수 있습니다.
+
+| 체크 | 서버 `.env` 키 | 신호를 보내는 곳 | healthchecks.io 주기 / 유예 |
+|---|---|---|---|
+| health | `HEALTHCHECK_URL_HEALTH` | `{{project.db.name}}-health.timer` 5분마다 `/api/health` | 5분 / 10분 |
+| deploy | `HEALTHCHECK_URL_DEPLOY` | 자동 배포 2분마다 (최신, CI 대기, 배포 성공은 ok, CI·배포 실패는 fail) | 2분 / 10분 |
+| backup | `HEALTHCHECK_URL_BACKUP` | 매일 덤프 (S3 사본 실패도 fail) | 1일 / 2시간 |
+| restore | `HEALTHCHECK_URL_RESTORE` | 매주 복구 확인 | 7일 / 1일 |
+| report | `HEALTHCHECK_URL_REPORT` | 매일 서버 상태 보고 (#285) | 1일 / 2시간 |
+
+- 설치: `sudo bash /opt/{{project.name}}/deploy/install-backup.sh` (백업·복구 확인·health timer). `.env`에 주소를 나중에 넣어도 다시 실행할 필요가 없습니다.
+- 수동 확인: `bash /opt/{{project.name}}/deploy/notify.sh health` (주소는 출력하지 않습니다)
+- 신호 본문(덤프 이름, 실패 이유)은 healthchecks.io의 체크 기록에 남습니다. 비밀값은 넣지 않습니다.
 
 ## 5. 접속
 
