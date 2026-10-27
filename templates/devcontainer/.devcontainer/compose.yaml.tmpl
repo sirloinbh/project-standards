@@ -1,0 +1,17 @@
+# Dev Container service (#282). It runs next to the db service of the app's own compose.yaml
+# and reaches it as db:5432, with the user and password from the root .env.
+# Nothing is installed automatically (no postCreateCommand): package installs need the user's
+# approval (docs/dependency-policy.md). After the container starts, run once in its terminal
+# (the image already has npm {{versions.npm}}):
+#   npm ci --ignore-scripts
+services:
+  dev:
+    image: {{versions.images.devcontainerNode}}
+    command: sleep infinity
+    volumes:
+      - ..:/workspaces/{{project.repos.umbrella}}:cached
+    environment:
+      DATABASE_URL: postgres://${POSTGRES_USER:-{{project.db.name}}}:${POSTGRES_PASSWORD:?Copy .env.example to .env and set password}@db:5432/${POSTGRES_DB:-{{project.db.name}}}
+      TZ: Asia/Seoul
+    depends_on:
+      db: { condition: service_healthy }

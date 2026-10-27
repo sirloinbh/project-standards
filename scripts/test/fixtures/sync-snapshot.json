@@ -9,6 +9,8 @@
     "full .claude/skills/std-testing/SKILL.md",
     "full .codex/hooks.json",
     "full .codex/rules/package-installs.rules",
+    "full .devcontainer/compose.yaml",
+    "full .devcontainer/devcontainer.json",
     "full .editorconfig",
     "full .gitattributes",
     "full .github/dependabot.yml",
