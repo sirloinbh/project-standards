@@ -15,6 +15,7 @@
 | 8 | 작업 PC 점검 (Claude Code 버전, 에이전트 실행기) | 3분 | #183 | 일부: Claude Code 2.1.309 확인. 실행기는 1 이후 |
 | 9 | 리포 11개 secret scanning·push protection·CodeQL 켜기, App에 Code scanning 읽기 권한 추가 | 15분 | #261 | 안 함 (2026-10-27 추가) |
 | 10 | Claude API 키 발급·지출 한도, SSM에 넣기, 서버 읽기 키 넣기 | 15분 | #266 | 안 함 (2026-10-27 추가) |
+| 11 | healthchecks.io 계정·앱별 체크 만들고 서버 `.env`에 신호 주소 넣기 | 20분 | #286 | 안 함 (2026-10-27 추가) |
 
 **남은 권장 순서는 1 → 3 → 4입니다.** 2는 끝났습니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
 
@@ -232,4 +233,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
    ```
 4. AWS 콘솔에서 읽기 전용 IAM 사용자의 액세스 키를 만들고, 서버 `/opt/study-log/.env`에 `SECRETS_AWS_ACCESS_KEY_ID`, `SECRETS_AWS_SECRET_ACCESS_KEY`를 넣습니다. 다음 배포부터 서버가 SSM에서 키를 읽습니다. 그 뒤 서버 `.env`의 `ANTHROPIC_API_KEY` 줄은 지워도 됩니다.
 5. 예전 키가 있으면 Console에서 폐기합니다. 끝나면 #266에 "끝"이라고 댓글을 남겨 주세요(값은 쓰지 않음).
+
+## 11. healthchecks.io 알림 켜기 (#286)
+
+**왜 필요한가요:** 앱이 멈추거나 백업·자동 배포가 실패해도 지금은 서버 로그에만 남습니다. 서버가 healthchecks.io로 신호를 보내고, 끊기거나 실패하면 메일이 옵니다(#284). 계정과 메일 설정은 사용자 계정으로만 할 수 있습니다. **신호 주소는 채팅·문서에 붙여 넣지 마세요**(비밀 UUID가 들어 있음).
+
+1. https://healthchecks.io 가입(무료 20개 체크). 알림 받을 메일을 확인합니다.
+2. 앱마다 체크를 만듭니다. 이름은 `<앱>-health`처럼 짓고, 주기·유예는 앱 배포 runbook(`docs/runbooks/deploy.md`) "알림" 표대로 합니다. 앱 8개 × 5개는 무료 한도를 넘으므로, 먼저 운영 중인 앱(workout-memo)부터 만듭니다.
+3. 서버 `/opt/<앱>/.env`에 체크별 주소를 `HEALTHCHECK_URL_HEALTH=...`처럼 넣습니다.
+4. `sudo bash /opt/<앱>/deploy/install-backup.sh`로 health timer를 설치합니다(동기화 PR 반영 뒤).
+5. `docker compose stop web`으로 잠깐 멈췄다가 10~15분 안에 메일이 오는지 보고, `docker compose start web`으로 되돌립니다. 결과를 #286에 댓글로 남겨 주세요(주소는 쓰지 않음).
 

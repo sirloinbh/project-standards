@@ -19,6 +19,25 @@ export IMAGE_TAG=${IMAGE_TAG:-$(cat .deployed 2>/dev/null || echo none)}
 
 env_value() { sed -n "s/^$1=//p" .env 2>/dev/null | tail -n 1 | tr -d "\"'\r"; }
 
+# One exit handler: removes the restore-check container and sends the healthchecks.io signal
+# (deploy/notify.sh, #284) for the nightly dump and the weekly restore check.
+signal_check=""
+signal_message=""
+restore_container=""
+finish() {
+  local status=$?
+  if [ -n "$restore_container" ]; then docker rm -f "$restore_container" > /dev/null 2>&1 || true; fi
+  if [ -n "$signal_check" ] && [ -f deploy/notify.sh ]; then
+    if [ "$status" -eq 0 ]; then
+      bash deploy/notify.sh ping "$signal_check" ok "$signal_message" || true
+    else
+      bash deploy/notify.sh ping "$signal_check" fail "exit $status: $signal_message" || true
+    fi
+  fi
+  exit "$status"
+}
+trap finish EXIT
+
 # "schema.table|rows" for every table, sorted. Exact counts, so it is only run on small app DBs.
 COUNT_SQL="select table_schema || '.' || table_name || '|' ||
   (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name), false, true, '')))[1]::text
@@ -68,6 +87,7 @@ dump() {
   fi
   find "$dir" -maxdepth 1 \( -name "$db-*.sql.gz" -o -name "$db-*.counts" \) -mtime +14 -delete
   echo "dumped $file ($(du -h "$file" | cut -f1))"
+  signal_message="$(basename "$file") $(du -h "$file" | cut -f1)"
   # Exit 3: the local dump is fine but the S3 copy failed. The timer shows it as failed;
   # a deploy goes on (remote-deploy.sh accepts 3).
   if ! { upload "$file" && { [ ! -f "$dir/$name.counts" ] || upload "$dir/$name.counts"; }; }; then
@@ -87,9 +107,8 @@ verify() {
   image=$(docker inspect --format "$image_format" "$(docker compose ps -q db)")
   container=$db-restore-check
   docker rm -f "$container" > /dev/null 2>&1 || true
+  restore_container=$container
   docker run -d --rm --name "$container" -e POSTGRES_PASSWORD=restore-check -e POSTGRES_DB=restore_check "$image" > /dev/null
-  # Expanded now: the local variable is gone when the trap runs at exit.
-  trap "docker rm -f $container > /dev/null 2>&1 || true" EXIT
   for _ in $(seq 1 60); do
     if docker exec "$container" pg_isready -q -U postgres -d restore_check 2> /dev/null; then break; fi
     sleep 2
@@ -105,11 +124,19 @@ verify() {
     exit 1
   fi
   echo "restore check passed: $(basename "$latest"), $(wc -l < "$counts") tables"
+  signal_message="$(basename "$latest"), $(wc -l < "$counts") tables"
 }
 
 case "${1:-}" in
-  dump) dump "${2:-}" ;;
-  verify) verify ;;
+  dump)
+    # Pre-deploy dumps (with a label) are not the nightly backup and send no signal.
+    if [ -z "${2:-}" ]; then signal_check=backup; fi
+    dump "${2:-}"
+    ;;
+  verify)
+    signal_check=restore
+    verify
+    ;;
   *)
     echo "usage: backup.sh dump [label] | verify" >&2
     exit 2

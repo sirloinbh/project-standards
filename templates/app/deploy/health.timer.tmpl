@@ -1,0 +1,10 @@
+[Unit]
+Description=Check /api/health of {{project.name}} every 5 minutes and signal healthchecks.io
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

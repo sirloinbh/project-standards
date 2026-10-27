@@ -28,8 +28,11 @@ const DEPLOY_FILES = [
   'deploy/backup.service',
   'deploy/backup.sh',
   'deploy/backup.timer',
+  'deploy/health.service',
+  'deploy/health.timer',
   'deploy/install-autodeploy.sh',
   'deploy/install-backup.sh',
+  'deploy/notify.sh',
   'deploy/remote-deploy.sh',
   'deploy/restore-check.service',
   'deploy/restore-check.timer',
@@ -158,6 +161,9 @@ function backupRun(args, { env = '', restored = 'public.a|2\npublic.b|5\n', setu
     'esac',
   ]);
   fs.writeFileSync(path.join(app, '.env'), env);
+  // A fake deploy/notify.sh records the healthchecks.io signals (#284).
+  fs.mkdirSync(path.join(app, 'deploy'));
+  fs.writeFileSync(path.join(app, 'deploy/notify.sh'), 'echo "$*" >> "$FAKE_LOG.notify"\n');
   setup?.({ app, store });
   const log = path.join(dir, 'log');
   // Git Bash on Windows takes a POSIX PATH; prepend the fake tools.
@@ -167,7 +173,7 @@ function backupRun(args, { env = '', restored = 'public.a|2\npublic.b|5\n', setu
     env: { ...process.env, FAKE_LOG: posix(log), RESTORED: restored, FAIL_COUNTS: failCounts ? '1' : '' },
   });
   const read = (suffix) => (fs.existsSync(log + suffix) ? fs.readFileSync(log + suffix, 'utf8') : '');
-  const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, files: fs.readdirSync(store).sort(), curlArgs: read('.curl-args'), curlStdin: read('.curl-stdin'), docker: read('.docker') };
+  const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, files: fs.readdirSync(store).sort(), curlArgs: read('.curl-args'), curlStdin: read('.curl-stdin'), docker: read('.docker'), notify: read('.notify') };
   fs.rmSync(dir, { recursive: true, force: true });
   return result;
 }
@@ -316,5 +322,90 @@ test('remote-deploy reads the Claude key from SSM only for apps with features.cl
     assert.equal(noPair.stdout, 'unset', 'without the key pair compose keeps reading .env');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// Runs the rendered notify.sh with a fake curl (#284). HEALTH_OK=0 makes the health endpoint fail.
+function notifyRun(args, { env = '', healthOk = true } = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'notify-'));
+  const bin = path.join(dir, 'bin');
+  const app = path.join(dir, 'app');
+  for (const d of [bin, app]) fs.mkdirSync(d);
+  const posix = (p) => p.split(path.sep).join('/');
+  fs.writeFileSync(
+    path.join(bin, 'curl'),
+    ['#!/bin/bash', 'echo "$*" >> "$FAKE_LOG.curl-args"', 'if [[ "$*" == */api/health* ]]; then [ "$HEALTH_OK" = 1 ]; exit $?; fi', 'cat >> "$FAKE_LOG.curl-stdin"', ''].join('\n'),
+    { mode: 0o755 },
+  );
+  fs.writeFileSync(path.join(app, '.env'), env);
+  const script = rendered['study-log']['deploy/notify.sh'].replace('cd /opt/study-log', `cd '${posix(app)}'`).replace(/^#!.*\n/, '');
+  const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+  const log = path.join(dir, 'log');
+  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'notify.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log), HEALTH_OK: healthOk ? '1' : '0' } });
+  const read = (suffix) => (fs.existsSync(log + suffix) ? fs.readFileSync(log + suffix, 'utf8') : '');
+  const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, curlArgs: read('.curl-args'), curlStdin: read('.curl-stdin') };
+  fs.rmSync(dir, { recursive: true, force: true });
+  return result;
+}
+const HC = 'https://hc-ping.com/00000000-0000-0000-0000-00000000abcd';
+
+test('notify sends ok and fail signals with the message as the body, and never prints the URL', { skip: !has('bash') && 'bash not found' }, () => {
+  const none = notifyRun(['ping', 'backup', 'ok', 'x']);
+  assert.equal(none.status, 0);
+  assert.equal(none.curlArgs, '', 'no URL in .env, no signal');
+
+  const ok = notifyRun(['ping', 'backup', 'ok', 'study-2026.sql.gz 4.0K'], { env: `HEALTHCHECK_URL_BACKUP="${HC}"\n` });
+  assert.equal(ok.status, 0);
+  assert.match(ok.curlArgs, new RegExp(`--data-binary @- ${HC}$`, 'm'));
+  assert.equal(ok.curlStdin, 'study-2026.sql.gz 4.0K');
+  assert.ok(!(ok.stdout + ok.stderr).includes(HC), 'the URL is not printed');
+
+  const fail = notifyRun(['ping', 'deploy', 'fail', 'CI failed'], { env: `HEALTHCHECK_URL_DEPLOY=${HC}\r\n` });
+  assert.match(fail.curlArgs, new RegExp(`${HC}/fail$`, 'm'));
+
+  assert.equal(notifyRun(['ping', 'other', 'ok']).status, 2);
+  assert.equal(notifyRun(['ping', 'backup', 'maybe']).status, 2);
+});
+
+test('notify health pings ok or fail from /api/health on the web port', { skip: !has('bash') && 'bash not found' }, () => {
+  const env = `WEB_PORT=8102\nHEALTHCHECK_URL_HEALTH=${HC}\n`;
+  const up = notifyRun(['health'], { env });
+  assert.equal(up.status, 0);
+  assert.match(up.curlArgs, /http:\/\/127\.0\.0\.1:8102\/api\/health/);
+  assert.match(up.curlArgs, new RegExp(`--data-binary @- ${HC}$`, 'm'));
+  const down = notifyRun(['health'], { env, healthOk: false });
+  assert.equal(down.status, 1);
+  assert.match(down.curlArgs, new RegExp(`${HC}/fail$`, 'm'));
+  const registryPort = notifyRun(['health'], { env: `HEALTHCHECK_URL_HEALTH=${HC}\n` });
+  assert.match(registryPort.curlArgs, new RegExp(`127\\.0\\.0\\.1:${project('study-log').ports.web}/api/health`));
+});
+
+test('backup signals the nightly dump and the restore check, not pre-deploy dumps', { skip: !canRunBackup && 'bash or gzip not found' }, () => {
+  const nightly = backupRun(['dump']);
+  assert.equal(nightly.status, 0, nightly.stderr);
+  assert.match(nightly.notify, /^ping backup ok study-\d{4}-\d\d-\d\d-\d{6}\.sql\.gz \S+\n$/);
+  assert.equal(backupRun(['dump', 'predeploy']).notify, '');
+  const s3Failed = backupRun(['dump'], { env: 'BACKUP_S3_BUCKET=sirloinbh-backups\n' });
+  assert.equal(s3Failed.status, 3);
+  assert.match(s3Failed.notify, /^ping backup fail exit 3: study-/);
+
+  const seed = ({ store }) => {
+    fs.writeFileSync(path.join(store, 'study-2026-10-26-033000.sql.gz'), spawnSync('gzip', ['-c'], { input: '-- dump\n' }).stdout);
+    fs.writeFileSync(path.join(store, 'study-2026-10-26-033000.counts'), 'public.a|2\npublic.b|5\n');
+  };
+  assert.match(backupRun(['verify'], { setup: seed }).notify, /^ping restore ok study-2026-10-26-033000\.sql\.gz, 2 tables\n$/);
+  const bad = backupRun(['verify'], { setup: seed, restored: 'public.a|2\n' });
+  assert.match(bad.notify, /^ping restore fail exit 1: /);
+  assert.match(bad.docker, /rm -f study-restore-check/, 'the throwaway database is still removed');
+});
+
+test('autodeploy signals every decision and the health timer runs every 5 minutes', () => {
+  for (const [name, files] of Object.entries(rendered)) {
+    const auto = files['deploy/autodeploy.sh'];
+    assert.match(auto, /^signal\(\) \{ if \[ -f deploy\/notify\.sh \]; then bash deploy\/notify\.sh ping deploy "\$@" \|\| true; fi; \}$/m, name);
+    for (const s of ['signal ok "up to date at $sha"', 'signal fail "$sha failed before', 'signal ok "waiting for CI of $sha"', 'signal fail "CI failed for $sha"', 'signal ok "deployed $sha"', 'signal fail "deploy of $sha failed"']) assert.ok(auto.includes(s), `${name}: ${s}`);
+    assert.match(files['deploy/health.timer'], /^OnUnitActiveSec=5min$/m, name);
+    assert.ok(files['deploy/health.service'].includes(`/tmp/${project(name).db.name}-notify.sh health`), name);
+    assert.match(files['deploy/install-backup.sh'], /^for unit in backup restore-check health; do$/m, name);
   }
 });
