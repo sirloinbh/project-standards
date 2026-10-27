@@ -358,7 +358,8 @@ test('notify sends ok and fail signals with the message as the body, and never p
   assert.equal(ok.status, 0);
   assert.match(ok.curlArgs, new RegExp(`--data-binary @- ${HC}$`, 'm'));
   assert.equal(ok.curlStdin, 'study-2026.sql.gz 4.0K');
-  assert.ok(!(ok.stdout + ok.stderr).includes(HC), 'the URL is not printed');
+  // Compare with the UUID, not the URL (CodeQL reads a URL substring check as URL validation).
+  assert.doesNotMatch(ok.stdout + ok.stderr, /00000000abcd/, 'the URL is not printed');
 
   const fail = notifyRun(['ping', 'deploy', 'fail', 'CI failed'], { env: `HEALTHCHECK_URL_DEPLOY=${HC}\r\n` });
   assert.match(fail.curlArgs, new RegExp(`${HC}/fail$`, 'm'));

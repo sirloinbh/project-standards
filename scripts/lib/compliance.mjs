@@ -84,7 +84,8 @@ export function repoStatus({ target, project, read, pulls = [], now = new Date()
   };
 }
 
-const cell = (s) => String(s).replace(/\|/g, '\\|');
+/** A Markdown table cell: backslashes first, so a value ending in "\" cannot escape the next "|" (#290). */
+export const cell = (s) => String(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 
 const MARK = { fail: '✗', warn: '△ 권장', plan: '— 요금제', unknown: '? 확인 못 함' };
 
