@@ -13,12 +13,15 @@
 | Actions 기본 토큰 권한 | `read` | 필수 | 워크플로가 필요한 권한만 `permissions:`로 올린다 |
 | Actions의 PR 승인 | 끔 | 필수 | 자동화가 자기 PR을 승인해 보호 규칙을 피하지 못하게 |
 | `main` 브랜치 보호 | 켬, 필수 검사 1개 이상, 강제 push·삭제 금지 | 필수 (공개 리포) | CI를 통과하지 않은 변경이 `main`(=배포)에 들어가지 않게 |
-| secret scanning, push protection | `enabled` | 필수 (공개 리포) | 토큰·키가 커밋되면 막거나 알린다 |
+| secret scanning, push protection | `enabled` | 필수 (공개 리포) | 토큰·키가 커밋되면 막거나 알린다. CI의 `secret-scan`(#259)은 모양이 분명한 키만 보고, 나머지 공급자는 secret scanning이 맡는다 |
+| CodeQL 코드 스캔 | 기본 설정(default setup) `configured` | 필수 (공개 리포) | 코드의 알려진 취약 패턴(주입, 경로 조작 등)을 PR마다 찾는다. 워크플로 파일을 관리하지 않아도 되도록 고급 설정 대신 기본 설정을 쓴다 (#260) |
 | Dependabot 취약점 알림 | 켬 | 필수 | 공급망 공격 대응. 보안 업데이트만 쓰는 정책([dependency-policy.md](dependency-policy.md))의 전제 |
 | Dependabot 보안 업데이트 | 켬 | 필수 | 같은 이유. 버전 업 PR은 `.github/dependabot.yml`이 막는다 |
 | Actions secret·variable 이름 | `sync.config.json` 대상의 `secrets`·`variables` 목록과 같음 | 필수(없는 이름) / 권장(목록에 없는 이름) | 필요한 secret이 빠졌거나, 쓰지 않는 secret이 남아 있지 않은지 |
 
-- **비공개 리포와 요금제:** GitHub Free에서는 비공개 리포에 브랜치 보호(규칙 포함)와 secret scanning을 쓸 수 없다. 준수 현황에는 실패가 아니라 "— 요금제"로 표시한다. 지금 workout-memo만 공개이고 나머지 8개와 중앙 리포는 비공개다(2026-10-22).
+- **공개 여부:** 2026-10-27 기준 중앙 리포, 하위 리포 9개, file-control이 모두 공개다. 그래서 위 "필수 (공개 리포)" 항목이 모든 리포에 필수다.
+- **비공개 리포와 요금제:** GitHub Free에서는 비공개 리포에 브랜치 보호(규칙 포함), secret scanning, CodeQL을 쓸 수 없다. 리포를 다시 비공개로 바꾸면 준수 현황에는 실패가 아니라 "— 요금제"로 표시한다.
+- **CodeQL 확인 권한:** 준수 현황은 `GET repos/<리포>/code-scanning/default-setup`으로 확인한다. 동기화 App에 Code scanning alerts 읽기 권한이 있어야 하고, 없으면 "? 확인 못 함"으로 나온다([github-app.md](github-app.md)).
 - **값은 다루지 않는다.** secret API는 이름만 돌려준다. variable API는 값도 돌려주지만 받자마자 버리고 이름만 남긴다. 테스트(`scripts/test/repo-settings.test.mjs`)가 보고서에 값이 나오지 않는지 확인한다.
 - secret·variable 목록은 지금 모든 리포가 빈 목록이다. 앱 CI는 `GITHUB_TOKEN`만 쓴다. 리포에 secret이 필요해지면 `sync.config.json`의 그 대상에 이름을 더한다.
 
@@ -50,17 +53,26 @@ ghp api -X PUT repos/sirloinbh/<리포>/automated-security-fixes
 ghp api -X PATCH repos/sirloinbh/<리포> -F allow_squash_merge=false -F allow_rebase_merge=false -F delete_branch_on_merge=true
 ```
 
-workout-memo(공개)는 추가로 secret scanning과 브랜치 보호를 켠다. 브랜치 보호의 필수 검사 이름은 첫 동기화(#97)로 CI 호출부가 바뀐 뒤의 이름을 써야 하므로, 브랜치 보호는 #97 병합 뒤에 설정한다.
+공개 리포는 모두 secret scanning·push protection과 CodeQL 기본 설정을 켠다(아래 명령, #261). 브랜치 보호도 켠다. 브랜치 보호의 필수 검사 이름은 첫 동기화(#97)로 CI 호출부가 바뀐 뒤의 이름을 써야 하므로, 브랜치 보호는 #97 병합 뒤에 설정한다.
 
 ```powershell
 # secret scanning, push protection
 # 래퍼는 파이프 입력을 받지 않으므로 JSON을 임시 파일로 넘긴다(#228)
-$f = Join-Path $env:TEMP 'workout-memo-security.json'
+$f = Join-Path $env:TEMP 'repo-security.json'
 '{"security_and_analysis":{"secret_scanning":{"status":"enabled"},"secret_scanning_push_protection":{"status":"enabled"}}}' | Set-Content -Encoding ascii $f
-ghp api -X PATCH repos/sirloinbh/workout-memo --input $f --jq '.security_and_analysis'
+ghp api -X PATCH repos/sirloinbh/<리포> --input $f --jq '.security_and_analysis'
 Remove-Item $f
+
+# CodeQL 기본 설정 켜기 (언어는 GitHub가 고른다)
+$f = Join-Path $env:TEMP 'repo-codeql.json'
+'{"state":"configured","query_suite":"default"}' | Set-Content -Encoding ascii $f
+ghp api -X PATCH repos/sirloinbh/<리포>/code-scanning/default-setup --input $f
+Remove-Item $f
+ghp api repos/sirloinbh/<리포>/code-scanning/default-setup --jq '.state'   # configured가 나오면 성공
 ```
 
 브랜치 보호는 웹에서 설정하는 것이 쉽다: workout-memo → Settings → Branches → Add branch protection rule(`main`) → "Require status checks to pass"에서 CI 검사 선택, "Allow force pushes"·"Allow deletions"는 끈다.
 
-비공개 리포에도 브랜치 보호와 secret scanning을 쓰려면 GitHub Pro로 바꾸거나 리포를 공개해야 한다. 이건 사용자가 정할 일이다.
+웹에서는 각 리포 → Settings → Code security에서 "Secret Protection"(secret scanning, push protection)과 "Code scanning → CodeQL analysis → Default"를 켠다.
+
+비공개 리포에도 브랜치 보호, secret scanning, CodeQL을 쓰려면 GitHub Pro 이상이 필요하다. 이건 사용자가 정할 일이다.
