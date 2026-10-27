@@ -60,12 +60,17 @@ dump() {
   # --no-owner keeps the dump restorable into a database whose user has another name.
   docker compose exec -T db sh -c 'pg_dump --no-owner --no-privileges -U "$POSTGRES_USER" -d "$POSTGRES_DB"' | gzip > "$file.part"
   mv "$file.part" "$file"
-  docker compose exec -T db sh -c 'psql -At -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "$0"' "$COUNT_SQL" > "$dir/$name.counts"
+  # Row counts are for the weekly restore check only: a failure here must not fail the dump
+  # (or block a deploy). Without the file, the next restore check reports it.
+  if ! docker compose exec -T db sh -c 'psql -At -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "$0"' "$COUNT_SQL" > "$dir/$name.counts"; then
+    echo "row counts failed; $file has no .counts for the restore check" >&2
+    rm -f "$dir/$name.counts"
+  fi
   find "$dir" -maxdepth 1 \( -name "$db-*.sql.gz" -o -name "$db-*.counts" \) -mtime +14 -delete
   echo "dumped $file ($(du -h "$file" | cut -f1))"
   # Exit 3: the local dump is fine but the S3 copy failed. The timer shows it as failed;
   # a deploy goes on (remote-deploy.sh accepts 3).
-  if ! { upload "$file" && upload "$dir/$name.counts"; }; then
+  if ! { upload "$file" && { [ ! -f "$dir/$name.counts" ] || upload "$dir/$name.counts"; }; }; then
     echo "S3 copy failed; the local dump $file is kept" >&2
     exit 3
   fi

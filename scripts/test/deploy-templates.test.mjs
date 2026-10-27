@@ -132,7 +132,7 @@ test('autodeploy deploys only when every check run passed', { skip: !(has('bash'
 });
 
 // Runs the rendered backup.sh with fake docker, curl and flock on PATH, in a temporary app folder.
-function backupRun(args, { env = '', restored = 'public.a|2\npublic.b|5\n', setup } = {}) {
+function backupRun(args, { env = '', restored = 'public.a|2\npublic.b|5\n', setup, failCounts = false } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'backup-'));
   const bin = path.join(dir, 'bin');
   const app = path.join(dir, 'app');
@@ -149,7 +149,7 @@ function backupRun(args, { env = '', restored = 'public.a|2\npublic.b|5\n', setu
   tool('docker', [
     'echo "$*" >> "$FAKE_LOG.docker"',
     'case "$1 $2" in',
-    '  "compose exec") if [[ "$*" == *pg_dump* ]]; then echo "-- dump"; else printf "public.a|2\\npublic.b|5\\n"; fi ;;',
+    '  "compose exec") if [[ "$*" == *pg_dump* ]]; then echo "-- dump"; elif [ -n "$FAIL_COUNTS" ]; then exit 1; else printf "public.a|2\\npublic.b|5\\n"; fi ;;',
     '  "compose ps") echo cid ;;',
     '  "inspect --format") echo postgres:17 ;;',
     '  "exec -i") cat > /dev/null ;;',
@@ -163,7 +163,7 @@ function backupRun(args, { env = '', restored = 'public.a|2\npublic.b|5\n', setu
   const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
   const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script.replace(/^#!.*\n/, '')}`, 'backup.sh', ...args], {
     encoding: 'utf8',
-    env: { ...process.env, FAKE_LOG: posix(log), RESTORED: restored },
+    env: { ...process.env, FAKE_LOG: posix(log), RESTORED: restored, FAIL_COUNTS: failCounts ? '1' : '' },
   });
   const read = (suffix) => (fs.existsSync(log + suffix) ? fs.readFileSync(log + suffix, 'utf8') : '');
   const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, files: fs.readdirSync(store).sort(), curlArgs: read('.curl-args'), curlStdin: read('.curl-stdin'), docker: read('.docker') };
@@ -184,6 +184,12 @@ test('backup dump writes the dump and row counts, and skips S3 without a bucket'
   assert.equal(r.curlArgs, '');
   const labelled = backupRun(['dump', 'predeploy']);
   assert.match(labelled.files[1], /-predeploy\.sql\.gz$/);
+  // A failed row count must not fail the dump, so a deploy is never blocked by it.
+  const noCounts = backupRun(['dump'], { env: S3_ENV, failCounts: true });
+  assert.equal(noCounts.status, 0, noCounts.stderr);
+  assert.deepEqual(noCounts.files.map((f) => f.replace(/^study-[\d-]+/, '')), ['.sql.gz']);
+  assert.match(noCounts.stderr, /row counts failed/);
+  assert.equal(noCounts.curlArgs.trim().split('\n').length, 1, 'only the dump is uploaded');
 });
 
 test('backup dump copies both files to S3 and passes the key pair only on standard input', { skip: !canRunBackup && 'bash or gzip not found' }, () => {
