@@ -184,6 +184,21 @@ node tools/repos.mjs workspace         # .local/sirloinbh.code-workspace를 만�
 - 브랜치를 바꾸거나 지우지 않는다. 브랜치 정리는 Fork 앱에서 한다.
 - 작업공간 파일은 PC마다 경로가 달라 `.local/`(git 제외)에 만든다. 폴더마다 그 리포의 `.vscode/settings.json`(개인 계정 터미널)이 그대로 적용된다.
 
+## 앱 리포 라벨 통일 (tools/labels.mjs)
+
+동기화 대상 리포와 file-control의 이슈를 중앙 표준 라벨(`templates/common/labels.json`)로 옮긴다(#277). 다른 개인 리포는 건드리지 않는다.
+
+```powershell
+node tools/labels.mjs plan                       # 읽기 전용: 리포별로 더할 라벨과 기존→표준 대응표
+node tools/labels.mjs apply                      # 확인 질문 뒤 표준 라벨을 더한다 (기존 라벨은 남김)
+node tools/labels.mjs apply --remove-old --overrides .local/labels-overrides.json
+```
+
+- 우선순위는 기존 라벨 이름의 `P0`~`P4`에서 읽는다(`P1 높음`, `우선순위: P1`, `priority:P1`). 종류는 `enhancement` → `type/feature`, `documentation` → `type/docs`만 자동으로 옮긴다. `특성: 안전`, `기능: 루틴`처럼 대응이 없는 라벨은 그대로 둔다.
+- 우선순위 라벨이 없는 열린 이슈는 std-backlog 규칙대로 `priority/P3`를 받는다. `--overrides`(JSON, `"<리포>#<번호>": "priority/P1"`)로 이슈별로 정하거나, `--keep-unlabeled <리포>`로 비워 둘 수 있다.
+- `--remove-old`는 닫힌 이슈에도 표준 라벨을 먼저 더한 뒤, 대응표의 기존 라벨을 리포에서 지운다. 라벨 추가에 실패한 이슈가 있는 리포에서는 지우지 않는다.
+- 앱 리포를 바꾸는 명령이라 사용자 확인 뒤에만 실행한다.
+
 ## 의존성 PR 현황과 일괄 닫기 (tools/dependency-prs.mjs)
 
 sirloinbh 리포 전체에 열린 Dependabot PR을 패키지·목표 버전별로 묶어 보여 주고, 고른 묶음을 확인 질문 뒤에 이유 댓글과 함께 닫는다(#268). **병합은 하지 않는다.** 앱 PR 병합은 곧 운영 배포라 사용자가 한다.
@@ -201,6 +216,7 @@ node tools/dependency-prs.mjs close --package body-parser --repo study-log --rea
 
 - 에이전트 워커: `npm run test:agents`. `npm test`(따라서 `npm run check`)에도 포함된다. Windows에서는 `.github/workflows/agents.yml`이 한 번 더 돌린다. 가짜 git·gh·npm·Codex와 임시 리포만 쓴다. 실행기 검사(임시 폴더에 설치한 `agents.ps1 -Root <폴더> status`가 가짜 리포 두 곳에서 각자의 큐만 보여 줌, `-Root`·`-BranchType`·`-Slug` 전달, PowerShell→Node 경계 2개)는 Windows에서만 돈다.
 - 리포 일괄 명령: `node --test scripts/test/repos.test.mjs`. 임시 git 리포만 쓴다.
+- 라벨 통일: `node --test scripts/test/labels.test.mjs`. 가짜 gh(`LABELS_GH`)만 쓰고, 추가가 모두 끝난 뒤에만 지우는지 확인한다.
 - 의존성 PR 명령: `node --test scripts/test/dependency-prs.test.mjs`. 가짜 gh(`DEPENDENCY_PRS_GH`)만 쓰고, 닫기 전 확인과 병합하지 않음을 확인한다.
 - 공용 Claude API 키: `node --test scripts/test/app-secrets.test.mjs`. 가짜 AWS CLI(`APP_SECRETS_AWS`)만 쓰고, 값이 출력·인자에 나오지 않는지 확인한다.
 - 계정 도구: `node --test scripts/test/tools.test.mjs` (Windows 전용 검사는 다른 OS에서 건너뛴다). 설치 검사는 워커·레지스트리·`versions.json`이 설치되고 바뀐 워커 파일이 백업되는지도 본다. 가짜 `gh`·`code`, 임시 사용자 폴더, 합성 토큰만 쓰며 실제 인증·설치본·VS Code는 건드리지 않는다.
