@@ -5,7 +5,7 @@
 - 1단계 산출물은 **설계 문서와 리포 골격**이다. 하위 리포에 실제 동기화 PR을 여는 일은 사용자 승인 후 진행한다.
 
 # 현재 상황 (사실)
-- GitHub 계정: 개인 `sirloinbh`, private 리포. GitHub 작업은 `ghp` 또는 `scripts/gh-project.ps1` 래퍼만 사용하고, 회사 계정 `gh`(byunghKim)는 쓰지 않는다.
+- GitHub 계정: 개인 `sirloinbh`, private 리포. GitHub 작업은 `ghp` 또는 `scripts/gh-project.ps1` 래퍼만 사용하고, 회사 계정 `gh`는 쓰지 않는다.
 - 하위 프로젝트: 앱 8개와 공유 인프라 1개.
   - 앱: workout-memo(기준 프로젝트), study-log, health-log, life-journal, money-ledger, english-study, plan-routine, dev-career-portfolio
   - 각 앱은 우산 모노레포 + `<name>-frontend/-backend/-db` subtree 배포 리포 구조다.
