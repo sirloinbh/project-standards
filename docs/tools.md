@@ -170,8 +170,22 @@ node tools/app-secrets.mjs pull                    # 앱 .env에 넣기 (--app s
 - 운영 서버는 이 명령을 쓰지 않는다. 배포 스크립트(`deploy/ssm-get.sh`)가 배포할 때마다 SSM에서 읽는다([배포 runbook](runbooks/deploy.md)).
 - 키를 바꾼 뒤: 서버는 다음 배포부터 새 키를 쓴다. PC는 `pull`을 다시 실행한다.
 
+## 의존성 PR 현황과 일괄 닫기 (tools/dependency-prs.mjs)
+
+sirloinbh 리포 전체에 열린 Dependabot PR을 패키지·목표 버전별로 묶어 보여 주고, 고른 묶음을 확인 질문 뒤에 이유 댓글과 함께 닫는다(#268). **병합은 하지 않는다.** 앱 PR 병합은 곧 운영 배포라 사용자가 한다.
+
+```powershell
+node tools/dependency-prs.mjs list                                # 표로 보기 (읽기 전용)
+node tools/dependency-prs.mjs close --package zod --to 4.6.6      # 닫기 전에 목록을 보여 주고 묻는다
+node tools/dependency-prs.mjs close --package body-parser --repo study-log --reason "묶음 PR로 대체"
+```
+
+- GitHub는 `tools/gh-project.ps1`(Windows)로만 부르고, 계정이 sirloinbh가 아니면 아무것도 읽지 않고 멈춘다.
+- 묶음 설정(#267)이 반영되기 전에 열린 디렉터리별 PR은, 묶음 PR이 열린 뒤 이 명령으로 닫는다([의존성 정책](dependency-policy.md)).
+
 ## 검증
 
 - 에이전트 워커: `npm run test:agents`. `npm test`(따라서 `npm run check`)에도 포함된다. Windows에서는 `.github/workflows/agents.yml`이 한 번 더 돌린다. 가짜 git·gh·npm·Codex와 임시 리포만 쓴다. 실행기 검사(임시 폴더에 설치한 `agents.ps1 -Root <폴더> status`가 가짜 리포 두 곳에서 각자의 큐만 보여 줌, `-Root`·`-BranchType`·`-Slug` 전달, PowerShell→Node 경계 2개)는 Windows에서만 돈다.
+- 의존성 PR 명령: `node --test scripts/test/dependency-prs.test.mjs`. 가짜 gh(`DEPENDENCY_PRS_GH`)만 쓰고, 닫기 전 확인과 병합하지 않음을 확인한다.
 - 공용 Claude API 키: `node --test scripts/test/app-secrets.test.mjs`. 가짜 AWS CLI(`APP_SECRETS_AWS`)만 쓰고, 값이 출력·인자에 나오지 않는지 확인한다.
 - 계정 도구: `node --test scripts/test/tools.test.mjs` (Windows 전용 검사는 다른 OS에서 건너뛴다). 설치 검사는 워커·레지스트리·`versions.json`이 설치되고 바뀐 워커 파일이 백업되는지도 본다. 가짜 `gh`·`code`, 임시 사용자 폴더, 합성 토큰만 쓰며 실제 인증·설치본·VS Code는 건드리지 않는다.
