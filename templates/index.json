@@ -9,6 +9,7 @@
       ".standards/lib/hash.mjs": "scripts/lib/hash.mjs",
       ".standards/lib/render.mjs": "scripts/lib/render.mjs",
       ".standards/ioc-scan.mjs": "scripts/ioc-scan.mjs",
+      ".standards/secret-scan.mjs": "scripts/secret-scan.mjs",
       ".standards/blocked-packages.json": "security/blocked-packages.json"
     }
   },

@@ -21,3 +21,4 @@ jobs:
       # 외부 npm 의존성이 없으므로 npm ci 없이 바로 검사한다.
       - run: npm run check
       - run: node scripts/ioc-scan.mjs
+      - run: node scripts/secret-scan.mjs

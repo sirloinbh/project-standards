@@ -39,3 +39,15 @@ NODE_AUTH_TOKEN=
 - 포트와 DB 이름은 레지스트리 값과 같아야 한다. `standards-check`가 `PORT`, `DATABASE_URL`의 포트와 DB 이름, `POSTGRES_DB`를 비교한다.
 - 프런트엔드 빌드에 들어가는 값(`VITE_` 접두어)은 비밀이 아니어야 한다. 브라우저에 그대로 노출된다.
 - 새 키를 추가하면 `.env.example`, 사용하는 코드, 배포 runbook(서버 `.env` 키 목록)을 같은 PR에서 고친다.
+
+## 커밋된 비밀값 검사 (#259)
+
+CI가 매번 `secret-scan`으로 커밋 대상 파일에 토큰·키가 있는지 검사한다. 리포가 모두 public이라 한 번 push된 값은 지워도 이미 공개된 것으로 본다.
+
+- 실행: 중앙은 `npm run secrets:check`(`npm run check`에 포함), 하위 리포는 `node .standards/secret-scan.mjs`. CI에서는 의존성 설치 전에 실행한다.
+- 막는 것: 모양으로 알아볼 수 있는 토큰·키(GitHub, Anthropic, OpenAI, AWS, npm, Slack, Google, Stripe 운영 키), 개인키 블록, 커밋된 `.env` 파일(`.env.example`·`.sample`·`.template`은 허용).
+- 출력에는 파일과 줄 번호, 규칙 이름만 나오고 값은 나오지 않는다.
+- 일부러 넣은 가짜 값(테스트)은 그 줄에 `secret-scan:allow` 주석을 붙인다. 테스트에서는 값을 문자열 조각으로 나눠 실행 중에 만드는 편이 낫다(`scripts/test/secret-scan.test.mjs`).
+- 이력 검사: `node .standards/secret-scan.mjs --history`는 모든 브랜치의 커밋에서 추가된 줄을 검사한다. CI에서는 쓰지 않고, 처음 도입할 때와 유출이 의심될 때 실행한다.
+- 외부 도구(gitleaks 등)를 쓰지 않고 Node 내장 모듈로 만들었다. 새 공급망 위험을 들이지 않고, 오탐이 적은 모양만 검사해서 발견하면 바로 실패시키기 위해서다. 더 넓은 공급자 목록은 GitHub secret scanning이 맡는다([repo-settings.md](repo-settings.md)).
+- 발견하면: 진짜 값이면 먼저 그 키를 폐기·교체하고, 커밋에서 지운 뒤 사용자에게 알린다. 이력에서 지우는 일(강제 push)은 사용자가 정한다.
