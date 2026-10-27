@@ -22,8 +22,8 @@
 
 - 실제 nginx(`nginx:1.27-alpine`)로 확인: `nginx -t` 통과. 가짜 API 앞에서 60번 연속 요청 → 200이 42번, 429가 18번.
 - `node --test scripts/test/docker.test.mjs`: 4개 통과
+- `npm run check`: 테스트 464개 중 463개 통과, 1개 건너뜀, 실패 0
 
 ## CodeQL 알림
 
 CodeQL `js/missing-rate-limiting`은 Express 코드 안의 제한만 인식하므로, nginx 제한으로는 알림이 닫히지 않는다. 중앙 스캐폴드 알림은 이유를 적어 닫는다. 앱 리포 알림 71개를 닫는 일은 사용자 확인 뒤에 한다.
-- `npm run check`: 테스트 464개 중 463개 통과, 1개 건너뜀, 실패 0
