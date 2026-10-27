@@ -1,86 +1,17 @@
 # 준수 현황
 
-<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-26 06:29 UTC, 중앙 d40b8ee -->
+<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-27 00:48 UTC, 중앙 3b90c85 -->
 
 | 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example | 리포 설정 |
 |---|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | ✓ | `523d533` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/study-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/health-log | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/life-journal | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/money-ledger | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/english-study | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/plan-routine | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/dev-career-portfolio | ✓ | `5b4fe8a` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/workout-memo | ✓ | `3b90c85` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/study-log | ✓ | `3b90c85` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/health-log | ✓ | `3b90c85` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/life-journal | ✓ | `3b90c85` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/money-ledger | ✓ | `3b90c85` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/english-study | ✓ | `3b90c85` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/plan-routine | ✓ | `3b90c85` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/dev-career-portfolio | ✓ | `3b90c85` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
 | sirloinbh/shared-aws-infrastructure | ✓ | `271db28` | ✓ 일치 | — | 없음 | — | ✓ |
-
-## 리포 설정
-
-기준과 이유는 [repo-settings.md](repo-settings.md)에 있다. secret·variable은 이름만 비교한다.
-
-### sirloinbh/study-log
-
-| 상태 | 항목 | 지금 | 기준 |
-|---|---|---|---|
-| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
-| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-
-### sirloinbh/health-log
-
-| 상태 | 항목 | 지금 | 기준 |
-|---|---|---|---|
-| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
-| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-
-### sirloinbh/life-journal
-
-| 상태 | 항목 | 지금 | 기준 |
-|---|---|---|---|
-| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
-| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-
-### sirloinbh/money-ledger
-
-| 상태 | 항목 | 지금 | 기준 |
-|---|---|---|---|
-| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
-| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-
-### sirloinbh/english-study
-
-| 상태 | 항목 | 지금 | 기준 |
-|---|---|---|---|
-| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
-| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-
-### sirloinbh/plan-routine
-
-| 상태 | 항목 | 지금 | 기준 |
-|---|---|---|---|
-| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
-| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-
-### sirloinbh/dev-career-portfolio
-
-| 상태 | 항목 | 지금 | 기준 |
-|---|---|---|---|
-| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
-| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-
-### sirloinbh/shared-aws-infrastructure
-
-| 상태 | 항목 | 지금 | 기준 |
-|---|---|---|---|
-| — 요금제 | main 브랜치 보호 | 비공개 리포라 Free 요금제에서 쓸 수 없음 | 켬 |
-| — 요금제 | secret scanning | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-| — 요금제 | push protection (secret 차단) | 비공개 리포라 Free 요금제에서 쓸 수 없음 | enabled |
-
 
 고치는 방법은 [README](../README.md)의 "하위 리포에서 standards-check가 실패했을 때"를 따른다.
