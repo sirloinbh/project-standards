@@ -81,9 +81,14 @@ test('section files keep what the project added below the marker', () => {
 
 test('package.json fields are rendered from versions.json for all three package files', () => {
   const expected = { packageManager: 'npm@11.19.0', 'engines.node': '24.21.0', 'engines.npm': '11.19.0' };
-  for (const p of ['frontend/package.json', 'backend/package.json']) {
-    assert.deepEqual(byPath[p], { path: p, source: 'templates/index.json', mode: 'fields', fields: { ...expected, 'devDependencies.@sirloinbh/tsconfig': '1.0.0' } });
-  }
+  const tsconfig = { 'devDependencies.@sirloinbh/tsconfig': '1.0.0' };
+  assert.deepEqual(byPath['backend/package.json'], { path: 'backend/package.json', source: 'templates/index.json', mode: 'fields', fields: { ...expected, ...tsconfig } });
+  assert.deepEqual(byPath['frontend/package.json'], {
+    path: 'frontend/package.json',
+    source: 'templates/index.json',
+    mode: 'fields',
+    fields: { ...expected, 'dependencies.@sirloinbh/design-tokens': '1.0.0', ...tsconfig },
+  });
   assert.deepEqual(byPath['package.json'].fields, {
     ...expected,
     'scripts.standards:check': 'node .standards/check.mjs',
@@ -97,6 +102,7 @@ test('a manifest built from the render accepts the rendered files and catches ed
   const pkg = { name: 'study-log', packageManager: 'npm@11.19.0', engines: { node: '24.21.0', npm: '11.19.0' } };
   const repo = Object.fromEntries(rendered.filter((f) => f.content).map((f) => [f.path, f.content]));
   for (const p of ['frontend/package.json', 'backend/package.json']) repo[p] = JSON.stringify({ ...pkg, devDependencies: { '@sirloinbh/tsconfig': '1.0.0' } });
+  repo['frontend/package.json'] = JSON.stringify({ ...JSON.parse(repo['frontend/package.json']), dependencies: { '@sirloinbh/design-tokens': '1.0.0' } });
   repo['package.json'] = JSON.stringify({
     ...pkg,
     scripts: { 'standards:check': 'node .standards/check.mjs' },

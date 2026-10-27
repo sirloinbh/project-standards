@@ -39,7 +39,8 @@ function makeRepo(edit = () => {}) {
   const lint = { '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] };
   const tsconfig = { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] };
   write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs' }, devDependencies: lint }));
-  write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, devDependencies: tsconfig }));
+  const tokens = { '@sirloinbh/design-tokens': v['@sirloinbh/design-tokens'] };
+  write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, dependencies: tokens, devDependencies: tsconfig }));
   write('backend/package.json', JSON.stringify({ name: 'backend', ...pkgFields, devDependencies: tsconfig }));
   for (const [rel, text] of Object.entries(appFiles)) write(rel, text);
   write('node_modules/@sirloinbh/tsconfig/package.json', JSON.stringify({ name: '@sirloinbh/tsconfig', version: '1.0.0' }));
