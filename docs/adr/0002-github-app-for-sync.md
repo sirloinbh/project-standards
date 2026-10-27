@@ -10,9 +10,10 @@
 ## 결정
 
 - GitHub App `project-standards-sync`를 만들고 대상 리포에만 설치한다.
-- 권한: Contents write, Pull requests write, Metadata read, **Workflows write**, Administration read, Secrets read, Variables read, **Issues write**.
+- 권한: Contents write, Pull requests write, Metadata read, **Workflows write**, Administration read, Secrets read, Variables read, **Issues write**, Code scanning alerts read.
   - Workflows 권한은 요구사항(bootstrap-prompt)의 3종에 추가한 것이다. 동기화 대상에 `.github/workflows/ci.yml`이 있고, GitHub는 이 권한이 없는 토큰으로 워크플로 파일을 바꾸는 push를 거부한다.
   - Administration·Secrets·Variables **읽기** 권한은 준수 현황(#22, #82)에서 리포 설정과 secret·variable **이름**이 기준대로인지 확인하는 데 쓴다. 이 권한으로는 secret 값을 읽을 수 없고 설정을 바꿀 수도 없다(2026-10-22 추가, #74).
+  - Code scanning alerts **읽기** 권한은 준수 현황에서 CodeQL 기본 설정 상태(`code-scanning/default-setup`)를 확인하는 데 쓴다. 공개 리포라 알림 내용도 이미 공개되어 있고, 설정을 바꿀 수는 없다(2026-10-27 추가, #260).
   - Issues **쓰기** 권한은 이슈 라벨 동기화(#40)에 쓴다. 동기화가 `templates/common/labels.json`의 라벨을 대상 리포에 만들거나 고친다. 라벨을 지우지 않고, 이슈 본문·댓글도 바꾸지 않는다(2026-10-22 추가, #40).
 - 개인키는 중앙 리포 secret에만 둔다. 실행할 때마다 1시간짜리 설치 토큰을 발급한다. JWT 서명은 외부 Action 없이 `node:crypto`로 구현한다.
 - App 생성, 설치, 키 교체는 사용자가 직접 수행한다.

@@ -2,7 +2,7 @@
 // the standard in docs/repo-settings.md (#22). Values never leave this module: the secrets API only
 // returns names, and variable values are dropped as soon as they arrive.
 
-// GitHub Free does not offer branch protection, rulesets or secret scanning on private repositories.
+// GitHub Free does not offer branch protection, rulesets, secret scanning or code scanning on private repositories.
 const PLAN_LIMIT = /Upgrade to GitHub Pro|make this repository public/i;
 const NAME = /^[A-Z_][A-Z0-9_]*$/;
 
@@ -19,7 +19,7 @@ export async function collectSettings(api, repo) {
   const base = `/repos/${repo}`;
   const info = await safe(() => api('GET', base));
   const branch = info.value?.default_branch ?? 'main';
-  const [workflow, protection, alerts, fixes, secrets, variables] = await Promise.all([
+  const [workflow, protection, alerts, fixes, secrets, variables, codeql] = await Promise.all([
     safe(() => api('GET', `${base}/actions/permissions/workflow`)),
     safe(() => api('GET', `${base}/branches/${branch}/protection`)),
     // 204 when enabled (the client returns ''), 404 (null) when disabled.
@@ -27,6 +27,8 @@ export async function collectSettings(api, repo) {
     safe(() => api('GET', `${base}/automated-security-fixes`)),
     safe(() => api('GET', `${base}/actions/secrets?per_page=100`)),
     safe(() => api('GET', `${base}/actions/variables?per_page=30`)),
+    // CodeQL default setup: { state: 'configured' | 'not-configured' }. Needs the App's Code scanning alerts read permission.
+    safe(() => api('GET', `${base}/code-scanning/default-setup`)),
   ]);
   const r = info.value ?? {};
   const sa = r.security_and_analysis ?? {};
@@ -55,6 +57,7 @@ export async function collectSettings(api, repo) {
           : 'none',
     secretScanning: sa.secret_scanning?.status ?? (r.visibility === 'private' ? 'plan' : null),
     pushProtection: sa.secret_scanning_push_protection?.status ?? (r.visibility === 'private' ? 'plan' : null),
+    codeScanning: codeql.value?.state ?? (r.visibility === 'private' ? 'plan' : null),
     vulnerabilityAlerts: alerts.value ?? null,
     securityFixes: fixes.value ? Boolean(fixes.value.enabled) : null,
     secrets: names(secrets, 'secrets'),
@@ -99,6 +102,9 @@ export function evaluateSettings(facts, { secrets = [], variables = [] } = {}) {
     if (value === 'plan') add(id, label, 'plan', '비공개 리포라 Free 요금제에서 쓸 수 없음', 'enabled');
     else add(id, label, value === null ? 'unknown' : value === 'enabled' ? 'ok' : 'fail', value ?? '?', 'enabled');
   }
+  const cs = facts.codeScanning;
+  if (cs === 'plan') add('code-scanning', 'CodeQL 코드 스캔 (기본 설정)', 'plan', '비공개 리포라 Free 요금제에서 쓸 수 없음', 'configured');
+  else add('code-scanning', 'CodeQL 코드 스캔 (기본 설정)', cs === undefined || cs === null ? 'unknown' : cs === 'configured' ? 'ok' : 'fail', cs ?? '?', 'configured');
   add('vulnerability-alerts', 'Dependabot 취약점 알림', yes(facts.vulnerabilityAlerts, true), on(facts.vulnerabilityAlerts), '켬');
   add('security-fixes', 'Dependabot 보안 업데이트', yes(facts.securityFixes, true), on(facts.securityFixes), '켬');
 

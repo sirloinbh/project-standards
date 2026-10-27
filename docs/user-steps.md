@@ -13,6 +13,7 @@
 | 6 | (3을 이미 했다면) GitHub App에 Issues 쓰기 권한 추가 | 3분 | #40 | 3을 아직 안 해서 건너뜀 |
 | 7 | Codex 훅 신뢰와 차단 확인 | 3분 | #180 | 안 함 (Codex CLI 0.144.4 설치됨, 규칙 판정은 PR #185로 기록) |
 | 8 | 작업 PC 점검 (Claude Code 버전, 에이전트 실행기) | 3분 | #183 | 일부: Claude Code 2.1.309 확인. 실행기는 1 이후 |
+| 9 | 리포 11개 secret scanning·push protection·CodeQL 켜기, App에 Code scanning 읽기 권한 추가 | 15분 | #261 | 안 함 (2026-10-27 추가) |
 
 **남은 권장 순서는 1 → 3 → 4입니다.** 2는 끝났습니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
 
@@ -206,3 +207,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 ```
 
 그다음 새로 시작한 Claude Code 세션에서 `npm --silent install --help`가 막히고 `npm ls`는 실행되는지 확인합니다. Claude Code가 2.1.295보다 낮으면 차단 훅이 실패했을 때 명령이 그대로 실행됩니다. 결과(PC 이름, 버전)를 #183에 댓글로 남겨 주세요.
+
+## 9. 리포 보안 설정 켜기와 App 권한 추가 (#261)
+
+**왜 필요한가요:** 리포 11개가 모두 공개라 secret scanning, push protection, CodeQL을 무료로 쓸 수 있습니다. 준수 현황은 이제 세 가지를 모든 리포에 필수로 봅니다(#260). 설정을 바꾸는 권한은 사용자에게만 있습니다.
+
+1. 동기화 App 권한 추가: GitHub → Settings → Developer settings → GitHub Apps → `project-standards-sync` → Permissions & events → Repository permissions의 **Code scanning alerts**를 "Read-only"로 바꾸고 저장합니다. Settings → Applications → Installed GitHub Apps에서 새 권한을 **Accept**합니다.
+2. 리포 11개(`project-standards`, `shared-aws-infrastructure`, 앱 8개, `file-control`)마다 secret scanning·push protection과 CodeQL 기본 설정을 켭니다. 명령은 [repo-settings.md](repo-settings.md)의 "맞추는 법"에 있습니다.
+3. 켠 뒤 처음 나온 code scanning·secret scanning 알림 **수**를 #261에 댓글로 남겨 주세요(내용은 쓰지 않음). 다음 준수 현황에서 세 항목이 모두 ✓이면 끝입니다.

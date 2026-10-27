@@ -25,9 +25,10 @@
 | Administration | Read-only | 준수 현황에서 브랜치 보호·병합 설정 확인 (#22) |
 | Secrets | Read-only | 준수 현황에서 secret **이름**만 확인. 값은 읽을 수 없다 (#22) |
 | Variables | Read-only | 준수 현황에서 variable 이름 확인 (#22) |
+| Code scanning alerts | Read-only | 준수 현황에서 CodeQL 기본 설정이 켜졌는지 확인 (#260). 알림 내용은 읽지 않는다 |
 | Issues | Read and write | 이슈 라벨 생성·갱신(`templates/common/labels.json`). 라벨을 지우지 않는다 (#40) |
 
-나머지 권한은 모두 "No access"로 둔다. 이미 App을 만들었다면 아래 "권한을 바꿀 때"대로 Issues 권한을 추가한다.
+나머지 권한은 모두 "No access"로 둔다. 이미 App을 만들었다면 아래 "권한을 바꿀 때"대로 Issues 권한과 Code scanning alerts 권한을 추가한다.
 
 Actions 권한은 주지 않는다. 동기화가 공유 패키지의 배포 기록(Release와 `publish.yml` 실행)을 확인할 때는 App 토큰 대신 `sync.yml`의 `GITHUB_TOKEN`(`actions: read`)으로 중앙 리포만 읽는다(#205).
 

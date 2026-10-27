@@ -56,6 +56,7 @@ const goodPublic = {
   '/automated-security-fixes': { enabled: true, paused: false },
   '/actions/secrets?per_page=100': { total_count: 1, secrets: [{ name: 'DEPLOY_KEY', created_at: '2026-10-01' }] },
   '/actions/variables?per_page=30': { total_count: 0, variables: [] },
+  '/code-scanning/default-setup': { state: 'configured', languages: ['javascript-typescript'], query_suite: 'default' },
 };
 
 const byId = (rows) => Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -73,6 +74,7 @@ test('a private repository on GitHub Free marks protection and secret scanning a
   assert.equal(rows['branch-protection'].status, 'plan');
   assert.equal(rows['secret-scanning'].status, 'plan');
   assert.equal(rows['push-protection'].status, 'plan');
+  assert.equal(rows['code-scanning'].status, 'plan');
   assert.equal(rows['vulnerability-alerts'].status, 'fail');
   assert.equal(rows['security-fixes'].status, 'fail');
   assert.equal(rows['squash-merge'].status, 'warn');
@@ -94,6 +96,15 @@ test('missing protection on a public repository, missing secrets and unreadable 
   const missing = byId(evaluateSettings(await collectSettings(fakeApi('sirloinbh/z', goodPublic).api, 'sirloinbh/z'), { secrets: ['DEPLOY_KEY', 'NODE_AUTH_TOKEN'] }));
   assert.equal(missing.secrets.status, 'fail');
   assert.equal(missing.secrets.actual, '없음: NODE_AUTH_TOKEN');
+});
+
+test('CodeQL default setup must be configured on a public repository; an unreadable endpoint is unknown', async () => {
+  const off = byId(evaluateSettings(await collectSettings(fakeApi('sirloinbh/a', { ...goodPublic, '/code-scanning/default-setup': { state: 'not-configured' } }).api, 'sirloinbh/a')));
+  assert.equal(off['code-scanning'].status, 'fail');
+  assert.equal(off['code-scanning'].actual, 'not-configured');
+  const denied = new Error('GitHub API GET failed: 403 Resource not accessible by integration');
+  const unknown = byId(evaluateSettings(await collectSettings(fakeApi('sirloinbh/b', { ...goodPublic, '/code-scanning/default-setup': denied }).api, 'sirloinbh/b')));
+  assert.equal(unknown['code-scanning'].status, 'unknown');
 });
 
 test('only names are collected: variable values are dropped and never reach the reports', async () => {
