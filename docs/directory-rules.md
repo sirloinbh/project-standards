@@ -23,7 +23,8 @@ workout-memo 구조를 근거로 한 표준이다. 신규 프로젝트는 그대
 │  ├─ Dockerfile  package.json  package-lock.json  tsconfig.json
 │  ├─ src/
 │  │  ├─ server.ts  app.ts                  # 서버 시작, 앱 조립·오류 처리
-│  │  ├─ routes/<기능>.ts  routes/shared.ts # 기능별 API 모듈, 오류 처리
+│  │  ├─ routes/<기능>.ts  routes/shared.ts # 기능별 API 모듈, 공통 도우미 다시 내보내기
+│  │  ├─ standard/http.ts                   # 중앙 관리: 오류 처리기, 404, ID·날짜 도우미 (#309)
 │  │  ├─ openapi.ts  openapi-cli.ts         # OpenAPI 문서 생성 (docs/openapi.json)
 │  │  ├─ domain.ts                          # 도메인 규칙·검증
 │  │  ├─ migrations.ts  migrate.ts          # 마이그레이션 실행기 규칙·명령 (docs/conventions/database.md)
@@ -55,7 +56,9 @@ workout-memo 구조를 근거로 한 표준이다. 신규 프로젝트는 그대
 ### 구조
 
 - `backend/src/app.ts`의 `createApp(pool)`이 앱을 조립한다: JSON 본문 파서 → 기능 라우트 → `app.use('/api', notFound)` → `app.use(errorHandler)` 순서다. `server.ts`는 포트를 열기만 한다.
-- 기능마다 `backend/src/routes/<기능>.ts` 모듈 하나를 두고, `register<기능>Routes(app, pool)` 함수로 등록한다. 공통 도우미(`errorHandler`, `notFound`, `Db` 타입)는 `routes/shared.ts`에 둔다.
+- 기능마다 `backend/src/routes/<기능>.ts` 모듈 하나를 두고, `register<기능>Routes(app, pool)` 함수로 등록한다.
+- 오류 처리기(`errorHandler`), 없는 경로 404(`notFound`), `HttpError`, `parseId`, `serviceDate`는 중앙 관리 파일 `backend/src/standard/http.ts`에 있다(#309). 앱 8개가 같은 파일을 동기화로 받으므로 앱에서 고치지 않는다. 스캐폴드는 `routes/shared.ts`에서 이것들과 `Db` 타입을 함께 내보낸다.
+- 이 파일은 타입만 import한다. 그래서 앱의 zod·Express 버전과 상관없이 쓸 수 있다(`ZodError`는 모양으로 알아본다).
 - 테스트는 `createApp`에 가짜 `pool`을 넘겨 DB 없이 라우팅과 오류 형식을 확인한다(스캐폴드 `backend/test/health.test.ts`).
 
 ### 경로
@@ -77,12 +80,26 @@ workout-memo 구조를 근거로 한 표준이다. 신규 프로젝트는 그대
 
 | 상태 코드 | 언제 | 처리 위치 |
 |---|---|---|
-| `400` | Zod 검증 실패(이슈 메시지를 `, `로 이음), 깨진 JSON 본문 | `errorHandler` |
-| `404` | 대상 행이 없음 / 등록되지 않은 `/api` 경로 | 라우트 / `notFound` |
+| `400` | Zod 검증 실패(이슈 메시지를 `, `로 이음), 깨진 JSON 본문, 잘못된 ID(`parseId`), `NUL` 문자 입력(PostgreSQL `22021`) | `errorHandler` |
+| `404` | 대상 행이 없음(`throw new HttpError(404, '…')`) / 등록되지 않은 `/api` 경로 | 라우트 / `notFound` |
 | `409` | 고유 제약 위반(PostgreSQL `23505`), 상태 충돌 | `errorHandler` / 라우트 |
 | `413` | 본문 크기 한도(기본 `256kb`) 초과 | `errorHandler` |
 | 그 밖의 `4xx` | 라우팅 전에 Express가 낸 클라이언트 오류 | `errorHandler`(상태 코드 유지) |
 | `500` | 그 밖의 모든 오류(DB 연결 실패 포함) | `errorHandler` |
+
+- 라우트는 `throw new HttpError(<상태 코드>, '<한국어 메시지>')`로 원하는 상태 코드와 메시지를 낸다. `errorHandler`가 그대로 보낸다.
+- 앱에만 있는 오류(workout-memo의 외래 키 위반 `23503` 등)는 앱의 오류 미들웨어를 `errorHandler` 앞에 두고, 처리하지 않은 오류는 `next(err)`로 넘긴다.
+
+```ts
+app.use('/api', notFound);
+app.use(appErrors); // (err, req, res, next) => { if (code === '23503') return sendError(res, 400, '…'); next(err); }
+app.use(errorHandler);
+```
+
+### ID와 날짜
+
+- 경로 ID는 `parseId(req.params.id, '<무엇의>')`로 읽는다. 1~15자리 양의 정수(앞자리 0, 부호, `1e3`, 공백 불가)만 받고, 아니면 `400 { error: '<무엇의> ID가 올바르지 않습니다' }`다. 15자리 이하는 `BIGINT` 열이어도 JS 숫자로 정확하다. Zod 스키마에서는 `ID_PATTERN`을 쓴다.
+- "오늘"은 `serviceDate()`(Asia/Seoul의 `YYYY-MM-DD`)다. 서버 시계의 시간대를 쓰지 않는다.
 
 ### 검증 위치
 
@@ -110,7 +127,7 @@ workout-memo 구조를 근거로 한 표준이다. 신규 프로젝트는 그대
 | 라우트 위치 | `routes/<기능>.ts`, `register<기능>Routes(app, pool)` | 기능 라우트가 있는 study-log·plan-routine은 `src/<기능>.ts`의 `Router`를 `app.use('/api/<기능>', …)`로 연결. 나머지 5개는 아직 기능 라우트 없음 | workout-memo 방식 |
 | `/api/health` 등록 | `app.ts` 안에 직접 | `app.ts` 안에 직접 | `routes/health.ts` |
 | `/api/health` 성공 본문 | `{ status: 'ok' }` | `{ ok: true, service, today }` | `{ status: 'ok' }` (둘 다 허용) |
-| 오류 처리기 | `routes/shared.ts`의 `errorHandler` | `app.ts` 안의 익명 함수 | `routes/shared.ts`의 `errorHandler` |
+| 오류 처리기 | `routes/shared.ts`의 `errorHandler` | `app.ts` 안의 익명 함수 | 중앙 관리 파일 `standard/http.ts`의 `errorHandler` (#309) |
 | 없는 `/api` 경로 | Express 기본 HTML 404 | `404 { error }` | `404 { error }` (`notFound`) |
 | 깨진 JSON 본문 | `400` 일반 메시지 | study-log만 `400` 전용 메시지(`entity.parse.failed`), 나머지는 `500` | `400` 전용 메시지 |
 | 본문 크기 초과 | `413`(백업 전용 메시지) | study-log만 `413`, 나머지는 `500` | `413` |
