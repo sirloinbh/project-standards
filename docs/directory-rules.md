@@ -65,7 +65,15 @@ workout-memo 구조를 근거로 한 표준이다. 신규 프로젝트는 그대
 
 - 모든 API는 `/api`로 시작한다. nginx가 `/api/`를 API 컨테이너로 넘긴다.
 - 경로는 소문자 영어 복수형과 하이픈: `GET /api/body-measurements`, `DELETE /api/workouts/:id`. 파일 확장자는 내려받기에만 붙인다: `GET /api/export/workouts.csv`.
-- 수정은 `PUT`(전체 교체)을 기본으로 한다. 생성 성공은 `201`, 조회·수정·삭제 성공은 `200`이다.
+- 수정은 `PUT`(전체 교체)을 기본으로 한다. 일부 필드만 바꾸는 경로(이름 바꾸기 등)는 `PATCH`를 쓴다.
+- 만들기·바꾸기·지우기로 나타낼 수 없는 동작은 `POST /api/<자원>/:id/<동작>`으로 쓴다: `POST /api/routines/:id/archive`, `POST /api/routines/:id/move`.
+- 생성 성공은 `201`, 조회·수정 성공은 `200`이다. 삭제 성공은 `200` 또는 `204`(본문 없음)다(#312). 화면의 `requestJson`(`frontend/src/lib/api.ts`)은 `204`를 `undefined`로 돌려준다.
+
+### 성공 응답 모양
+
+- 새 코드는 이름으로 감싼다: 목록은 `{ "<복수형>": [...] }`(`{ "textbooks": [...] }`), 하나는 `{ "<단수형>": {...} }`(`{ "textbook": {...} }`)(#312). 나중에 필드(합계, 다음 페이지 등)를 더해도 응답 모양이 깨지지 않는다.
+- 기존 workout-memo는 행·배열을 그대로 보낸다(`res.json(rows)`). 화면을 함께 바꿔야 하므로 그대로 둔다.
+- 목록 페이지 나눔 규칙은 두지 않는다. 1인 사용 앱의 데이터 크기에서는 날짜 범위 필터로 충분하다(#241 후보 G).
 
 ### 상태 확인 `GET /api/health`
 
@@ -98,6 +106,7 @@ app.use(errorHandler);
 
 ### ID와 날짜
 
+- ID는 1~15자리 양의 정수이고, JSON에서는 숫자로 보낸다(`"id": 7`). 기존 plan-routine은 문자열 ID(`"id": "7"`)를 보내며, 화면을 함께 바꿔야 하므로 그대로 둔다. 새 앱은 숫자다(#312).
 - 경로 ID는 `parseId(req.params.id, '<무엇의>')`로 읽는다. 1~15자리 양의 정수(앞자리 0, 부호, `1e3`, 공백 불가)만 받고, 아니면 `400 { error: '<무엇의> ID가 올바르지 않습니다' }`다. 15자리 이하는 `BIGINT` 열이어도 JS 숫자로 정확하다. Zod 스키마에서는 `ID_PATTERN`을 쓴다.
 - "오늘"은 `serviceDate()`(Asia/Seoul의 `YYYY-MM-DD`)다. 서버 시계의 시간대를 쓰지 않는다.
 
@@ -117,6 +126,7 @@ app.use(errorHandler);
 - `app.<method>('<경로>')`가 `/api`로 시작하지 않거나, 경로 조각이 소문자·하이픈이 아님
 - `res.status(4xx|5xx).json({ <error 아닌 키>: … })`
 - `req.body.<필드>`, `req.query.<필드>` 직접 읽기
+- `frontend/src`의 `.ts`·`.tsx` 파일 이름이 소문자·하이픈이 아님([코드 관례](conventions/code.md), #312)
 
 ### workout-memo와 다른 점
 
