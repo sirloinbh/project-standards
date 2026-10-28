@@ -2,7 +2,7 @@
 // Node runs it directly by stripping the types; the file imports only types, so no app packages are needed.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { errorHandler, HttpError, ID_PATTERN, notFound, parseId, serviceDate } from '../../templates/app/backend/src/standard/http.ts';
+import { errorHandler, HttpError, ID_PATTERN, MAX_ISSUES, notFound, parseId, serviceDate } from '../../templates/app/backend/src/standard/http.ts';
 
 function fakeResponse() {
   const res = { statusCode: 0, body: undefined };
@@ -44,6 +44,18 @@ test('zod 3 and zod 4 validation errors become 400 with the issue messages', () 
   const zod = Object.assign(new Error('[...]'), { name: 'ZodError', issues: [{ message: '이름을 입력하세요' }, { message: '날짜 형식이 올바르지 않습니다' }] });
   assert.deepEqual(answer(zod).body, { error: '이름을 입력하세요, 날짜 형식이 올바르지 않습니다' });
   assert.equal(answer(zod).status, 400);
+});
+
+test('a huge invalid array answers with the first 10 messages and a count, not every issue (#326)', () => {
+  const issues = Array.from({ length: 50000 }, (_, i) => ({ message: `${i}번째 ID가 올바르지 않습니다` }));
+  const result = answer(Object.assign(new Error('[...]'), { name: 'ZodError', issues }));
+  assert.equal(result.status, 400);
+  const parts = result.body.error.split(', ');
+  assert.equal(parts.length, MAX_ISSUES + 1);
+  assert.equal(parts[0], '0번째 ID가 올바르지 않습니다');
+  assert.equal(parts.at(-1), `외 ${50000 - MAX_ISSUES}개`);
+  const ten = Array.from({ length: MAX_ISSUES }, () => ({ message: 'x' }));
+  assert.equal(answer(Object.assign(new Error(''), { name: 'ZodError', issues: ten })).body.error, Array(MAX_ISSUES).fill('x').join(', '));
 });
 
 test('HttpError keeps its status and message; PostgreSQL input errors are 400 and 409', () => {

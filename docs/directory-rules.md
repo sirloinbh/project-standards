@@ -88,7 +88,7 @@ workout-memo 구조를 근거로 한 표준이다. 신규 프로젝트는 그대
 
 | 상태 코드 | 언제 | 처리 위치 |
 |---|---|---|
-| `400` | Zod 검증 실패(이슈 메시지를 `, `로 이음), 깨진 JSON 본문, 잘못된 ID(`parseId`), `NUL` 문자 입력(PostgreSQL `22021`) | `errorHandler` |
+| `400` | Zod 검증 실패(이슈 메시지 앞 10개를 `, `로 잇고 나머지는 개수만), 깨진 JSON 본문, 잘못된 ID(`parseId`), `NUL` 문자 입력(PostgreSQL `22021`) | `errorHandler` |
 | `404` | 대상 행이 없음(`throw new HttpError(404, '…')`) / 등록되지 않은 `/api` 경로 | 라우트 / `notFound` |
 | `409` | 고유 제약 위반(PostgreSQL `23505`), 상태 충돌 | `errorHandler` / 라우트 |
 | `413` | 본문 크기 한도(기본 `256kb`) 초과 | `errorHandler` |
@@ -126,6 +126,7 @@ app.use(errorHandler);
 - `app.<method>('<경로>')`가 `/api`로 시작하지 않거나, 경로 조각이 소문자·하이픈이 아님
 - `res.status(4xx|5xx).json({ <error 아닌 키>: … })`
 - `req.body.<필드>`, `req.query.<필드>` 직접 읽기
+- 길이 제한(`.max()`·`.length()`)이 없는 zod 배열 스키마(`z.array(...)`, `.array()`). zod 3 보안 권고 GHSA-mrhx-c7xc-m3w5의 공격 경로다(#326)
 - `frontend/src`의 `.ts`·`.tsx` 파일 이름이 소문자·하이픈이 아님([코드 관례](conventions/code.md), #312)
 
 ### workout-memo와 다른 점
