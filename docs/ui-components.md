@@ -25,6 +25,16 @@
 
 컴포넌트마다 `*.test.tsx`(Vitest, Testing Library)가 함께 동기화되어 앱의 `npm test`에서 실행된다.
 
+## 공통 도우미
+
+| 파일 | 내보내는 것 | 메모 |
+|---|---|---|
+| `frontend/src/lib/api.ts` | `requestJson`, `RequestError` | 앱 API 요청(#310). 성공하면 JSON 본문, `204`이면 `undefined`. 실패하면 서버의 한국어 `error`와 `status`를 담은 `RequestError`(연결 실패는 "서버에 연결할 수 없습니다", `status` 없음). 서버 쪽 짝은 `backend/src/standard/http.ts`(#309) |
+| `frontend/src/health.ts` | `Health`, `healthText` | 서버 상태 표시 문구. 7개 앱이 같은 파일을 쓰고 있었다. workout-memo는 쓰지 않아 `allowedDifferences`로 뺐다 |
+
+- 화면 코드는 `fetch`를 직접 부르지 않고 `requestJson`을 쓴다. 삭제한 항목이 이미 없을 때(`404`)처럼 상태별로 다르게 처리하려면 `error instanceof RequestError && error.status === 404`로 나눈다.
+- study-log·plan-routine의 `frontend/src/api.ts`, workout-memo의 화면별 `fetch`는 앱 리포에서 `lib/api.ts`로 옮긴다(아래 변경 기록의 앱별 안내).
+
 ## 앱에 켜기
 
 컴포넌트는 레지스트리에서 `features.ui`가 `true`인 앱에만 동기화한다. 의존성이 없는 앱에 넣으면 빌드가 깨지기 때문이다. 디자인 시스템 적용(#126)으로 8개 앱 모두 `true`다. 새 앱이나 기능을 끈 앱은 다음 순서로 켠다.
