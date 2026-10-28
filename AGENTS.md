@@ -14,6 +14,7 @@
 
 - 요구사항을 이슈로 등록하거나 다음 작업을 고를 때는 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 스킬을 따른다.
 - 이슈·브랜치·커밋·PR을 쓸 때는 [std-git-writing](templates/common/skills/std-git-writing/SKILL.md) 스킬과 `.github/`의 이슈·PR 템플릿을 따른다.
+- 사용자에게 하는 설명은 [std-communication](templates/common/skills/std-communication/SKILL.md) 스킬대로 한국어로 쓴다.
 
 1. `sirloinbh/project-standards`에 이슈를 등록한다. 사용자가 지정한 기존 이슈가 있으면 재사용한다.
 2. 이슈 번호를 포함한 브랜치를 만든다: `<type>/<issue-number>-<slug>`.

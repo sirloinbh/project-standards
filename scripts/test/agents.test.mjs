@@ -33,9 +33,9 @@ test('every app gets AGENTS.md and CLAUDE.md that point to AGENTS.project.md', (
   }
 });
 
-test('app repositories get all five shared skills, mirrored into .claude/skills', () => {
+test('app repositories get all six shared skills, mirrored into .claude/skills', () => {
   for (const { target, files } of apps) {
-    for (const skill of ['std-implementation', 'std-testing', 'std-foundation', 'std-backlog', 'std-git-writing']) {
+    for (const skill of ['std-implementation', 'std-testing', 'std-foundation', 'std-backlog', 'std-git-writing', 'std-communication']) {
       const source = files[`skills/${skill}/SKILL.md`];
       const mirror = files[`.claude/skills/${skill}/SKILL.md`];
       assert.ok(source, `${target.repo} ${skill}`);
@@ -79,4 +79,6 @@ test('the infra repository gets the common skills but no app-only files', () => 
   const infra = rendered.find((r) => r.target.profile === 'infra').files;
   assert.match(infra['skills/std-implementation/SKILL.md'].content, /`sirloinbh\/shared-aws-infrastructure` 리포/);
   for (const appOnly of ['AGENTS.md', 'skills/std-testing/SKILL.md', '.npmrc']) assert.equal(infra[appOnly], undefined, appOnly);
+  assert.match(infra['skills/std-communication/SKILL.md'].content, /사용자에게 하는 설명은 항상 한국어로 쓴다/);
+  assert.equal(infra['.claude/skills/std-communication/SKILL.md'].content, infra['skills/std-communication/SKILL.md'].content);
 });
