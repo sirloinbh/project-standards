@@ -85,9 +85,10 @@ test('shared packages go into devDependencies of the package.json that uses them
   const plan = planTarget({ root, data: original.data, target: targetOf(original.data, 'study-log'), centralSha: 'x', readExisting: (p) => existing[p] ?? null });
   const dev = (p) => JSON.parse(plan.files.find((f) => f.path === p).content).devDependencies;
   const v = original.data.versions.packages;
-  assert.deepEqual(dev('package.json'), { eslint: '10.12.0', '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] });
-  assert.deepEqual(dev('frontend/package.json'), { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] });
-  assert.deepEqual(dev('backend/package.json'), { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] });
+  const shared = original.data.versions.dependencies;
+  assert.deepEqual(dev('package.json'), { ...shared.root.devDependencies, '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] });
+  assert.deepEqual(dev('frontend/package.json'), { ...shared.frontend.devDependencies, '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] });
+  assert.deepEqual(dev('backend/package.json'), { ...shared.backend.devDependencies, '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] });
   assert.match(v['@sirloinbh/tsconfig'], /^\d+\.\d+\.\d+$/, 'an exact version, not a ^ range');
 });
 

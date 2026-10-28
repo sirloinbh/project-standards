@@ -20,12 +20,12 @@ const SHA2 = 'b2c3d4e5f60718293a4b5c6d7e8f901234567890';
 
 // A study-log-like repository: a project line in .gitignore, ^ ranges, root and subtree lockfiles.
 function studyRepo() {
-  const lock = { name: 'study-log', lockfileVersion: 3, packages: { '': { devDependencies: { concurrently: '^9.2.0' } }, frontend: { dependencies: { react: '^19.1.0' } }, 'node_modules/concurrently': { version: '9.2.1' }, 'node_modules/react': { version: '19.1.1' } } };
-  const frontendLock = { name: 'frontend', lockfileVersion: 3, packages: { '': { dependencies: { react: '^19.1.0' } }, 'node_modules/react': { version: '19.1.1' } } };
+  const lock = { name: 'study-log', lockfileVersion: 3, packages: { '': { devDependencies: { concurrently: '^9.2.0' } }, frontend: { dependencies: { recharts: '^3.10.0' } }, 'node_modules/concurrently': { version: '9.2.1' }, 'node_modules/recharts': { version: '3.10.1' } } };
+  const frontendLock = { name: 'frontend', lockfileVersion: 3, packages: { '': { dependencies: { recharts: '^3.10.0' } }, 'node_modules/recharts': { version: '3.10.1' } } };
   return fakeRepo('sirloinbh/study-log', {
     '.gitignore': 'node_modules/\n.env\nmy-project-only/\n',
     'package.json': JSON.stringify({ name: 'study-log', devDependencies: { concurrently: '^9.2.0' } }, null, 2),
-    'frontend/package.json': JSON.stringify({ name: 'frontend', dependencies: { react: '^19.1.0' } }, null, 2),
+    'frontend/package.json': JSON.stringify({ name: 'frontend', dependencies: { recharts: '^3.10.0' } }, null, 2),
     'backend/package.json': JSON.stringify({ name: 'backend' }, null, 2),
     'package-lock.json': JSON.stringify(lock, null, 2),
     'frontend/package-lock.json': JSON.stringify(frontendLock, null, 2),
@@ -58,9 +58,9 @@ test('a first sync opens a PR with the rendered files, pinned versions, and the 
   assert.match(files['.gitignore'], /# --- project ---\nmy-project-only\/\n$/, 'project-only lines move below the marker');
   assert.equal(JSON.parse(files['package.json']).devDependencies.concurrently, '9.2.1');
   assert.equal(JSON.parse(files['package.json']).engines.node, '24.21.0');
-  assert.equal(JSON.parse(files['frontend/package.json']).dependencies.react, '19.1.1');
-  assert.equal(JSON.parse(files['package-lock.json']).packages.frontend.dependencies.react, '19.1.1');
-  assert.equal(JSON.parse(files['frontend/package-lock.json']).packages[''].dependencies.react, '19.1.1');
+  assert.equal(JSON.parse(files['frontend/package.json']).dependencies.recharts, '3.10.1');
+  assert.equal(JSON.parse(files['package-lock.json']).packages.frontend.dependencies.recharts, '3.10.1');
+  assert.equal(JSON.parse(files['frontend/package-lock.json']).packages[''].dependencies.recharts, '3.10.1');
   assert.equal(files['src/app.ts'], 'export {};\n', 'project code is untouched');
   assert.equal(repo.refs.get('heads/main'), [...repo.commits.keys()][0], 'main is never pushed to');
   const pr = repo.pulls[0];

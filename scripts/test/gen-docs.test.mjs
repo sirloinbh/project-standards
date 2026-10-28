@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { renderProjects } from '../gen-docs.mjs';
+import { renderProjects, renderVersions } from '../gen-docs.mjs';
 import { loadAll } from '../lib/registry.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -38,4 +38,14 @@ test('--check fails when the file is stale', () => {
   } finally {
     fs.writeFileSync(target, saved);
   }
+});
+
+test('docs/versions.md lists every shared app dependency with its file and section (#304)', () => {
+  const files = { root: 'package.json', frontend: 'frontend/package.json', backend: 'backend/package.json' };
+  const text = renderVersions(data.versions, files);
+  assert.match(text, /^# 버전 원본\n\n<!-- 자동 생성 파일/);
+  assert.match(text, new RegExp(`\| \`vite\` \| ${data.versions.dependencies.frontend.devDependencies.vite} \| \`frontend/package.json\` \| devDependencies \|`));
+  assert.match(text, /\| 이미지 playwright \| `mcr\.microsoft\.com\/playwright:v[\d.]+-noble` \(digest 고정\) \|/);
+  const count = Object.values(data.versions.dependencies).flatMap((s) => Object.values(s).flatMap(Object.keys)).length;
+  assert.equal(text.split('\n').filter((l) => /\| `[^`]+` \| [\d.]+ \| `[a-z/]*package\.json` \|/.test(l)).length, count);
 });

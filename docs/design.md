@@ -75,7 +75,7 @@ project-standards/
 │  ├─ sync.mjs
 │  ├─ standards-check.mjs         # 하위 리포 .standards/check.mjs의 원본
 │  ├─ registry-check.mjs
-│  ├─ gen-docs.mjs                # docs/projects.md (--check)
+│  ├─ gen-docs.mjs                # docs/projects.md, versions.md, design-tokens.md (--check)
 │  ├─ compliance.mjs              # docs/compliance.md, docs/env-matrix.md
 │  ├─ package-guard.mjs
 │  ├─ ioc-scan.mjs
@@ -90,10 +90,10 @@ project-standards/
 │     ├─ reusable-app-ci.yml      # workflow_call
 │     └─ reusable-infra-ci.yml    # workflow_call
 └─ docs/
-   ├─ design.md  projects.md  env-matrix.md  compliance.md
+   ├─ design.md  projects.md  versions.md  env-matrix.md  compliance.md
    ├─ github-app.md               # App 생성·설치·키 교체 ([사용자] 단계 표시)
    ├─ stack.md                    # 허용 목록, 신규 기준, 메이저 업그레이드 절차
-   ├─ dependency-policy.md        # 메이저 버전 통일표, 외부 도구 도입 절차
+   ├─ dependency-policy.md        # 버전 원본 안내, 한 앱만 쓰는 패키지의 메이저 표, 외부 도구 도입 절차
    ├─ git-conventions.md  directory-rules.md  design-system.md  env-conventions.md
    ├─ runbooks/                   # 배포, 백업·복구, daily·next-steps 형식
    ├─ changes/
@@ -156,7 +156,7 @@ packages/<pkg> 변경 PR (버전·CHANGELOG 포함) → 사용자 병합
 | A안 패키지 | ESLint·Prettier·tsconfig·디자인 토큰 내용 | 설치 버전이 manifest와 다르면 실패 |
 | B안 전체 관리 | `.editorconfig`, `.gitattributes`, `.nvmrc`, `.node-version`, `.npmrc`(루트·`frontend/`·`backend/`), `eslint.config.mjs`, `.prettierrc.json`, `frontend/tsconfig.json`, `backend/tsconfig.json`, `AGENTS.md`, `CLAUDE.md`, `skills/std-*`, `.claude/skills/std-*`, `.github/ISSUE_TEMPLATE/*`, `.github/pull_request_template.md`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `.standards/check.mjs`, `.standards/lockfiles.mjs`, `scripts/claude-skills.mjs`, `frontend/Dockerfile`, `backend/Dockerfile`, `frontend/nginx.conf` | 해시가 다르면 실패 |
 | B안 구간 관리 | `.gitignore`, `.prettierignore`, `.env.example`: `# --- project ---` 줄 위가 중앙 구간, 아래가 프로젝트 구간 | 중앙 구간 해시만 비교 |
-| B안 필드 관리 | `package.json`(루트·`frontend/`·`backend/`)의 `packageManager`, `engines`, `@sirloinbh/*` 버전, `standards:check`·`lockfiles:sync` 스크립트 | 필드만 비교 |
+| B안 필드 관리 | `package.json`(루트·`frontend/`·`backend/`)의 `packageManager`, `engines`, `@sirloinbh/*` 버전, 앱 공통 의존성 37개(`versions.json` `dependencies`), `standards:check`·`lockfiles:sync` 스크립트 | 필드만 비교 |
 | 프로젝트 고정값 | 포트, DB 이름, 리포 이름, 도메인, AWS 접두어 | `compose.yaml`, `vite.config.ts`, `playwright.config.ts`, `backend/src/server.ts`, `frontend/nginx.conf`, Dockerfile `EXPOSE`의 실제 값이 레지스트리와 다르면 실패 |
 | 프로젝트 고유 | `AGENTS.project.md`, `skills/<proj>-*`, 앱 코드, `compose.yaml`(빌드 secret 설정은 검사), `docs/changes/` | 검사하지 않음 |
 | 하위 lockfile | `frontend/package-lock.json`, `backend/package-lock.json` | 루트 `package-lock.json`과 설치 버전이 다르면 실패 ([의존성 정책](dependency-policy.md#하위-lockfile-frontend-backend)) |

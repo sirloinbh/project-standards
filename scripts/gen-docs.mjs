@@ -1,4 +1,4 @@
-// Generates docs/projects.md from the registry.
+// Generates docs/projects.md from the registry, docs/versions.md from versions.json, and docs/design-tokens.md.
 // Usage: node scripts/gen-docs.mjs          write the file
 //        node scripts/gen-docs.mjs --check  fail if the committed file is stale
 import fs from 'node:fs';
@@ -146,12 +146,51 @@ export function renderTokens(t) {
   ].join('\n');
 }
 
+export function renderVersions(v, dependencyFiles) {
+  const rows = [];
+  for (const [part, sections] of Object.entries(v.dependencies)) {
+    for (const [section, deps] of Object.entries(sections)) {
+      for (const [name, version] of Object.entries(deps)) rows.push([`\`${name}\``, version, `\`${dependencyFiles[part]}\``, section]);
+    }
+  }
+  return [
+    '# 버전 원본',
+    '',
+    '<!-- 자동 생성 파일. 수정은 versions.json에서 하고 `npm run docs` 로 다시 생성한다. -->',
+    '',
+    '중앙이 정하는 도구·패키지 버전이다. 바꾸는 절차는 [의존성 정책](dependency-policy.md)을 따른다.',
+    '',
+    '## 도구',
+    '',
+    ...table(['항목', '버전'], [
+      ['Node', v.node],
+      ['npm', v.npm],
+      ['PostgreSQL', v.postgres],
+      ['Terraform', `${v.terraform.required} (CI ${v.terraform.cli ?? '미정'})`],
+      ['GitHub 러너', `\`${v.runner}\``],
+      ...Object.entries(v.images).map(([name, image]) => [`이미지 ${name}`, `\`${image.split('@')[0]}\`${image.includes('@') ? ' (digest 고정)' : ''}`]),
+    ]),
+    '',
+    '## 공유 설정 패키지 (@sirloinbh)',
+    '',
+    ...table(['패키지', '버전'], Object.entries(v.packages).map(([name, version]) => [`\`${name}\``, version ?? '배포 전'])),
+    '',
+    '## 앱 공통 의존성',
+    '',
+    '앱 8개와 스캐폴드가 같은 파일·같은 칸에 같은 버전으로 쓰는 외부 의존성이다. 앱 `package.json`의 관리 필드라서, 앱 하나만 버전이 다르면 `standards-check`가 실패한다(#304). 한 앱만 쓰는 의존성은 여기에 없다.',
+    '',
+    ...table(['패키지', '버전', '파일', '칸'], rows),
+    '',
+  ].join('\n');
+}
+
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const tokens = JSON.parse(fs.readFileSync(path.join(root, 'design/tokens.json'), 'utf8'));
   const outputs = [
     ['docs/projects.md', renderProjects(loadAll(root).data)],
+    ['docs/versions.md', renderVersions(loadAll(root).data.versions, JSON.parse(fs.readFileSync(path.join(root, 'templates/index.json'), 'utf8')).dependencyFields.files)],
     ['docs/design-tokens.md', renderTokens(tokens)],
   ];
   let stale = false;

@@ -46,7 +46,7 @@
 | 공통 스킬 | `templates/common/skills/` | 이 리포의 `.claude/skills/` |
 | 이슈·PR 템플릿 | `templates/common/.github/` | 이 리포의 `.github/` 템플릿 |
 | 에이전트 차단 설정 | `templates/common/.claude/`, `templates/common/.codex/` | 이 리포의 `.claude/`, `.codex/` |
-| 도구 버전, 외부 Action | `versions.json` | — |
+| 도구 버전, 외부 Action, 앱 공통 의존성 버전 | `versions.json` | `docs/versions.md`(생성 문서), 앱 `package.json` 관리 필드 |
 | 포트·DB 이름 등 프로젝트 값 | `registry/projects.json` | `docs/projects.md`(생성 문서) |
 | 동기화 대상·적용 단계 | `sync.config.json` | — |
 

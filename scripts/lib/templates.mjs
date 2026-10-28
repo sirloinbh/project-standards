@@ -52,6 +52,25 @@ function flatten(object, prefix = '') {
   }, {});
 }
 
+/** versions.json dependencies as flat package.json fields per target file, for the profiles in index.dependencyFields (#304). */
+export function sharedDependencyFields(index, profile, versions) {
+  const spec = index.dependencyFields;
+  if (!spec?.profiles?.includes(profile)) return {};
+  const out = {};
+  for (const [part, sections] of Object.entries(versions?.dependencies ?? {})) {
+    const target = spec.files?.[part];
+    if (!target) throw new Error(`versions.json dependencies.${part} has no file in templates/index.json dependencyFields.files`);
+    for (const [section, deps] of Object.entries(sections)) {
+      for (const [name, version] of Object.entries(deps)) {
+        // Field paths are dotted (applyFields), so a dot in a package name would split it.
+        if (name.includes('.')) throw new Error(`versions.json dependencies.${part}.${section}: "${name}" contains a dot and cannot be a managed field`);
+        (out[target] ??= {})[`${section}.${name}`] = version;
+      }
+    }
+  }
+  return out;
+}
+
 /**
  * Renders a profile for one target.
  * readExisting(path) returns the target's current text or null (needed to keep project sections).
@@ -82,9 +101,13 @@ export function renderProfile({ root, profile, folders, vars, readExisting = () 
       files.push({ ...f, path: copy });
     }
   }
-  for (const [target, fields] of Object.entries(index.fields[profile] ?? {})) {
+  const shared = sharedDependencyFields(index, profile, vars.versions);
+  for (const target of new Set([...Object.keys(index.fields[profile] ?? {}), ...Object.keys(shared)])) {
     if (files.some((f) => f.path === target)) throw new Error(`${target} is both a template file and a fields entry`);
-    files.push({ path: target, source: 'templates/index.json', mode: 'fields', fields: flatten(renderFields(fields, vars, `templates/index.json ${target}`)) });
+    const own = flatten(renderFields(index.fields[profile]?.[target] ?? {}, vars, `templates/index.json ${target}`));
+    const overlap = Object.keys(shared[target] ?? {}).filter((k) => k in own);
+    if (overlap.length) throw new Error(`${target}: ${overlap.join(', ')} is set by both templates/index.json fields and versions.json dependencies`);
+    files.push({ path: target, source: 'templates/index.json', mode: 'fields', fields: { ...own, ...shared[target] } });
   }
   return files.sort((a, b) => a.path.localeCompare(b.path));
 }

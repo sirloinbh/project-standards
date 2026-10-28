@@ -7,7 +7,8 @@ import { fileURLToPath } from 'node:url';
 import { buildManifest, checkManifest } from '../lib/manifest.mjs';
 import { loadAll } from '../lib/registry.mjs';
 import { hasHeader, PROJECT_MARKER } from '../lib/render.mjs';
-import { collectTemplates, renderProfile } from '../lib/templates.mjs';
+import { applyFields } from '../lib/sync-plan.mjs';
+import { collectTemplates, loadIndex, renderProfile, sharedDependencyFields } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -82,15 +83,17 @@ test('section files keep what the project added below the marker', () => {
 test('package.json fields are rendered from versions.json for all three package files', () => {
   const expected = { packageManager: 'npm@11.19.0', 'engines.node': '24.21.0', 'engines.npm': '11.19.0' };
   const tsconfig = { 'devDependencies.@sirloinbh/tsconfig': '1.0.0' };
-  assert.deepEqual(byPath['backend/package.json'], { path: 'backend/package.json', source: 'templates/index.json', mode: 'fields', fields: { ...expected, ...tsconfig } });
+  const shared = sharedDependencyFields(loadIndex(root), 'app', data.versions);
+  assert.deepEqual(byPath['backend/package.json'], { path: 'backend/package.json', source: 'templates/index.json', mode: 'fields', fields: { ...expected, ...tsconfig, ...shared['backend/package.json'] } });
   assert.deepEqual(byPath['frontend/package.json'], {
     path: 'frontend/package.json',
     source: 'templates/index.json',
     mode: 'fields',
-    fields: { ...expected, 'dependencies.@sirloinbh/design-tokens': '1.0.0', ...tsconfig },
+    fields: { ...expected, 'dependencies.@sirloinbh/design-tokens': '1.0.0', ...tsconfig, ...shared['frontend/package.json'] },
   });
   assert.deepEqual(byPath['package.json'].fields, {
     ...expected,
+    ...shared['package.json'],
     'scripts.standards:check': 'node .standards/check.mjs',
     'scripts.lockfiles:sync': 'node .standards/lockfiles.mjs --write',
     'devDependencies.@sirloinbh/eslint-config': '1.0.0',
@@ -98,17 +101,26 @@ test('package.json fields are rendered from versions.json for all three package 
   });
 });
 
+test('versions.json dependencies become managed fields of the app package files only (#304)', () => {
+  const index = loadIndex(root);
+  const shared = sharedDependencyFields(index, 'app', data.versions);
+  assert.equal(shared['frontend/package.json']['devDependencies.vite'], data.versions.dependencies.frontend.devDependencies.vite);
+  assert.equal(shared['backend/package.json']['dependencies.zod'], data.versions.dependencies.backend.dependencies.zod);
+  assert.equal(shared['package.json']['devDependencies.eslint'], data.versions.dependencies.root.devDependencies.eslint);
+  assert.deepEqual(sharedDependencyFields(index, 'infra', data.versions), {});
+  const dotted = structuredClone(data.versions);
+  dotted.dependencies.frontend.dependencies['tesseract.js'] = '7.0.0';
+  assert.throws(() => sharedDependencyFields(index, 'app', dotted), /"tesseract\.js" contains a dot/);
+  const twice = structuredClone(data);
+  twice.versions.dependencies.root.devDependencies['@sirloinbh/eslint-config'] = '1.0.0';
+  assert.throws(() => renderProfile({ root, profile: 'app', folders: ['common', 'app'], vars: buildVars(twice, data.sync.targets[0], { centralSha: 'x' }) }), /set by both templates\/index\.json fields and versions\.json dependencies/);
+});
+
 test('a manifest built from the render accepts the rendered files and catches edits', () => {
   const manifest = buildManifest({ centralSha: 'test', profile: 'app', project: 'study-log', files: rendered });
   const pkg = { name: 'study-log', packageManager: 'npm@11.19.0', engines: { node: '24.21.0', npm: '11.19.0' } };
   const repo = Object.fromEntries(rendered.filter((f) => f.content).map((f) => [f.path, f.content]));
-  for (const p of ['frontend/package.json', 'backend/package.json']) repo[p] = JSON.stringify({ ...pkg, devDependencies: { '@sirloinbh/tsconfig': '1.0.0' } });
-  repo['frontend/package.json'] = JSON.stringify({ ...JSON.parse(repo['frontend/package.json']), dependencies: { '@sirloinbh/design-tokens': '1.0.0' } });
-  repo['package.json'] = JSON.stringify({
-    ...pkg,
-    scripts: { 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write' },
-    devDependencies: { '@sirloinbh/eslint-config': '1.0.0', '@sirloinbh/prettier-config': '1.0.0' },
-  });
+  for (const f of rendered.filter((x) => x.mode === 'fields')) repo[f.path] = applyFields(JSON.stringify(pkg), f.fields);
   assert.deepEqual(checkManifest(manifest, (p) => repo[p] ?? null), []);
   repo['.editorconfig'] = repo['.editorconfig'].replace('indent_size = 2', 'indent_size = 4');
   assert.deepEqual(checkManifest(manifest, (p) => repo[p] ?? null), [{ path: '.editorconfig', reason: 'changed' }]);

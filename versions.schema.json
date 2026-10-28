@@ -3,7 +3,7 @@
   "title": "도구 버전 원본",
   "description": "템플릿에 주입하는 도구 버전. 범위 버전(^, ~)은 쓰지 않는다. 외부 Action은 커밋 SHA로 고정한다.",
   "type": "object",
-  "required": ["node", "npm", "postgres", "terraform", "images", "runner", "actions", "packages"],
+  "required": ["node", "npm", "postgres", "terraform", "images", "runner", "actions", "dependencies", "packages"],
   "additionalProperties": false,
   "properties": {
     "$schema": { "type": "string" },
@@ -54,6 +54,17 @@
         }
       }
     },
+    "dependencies": {
+      "type": "object",
+      "description": "앱 8개와 스캐폴드가 같은 파일·같은 칸에 같은 버전으로 쓰는 외부 의존성. 앱 package.json 3개(root, frontend, backend)의 관리 필드가 된다(templates/index.json dependencyFields, #304). 이름에 점(.)은 쓸 수 없다",
+      "required": ["root", "frontend", "backend"],
+      "additionalProperties": false,
+      "properties": {
+        "root": { "$ref": "#/$defs/dependencySections" },
+        "frontend": { "$ref": "#/$defs/dependencySections" },
+        "backend": { "$ref": "#/$defs/dependencySections" }
+      }
+    },
     "packages": {
       "type": "object",
       "description": "A안 패키지의 배포 버전. 아직 배포 전이면 null",
@@ -61,6 +72,14 @@
     }
   },
   "$defs": {
+    "dependencySections": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "dependencies": { "type": "object", "additionalProperties": { "$ref": "#/$defs/exact" } },
+        "devDependencies": { "type": "object", "additionalProperties": { "$ref": "#/$defs/exact" } }
+      }
+    },
     "exact": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
     "image": { "type": "string", "pattern": "^[a-z0-9./-]+:[A-Za-z0-9._-]+$" },
     "pinnedImage": { "type": "string", "pattern": "^[a-z0-9./-]+:[A-Za-z0-9._-]+@sha256:[0-9a-f]{64}$" }
