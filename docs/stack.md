@@ -1,6 +1,6 @@
 # 기술 스택
 
-8개 앱이 쓸 수 있는 기술(허용 목록)과 신규 프로젝트의 기본 구성이다. 근거는 workout-memo의 현재 구현이다. 버전은 [versions.json](../versions.json)과 [dependency-policy.md](dependency-policy.md)가 원본이다.
+8개 앱이 쓸 수 있는 기술(허용 목록)과 신규 프로젝트의 기본 구성이다. 근거는 앱 8개의 현재 구현이다(2026-10-28 비교: [research/stack-survey.md](research/stack-survey.md)). 버전은 [versions.json](../versions.json)과 [dependency-policy.md](dependency-policy.md)가 원본이다.
 
 ## 허용 목록
 
@@ -8,16 +8,16 @@
 |---|---|---|---|
 | 런타임 | Node.js 24, npm 11, npm workspaces | 8개 앱 사용 중 | 각 리포 `.nvmrc`, `packageManager` |
 | 프런트엔드 | React 19, Vite, TypeScript | 8개 앱 사용 중 | `frontend/package.json` |
-| 라우팅 | React Router (`BrowserRouter`, `NavLink`) | workout-memo | `frontend/src/app.tsx` |
+| 라우팅 | React Router (`BrowserRouter`, `NavLink`) | 8개 앱 사용 중 | `frontend/src/app.tsx` |
 | 서버 상태 | TanStack Query | workout-memo | `frontend/package.json` |
 | 폼 | React Hook Form + `@hookform/resolvers` + Zod | workout-memo | `frontend/package.json` |
-| 스타일 | Tailwind CSS 4 + `@sirloinbh/design-tokens` | workout-memo, 나머지는 #126 | [design-system.md](design-system.md) |
+| 스타일 | Tailwind CSS 4 + `@sirloinbh/design-tokens` | 8개 앱 사용 중 | [design-system.md](design-system.md) |
 | UI 컴포넌트 | shadcn/ui (소스 직접 소유), Radix UI | 결정됨 (ADR-0007) | [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md) |
 | 아이콘·이모지 | lucide-react, Fluent Emoji Flat | 결정됨 (ADR-0007) | 같은 ADR |
 | 백엔드 | Express 5, pg, Zod | 8개 앱 사용 중 | `backend/package.json` |
 | DB | PostgreSQL 17 | 8개 앱 사용 중 | `compose.yaml` |
 | 실행 환경 | Docker Compose, nginx | 8개 앱 사용 중 | `compose.yaml`, `frontend/nginx.conf` |
-| 테스트 | node:test(백엔드), Vitest + Testing Library(화면), Playwright(브라우저) | workout-memo | workout-memo `AGENTS.md` 검증 명령 |
+| 테스트 | node:test(백엔드), Vitest + Testing Library(화면), Playwright(브라우저) | 8개 앱(Playwright는 workout-memo) | workout-memo `AGENTS.md` 검증 명령 |
 | CI | GitHub Actions, 중앙 공통 CI | 중앙 리포 | [reusable-app-ci.yml](../.github/workflows/reusable-app-ci.yml) |
 | 인프라 | Terraform, AWS Lightsail | shared-aws-infrastructure | ADR-0005 |
 

@@ -24,7 +24,7 @@ workout-memo `package-lock.json`의 설치 버전 기준(2026-10-22)이다. 앱�
 | prettier | 3 | 3.9.10 | `@sirloinbh/prettier-config` peer |
 | vitest | 5 | 5.0.3 | workout-memo |
 | @playwright/test | 1 | 1.63.0 | workout-memo |
-| lucide-react | 1 | 1.52.0 | 앱 설치본은 아직 0.468.0. 공통 UI 반영 때 올림(ADR-0007, #137) |
+| lucide-react | 1 | 1.52.0 | ADR-0007, #137 |
 | radix-ui | 1 | 1.7.0 | 공통 UI 컴포넌트(#123), ADR-0007 |
 | sonner | 2 | 2.0.8 | 토스트, ADR-0007 |
 | vaul | 1 | 1.1.2 | drawer(#124), ADR-0007 |
