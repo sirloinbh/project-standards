@@ -181,6 +181,15 @@ node tools/app-secrets.mjs pull                    # 앱 .env에 넣기 (--app s
 - vite·api 포트(레지스트리 값)는 VS Code가 PC로 전달한다.
 - 한글이 들어간 폴더 경로(`문서` 등)는 Docker Desktop 바인드 마운트에서 문제가 될 수 있다. 문제가 생기면 영문 경로에 클론해서 연다.
 
+## 저장할 때 자동 포맷 (.vscode/settings.json)
+
+동기화되는 `.vscode/settings.json`은 터미널 설정과 함께 저장 시 정리를 켠다(#247). 포맷이 어긋난 파일을 CI까지 가기 전에 편집기에서 고친다.
+
+- JS·TS·JSON·CSS·HTML·Markdown·YAML 파일은 저장하면 Prettier로 포맷한다. 그 리포에 Prettier 설정(`.prettierrc.json`)이 있을 때만 한다(`prettier.requireConfig`). 그래서 같은 파일을 받는 shared-aws-infrastructure와, Prettier를 쓰지 않는 이 중앙 리포에서는 포맷하지 않는다.
+- 저장하면 ESLint 자동 수정(`source.fixAll.eslint`)을 적용한다. ESLint 설정이 없는 리포에서는 아무 일도 하지 않는다.
+- 앱 리포는 `.vscode/extensions.json`으로 확장 4개를 권한다: Prettier, ESLint, EditorConfig, GitHub Pull Requests. 처음 열면 VS Code가 설치를 묻는다.
+- 이 중앙 리포의 `.vscode/settings.json`은 동기화 대상이 아니다. 중앙 리포에는 Prettier·ESLint가 없어 포맷 설정을 넣지 않았다.
+
 ## 리포 일괄 명령과 VS Code 작업공간 (tools/repos.mjs)
 
 이 리포와 `sync.config.json`의 대상 리포(앱 8개, shared-aws-infrastructure)를 한 번에 다룬다(#276). 클론은 이 리포의 상위 폴더에 있다고 보고, 다르면 `--base <폴더>`를 붙인다.
