@@ -46,29 +46,85 @@ test('package-guard rejects dependencies, install scripts, ranges, privacy, and 
 });
 
 test('a release tag must match the package version', () => {
-  assert.deepEqual(checkTag(root, 'eslint-config/v1.0.0'), []);
-  assert.deepEqual(checkTag(root, 'eslint-config/v1.0.1'), ['tag eslint-config/v1.0.1: packages/eslint-config is version 1.0.0']);
+  assert.deepEqual(checkTag(root, 'eslint-config/v1.1.0'), []);
+  assert.deepEqual(checkTag(root, 'eslint-config/v1.0.1'), ['tag eslint-config/v1.0.1: packages/eslint-config is version 1.1.0']);
   assert.deepEqual(checkTag(root, 'v1.0.0'), ['tag v1.0.0 must look like <package>/v<x.y.z>']);
 });
 
+const stub11 = () => ({
+  js: { configs: { recommended: { name: 'js-recommended' } } },
+  tseslint: { configs: { recommended: [{ name: 'ts-1' }, { name: 'ts-2' }] }, config: (...items) => items },
+  globals: { node: { process: 'readonly' }, browser: { window: 'readonly' } },
+  reactHooks: { name: 'react-hooks-plugin' },
+  prettier: { name: 'prettier' },
+});
+
 test('the ESLint factory builds the same config as the apps use today', () => {
-  const stub = {
-    js: { configs: { recommended: { name: 'js-recommended' } } },
-    tseslint: { configs: { recommended: [{ name: 'ts-1' }, { name: 'ts-2' }] }, config: (...items) => items },
-    globals: { node: { process: 'readonly' }, browser: { window: 'readonly' } },
-    reactHooks: { name: 'react-hooks-plugin' },
-    prettier: { name: 'prettier' },
-  };
+  const stub = stub11();
   const config = createConfig(stub);
-  assert.deepEqual(config.map((c) => c.name ?? Object.keys(c).join('+')), ['ignores', 'js-recommended', 'ts-1', 'ts-2', 'files+languageOptions+rules', 'files+languageOptions+plugins+rules', 'prettier']);
+  assert.deepEqual(config.map((c) => c.name ?? Object.keys(c).join('+')), [
+    'ignores',
+    'js-recommended',
+    'ts-1',
+    'ts-2',
+    'files+languageOptions+rules',
+    'files+rules',
+    'files+languageOptions+plugins+rules',
+    'prettier',
+  ]);
   assert.deepEqual(config[0].ignores, ['**/node_modules/**', '**/dist/**', '.local/**']);
   assert.deepEqual(config[4].rules['@typescript-eslint/no-unused-vars'], ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]);
-  assert.deepEqual(config[5].rules, { 'react-hooks/rules-of-hooks': 'error', 'react-hooks/exhaustive-deps': 'error' });
-  assert.equal(config[5].files[0], 'frontend/src/**/*.{ts,tsx}');
+  assert.deepEqual(config[6].rules, { 'react-hooks/rules-of-hooks': 'error', 'react-hooks/exhaustive-deps': 'error' });
+  assert.equal(config[6].files[0], 'frontend/src/**/*.{ts,tsx}');
   // The same rules appear in study-log's eslint.config.mjs today.
   const today = fixture('eslint.config.mjs');
   for (const rule of ["'react-hooks/rules-of-hooks': 'error'", "'react-hooks/exhaustive-deps': 'error'", "argsIgnorePattern: '^_'", "files: ['frontend/src/**/*.{ts,tsx}']"]) assert.ok(today.includes(rule), rule);
   assert.deepEqual(createConfig(stub, { ignores: ['e2e/**'] })[0].ignores.at(-1), 'e2e/**');
+});
+
+test('1.1.0: conventions apply everywhere except tool config files, which keep their default export (#243)', () => {
+  const config = createConfig(stub11());
+  const shared = config[4];
+  assert.deepEqual(shared.rules['@typescript-eslint/consistent-type-definitions'], ['error', 'type']);
+  assert.equal(shared.rules['no-restricted-syntax'][1].selector, 'ExportDefaultDeclaration');
+  assert.deepEqual(config[5], { files: ['**/*.config.{ts,mts,cts,js,mjs,cjs}'], rules: { 'no-restricted-syntax': 'off' } });
+  // Without tsconfigRootDir or optional plugins, 1.1.0 adds no type-aware or plugin rules: a 1.0.0 app keeps working.
+  assert.equal(config.length, 8);
+  assert.ok(!config.some((c) => c.languageOptions?.parserOptions?.projectService));
+});
+
+test('1.1.0: tsconfigRootDir turns on the type-aware rules for the source folders only (#244)', () => {
+  const config = createConfig(stub11(), { tsconfigRootDir: '/repo' });
+  const typed = config.find((c) => c.languageOptions?.parserOptions?.projectService);
+  assert.deepEqual(typed.files, ['frontend/src/**/*.{ts,tsx}', 'backend/src/**/*.ts']);
+  assert.equal(typed.languageOptions.parserOptions.tsconfigRootDir, '/repo');
+  assert.deepEqual(
+    Object.keys(typed.rules).filter((r) => typed.rules[r] === 'error'),
+    [
+      '@typescript-eslint/no-floating-promises',
+      '@typescript-eslint/no-misused-promises',
+      '@typescript-eslint/await-thenable',
+      '@typescript-eslint/no-unnecessary-type-assertion',
+      '@typescript-eslint/require-await',
+    ],
+  );
+  assert.equal(typed.rules['require-await'], 'off');
+  assert.equal(config.at(-1).name, 'prettier', 'eslint-config-prettier stays last');
+});
+
+test('1.1.0: optional plugins add their rules only when the app passes them (#244)', () => {
+  const reactRefresh = { configs: { vite: () => ({ plugins: { 'react-refresh': 'rr' }, rules: { 'react-refresh/only-export-components': ['error', { allowConstantExport: true }] } }) } };
+  const jsxA11y = { configs: { recommended: { plugins: { 'jsx-a11y-x': 'a11y' }, rules: { 'jsx-a11y-x/alt-text': 'error' } } } };
+  const importSort = { rules: {} };
+  const config = createConfig({ ...stub11(), reactRefresh, jsxA11y, importSort });
+  const byPlugin = (name) => config.find((c) => c.plugins?.[name]);
+  assert.deepEqual(byPlugin('react-refresh').files, ['frontend/src/**/*.{ts,tsx}']);
+  assert.deepEqual(byPlugin('jsx-a11y-x').files, ['frontend/src/**/*.{ts,tsx}']);
+  assert.equal(byPlugin('simple-import-sort').plugins['simple-import-sort'], importSort);
+  assert.deepEqual(byPlugin('simple-import-sort').rules, { 'simple-import-sort/imports': 'error', 'simple-import-sort/exports': 'error' });
+  assert.equal(config.at(-1).name, 'prettier');
+  const custom = createConfig({ ...stub11(), jsxA11y }, { frontendFiles: 'web/**/*.tsx' });
+  assert.equal(custom.find((c) => c.plugins?.['jsx-a11y-x']).files[0], 'web/**/*.tsx');
 });
 
 test('prettier and tsconfig packages match the files the apps have today', () => {
