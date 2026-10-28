@@ -50,7 +50,9 @@
         "workout-implementation",
         "workout-testing"
       ],
-      "allowedDifferences": []
+      "allowedDifferences": [
+        { "path": "frontend/src/health.ts", "reason": "서버 상태를 화면에 따로 표시하지 않아 이 도우미를 쓰지 않는다(#310)", "until": null }
+      ]
     },
     {
       "slot": 2,
