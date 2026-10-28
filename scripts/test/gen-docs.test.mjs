@@ -44,7 +44,8 @@ test('docs/versions.md lists every shared app dependency with its file and secti
   const files = { root: 'package.json', frontend: 'frontend/package.json', backend: 'backend/package.json' };
   const text = renderVersions(data.versions, files);
   assert.match(text, /^# 버전 원본\n\n<!-- 자동 생성 파일/);
-  assert.match(text, new RegExp(`\| \`vite\` \| ${data.versions.dependencies.frontend.devDependencies.vite} \| \`frontend/package.json\` \| devDependencies \|`));
+  const vite = data.versions.dependencies.frontend.devDependencies.vite;
+  assert.ok(text.split('\n').includes(`| \`vite\` | ${vite} | \`frontend/package.json\` | devDependencies |`));
   assert.match(text, /\| 이미지 playwright \| `mcr\.microsoft\.com\/playwright:v[\d.]+-noble` \(digest 고정\) \|/);
   const count = Object.values(data.versions.dependencies).flatMap((s) => Object.values(s).flatMap(Object.keys)).length;
   assert.equal(text.split('\n').filter((l) => /\| `[^`]+` \| [\d.]+ \| `[a-z/]*package\.json` \|/.test(l)).length, count);
