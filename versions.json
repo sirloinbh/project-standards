@@ -19,6 +19,19 @@
     "uploadArtifact": { "repo": "actions/upload-artifact", "version": "v7.0.2", "sha": "cf430e030ddbb5b0abf93d22962f4752f3646cd9" },
     "setupTerraform": { "repo": "hashicorp/setup-terraform", "version": "v4.0.1", "sha": "dfe3c3f87815947d99a8997f908cb6525fc44e9e" }
   },
+  "dependencies": {
+    "root": {
+      "devDependencies": { "@eslint/js": "10.0.1", "eslint": "10.12.0", "eslint-config-prettier": "10.1.8", "eslint-plugin-react-hooks": "7.1.1", "globals": "16.5.0", "prettier": "3.9.10", "typescript-eslint": "8.71.2" }
+    },
+    "frontend": {
+      "dependencies": { "class-variance-authority": "0.7.1", "clsx": "2.1.1", "lucide-react": "1.52.0", "radix-ui": "1.7.0", "react": "19.3.0", "react-dom": "19.3.0", "react-router": "8.4.0", "sonner": "2.0.8", "tailwind-merge": "3.7.0", "tw-animate-css": "1.4.0", "vaul": "1.1.2" },
+      "devDependencies": { "@tailwindcss/vite": "4.3.3", "@testing-library/dom": "10.4.2", "@testing-library/jest-dom": "7.0.1", "@testing-library/react": "16.3.3", "@types/react": "19.3.0", "@types/react-dom": "19.3.0", "jsdom": "30.1.2", "tailwindcss": "4.3.3", "typescript": "5.9.3", "vite": "6.4.4", "vitest": "5.0.3" }
+    },
+    "backend": {
+      "dependencies": { "express": "5.3.0", "pg": "8.23.1", "zod": "3.25.76" },
+      "devDependencies": { "@types/express": "5.0.6", "@types/node": "24.19.2", "@types/pg": "8.23.1", "tsx": "4.23.15", "typescript": "5.9.3" }
+    }
+  },
   "packages": {
     "@sirloinbh/eslint-config": "1.0.0",
     "@sirloinbh/prettier-config": "1.0.0",

@@ -115,12 +115,9 @@ test('the rendered repository passes standards-check with no problems or warning
   }
 });
 
-test('dependencies are exact and match the dependency policy table and own packages', () => {
-  const policy = new Map();
-  for (const line of fs.readFileSync(path.join(root, 'docs/dependency-policy.md'), 'utf8').split('\n')) {
-    const cells = line.split('|').map((c) => c.trim());
-    if (cells.length > 4 && /^\d+\.\d+\.\d+$/.test(cells[3])) for (const name of cells[1].split(',')) policy.set(name.trim(), cells[3]);
-  }
+test('dependencies are exact and match versions.json (shared app dependencies) and own packages', () => {
+  const shared = loadAll(root).data.versions.dependencies;
+  const policy = new Map(Object.values(shared).flatMap((sections) => Object.values(sections).flatMap((deps) => Object.entries(deps))));
   const own = packageVars(root);
   const checked = [];
   for (const file of ['package.json', 'frontend/package.json', 'backend/package.json']) {

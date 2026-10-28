@@ -1,6 +1,6 @@
 # 기술 스택
 
-8개 앱이 쓸 수 있는 기술(허용 목록)과 신규 프로젝트의 기본 구성이다. 근거는 앱 8개의 현재 구현이다(2026-10-28 비교: [research/stack-survey.md](research/stack-survey.md)). 버전은 [versions.json](../versions.json)과 [dependency-policy.md](dependency-policy.md)가 원본이다.
+8개 앱이 쓸 수 있는 기술(허용 목록)과 신규 프로젝트의 기본 구성이다. 근거는 앱 8개의 현재 구현이다(2026-10-28 비교: [research/stack-survey.md](research/stack-survey.md)). 버전은 [versions.json](../versions.json)이 원본이고 [versions.md](versions.md)로 볼 수 있다. 한 앱만 쓰는 패키지의 메이저는 [dependency-policy.md](dependency-policy.md)에 있다.
 
 ## 허용 목록
 

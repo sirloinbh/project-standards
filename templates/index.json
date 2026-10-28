@@ -17,6 +17,11 @@
   },
   "data": { "why": "동기화 스크립트가 읽는 데이터라 대상 리포에 파일로 복사하지 않는다. labels.json은 대상 리포의 이슈 라벨로 반영한다(#40).", "files": ["common/labels.json"] },
   "mirror": [{ "from": "skills/", "to": ".claude/skills/", "why": "Claude Code는 .claude/skills/만 읽는다. 원본 skills/와 같은 내용의 복제본을 함께 관리한다." }],
+  "dependencyFields": {
+    "why": "versions.json dependencies(앱 8개와 스캐폴드가 함께 쓰는 외부 의존성)를 앱 package.json 3개의 관리 필드로 쓴다. 버전은 중앙에서 올리고 동기화 PR로 퍼지며, 앱 하나만 다르면 standards-check가 잡는다(#304).",
+    "profiles": ["app"],
+    "files": { "root": "package.json", "frontend": "frontend/package.json", "backend": "backend/package.json" }
+  },
   "fields": {
     "app": {
       "package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "scripts": { "standards:check": "node .standards/check.mjs", "lockfiles:sync": "node .standards/lockfiles.mjs --write" }, "devDependencies": { "@sirloinbh/eslint-config": "{{versions.packages.@sirloinbh/eslint-config}}", "@sirloinbh/prettier-config": "{{versions.packages.@sirloinbh/prettier-config}}" } },

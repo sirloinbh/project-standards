@@ -38,10 +38,11 @@ function makeRepo(edit = () => {}) {
   const v = data.versions.packages;
   const lint = { '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] };
   const tsconfig = { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] };
-  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write' }, devDependencies: lint }));
+  const shared = data.versions.dependencies;
+  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write' }, devDependencies: { ...shared.root.devDependencies, ...lint } }));
   const tokens = { '@sirloinbh/design-tokens': v['@sirloinbh/design-tokens'] };
-  write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, dependencies: tokens, devDependencies: tsconfig }));
-  write('backend/package.json', JSON.stringify({ name: 'backend', ...pkgFields, devDependencies: tsconfig }));
+  write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, dependencies: { ...shared.frontend.dependencies, ...tokens }, devDependencies: { ...shared.frontend.devDependencies, ...tsconfig } }));
+  write('backend/package.json', JSON.stringify({ name: 'backend', ...pkgFields, dependencies: shared.backend.dependencies, devDependencies: { ...shared.backend.devDependencies, ...tsconfig } }));
   for (const [rel, text] of Object.entries(appFiles)) write(rel, text);
   write('node_modules/@sirloinbh/tsconfig/package.json', JSON.stringify({ name: '@sirloinbh/tsconfig', version: '1.0.0' }));
   const manifest = buildManifest({
@@ -90,13 +91,26 @@ test('CRLF line endings from a Windows checkout still pass', () => {
 });
 
 test('a removed managed file and a changed package.json field fail', () => {
-  const result = check(({ dir, write }) => {
+  const result = check(({ dir, write, read }) => {
     fs.rmSync(path.join(dir, '.nvmrc'));
-    write('backend/package.json', JSON.stringify({ name: 'backend', packageManager: 'npm@11.19.0', engines: { node: '22.0.0', npm: '11.19.0' }, devDependencies: { '@sirloinbh/tsconfig': '1.0.0' } }));
+    const backend = JSON.parse(read('backend/package.json'));
+    write('backend/package.json', JSON.stringify({ ...backend, engines: { node: '22.0.0', npm: '11.19.0' } }));
   });
   assert.deepEqual(result.problems.map((p) => p.message), [
     '파일이 없습니다 (중앙 원본: templates/app/.nvmrc.tmpl)',
     '관리 필드가 다릅니다: engines.node (중앙 원본: templates/index.json)',
+  ]);
+});
+
+test('an app whose shared dependency version differs from versions.json fails (#304)', () => {
+  const result = check(({ write, read }) => {
+    const frontend = JSON.parse(read('frontend/package.json'));
+    frontend.devDependencies.vite = '6.4.3';
+    delete frontend.dependencies.clsx;
+    write('frontend/package.json', JSON.stringify(frontend));
+  });
+  assert.deepEqual(result.problems, [
+    { group: '관리 파일', path: 'frontend/package.json', message: '관리 필드가 다릅니다: dependencies.clsx, devDependencies.vite (중앙 원본: templates/index.json)' },
   ]);
 });
 

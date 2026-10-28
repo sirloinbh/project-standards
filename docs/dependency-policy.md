@@ -2,34 +2,20 @@
 
 npm 공급망 공격(Shai-Hulud 계열)이 진행 중이므로 의존성은 최소로, 고정 버전으로, 검증한 뒤에만 들인다.
 
-## 메이저 버전 통일표
+## 버전 원본
 
-workout-memo `package-lock.json`의 설치 버전 기준(2026-10-22)이다. 앱마다 메이저 버전을 이 표와 맞춘다.
+- 도구(Node, npm, PostgreSQL, 이미지)와 앱 8개가 함께 쓰는 의존성 37개의 정확한 버전은 [`versions.json`](../versions.json)이 원본이다. 표는 [versions.md](versions.md)로 생성된다(`npm run docs`).
+- 앱 공통 의존성은 앱 `package.json` 3개의 관리 필드다. 앱 하나만 버전이 다르면 `standards-check`가 실패한다(#304). 버전을 올릴 때는 중앙의 `versions.json`을 고치고, 앱마다 열리는 동기화 PR에서 lockfile을 맞춘다.
+- 한 앱만 쓰는 의존성은 그 앱이 버전을 정한다. 메이저 버전은 아래 표를 따른다.
 
-| 패키지 | 메이저 | 설치 버전 | 비고 |
+| 패키지 | 메이저 | 쓰는 앱 | 비고 |
 |---|---|---|---|
-| node | 24 | 24.21.0 | `versions.json` |
-| npm | 11 | 11.19.0 | `versions.json` |
-| react, react-dom | 19 | 19.3.0 | |
-| react-router | 8 | 8.4.0 | workout-memo |
-| @tanstack/react-query | 5 | 5.104.1 | workout-memo |
-| react-hook-form | 7 | 7.89.0 | workout-memo |
-| vite | 6 | 6.4.4 | |
-| typescript | 5 | 5.9.3 | `@sirloinbh/tsconfig` peer |
-| express | 5 | 5.3.0 | |
-| pg | 8 | 8.23.1 | |
-| zod | 3 | 3.25.76 | |
-| tailwindcss, @tailwindcss/vite | 4 | 4.3.3 | ADR-0007 |
-| eslint | 10 | 10.12.0 | `@sirloinbh/eslint-config` peer |
-| prettier | 3 | 3.9.10 | `@sirloinbh/prettier-config` peer |
-| vitest | 5 | 5.0.3 | workout-memo |
-| @playwright/test | 1 | 1.63.0 | workout-memo |
-| lucide-react | 1 | 1.52.0 | ADR-0007, #137 |
-| radix-ui | 1 | 1.7.0 | 공통 UI 컴포넌트(#123), ADR-0007 |
-| sonner | 2 | 2.0.8 | 토스트, ADR-0007 |
-| vaul | 1 | 1.1.2 | drawer(#124), ADR-0007 |
-| tw-animate-css | 1 | 1.4.0 | 애니메이션 유틸리티, ADR-0007 |
-| PostgreSQL | 17 | postgres:17-alpine | `versions.json` |
+| @tanstack/react-query | 5 | workout-memo | |
+| react-hook-form, @hookform/resolvers | 7, 5 | workout-memo | |
+| @playwright/test, @axe-core/playwright | 1, 4 | workout-memo | 화면 비교 이미지와 같은 버전(`versions.json` `images.playwright`) |
+| recharts | 3 | study-log | |
+
+공통 의존성의 메이저 결정 근거: tailwindcss 4·lucide-react·radix-ui·sonner·vaul·tw-animate-css는 [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), typescript·eslint·prettier는 `@sirloinbh/*` 공유 패키지의 peer 범위를 따른다. zod는 3에 머문다(#306).
 
 ## 버전 쓰는 법
 
