@@ -18,6 +18,8 @@
 | `spinner.tsx` | `Spinner`, `spinnerVariants` | `size`: sm(16px), md(24px), lg(32px). `role="status"`, 기본 이름 "불러오는 중" |
 | `empty-state.tsx` | `EmptyState` | 아이콘, 제목, 설명, 다음 행동(버튼). 제목 단계는 `headingLevel` |
 | `dialog.tsx` | `Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`, `DialogClose` | 모달. [공통 레이아웃](layout.md) |
+| `confirm-dialog.tsx` | `ConfirmDialog` | 삭제처럼 되돌릴 수 없는 동작 전에 묻는다(#311). 브라우저 `confirm()` 대신 쓴다. `trigger`(여는 버튼) 또는 `open`·`onOpenChange`로 연다. `onConfirm`이 Promise를 돌려주면 끝날 때까지 버튼을 막고, 성공하면 닫고 실패하면 열어 둔다. 기본 문구는 "삭제"·"취소", `destructive`(기본 `true`)이면 확인 버튼이 파괴적 모양 |
+| `notice.tsx` | `Notice` | 화면 안 알림(#311). `notice.kind`가 `status`이면 `role="status"`, `error`이면 `role="alert"`. 값이 없으면 아무것도 그리지 않는다. 한곳에 묶이지 않는 지나가는 알림은 `toast` |
 | `sheet.tsx` | `Sheet`, `SheetTrigger`, `SheetContent`(`side`), `SheetHeader`, `SheetFooter`, `SheetTitle`, `SheetDescription`, `SheetClose` | 가장자리 패널 |
 | `drawer.tsx` | `Drawer`, `DrawerTrigger`, `DrawerContent`, `DrawerHeader`, `DrawerFooter`, `DrawerTitle`, `DrawerDescription`, `DrawerClose` | 아래 패널(vaul). 열면 포커스가 안으로 이동 |
 | `dropdown-menu.tsx` | `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioGroup`, `DropdownMenuRadioItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuGroup` | 버튼 메뉴 |
@@ -30,6 +32,7 @@
 | 파일 | 내보내는 것 | 메모 |
 |---|---|---|
 | `frontend/src/lib/api.ts` | `requestJson`, `RequestError` | 앱 API 요청(#310). 성공하면 JSON 본문, `204`이면 `undefined`. 실패하면 서버의 한국어 `error`와 `status`를 담은 `RequestError`(연결 실패는 "서버에 연결할 수 없습니다", `status` 없음). 서버 쪽 짝은 `backend/src/standard/http.ts`(#309) |
+| `frontend/src/lib/use-notice.ts` | `useNotice`, `errorText`, `NoticeValue` | `const { notice, status, error, clear } = useNotice()`. `error(e)`는 던져진 값에서 메시지를 꺼낸다(`RequestError`면 서버 문구). 화면에는 `<Notice notice={notice} />` |
 | `frontend/src/health.ts` | `Health`, `healthText` | 서버 상태 표시 문구. 7개 앱이 같은 파일을 쓰고 있었다. workout-memo는 쓰지 않아 `allowedDifferences`로 뺐다 |
 
 - 화면 코드는 `fetch`를 직접 부르지 않고 `requestJson`을 쓴다. 삭제한 항목이 이미 없을 때(`404`)처럼 상태별로 다르게 처리하려면 `error instanceof RequestError && error.status === 404`로 나눈다.
