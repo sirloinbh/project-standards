@@ -23,7 +23,7 @@
 
 | 패키지 | 버전 |
 |---|---|
-| `@sirloinbh/eslint-config` | 1.0.0 |
+| `@sirloinbh/eslint-config` | 1.1.0 |
 | `@sirloinbh/prettier-config` | 1.0.0 |
 | `@sirloinbh/tsconfig` | 1.0.0 |
 | `@sirloinbh/design-tokens` | 1.0.0 |
