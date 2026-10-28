@@ -46,7 +46,9 @@ test('intended differences from study-log: ignore-scripts and the project marker
   );
   assert.equal(withoutHeader(byPath['frontend/.npmrc'].content), withoutHeader(byPath['.npmrc'].content));
   assert.match(byPath['frontend/.npmrc'].content, /templates\/app\/frontend\/에서/);
-  assert.equal(withoutHeader(byPath['.gitignore'].content), `${fixture('gitignore')}${PROJECT_MARKER}\n`);
+  // Tool outputs and personal settings every app produces were added to the shared section (#323).
+  const toolOutputs = ['.claude/settings.local.json', '*.tfvars', 'test-results/', 'playwright-report/', 'blob-report/', 'coverage/', '*.tsbuildinfo'];
+  assert.equal(withoutHeader(byPath['.gitignore'].content), `${fixture('gitignore')}${toolOutputs.join('\n')}\n${PROJECT_MARKER}\n`);
   // study-log's ignore list stays; the managed files are added before the marker (#154).
   const prettierignore = withoutHeader(byPath['.prettierignore'].content);
   assert.ok(prettierignore.startsWith(fixture('prettierignore')));
