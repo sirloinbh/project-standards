@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll } from '../lib/registry.mjs';
-import { checkApi, checkFileNames, formatReport, runCheck } from '../standards-check.mjs';
+import { checkApi, checkFileNames, checkZodArrays, formatReport, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -185,6 +185,31 @@ test('frontend file names must be lowercase words and hyphens (warning only, #31
   const result = check(({ write }) => write('frontend/src/StudyLogs.tsx', 'export function StudyLogs() { return null; }\n'));
   assert.deepEqual(result.problems, []);
   assert.deepEqual(result.warnings, ['frontend/src: 파일 이름은 소문자와 하이픈으로 씁니다(docs/conventions/code.md). 1개: frontend/src/StudyLogs.tsx']);
+});
+
+test('zod arrays without a length limit are warned, across lines and through other chained calls (#326)', () => {
+  const text = [
+    "import { z } from 'zod';",
+    'const order = z.object({',
+    '  ids: z',
+    "    .array(z.string().regex(/^\\d+$/), { invalid_type_error: '목록을 보내세요' })",
+    "    .min(1, '하나 이상')",
+    "    .refine((ids) => new Set(ids).size === ids.length, '중복'),",
+    '});',
+    'const sets = z.array(z.object({ reps: z.number() })).max(100);',
+    "const days = z.array(z.number()).min(1).max(7, '최대 7일');",
+    'const tags = z.string().array().length(3);',
+    'const loose = z.number().array();',
+  ].join('\n');
+  assert.deepEqual(checkZodArrays([{ file: 'backend/src/order.ts', text }]), [
+    'backend/src/order.ts:4: 배열 스키마에 길이 제한이 없습니다. .max(<개수>)를 붙입니다(zod 보안 권고 GHSA-mrhx-c7xc-m3w5).',
+    'backend/src/order.ts:11: 배열 스키마에 길이 제한이 없습니다. .max(<개수>)를 붙입니다(zod 보안 권고 GHSA-mrhx-c7xc-m3w5).',
+  ]);
+  // Files that do not import zod (plain Array methods) are not read.
+  assert.deepEqual(checkZodArrays([{ file: 'backend/src/x.ts', text: 'const a = rows.array(1);' }]), []);
+  const result = check(({ write }) => write('backend/src/order.ts', text));
+  assert.deepEqual(result.problems, []);
+  assert.equal(result.warnings.filter((w) => w.includes('GHSA')).length, 2);
 });
 
 test('the vendored copy runs on its own and exits 0, 1, or 2', () => {
