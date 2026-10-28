@@ -267,6 +267,21 @@ test('the VS Code settings template opens terminals with the shared tools folder
   assert.ok(profile.args.includes('${env:LOCALAPPDATA}\\sirloinbh-tools\\project-terminal.ps1'));
 });
 
+test('the VS Code settings template formats on save only where the repo has a Prettier config', () => {
+  const settings = JSON.parse(readFileSync(join(root, 'templates/common/.vscode/settings.json.tmpl'), 'utf8'));
+  // Infra repos get the same file but no .prettierrc, so Prettier must not fall back to its defaults there.
+  assert.equal(settings['prettier.requireConfig'], true);
+  assert.equal(settings['editor.formatOnSave'], undefined, 'format on save stays scoped to the languages below');
+  const [scope, block] = Object.entries(settings).find(([key]) => key.startsWith('['));
+  for (const lang of ['typescript', 'typescriptreact', 'json', 'css', 'markdown']) assert.ok(scope.includes(`[${lang}]`), lang);
+  assert.ok(!scope.includes('[terraform]'));
+  assert.equal(block['editor.defaultFormatter'], 'esbenp.prettier-vscode');
+  assert.equal(block['editor.formatOnSave'], true);
+  assert.equal(settings['editor.codeActionsOnSave']['source.fixAll.eslint'], 'explicit');
+  const { recommendations } = JSON.parse(readFileSync(join(root, 'templates/app/.vscode/extensions.json.tmpl'), 'utf8'));
+  assert.deepEqual(recommendations, ['esbenp.prettier-vscode', 'dbaeumer.vscode-eslint', 'EditorConfig.EditorConfig', 'GitHub.vscode-pull-request-github']);
+});
+
 test('harness scripts stay ASCII-only and read paths from the environment', () => {
   for (const [name, body] of Object.entries(harnesses)) {
     assert.equal([...body].find((c) => c.codePointAt(0) > 0x7f), undefined, name);
