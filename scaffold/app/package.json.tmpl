@@ -17,7 +17,8 @@
     "lint": "eslint . --max-warnings 0",
     "typecheck": "npm run typecheck --workspaces && tsc -p e2e/tsconfig.json",
     "check": "npm run format:check && npm run lint && npm run contract:check && npm run skills:check && npm run typecheck && npm test && npm run build",
-    "standards:check": "node .standards/check.mjs"
+    "standards:check": "node .standards/check.mjs",
+    "lockfiles:sync": "node .standards/lockfiles.mjs --write"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

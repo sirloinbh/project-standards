@@ -11,6 +11,7 @@ Node.js **{{versions.node}}**, npm **{{versions.npm}}**. 공통 규칙은 중앙
 | `npm ci` | 의존성 설치 (`.npmrc`가 설치 스크립트를 막음) |
 | `npm run check` | 포맷, 린트, 계약 복제본, 스킬 복제본, 타입, 테스트, 빌드 |
 | `npm run standards:check` | 중앙 관리 파일과 레지스트리 값 확인 |
+| `npm run lockfiles:sync` | 의존성을 바꾼 뒤 `frontend/`·`backend/` lockfile을 루트 lockfile 버전으로 맞추기 (설치 없음) |
 | `npm run test:e2e` | Playwright 브라우저 검사 (테스트 DB 필요) |
 | `npm run db:migrate` | DB 마이그레이션 적용 |
 | `npm run openapi` | API를 바꾼 뒤 `docs/openapi.json` 다시 만들기 |
