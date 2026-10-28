@@ -16,6 +16,10 @@
 | 9 | 리포 11개 secret scanning·push protection·CodeQL 켜기, App에 Code scanning 읽기 권한 추가 | 15분 | #261 | 안 함 (2026-10-27 추가) |
 | 10 | Claude API 키 발급·지출 한도, SSM에 넣기, 서버 읽기 키 넣기 | 15분 | #266 | 안 함 (2026-10-27 추가) |
 | 11 | healthchecks.io 계정·앱별 체크 만들고 서버 `.env`에 신호 주소 넣기 | 20분 | #286 | 안 함 (2026-10-27 추가) |
+| 12 | 동기화 PR 8개의 lockfile 맞추기 (공유 ESLint 설정 1.1.0) | 15분 | #328 | 진행 중 (2026-10-28): 설치 승인 받음, 토큰 권한 부족으로 멈춤 |
+| 13 | 앱 PR 3개 병합 (스킬 정리) | 5분 | #313 | 안 함 (2026-10-28 추가). 12 다음 |
+| 14 | ESLint·Prettier 플러그인 등 설치 승인 | 10분 | #245 | 안 함 |
+| 15 | Fork에서 병합된 로컬 브랜치 정리 | 5분 | — | 안 함 (2026-10-28 추가) |
 
 **남은 권장 순서는 1 → 3 → 4입니다.** 2는 끝났습니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
 
@@ -244,3 +248,59 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 4. `sudo bash /opt/<앱>/deploy/install-backup.sh`로 health timer를 설치합니다(동기화 PR 반영 뒤).
 5. `docker compose stop web`으로 잠깐 멈췄다가 10~15분 안에 메일이 오는지 보고, `docker compose start web`으로 되돌립니다. 결과를 #286에 댓글로 남겨 주세요(주소는 쓰지 않음).
 
+## 12. 동기화 PR 8개의 lockfile 맞추기 (#328)
+
+**왜 필요한가요:** 공유 ESLint 설정 1.1.0을 배포했고(태그 `eslint-config/v1.1.0`, 2026-10-28), 앱 8개의 동기화 PR이 루트 `package.json`의 `@sirloinbh/eslint-config`를 1.1.0으로 바꿨습니다. lockfile은 그대로라 CI가 `npm ci`에서 실패합니다(`lock file's @sirloinbh/eslint-config@1.0.0 does not satisfy ...@1.1.0`). 에이전트는 설치 명령을 실행할 수 없어(차단 hook, [agent-guardrails.md](agent-guardrails.md)) 설치 한 줄은 사용자가 실행합니다. 설치 승인은 2026-10-28에 받았습니다.
+
+| 앱 | 동기화 PR | 브랜치 |
+|---|---|---|
+| workout-memo | sirloinbh/workout-memo#177 | `chore/standards-sync-5435065` |
+| study-log | sirloinbh/study-log#116 | `chore/standards-sync-29607cf` |
+| plan-routine | sirloinbh/plan-routine#33 | `chore/standards-sync-29607cf` |
+| health-log | sirloinbh/health-log#19 | `chore/standards-sync-29607cf` |
+| life-journal | sirloinbh/life-journal#16 | `chore/standards-sync-29607cf` |
+| money-ledger | sirloinbh/money-ledger#17 | `chore/standards-sync-29607cf` |
+| english-study | sirloinbh/english-study#16 | `chore/standards-sync-29607cf` |
+| dev-career-portfolio | sirloinbh/dev-career-portfolio#16 | `chore/standards-sync-29607cf` |
+
+브랜치 이름은 다음 동기화 때 바뀔 수 있습니다. 실행 전에 PR에서 다시 확인합니다. 각 리포에 있는 `chore/standards-sync-5b4fe8a` 원격 브랜치는 열린 PR이 없는 예전 브랜치입니다.
+
+1. **토큰 권한 추가 (한 번만).** 로컬 설치는 GitHub Packages 읽기 권한이 필요합니다. 2026-10-28 실행은 이 권한이 없어 8개 모두 `401 Unauthorized`로 멈췄습니다(파일은 바뀌지 않음). VS Code의 PowerShell 터미널에서:
+   ```powershell
+   ghp auth refresh -h github.com -s read:packages
+   ```
+2. **lockfile 다시 쓰기.** 앱마다 동기화 PR 브랜치에서 실행합니다. `node_modules`를 만들지 않고 설치 스크립트도 실행하지 않습니다.
+   ```powershell
+   $env:NODE_AUTH_TOKEN = (ghp auth token)
+   npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+   Remove-Item Env:NODE_AUTH_TOKEN
+   ```
+   에이전트에게 "12 준비"라고 하면 8개 브랜치를 작업 폴더(worktree)로 받아 두고, 한 번에 돌리는 스크립트를 만들어 줍니다. 로컬 앱 체크아웃은 건드리지 않습니다.
+3. **에이전트에게 "12 실행함"이라고 알려 주세요.** 에이전트가 이어서 합니다.
+   - 앱마다 lockfile 변경이 `@sirloinbh/eslint-config` 항목(버전·주소·무결성 값)뿐인지 확인합니다. 다른 패키지가 바뀌었으면 그 앱은 멈추고 알립니다.
+   - 커밋·push하고, CI가 모두 통과하면 동기화 PR을 병합합니다(workout-memo부터). 이 8개 병합은 2026-10-28 사용자가 맡겼습니다.
+   - `frontend/`·`backend/` lockfile은 바뀌지 않습니다(이 패키지는 루트 `devDependencies`에만 있음). `npm run lockfiles:sync`(#303)로 한 번 더 확인합니다.
+
+새로 켜지는 규칙은 `type`만 쓰기와 default export 금지 2개이고, 앱 8개의 위반은 0개입니다(#308).
+
+## 13. 앱 PR 3개 병합 (#313)
+
+앱 스킬의 낡은 줄을 고치는 PR입니다. 스킬 문서만 바뀝니다.
+
+- [ ] sirloinbh/study-log#119: `study-log-testing`·`study-log-foundation`의 도구·토큰 설명
+- [ ] sirloinbh/plan-routine#35: 같은 두 줄
+- [ ] sirloinbh/workout-memo#176: `workout-communication` 삭제. **12의 workout-memo 동기화 PR(#177)을 먼저 병합합니다.** 그래야 대신 쓸 `skills/std-communication/`이 들어와 있습니다
+
+에이전트에게 맡기려면 "13 병합해 줘"라고 하면 됩니다.
+
+## 14. 설치 승인 (#245)
+
+ESLint·Prettier 플러그인 4개(#244), knip(#263), Lighthouse CI(#280), MSW(#281)의 설치 승인입니다. 패키지 목록과 검증 결과는 #245와 `docs/research/lint-rules.md`에 있습니다. 승인 전에 socket.dev 점수를 확인해 주세요. 승인하면 #246(앱 템플릿에 플러그인 넘기기)이 시작됩니다.
+
+## 15. Fork에서 로컬 브랜치 정리
+
+병합이 끝난 로컬 브랜치를 Fork에서 지웁니다. 먼저 main을 체크아웃해 Pull합니다.
+
+- project-standards: `docs/240-research-decisions`, `feat/303-workspace-lockfiles`, `feat/304-shared-dependency-versions`, `feat/308-eslint-config-1-1`, `feat/309-backend-http-standard`, `feat/310-frontend-api-standard`, `feat/311-confirm-dialog-notice`, `docs/307-zod4-research`, `docs/312-api-ui-code-rules`, `feat/313-std-communication`, `fix/326-zod-unbounded-arrays`, `chore/328-eslint-config-1-1-rollout`, `docs/328-pending-user-steps`(이 문서의 PR이 병합된 뒤)
+- study-log: `fix/121-content-order-limit`
+- 각 앱(12에서 worktree를 쓴 경우): `chore/standards-sync-*` 로컬 브랜치. 동기화 PR이 병합된 뒤 지웁니다
