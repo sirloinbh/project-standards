@@ -92,6 +92,7 @@ test('package.json fields are rendered from versions.json for all three package 
   assert.deepEqual(byPath['package.json'].fields, {
     ...expected,
     'scripts.standards:check': 'node .standards/check.mjs',
+    'scripts.lockfiles:sync': 'node .standards/lockfiles.mjs --write',
     'devDependencies.@sirloinbh/eslint-config': '1.0.0',
     'devDependencies.@sirloinbh/prettier-config': '1.0.0',
   });
@@ -105,7 +106,7 @@ test('a manifest built from the render accepts the rendered files and catches ed
   repo['frontend/package.json'] = JSON.stringify({ ...JSON.parse(repo['frontend/package.json']), dependencies: { '@sirloinbh/design-tokens': '1.0.0' } });
   repo['package.json'] = JSON.stringify({
     ...pkg,
-    scripts: { 'standards:check': 'node .standards/check.mjs' },
+    scripts: { 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write' },
     devDependencies: { '@sirloinbh/eslint-config': '1.0.0', '@sirloinbh/prettier-config': '1.0.0' },
   });
   assert.deepEqual(checkManifest(manifest, (p) => repo[p] ?? null), []);

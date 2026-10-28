@@ -49,8 +49,18 @@ workout-memo `package-lock.json`의 설치 버전 기준(2026-10-22)이다. 앱�
 4. 필요하면 socket.dev, Snyk Advisor, deps.dev로 사전 검증한다.
 5. 조사 결과를 이슈에 표로 남기고 **사용자 승인**을 받는다. 승인 없이 `npm install`, `npx`, `pnpm/yarn/bun install`을 실행하지 않는다.
 6. `npm install --ignore-scripts <패키지>@<버전>`으로 설치하고, lockfile 변경과 `ioc-scan` 결과를 PR에 적는다.
+7. 앱 리포에서는 `npm run lockfiles:sync`로 `frontend/`·`backend/` lockfile을 루트 lockfile에 맞춘다(아래 [하위 lockfile](#하위-lockfile-frontend-backend)).
 
 예외: 자체 패키지(`@sirloinbh/*`)는 14일 규칙 대신 출처 확인으로 검증한다([ADR-0004](adr/0004-own-packages-provenance-instead-of-14-days.md)). 자체 패키지의 외부 peerDependencies는 위 절차를 그대로 따른다.
+
+## 하위 lockfile (frontend/, backend/)
+
+앱 리포에는 lockfile이 셋 있다. CI는 루트 `package-lock.json`으로 설치하고, 운영 Docker 빌드는 `frontend/package-lock.json`·`backend/package-lock.json`으로 설치한다. 둘이 다르면 CI가 검사한 버전과 운영 이미지의 버전이 달라진다(#303).
+
+- `standards-check`(`npm run standards:check`, CI)가 하위 lockfile이 루트 lockfile과 같은 버전을 쓰는지 본다. 패키지 위치(호이스팅) 차이는 무시하고 설치되는 버전만 비교한다. 다르면 실패한다.
+- `npm run lockfiles:sync`(`node .standards/lockfiles.mjs --write`)가 다른 하위 lockfile만 루트 lockfile의 버전으로 다시 쓴다. **아무것도 내려받거나 설치하지 않는다.** 루트 lockfile의 `resolved`·`integrity`를 그대로 옮기고, 위치와 `dev`·`optional` 표시만 다시 계산한다. 맞는 파일은 건드리지 않는다.
+- `--write` 없이 실행하면 다른 패키지만 보여 준다.
+- 중앙 리포에서는 `node scripts/lockfiles.mjs --root <앱 폴더>`로 같은 검사를 한다.
 
 ## 자동 업데이트
 

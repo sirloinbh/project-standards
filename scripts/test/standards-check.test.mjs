@@ -38,7 +38,7 @@ function makeRepo(edit = () => {}) {
   const v = data.versions.packages;
   const lint = { '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] };
   const tsconfig = { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] };
-  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs' }, devDependencies: lint }));
+  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write' }, devDependencies: lint }));
   const tokens = { '@sirloinbh/design-tokens': v['@sirloinbh/design-tokens'] };
   write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, dependencies: tokens, devDependencies: tsconfig }));
   write('backend/package.json', JSON.stringify({ name: 'backend', ...pkgFields, devDependencies: tsconfig }));
@@ -147,6 +147,20 @@ test('warns when a pattern disappears or strictPort is missing', () => {
   assert.deepEqual(result.problems, []);
   assert.equal(result.warnings.length, 3);
   assert.ok(result.warnings.some((w) => w.includes('strictPort')));
+});
+
+test('frontend/ and backend/ lockfiles must pin the versions of the root lockfile', () => {
+  const entry = (version) => ({ version, resolved: `https://registry.npmjs.org/react/-/react-${version}.tgz`, integrity: `sha512-${version}` });
+  const lockfiles = (subVersion) => ({ write, read }) => {
+    write('package.json', JSON.stringify({ ...JSON.parse(read('package.json')), workspaces: ['frontend', 'backend'] }));
+    const frontend = { name: 'frontend', dependencies: { react: '^1.0.0' } };
+    write('package-lock.json', JSON.stringify({ lockfileVersion: 3, packages: { '': { name: 'study-log' }, frontend, backend: { name: 'backend' }, 'node_modules/react': entry('1.0.1') } }));
+    write('frontend/package-lock.json', JSON.stringify({ lockfileVersion: 3, packages: { '': frontend, 'node_modules/react': entry(subVersion) } }));
+  };
+  assert.deepEqual(check(lockfiles('1.0.1')).problems, []);
+  const stale = check(lockfiles('1.0.0'));
+  assert.deepEqual(paths(stale), ['하위 lockfile|frontend/package-lock.json']);
+  assert.match(stale.problems[0].message, /버전이 다른 패키지 1개: react 1\.0\.0 \(루트 1\.0\.1\)\. node \.standards\/lockfiles\.mjs --write로 맞춥니다/);
 });
 
 test('the vendored copy runs on its own and exits 0, 1, or 2', () => {

@@ -8,6 +8,8 @@
       ".standards/lib/manifest.mjs": "scripts/lib/manifest.mjs",
       ".standards/lib/hash.mjs": "scripts/lib/hash.mjs",
       ".standards/lib/render.mjs": "scripts/lib/render.mjs",
+      ".standards/lib/lockfiles.mjs": "scripts/lib/lockfiles.mjs",
+      ".standards/lockfiles.mjs": "scripts/lockfiles.mjs",
       ".standards/ioc-scan.mjs": "scripts/ioc-scan.mjs",
       ".standards/secret-scan.mjs": "scripts/secret-scan.mjs",
       ".standards/blocked-packages.json": "security/blocked-packages.json"
@@ -17,7 +19,7 @@
   "mirror": [{ "from": "skills/", "to": ".claude/skills/", "why": "Claude Code는 .claude/skills/만 읽는다. 원본 skills/와 같은 내용의 복제본을 함께 관리한다." }],
   "fields": {
     "app": {
-      "package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "scripts": { "standards:check": "node .standards/check.mjs" }, "devDependencies": { "@sirloinbh/eslint-config": "{{versions.packages.@sirloinbh/eslint-config}}", "@sirloinbh/prettier-config": "{{versions.packages.@sirloinbh/prettier-config}}" } },
+      "package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "scripts": { "standards:check": "node .standards/check.mjs", "lockfiles:sync": "node .standards/lockfiles.mjs --write" }, "devDependencies": { "@sirloinbh/eslint-config": "{{versions.packages.@sirloinbh/eslint-config}}", "@sirloinbh/prettier-config": "{{versions.packages.@sirloinbh/prettier-config}}" } },
       "frontend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "dependencies": { "@sirloinbh/design-tokens": "{{versions.packages.@sirloinbh/design-tokens}}" }, "devDependencies": { "@sirloinbh/tsconfig": "{{versions.packages.@sirloinbh/tsconfig}}" } },
       "backend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "devDependencies": { "@sirloinbh/tsconfig": "{{versions.packages.@sirloinbh/tsconfig}}" } }
     }

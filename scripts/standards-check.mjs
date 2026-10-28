@@ -5,6 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { compareWorkspaceLockfile, workspaceLockfiles } from './lib/lockfiles.mjs';
 import { checkManifest, MANIFEST_PATH } from './lib/manifest.mjs';
 
 const CENTRAL = 'sirloinbh/project-standards';
@@ -131,6 +132,31 @@ function checkPackages(packages, read, problems) {
   }
 }
 
+// CI installs from the root lockfile and the Docker builds from frontend/ and backend/ lockfiles (#303).
+function checkLockfiles(read, problems) {
+  const rootPackage = read('package.json');
+  const rootLock = read('package-lock.json');
+  if (rootPackage === null || rootLock === null) return;
+  const lock = JSON.parse(rootLock);
+  for (const workspace of workspaceLockfiles(JSON.parse(rootPackage), (rel) => read(rel) !== null)) {
+    const file = `${workspace}/package-lock.json`;
+    let differences;
+    try {
+      differences = compareWorkspaceLockfile(lock, workspace, JSON.parse(read(file)));
+    } catch (error) {
+      problems.push({ group: '하위 lockfile', path: file, message: error.message });
+      continue;
+    }
+    if (!differences.length) continue;
+    const shown = differences.slice(0, 5).map((d) => `${d.name} ${d.workspace.join('·') || '없음'} (루트 ${d.root.join('·') || '없음'})`);
+    problems.push({
+      group: '하위 lockfile',
+      path: file,
+      message: `루트 package-lock.json과 버전이 다른 패키지 ${differences.length}개: ${shown.join(', ')}${differences.length > 5 ? ' 외' : ''}. node .standards/lockfiles.mjs --write로 맞춥니다`,
+    });
+  }
+}
+
 /** Returns { problems: [{ group, path, message }], warnings: [string], manifest }. */
 export function runCheck(root) {
   const read = (rel) => {
@@ -148,6 +174,7 @@ export function runCheck(root) {
   }
   checkPackages(manifest.packages, read, problems);
   if (manifest.registry) checkRegistry(manifest.registry, read, problems, warnings);
+  checkLockfiles(read, problems);
   warnings.push(...checkApi(apiSources(root)));
   const compose = read('compose.yaml');
   if (compose !== null && (manifest.files['frontend/Dockerfile'] || manifest.files['backend/Dockerfile'])) {
