@@ -105,6 +105,26 @@ export function checkApi(sources) {
   return warnings;
 }
 
+// Frontend file names are lowercase words joined by hyphens; dots only separate kinds (docs/conventions/code.md, #312).
+const FILE_NAME = /^[a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+(-[a-z0-9]+)*)*$/;
+export function checkFileNames(files) {
+  const bad = files.filter((rel) => /\.(ts|tsx)$/.test(rel) && !FILE_NAME.test(rel.split('/').pop()));
+  if (!bad.length) return [];
+  const shown = bad.slice(0, 5).join(', ');
+  return [`frontend/src: 파일 이름은 소문자와 하이픈으로 씁니다(docs/conventions/code.md). ${bad.length}개: ${shown}${bad.length > 5 ? ' 외' : ''}`];
+}
+
+function frontendFiles(root) {
+  const dir = path.join(root, 'frontend/src');
+  if (!fs.existsSync(dir)) return [];
+  return fs
+    .readdirSync(dir, { recursive: true })
+    .map((rel) => String(rel).split(path.sep).join('/'))
+    .filter((rel) => !rel.split('/').includes('node_modules') && fs.statSync(path.join(dir, rel)).isFile())
+    .sort()
+    .map((rel) => `frontend/src/${rel}`);
+}
+
 function apiSources(root) {
   const dir = path.join(root, 'backend/src');
   if (!fs.existsSync(dir)) return [];
@@ -176,6 +196,7 @@ export function runCheck(root) {
   if (manifest.registry) checkRegistry(manifest.registry, read, problems, warnings);
   checkLockfiles(read, problems);
   warnings.push(...checkApi(apiSources(root)));
+  warnings.push(...checkFileNames(frontendFiles(root)));
   const compose = read('compose.yaml');
   if (compose !== null && (manifest.files['frontend/Dockerfile'] || manifest.files['backend/Dockerfile'])) {
     for (const message of checkComposeSecrets(compose)) problems.push({ group: '빌드 secret', path: 'compose.yaml', message });

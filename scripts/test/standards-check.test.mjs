@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll } from '../lib/registry.mjs';
-import { checkApi, formatReport, runCheck } from '../standards-check.mjs';
+import { checkApi, checkFileNames, formatReport, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -175,6 +175,16 @@ test('frontend/ and backend/ lockfiles must pin the versions of the root lockfil
   const stale = check(lockfiles('1.0.0'));
   assert.deepEqual(paths(stale), ['하위 lockfile|frontend/package-lock.json']);
   assert.match(stale.problems[0].message, /버전이 다른 패키지 1개: react 1\.0\.0 \(루트 1\.0\.1\)\. node \.standards\/lockfiles\.mjs --write로 맞춥니다/);
+});
+
+test('frontend file names must be lowercase words and hyphens (warning only, #312)', () => {
+  const ok = ['frontend/src/app.tsx', 'frontend/src/vite-env.d.ts', 'frontend/src/lib/use-notice.ts', 'frontend/src/month-calendar.test.tsx', 'frontend/src/index.css', 'frontend/src/Logo.svg'];
+  assert.deepEqual(checkFileNames(ok), []);
+  const bad = ['frontend/src/StudyLogs.tsx', 'frontend/src/Calendar.tsx', 'frontend/src/study_logs.ts', 'frontend/src/a.tsx', 'frontend/src/B.tsx', 'frontend/src/C.tsx', 'frontend/src/D.tsx'];
+  assert.deepEqual(checkFileNames(bad), ['frontend/src: 파일 이름은 소문자와 하이픈으로 씁니다(docs/conventions/code.md). 6개: frontend/src/StudyLogs.tsx, frontend/src/Calendar.tsx, frontend/src/study_logs.ts, frontend/src/B.tsx, frontend/src/C.tsx 외']);
+  const result = check(({ write }) => write('frontend/src/StudyLogs.tsx', 'export function StudyLogs() { return null; }\n'));
+  assert.deepEqual(result.problems, []);
+  assert.deepEqual(result.warnings, ['frontend/src: 파일 이름은 소문자와 하이픈으로 씁니다(docs/conventions/code.md). 1개: frontend/src/StudyLogs.tsx']);
 });
 
 test('the vendored copy runs on its own and exits 0, 1, or 2', () => {
