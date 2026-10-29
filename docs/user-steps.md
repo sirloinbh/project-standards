@@ -16,8 +16,8 @@
 | 9 | 리포 11개 secret scanning·push protection·CodeQL 켜기, App에 Code scanning 읽기 권한 추가 | 15분 | #261 | 안 함 (2026-10-27 추가) |
 | 10 | Claude API 키 발급·지출 한도, SSM에 넣기, 서버 읽기 키 넣기 | 15분 | #266 | 안 함 (2026-10-27 추가) |
 | 11 | healthchecks.io 계정·앱별 체크 만들고 서버 `.env`에 신호 주소 넣기 | 20분 | #286 | 안 함 (2026-10-27 추가) |
-| 12 | 동기화 PR 8개의 lockfile 맞추기 (공유 ESLint 설정 1.1.0) | 15분 | #328 | 진행 중 (2026-10-28): 설치 승인 받음, 토큰 권한 부족으로 멈춤 |
-| 13 | 앱 PR 3개 병합 (스킬 정리) | 5분 | #313 | 안 함 (2026-10-28 추가). 12 다음 |
+| 12 | 동기화 PR 8개의 lockfile 맞추기 (공유 ESLint 설정 1.1.0) | 15분 | #328 | 완료 (2026-10-29) |
+| 13 | 앱 PR 3개 병합 (스킬 정리) | 5분 | #313 | 완료 (2026-10-29, 에이전트가 병합) |
 | 14 | ESLint·Prettier 플러그인 등 설치 승인 | 10분 | #245 | 안 함 |
 | 15 | Fork에서 병합된 로컬 브랜치 정리 | 5분 | — | 안 함 (2026-10-28 추가) |
 
@@ -250,6 +250,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 
 ## 12. 동기화 PR 8개의 lockfile 맞추기 (#328)
 
+> **완료 (2026-10-29).** 8개 PR 모두 lockfile 커밋을 더해 병합했습니다. 바뀐 곳은 8개 모두 `@sirloinbh/eslint-config` 항목의 같은 4줄이었습니다. 이 PC의 Node(24.22.1)가 앱의 고정 버전(24.21.0)과 달라 `engine-strict`에 걸렸으므로, lockfile만 쓰는 이번 실행에는 `--engine-strict=false`를 더했습니다. 아래 절차는 다음에 공유 패키지 버전을 올릴 때 다시 씁니다.
+
 **왜 필요한가요:** 공유 ESLint 설정 1.1.0을 배포했고(태그 `eslint-config/v1.1.0`, 2026-10-28), 앱 8개의 동기화 PR이 루트 `package.json`의 `@sirloinbh/eslint-config`를 1.1.0으로 바꿨습니다. lockfile은 그대로라 CI가 `npm ci`에서 실패합니다(`lock file's @sirloinbh/eslint-config@1.0.0 does not satisfy ...@1.1.0`). 에이전트는 설치 명령을 실행할 수 없어(차단 hook, [agent-guardrails.md](agent-guardrails.md)) 설치 한 줄은 사용자가 실행합니다. 설치 승인은 2026-10-28에 받았습니다.
 
 | 앱 | 동기화 PR | 브랜치 |
@@ -272,7 +274,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 2. **lockfile 다시 쓰기.** 앱마다 동기화 PR 브랜치에서 실행합니다. `node_modules`를 만들지 않고 설치 스크립트도 실행하지 않습니다.
    ```powershell
    $env:NODE_AUTH_TOKEN = (ghp auth token)
-   npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+   npm install --package-lock-only --ignore-scripts --engine-strict=false --no-audit --no-fund
    Remove-Item Env:NODE_AUTH_TOKEN
    ```
    에이전트에게 "12 준비"라고 하면 8개 브랜치를 작업 폴더(worktree)로 받아 두고, 한 번에 돌리는 스크립트를 만들어 줍니다. 로컬 앱 체크아웃은 건드리지 않습니다.
@@ -287,11 +289,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 
 앱 스킬의 낡은 줄을 고치는 PR입니다. 스킬 문서만 바뀝니다.
 
-- [ ] sirloinbh/study-log#119: `study-log-testing`·`study-log-foundation`의 도구·토큰 설명
-- [ ] sirloinbh/plan-routine#35: 같은 두 줄
-- [ ] sirloinbh/workout-memo#176: `workout-communication` 삭제. **12의 workout-memo 동기화 PR(#177)을 먼저 병합합니다.** 그래야 대신 쓸 `skills/std-communication/`이 들어와 있습니다
+- [x] sirloinbh/study-log#119: `study-log-testing`·`study-log-foundation`의 도구·토큰 설명
+- [x] sirloinbh/plan-routine#35: 같은 두 줄
+- [x] sirloinbh/workout-memo#176: `workout-communication` 삭제. 12의 workout-memo 동기화 PR(#177)을 먼저 병합했습니다
 
-에이전트에게 맡기려면 "13 병합해 줘"라고 하면 됩니다.
+2026-10-29 병합. 세 PR 모두 `docs/changes/standards-313-skill-cleanup.md`의 표 정렬이 `format:check`에 걸려, Prettier로 정렬하는 커밋을 더한 뒤 병합했습니다.
 
 ## 14. 설치 승인 (#245)
 
@@ -301,6 +303,6 @@ ESLint·Prettier 플러그인 4개(#244), knip(#263), Lighthouse CI(#280), MSW(#
 
 병합이 끝난 로컬 브랜치를 Fork에서 지웁니다. 먼저 main을 체크아웃해 Pull합니다.
 
-- project-standards: `docs/240-research-decisions`, `feat/303-workspace-lockfiles`, `feat/304-shared-dependency-versions`, `feat/308-eslint-config-1-1`, `feat/309-backend-http-standard`, `feat/310-frontend-api-standard`, `feat/311-confirm-dialog-notice`, `docs/307-zod4-research`, `docs/312-api-ui-code-rules`, `feat/313-std-communication`, `fix/326-zod-unbounded-arrays`, `chore/328-eslint-config-1-1-rollout`, `docs/328-pending-user-steps`(이 문서의 PR이 병합된 뒤)
+- project-standards: `docs/240-research-decisions`, `feat/303-workspace-lockfiles`, `feat/304-shared-dependency-versions`, `feat/308-eslint-config-1-1`, `feat/309-backend-http-standard`, `feat/310-frontend-api-standard`, `feat/311-confirm-dialog-notice`, `docs/307-zod4-research`, `docs/312-api-ui-code-rules`, `feat/313-std-communication`, `fix/326-zod-unbounded-arrays`, `chore/328-eslint-config-1-1-rollout`, `docs/328-pending-user-steps`, `chore/323-gitignore-tool-outputs`, `docs/248-domain-research`, `docs/328-user-steps-done`(이 문서의 PR이 병합된 뒤)
 - study-log: `fix/121-content-order-limit`
-- 각 앱(12에서 worktree를 쓴 경우): `chore/standards-sync-*` 로컬 브랜치. 동기화 PR이 병합된 뒤 지웁니다
+- 앱 8개: 12·13에서는 브랜치 없는 작업 폴더만 써서 새로 생긴 로컬 브랜치는 없습니다. Fork에 `chore/standards-sync-*`나 `docs/313-skill-cleanup` 로컬 브랜치가 보이면 병합된 것이니 지워도 됩니다
