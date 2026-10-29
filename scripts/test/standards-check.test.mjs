@@ -39,7 +39,7 @@ function makeRepo(edit = () => {}) {
   const lint = { '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] };
   const tsconfig = { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] };
   const shared = data.versions.dependencies;
-  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write' }, devDependencies: { ...shared.root.devDependencies, ...lint } }));
+  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write', knip: 'knip' }, devDependencies: { ...shared.root.devDependencies, ...lint } }));
   const tokens = { '@sirloinbh/design-tokens': v['@sirloinbh/design-tokens'] };
   write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, dependencies: { ...shared.frontend.dependencies, ...tokens }, devDependencies: { ...shared.frontend.devDependencies, ...tsconfig } }));
   write('backend/package.json', JSON.stringify({ name: 'backend', ...pkgFields, dependencies: shared.backend.dependencies, devDependencies: { ...shared.backend.devDependencies, ...tsconfig } }));

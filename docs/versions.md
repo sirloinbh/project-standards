@@ -39,6 +39,7 @@
 | `eslint-config-prettier` | 10.1.8 | `package.json` | devDependencies |
 | `eslint-plugin-react-hooks` | 7.1.1 | `package.json` | devDependencies |
 | `globals` | 16.5.0 | `package.json` | devDependencies |
+| `knip` | 6.41.0 | `package.json` | devDependencies |
 | `prettier` | 3.9.10 | `package.json` | devDependencies |
 | `typescript-eslint` | 8.71.2 | `package.json` | devDependencies |
 | `class-variance-authority` | 0.7.1 | `frontend/package.json` | dependencies |

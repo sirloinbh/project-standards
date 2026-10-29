@@ -4,7 +4,7 @@ npm 공급망 공격(Shai-Hulud 계열)이 진행 중이므로 의존성은 최�
 
 ## 버전 원본
 
-- 도구(Node, npm, PostgreSQL, 이미지)와 앱 8개가 함께 쓰는 의존성 37개의 정확한 버전은 [`versions.json`](../versions.json)이 원본이다. 표는 [versions.md](versions.md)로 생성된다(`npm run docs`).
+- 도구(Node, npm, PostgreSQL, 이미지)와 앱 8개가 함께 쓰는 의존성 38개의 정확한 버전은 [`versions.json`](../versions.json)이 원본이다. 표는 [versions.md](versions.md)로 생성된다(`npm run docs`).
 - 앱 공통 의존성은 앱 `package.json` 3개의 관리 필드다. 앱 하나만 버전이 다르면 `standards-check`가 실패한다(#304). 버전을 올릴 때는 중앙의 `versions.json`을 고치고, 앱마다 열리는 동기화 PR에서 lockfile을 맞춘다.
 - 한 앱만 쓰는 의존성은 그 앱이 버전을 정한다. 메이저 버전은 아래 표를 따른다.
 
@@ -57,4 +57,5 @@ npm 공급망 공격(Shai-Hulud 계열)이 진행 중이므로 의존성은 최�
 ## 정기 점검
 
 - CI가 매번 `ioc-scan`으로 lockfile·설치 스크립트·워크플로를 점검한다(#76).
+- CI가 매번 knip(`npm run knip`, 설정은 중앙 관리 파일 `knip.json`)으로 안 쓰는 파일·export·의존성을 찾는다(#263). 처음에는 경고만 낸다. 안 쓰는 의존성은 Dependabot PR과 취약점 대응 대상만 늘리므로 찾으면 지운다. 중앙 관리 파일(`.standards/`, 공통 UI 컴포넌트·도우미, `frontend/public/`)은 검사에서 뺀다.
 - 준수 현황(#82)에 리포별 `npm audit` 결과를 모은다.
