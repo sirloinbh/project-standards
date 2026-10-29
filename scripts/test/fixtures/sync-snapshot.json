@@ -110,6 +110,8 @@
     "full frontend/src/lib/theme.ts",
     "full frontend/src/lib/use-notice.ts",
     "full frontend/src/lib/utils.ts",
+    "full frontend/src/test/contract-api.test.ts",
+    "full frontend/src/test/contract-api.ts",
     "full frontend/tsconfig.json",
     "full frontend/vitest.config.ts",
     "full knip.json",

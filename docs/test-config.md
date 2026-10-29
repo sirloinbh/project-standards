@@ -61,3 +61,8 @@ workout-memo `package-lock.json`의 설치 버전이다(2026-10-22). 새 버전�
 ## 접근성·성능 점수 (Lighthouse CI, #280)
 
 레지스트리 `features.lighthouse`가 켜진 앱(지금은 workout-memo)은 `lighthouserc.json`을 받습니다. 공통 CI `verify` job이 `npm run check`로 만든 `frontend/dist`를 Lighthouse CI(`@lhci/cli`)로 재고, 점수를 작업 요약에 씁니다. 기준(접근성 0.9, 모범 사례 0.9, 성능 0.8)보다 낮아도 경고만 냅니다. 보고서는 artifact `lighthouse-report`에 7일 남습니다. 자세한 결정은 [변경 기록](changes/280-lighthouse.md)에 있습니다.
+
+## 백엔드 없는 화면 테스트 (MSW 계약 목, #281)
+
+레지스트리 `features.msw`가 켜진 앱(지금은 workout-memo)은 `frontend/src/test/contract-api.ts`를 받습니다. 테스트 파일에서 `setupContractApi()`를 부르면 MSW가 `docs/openapi.json`의 모든 API에 답하고, 계약에 없는 요청은 테스트를 실패시킵니다. 데이터는 `contractHandlers({ 'GET /api/…': … })`로 테스트마다 넣습니다. 계약에 성공 응답 스키마가 없으면 본문이 비므로, 목록 화면은 `setupContractApi({ emptyBody: [] })`처럼 기본값을 줍니다. 자세한 내용은 [변경 기록](changes/281-msw.md)에 있습니다.
+
