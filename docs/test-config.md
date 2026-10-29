@@ -57,3 +57,7 @@ workout-memo `package-lock.json`의 설치 버전이다(2026-10-22). 새 버전�
 1. 앱 리포에 이슈를 열고 위 표의 패키지를 적어 사용자 승인을 받는다.
 2. 사용자가 설치한다. `setup.ts`, `e2e/` 테스트, `test:e2e` 스크립트처럼 프로젝트 소유 파일을 앱 PR로 추가한다.
 3. 중앙 리포에서 `registry/projects.json`의 그 앱 `features.vitest` 또는 `features.e2e`를 `true`로 바꾸는 PR을 연다. 다음 동기화 PR에 설정 파일이 들어간다.
+
+## 접근성·성능 점수 (Lighthouse CI, #280)
+
+레지스트리 `features.lighthouse`가 켜진 앱(지금은 workout-memo)은 `lighthouserc.json`을 받습니다. 공통 CI `verify` job이 `npm run check`로 만든 `frontend/dist`를 Lighthouse CI(`@lhci/cli`)로 재고, 점수를 작업 요약에 씁니다. 기준(접근성 0.9, 모범 사례 0.9, 성능 0.8)보다 낮아도 경고만 냅니다. 보고서는 artifact `lighthouse-report`에 7일 남습니다. 자세한 결정은 [변경 기록](changes/280-lighthouse.md)에 있습니다.

@@ -113,6 +113,7 @@
     "full frontend/tsconfig.json",
     "full frontend/vitest.config.ts",
     "full knip.json",
+    "full lighthouserc.json",
     "fields package.json",
     "full playwright.config.ts",
     "full prettier.config.mjs",

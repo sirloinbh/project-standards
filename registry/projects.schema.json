@@ -75,7 +75,7 @@
         },
         "features": {
           "type": "object",
-          "required": ["e2e", "e2eVisual", "openapi", "contract", "ui", "vitest", "claude", "devcontainer"],
+          "required": ["e2e", "e2eVisual", "openapi", "contract", "ui", "vitest", "claude", "devcontainer", "lighthouse"],
           "additionalProperties": false,
           "properties": {
             "e2e": { "type": "boolean", "description": "Playwright 브라우저 테스트를 쓴다. CI e2e 작업과 playwright.config.ts 템플릿(templates/e2e)을 켠다(#33)" },
@@ -85,6 +85,7 @@
             "ui": { "type": "boolean", "description": "공통 UI 컴포넌트(templates/ui)를 동기화한다. 앱에 radix-ui 등 의존성을 설치한 뒤 켠다(#123, #126)" },
             "vitest": { "type": "boolean", "description": "화면 단위 테스트 설정 frontend/vitest.config.ts(templates/vitest)를 동기화한다. vitest·jsdom·Testing Library를 설치한 뒤 켠다(#33)" },
             "devcontainer": { "type": "boolean", "description": "새 PC용 Dev Container 설정(.devcontainer/, templates/devcontainer)을 동기화한다. Node는 versions.json images.devcontainerNode, DB는 앱 compose.yaml의 db 서비스를 쓴다(#282)" },
+            "lighthouse": { "type": "boolean", "description": "CI에서 빌드한 프런트(frontend/dist)를 Lighthouse CI로 재고 기준 미달을 경고만 한다. lighthouserc.json(templates/lighthouse)을 동기화하고, 앱 루트에 @lhci/cli를 설치한 뒤 켠다(#280)" },
             "claude": { "type": "boolean", "description": "백엔드가 Claude API를 쓴다. 배포 스크립트가 AWS SSM에서 ANTHROPIC_API_KEY를 읽어 넘기고, 중앙 명령 tools/app-secrets.mjs가 로컬 .env에 넣는다(ADR-0010, #265)" }
           }
         },

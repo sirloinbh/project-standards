@@ -43,7 +43,8 @@
         "ui": true,
         "vitest": true,
         "claude": false,
-        "devcontainer": true
+        "devcontainer": true,
+        "lighthouse": true
       },
       "skills": [
         "workout-foundation",
@@ -96,7 +97,8 @@
         "ui": true,
         "vitest": true,
         "claude": true,
-        "devcontainer": false
+        "devcontainer": false,
+        "lighthouse": false
       },
       "skills": [
         "study-log-foundation",
@@ -147,7 +149,8 @@
         "ui": true,
         "vitest": true,
         "claude": false,
-        "devcontainer": false
+        "devcontainer": false,
+        "lighthouse": false
       },
       "skills": [
         "health-log-foundation",
@@ -198,7 +201,8 @@
         "ui": true,
         "vitest": true,
         "claude": false,
-        "devcontainer": false
+        "devcontainer": false,
+        "lighthouse": false
       },
       "skills": [
         "life-journal-foundation",
@@ -249,7 +253,8 @@
         "ui": true,
         "vitest": true,
         "claude": false,
-        "devcontainer": false
+        "devcontainer": false,
+        "lighthouse": false
       },
       "skills": [
         "money-ledger-foundation",
@@ -300,7 +305,8 @@
         "ui": true,
         "vitest": true,
         "claude": false,
-        "devcontainer": false
+        "devcontainer": false,
+        "lighthouse": false
       },
       "skills": [
         "english-study-foundation",
@@ -351,7 +357,8 @@
         "ui": true,
         "vitest": true,
         "claude": false,
-        "devcontainer": false
+        "devcontainer": false,
+        "lighthouse": false
       },
       "skills": [
         "plan-routine-foundation",
@@ -402,7 +409,8 @@
         "ui": true,
         "vitest": true,
         "claude": false,
-        "devcontainer": false
+        "devcontainer": false,
+        "lighthouse": false
       },
       "skills": [
         "dev-career-portfolio-foundation",
