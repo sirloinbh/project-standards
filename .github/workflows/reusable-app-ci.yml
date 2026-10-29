@@ -30,6 +30,10 @@ on:
         description: 화면 비교용 Playwright 이미지, digest 고정 (versions.json images.playwright)
         type: string
         default: ''
+      knip-strict:
+        description: knip 결과가 있으면 CI를 실패시킨다. 결과가 0이 된 앱만 켠다 (레지스트리 features.knipStrict, #342)
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -88,9 +92,12 @@ jobs:
           fi
       - run: npm run check
       - name: 안 쓰는 파일·export·의존성 (knip, 경고만)
-        # 처음에는 실패시키지 않는다(#263). 결과가 0이 된 앱부터 실패로 바꾼다.
-        if: hashFiles('knip.json') != ''
+        # 처음에는 실패시키지 않는다(#263). 결과가 0이 된 앱은 features.knipStrict로 실패 단계를 쓴다(#342).
+        if: hashFiles('knip.json') != '' && !inputs.knip-strict
         run: npm run knip || echo "::warning title=knip::안 쓰는 파일·export·의존성이 있습니다. 이 단계 로그를 확인하세요."
+      - name: 안 쓰는 파일·export·의존성 (knip)
+        if: hashFiles('knip.json') != '' && inputs.knip-strict
+        run: npm run knip
       - name: 접근성·성능 점수 (Lighthouse CI, 경고만)
         # 레지스트리 features.lighthouse인 앱만 lighthouserc.json을 받는다(#280). npm run check가 만든
         # frontend/dist를 정적으로 띄워 러너의 Google Chrome으로 잰다. 기준 미달·측정 실패 모두 CI를 멈추지 않는다.
