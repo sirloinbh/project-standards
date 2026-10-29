@@ -72,6 +72,11 @@ test('every managed file Prettier would format is in .prettierignore, so npm run
   assert.deepEqual(formatted.map((f) => f.path).filter((p) => !ignoredBy(patterns, p)), []);
 });
 
+test('the Tailwind Prettier plugin keeps the spaces in class strings (#246)', () => {
+  // Without it `row${on ? ' top' : ''}` loses its space and the class becomes "rowtop".
+  assert.match(byPath['prettier.config.mjs'].content, /tailwindPreserveWhitespace: true/);
+});
+
 test('the app ESLint config skips the vendored central scripts (#154)', () => {
   assert.match(byPath['eslint.config.mjs'].content, /ignores: \['\.standards\/\*\*'\]/);
 });
