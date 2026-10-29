@@ -72,6 +72,10 @@ test('every managed file Prettier would format is in .prettierignore, so npm run
   assert.deepEqual(formatted.map((f) => f.path).filter((p) => !ignoredBy(patterns, p)), []);
 });
 
+test('a label around the UI kit Input counts as associated (#246)', () => {
+  assert.match(byPath['eslint.config.mjs'].content, /'jsx-a11y-x\/label-has-associated-control': \['error', \{ controlComponents: \['Input'\] \}\]/);
+});
+
 test('the Tailwind Prettier plugin keeps the spaces in class strings (#246)', () => {
   // Without it `row${on ? ' top' : ''}` loses its space and the class becomes "rowtop".
   assert.match(byPath['prettier.config.mjs'].content, /tailwindPreserveWhitespace: true/);
