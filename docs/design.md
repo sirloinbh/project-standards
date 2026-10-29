@@ -12,7 +12,7 @@
 |---|---|---|
 | Node / npm | `24.21.0` / `npm@11.19.0` | `.nvmrc`, `.node-version`, `package.json`의 `packageManager`·`engines` |
 | `.npmrc` | `engine-strict=true`, `save-exact=true` | 8개 동일 |
-| 동일 파일 | `.editorconfig`, `.gitattributes`, `.prettierrc.json`, `eslint.config.mjs`, `frontend/tsconfig.json`, `backend/tsconfig.json` | 해시 비교 |
+| 동일 파일 | `.editorconfig`, `.gitattributes`, `prettier.config.mjs`, `eslint.config.mjs`, `frontend/tsconfig.json`, `backend/tsconfig.json` | 해시 비교 |
 | Docker 이미지 | `node:24.21.0-alpine`, `nginx:1.27-alpine`, `postgres:17-alpine` | Dockerfile, `compose.yaml`, `ci.yml` |
 | 줄바꿈 | `* text=auto eol=lf`, `*.ps1 text eol=crlf` | `.gitattributes` |
 | 린트 도구 | `eslint 10.12.0`, `@eslint/js 10.0.1`, `typescript-eslint 8.71.2`, `globals 16.5.0`, `eslint-plugin-react-hooks 7.1.1`, `eslint-config-prettier 10.1.8`, `prettier 3.9.10` | 루트 `devDependencies` |
@@ -109,7 +109,7 @@ project-standards/
 | 패키지 | 내용 | peerDependencies | 사용하는 곳 |
 |---|---|---|---|
 | `@sirloinbh/eslint-config` | `createConfig(plugins, options)`를 export하는 팩토리. 현재 `eslint.config.mjs` 규칙과 같다 | `eslint`, `@eslint/js`, `typescript-eslint`, `globals`, `eslint-plugin-react-hooks`, `eslint-config-prettier` (현재 설치 버전 그대로) | 루트 |
-| `@sirloinbh/prettier-config` | 현재 `.prettierrc.json`과 같은 JSON | `prettier` | 루트 |
+| `@sirloinbh/prettier-config` | 앱 `prettier.config.mjs`가 불러 쓰는 공통 옵션 JSON | `prettier` | 루트 |
 | `@sirloinbh/tsconfig` | `base.json`, `react-app.json`, `node-api.json` | `typescript` | `frontend/`, `backend/` |
 | `@sirloinbh/design-tokens` | `tokens.css`(`:root` 변수, Tailwind 불필요), `tailwind.css`(`@theme static`), 브랜드 변수 목록 | 없음 | `frontend/` |
 
@@ -154,9 +154,9 @@ packages/<pkg> 변경 PR (버전·CHANGELOG 포함) → 사용자 병합
 | 분류 | 파일 | 하위에서 수정하면 |
 |---|---|---|
 | A안 패키지 | ESLint·Prettier·tsconfig·디자인 토큰 내용 | 설치 버전이 manifest와 다르면 실패 |
-| B안 전체 관리 | `.editorconfig`, `.gitattributes`, `.nvmrc`, `.node-version`, `.npmrc`(루트·`frontend/`·`backend/`), `eslint.config.mjs`, `.prettierrc.json`, `frontend/tsconfig.json`, `backend/tsconfig.json`, `AGENTS.md`, `CLAUDE.md`, `skills/std-*`, `.claude/skills/std-*`, `.github/ISSUE_TEMPLATE/*`, `.github/pull_request_template.md`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `.standards/check.mjs`, `.standards/lockfiles.mjs`, `scripts/claude-skills.mjs`, `frontend/Dockerfile`, `backend/Dockerfile`, `frontend/nginx.conf`, `backend/src/standard/http.ts`, 공통 UI(`features.ui`: `frontend/src/components/ui/`, `frontend/src/lib/`의 공통 도우미, `frontend/src/health.ts`) | 해시가 다르면 실패 |
+| B안 전체 관리 | `.editorconfig`, `.gitattributes`, `.nvmrc`, `.node-version`, `.npmrc`(루트·`frontend/`·`backend/`), `eslint.config.mjs`, `prettier.config.mjs`, `frontend/tsconfig.json`, `backend/tsconfig.json`, `AGENTS.md`, `CLAUDE.md`, `skills/std-*`, `.claude/skills/std-*`, `.github/ISSUE_TEMPLATE/*`, `.github/pull_request_template.md`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `.standards/check.mjs`, `.standards/lockfiles.mjs`, `scripts/claude-skills.mjs`, `frontend/Dockerfile`, `backend/Dockerfile`, `frontend/nginx.conf`, `backend/src/standard/http.ts`, 공통 UI(`features.ui`: `frontend/src/components/ui/`, `frontend/src/lib/`의 공통 도우미, `frontend/src/health.ts`) | 해시가 다르면 실패 |
 | B안 구간 관리 | `.gitignore`, `.prettierignore`, `.env.example`: `# --- project ---` 줄 위가 중앙 구간, 아래가 프로젝트 구간 | 중앙 구간 해시만 비교 |
-| B안 필드 관리 | `package.json`(루트·`frontend/`·`backend/`)의 `packageManager`, `engines`, `@sirloinbh/*` 버전, 앱 공통 의존성 38개(`versions.json` `dependencies`), `standards:check`·`lockfiles:sync` 스크립트 | 필드만 비교 |
+| B안 필드 관리 | `package.json`(루트·`frontend/`·`backend/`)의 `packageManager`, `engines`, `@sirloinbh/*` 버전, 앱 공통 의존성 42개(`versions.json` `dependencies`), `standards:check`·`lockfiles:sync` 스크립트 | 필드만 비교 |
 | 프로젝트 고정값 | 포트, DB 이름, 리포 이름, 도메인, AWS 접두어 | `compose.yaml`, `vite.config.ts`, `playwright.config.ts`, `backend/src/server.ts`, `frontend/nginx.conf`, Dockerfile `EXPOSE`의 실제 값이 레지스트리와 다르면 실패 |
 | 프로젝트 고유 | `AGENTS.project.md`, `skills/<proj>-*`, 앱 코드, `compose.yaml`(빌드 secret 설정은 검사), `docs/changes/` | 검사하지 않음 |
 | 하위 lockfile | `frontend/package-lock.json`, `backend/package-lock.json` | 루트 `package-lock.json`과 설치 버전이 다르면 실패 ([의존성 정책](dependency-policy.md#하위-lockfile-frontend-backend)) |

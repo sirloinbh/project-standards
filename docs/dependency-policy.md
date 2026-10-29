@@ -4,7 +4,7 @@ npm 공급망 공격(Shai-Hulud 계열)이 진행 중이므로 의존성은 최�
 
 ## 버전 원본
 
-- 도구(Node, npm, PostgreSQL, 이미지)와 앱 8개가 함께 쓰는 의존성 38개의 정확한 버전은 [`versions.json`](../versions.json)이 원본이다. 표는 [versions.md](versions.md)로 생성된다(`npm run docs`).
+- 도구(Node, npm, PostgreSQL, 이미지)와 앱 8개가 함께 쓰는 의존성 42개의 정확한 버전은 [`versions.json`](../versions.json)이 원본이다. 표는 [versions.md](versions.md)로 생성된다(`npm run docs`).
 - 앱 공통 의존성은 앱 `package.json` 3개의 관리 필드다. 앱 하나만 버전이 다르면 `standards-check`가 실패한다(#304). 버전을 올릴 때는 중앙의 `versions.json`을 고치고, 앱마다 열리는 동기화 PR에서 lockfile을 맞춘다.
 - 한 앱만 쓰는 의존성은 그 앱이 버전을 정한다. 메이저 버전은 아래 표를 따른다.
 

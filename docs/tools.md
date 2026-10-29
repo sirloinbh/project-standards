@@ -185,7 +185,7 @@ node tools/app-secrets.mjs pull                    # 앱 .env에 넣기 (--app s
 
 동기화되는 `.vscode/settings.json`은 터미널 설정과 함께 저장 시 정리를 켠다(#247). 포맷이 어긋난 파일을 CI까지 가기 전에 편집기에서 고친다.
 
-- JS·TS·JSON·CSS·HTML·Markdown·YAML 파일은 저장하면 Prettier로 포맷한다. 그 리포에 Prettier 설정(`.prettierrc.json`)이 있을 때만 한다(`prettier.requireConfig`). 그래서 같은 파일을 받는 shared-aws-infrastructure와, Prettier를 쓰지 않는 이 중앙 리포에서는 포맷하지 않는다.
+- JS·TS·JSON·CSS·HTML·Markdown·YAML 파일은 저장하면 Prettier로 포맷한다. 그 리포에 Prettier 설정(앱은 `prettier.config.mjs`)이 있을 때만 한다(`prettier.requireConfig`). 그래서 같은 파일을 받는 shared-aws-infrastructure와, Prettier를 쓰지 않는 이 중앙 리포에서는 포맷하지 않는다.
 - 저장하면 ESLint 자동 수정(`source.fixAll.eslint`)을 적용한다. ESLint 설정이 없는 리포에서는 아무 일도 하지 않는다.
 - 앱 리포는 `.vscode/extensions.json`으로 확장 4개를 권한다: Prettier, ESLint, EditorConfig, GitHub Pull Requests. 처음 열면 VS Code가 설치를 묻는다.
 - 이 중앙 리포의 `.vscode/settings.json`은 동기화 대상이 아니다. 중앙 리포에는 Prettier·ESLint가 없어 포맷 설정을 넣지 않았다.
