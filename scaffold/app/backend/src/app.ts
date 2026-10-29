@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Pool } from 'pg';
 import { types } from 'pg';
+
 import { registerHealthRoutes } from './routes/health.js';
 import { errorHandler, notFound } from './routes/shared.js';
 

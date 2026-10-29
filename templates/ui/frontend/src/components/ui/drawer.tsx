@@ -1,5 +1,6 @@
 import type * as React from 'react';
 import { Drawer as DrawerPrimitive } from 'vaul';
+
 import { cn } from '../../lib/utils';
 
 // A bottom panel that can be dragged down to close (vaul). Use it on phones for short choices and forms;
@@ -8,6 +9,7 @@ import { cn } from '../../lib/utils';
 // vaul leaves focus on the trigger by default (autoFocus=false), so keyboard users would tab outside the open
 // drawer. Moving focus inside keeps it consistent with Dialog and Sheet.
 function Drawer({ autoFocus = true, ...props }: React.ComponentProps<typeof DrawerPrimitive.Root>) {
+  // eslint-disable-next-line jsx-a11y-x/no-autofocus -- focus moves into the opened drawer, not on page load.
   return <DrawerPrimitive.Root data-slot="drawer" autoFocus={autoFocus} {...props} />;
 }
 

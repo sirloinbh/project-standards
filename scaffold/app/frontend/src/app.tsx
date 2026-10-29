@@ -1,11 +1,12 @@
 import { QueryClient, QueryClientProvider, useQuery } from '@tanstack/react-query';
 import { HomeIcon } from 'lucide-react';
 import { BrowserRouter, Route, Routes } from 'react-router';
+
 import { AppShell, type NavItem } from './components/layout/app-shell';
 import { Toaster } from './components/ui/sonner';
 
 // Every page URL lives here (docs/directory-rules.md in the central repository).
-export const pages = { overview: '/' } as const;
+const pages = { overview: '/' } as const;
 
 // Main menu (LNB) items, in display order.
 const nav: NavItem[] = [{ to: pages.overview, label: '개요', icon: HomeIcon }];

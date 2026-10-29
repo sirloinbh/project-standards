@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
+
 import { Input } from './input';
 import { Label } from './label';
 

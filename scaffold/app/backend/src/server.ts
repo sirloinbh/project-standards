@@ -1,4 +1,5 @@
 import { Pool } from 'pg';
+
 import { createApp } from './app.js';
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });

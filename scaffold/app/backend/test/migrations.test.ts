@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { checksum, planMigrations, readMigrations, type Migration } from '../src/migrations.js';
+
+import { checksum, type Migration, planMigrations, readMigrations } from '../src/migrations.js';
 
 // Rules of the shared runner without a database (project-standards docs/conventions/database.md).
 const repoMigrations = fileURLToPath(new URL('../../database/migrations/', import.meta.url));

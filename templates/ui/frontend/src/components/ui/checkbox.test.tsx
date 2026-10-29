@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { expect, test, vi } from 'vitest';
+
 import { Checkbox } from './checkbox';
 import { Label } from './label';
 

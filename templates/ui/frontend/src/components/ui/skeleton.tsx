@@ -1,4 +1,5 @@
 import type * as React from 'react';
+
 import { cn } from '../../lib/utils';
 
 // Loading placeholders in the shape of the real content (docs/design-system.md "로딩 표시").

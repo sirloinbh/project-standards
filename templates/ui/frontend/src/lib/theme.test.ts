@@ -1,4 +1,5 @@
 import { afterEach, expect, test } from 'vitest';
+
 import { applyTheme, readTheme, THEME_KEY } from './theme';
 
 afterEach(() => {

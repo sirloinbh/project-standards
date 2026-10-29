@@ -1,7 +1,8 @@
-import { MenuIcon, type LucideIcon } from 'lucide-react';
-import { useState } from 'react';
+import { type LucideIcon, MenuIcon } from 'lucide-react';
 import type * as React from 'react';
+import { useState } from 'react';
 import { Link, NavLink } from 'react-router';
+
 import { cn } from '../../lib/utils';
 import { Button } from '../ui/button';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from '../ui/sheet';

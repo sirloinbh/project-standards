@@ -2,7 +2,9 @@
 // Usage: npm run db:migrate            applies pending files
 //        npm run db:migrate -- --status only reports (no database change)
 import { fileURLToPath } from 'node:url';
+
 import { Client } from 'pg';
+
 import { migrate, migrationStatus, readMigrations } from './migrations.js';
 
 const dir = fileURLToPath(new URL('../../database/migrations/', import.meta.url));

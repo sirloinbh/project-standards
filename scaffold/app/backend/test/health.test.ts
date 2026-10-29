@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
 import type { AddressInfo } from 'node:net';
 import test from 'node:test';
+
 import type { Pool } from 'pg';
+
 import { createApp } from '../src/app.js';
 
 // A stand-in pool: these tests check routing and error shapes without a database.

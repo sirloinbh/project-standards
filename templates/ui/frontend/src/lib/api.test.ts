@@ -1,4 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest';
+
 import { RequestError, requestJson } from './api';
 
 const reply = (status: number, body?: unknown) =>
