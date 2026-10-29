@@ -45,7 +45,8 @@
         "claude": false,
         "devcontainer": true,
         "lighthouse": true,
-        "msw": true
+        "msw": true,
+        "knipStrict": false
       },
       "skills": [
         "workout-foundation",
@@ -100,7 +101,8 @@
         "claude": true,
         "devcontainer": false,
         "lighthouse": false,
-        "msw": false
+        "msw": false,
+        "knipStrict": false
       },
       "skills": [
         "study-log-foundation",
@@ -153,7 +155,8 @@
         "claude": false,
         "devcontainer": false,
         "lighthouse": false,
-        "msw": false
+        "msw": false,
+        "knipStrict": false
       },
       "skills": [
         "health-log-foundation",
@@ -206,7 +209,8 @@
         "claude": false,
         "devcontainer": false,
         "lighthouse": false,
-        "msw": false
+        "msw": false,
+        "knipStrict": false
       },
       "skills": [
         "life-journal-foundation",
@@ -259,7 +263,8 @@
         "claude": false,
         "devcontainer": false,
         "lighthouse": false,
-        "msw": false
+        "msw": false,
+        "knipStrict": false
       },
       "skills": [
         "money-ledger-foundation",
@@ -312,7 +317,8 @@
         "claude": false,
         "devcontainer": false,
         "lighthouse": false,
-        "msw": false
+        "msw": false,
+        "knipStrict": false
       },
       "skills": [
         "english-study-foundation",
@@ -365,7 +371,8 @@
         "claude": false,
         "devcontainer": false,
         "lighthouse": false,
-        "msw": false
+        "msw": false,
+        "knipStrict": false
       },
       "skills": [
         "plan-routine-foundation",
@@ -418,7 +425,8 @@
         "claude": false,
         "devcontainer": false,
         "lighthouse": false,
-        "msw": false
+        "msw": false,
+        "knipStrict": false
       },
       "skills": [
         "dev-career-portfolio-foundation",
