@@ -27,3 +27,8 @@
 ## 검증
 
 - `npm run check`: PR 본문에 기록
+
+## 실패로 바꾼 앱 (2026-10-29)
+
+- health-log, life-journal, money-ledger, english-study, dev-career-portfolio: `serviceTimeZone` export를 뺀 앱 PR이 병합되어 결과가 0이 됐다. `features.knipStrict`를 켰다.
+- study-log, plan-routine, workout-memo는 앱 고유 결과를 정리한 뒤 켠다.
