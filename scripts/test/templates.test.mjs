@@ -76,6 +76,11 @@ test('the app ESLint config skips the vendored central scripts (#154)', () => {
   assert.match(byPath['eslint.config.mjs'].content, /ignores: \['\.standards\/\*\*'\]/);
 });
 
+test('the app ESLint config takes the named react-refresh export, whose configs.vite is a function (#246)', () => {
+  // eslint-plugin-react-refresh 0.5 also has a default export, but its configs.vite is a plain object.
+  assert.match(byPath['eslint.config.mjs'].content, /^import \{ reactRefresh \} from 'eslint-plugin-react-refresh';$/m);
+});
+
 test('section files keep what the project added below the marker', () => {
   const existing = { '.gitignore': `old/\n${PROJECT_MARKER}\ntest-results/\nplaywright-report/\n` };
   const files = renderProfile({ root, profile: 'app', folders: ['common', 'app'], vars, readExisting: (p) => existing[p] ?? null });

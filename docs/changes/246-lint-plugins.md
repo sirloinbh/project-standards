@@ -29,3 +29,7 @@
 ## 검증
 
 - `npm run check`: 아래 PR 본문에 기록
+
+## 후속 수정 (2026-10-29)
+
+- 앱 템플릿 `eslint.config.mjs`가 `eslint-plugin-react-refresh`를 default로 가져와 앱 8개의 lint가 멈췄다. 0.5의 default export는 `configs.vite`가 함수가 아니라 객체라서 `reactRefresh.configs.vite()`가 실패한다. 이름 있는 export(`import { reactRefresh }`)로 바꿨다(패키지 README와 같은 방식).
