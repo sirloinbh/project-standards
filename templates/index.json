@@ -24,7 +24,7 @@
   },
   "fields": {
     "app": {
-      "package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "scripts": { "standards:check": "node .standards/check.mjs", "lockfiles:sync": "node .standards/lockfiles.mjs --write" }, "devDependencies": { "@sirloinbh/eslint-config": "{{versions.packages.@sirloinbh/eslint-config}}", "@sirloinbh/prettier-config": "{{versions.packages.@sirloinbh/prettier-config}}" } },
+      "package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "scripts": { "standards:check": "node .standards/check.mjs", "lockfiles:sync": "node .standards/lockfiles.mjs --write", "knip": "knip" }, "devDependencies": { "@sirloinbh/eslint-config": "{{versions.packages.@sirloinbh/eslint-config}}", "@sirloinbh/prettier-config": "{{versions.packages.@sirloinbh/prettier-config}}" } },
       "frontend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "dependencies": { "@sirloinbh/design-tokens": "{{versions.packages.@sirloinbh/design-tokens}}" }, "devDependencies": { "@sirloinbh/tsconfig": "{{versions.packages.@sirloinbh/tsconfig}}" } },
       "backend/package.json": { "packageManager": "npm@{{versions.npm}}", "engines": { "node": "{{versions.node}}", "npm": "{{versions.npm}}" }, "devDependencies": { "@sirloinbh/tsconfig": "{{versions.packages.@sirloinbh/tsconfig}}" } }
     }

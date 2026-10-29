@@ -98,6 +98,7 @@ test('package.json fields are rendered from versions.json for all three package 
     ...shared['package.json'],
     'scripts.standards:check': 'node .standards/check.mjs',
     'scripts.lockfiles:sync': 'node .standards/lockfiles.mjs --write',
+    'scripts.knip': 'knip',
     'devDependencies.@sirloinbh/eslint-config': data.versions.packages['@sirloinbh/eslint-config'],
     'devDependencies.@sirloinbh/prettier-config': '1.0.0',
   });
