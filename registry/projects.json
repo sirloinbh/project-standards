@@ -156,7 +156,7 @@
         "devcontainer": false,
         "lighthouse": false,
         "msw": false,
-        "knipStrict": false
+        "knipStrict": true
       },
       "skills": [
         "health-log-foundation",
@@ -210,7 +210,7 @@
         "devcontainer": false,
         "lighthouse": false,
         "msw": false,
-        "knipStrict": false
+        "knipStrict": true
       },
       "skills": [
         "life-journal-foundation",
@@ -264,7 +264,7 @@
         "devcontainer": false,
         "lighthouse": false,
         "msw": false,
-        "knipStrict": false
+        "knipStrict": true
       },
       "skills": [
         "money-ledger-foundation",
@@ -318,7 +318,7 @@
         "devcontainer": false,
         "lighthouse": false,
         "msw": false,
-        "knipStrict": false
+        "knipStrict": true
       },
       "skills": [
         "english-study-foundation",
@@ -426,7 +426,7 @@
         "devcontainer": false,
         "lighthouse": false,
         "msw": false,
-        "knipStrict": false
+        "knipStrict": true
       },
       "skills": [
         "dev-career-portfolio-foundation",
