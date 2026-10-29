@@ -47,7 +47,7 @@ test('intended differences from study-log: ignore-scripts and the project marker
   assert.equal(withoutHeader(byPath['frontend/.npmrc'].content), withoutHeader(byPath['.npmrc'].content));
   assert.match(byPath['frontend/.npmrc'].content, /templates\/app\/frontend\/에서/);
   // Tool outputs and personal settings every app produces were added to the shared section (#323).
-  const toolOutputs = ['.claude/settings.local.json', '*.tfvars', 'test-results/', 'playwright-report/', 'blob-report/', 'coverage/', '*.tsbuildinfo'];
+  const toolOutputs = ['.claude/settings.local.json', '*.tfvars', 'test-results/', 'playwright-report/', 'blob-report/', 'coverage/', '.lighthouseci/', '*.tsbuildinfo'];
   assert.equal(withoutHeader(byPath['.gitignore'].content), `${fixture('gitignore')}${toolOutputs.join('\n')}\n${PROJECT_MARKER}\n`);
   // study-log's ignore list stays; the managed files are added before the marker (#154).
   const prettierignore = withoutHeader(byPath['.prettierignore'].content);
@@ -66,7 +66,7 @@ function ignoredBy(patterns, file) {
 test('every managed file Prettier would format is in .prettierignore, so npm run format keeps the hashes (#154)', () => {
   const patterns = withoutHeader(byPath['.prettierignore'].content).split('\n').filter((l) => l && !l.startsWith('#'));
   // Include the feature folders (ui #123, e2e and vitest #33), which apps get once the feature is on.
-  const withUi = renderProfile({ root, profile: 'app', folders: ['common', 'app', 'ui', 'e2e', 'vitest'], vars });
+  const withUi = renderProfile({ root, profile: 'app', folders: ['common', 'app', 'ui', 'e2e', 'vitest', 'lighthouse'], vars });
   const formatted = withUi.filter((f) => f.mode === 'full' && /\.(md|json|ya?ml|[cm]?js|tsx?|css|html)$/.test(f.path));
   assert.ok(formatted.length > 20);
   assert.deepEqual(formatted.map((f) => f.path).filter((p) => !ignoredBy(patterns, p)), []);
