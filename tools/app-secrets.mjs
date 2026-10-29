@@ -1,13 +1,13 @@
 // Central command for the shared Claude API key (ADR-0010, #265). The value lives in AWS SSM
-// Parameter Store; this command sets it, checks that it exists, and copies it into the local
-// .env of every app with features.claude in the registry. It never prints the value.
+// Parameter Store; this command sets it, checks that it exists, and copies it into the one local
+// .env of this repository (ignored by Git). Apps with features.claude read that file in local
+// development, so the key is in one place on the PC too. It never prints the value.
 //
 //   node tools/app-secrets.mjs check [--profile <aws profile>]
-//   node tools/app-secrets.mjs pull  [--profile <aws profile>] [--app <name>] [--base <folder>]
+//   node tools/app-secrets.mjs pull  [--profile <aws profile>]
 //   node tools/app-secrets.mjs set   [--profile <aws profile>]     (value from standard input)
 //
 // --profile defaults to SIRLOINBH_AWS_PROFILE. Use the personal AWS profile, never the company one.
-// --base is the folder that holds the app clones, by default the parent of this repository.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -65,11 +65,9 @@ export async function run(argv, { root = central, log = console.log, input = rea
     return i >= 0 ? rest[i + 1] : undefined;
   };
   const profile = opt('profile') ?? process.env.SIRLOINBH_AWS_PROFILE;
-  if (!['check', 'pull', 'set'].includes(command)) throw new Error('사용법: node tools/app-secrets.mjs check|pull|set [--profile <aws 프로필>] [--app <앱>] [--base <폴더>]');
+  if (!['check', 'pull', 'set'].includes(command)) throw new Error('사용법: node tools/app-secrets.mjs check|pull|set [--profile <aws 프로필>]');
   if (!profile) throw new Error('--profile 또는 SIRLOINBH_AWS_PROFILE로 개인 AWS 프로필을 지정하세요');
-  const base = path.resolve(opt('base') ?? path.dirname(root));
-  const apps = opt('app') ? [opt('app')] : claudeApps(root);
-  for (const app of apps) if (!claudeApps(root).includes(app)) throw new Error(`${app}: 레지스트리에서 features.claude가 꺼진 앱입니다`);
+  const file = path.join(root, '.env');
 
   if (command === 'set') {
     const value = (await input()).trim();
@@ -96,28 +94,18 @@ export async function run(argv, { root = central, log = console.log, input = rea
       ok = false;
       log(`SSM ${PARAMETER}: 읽지 못함 — ${error.message}`);
     }
-    for (const app of apps) {
-      const file = path.join(base, app, '.env');
-      const has = fs.existsSync(file) && hasEnvValue(fs.readFileSync(file, 'utf8'), ENV_KEY);
-      if (!has) ok = false;
-      log(`${app}/.env ${ENV_KEY}: ${has ? '있음' : '없음'}`);
-    }
+    const has = fs.existsSync(file) && hasEnvValue(fs.readFileSync(file, 'utf8'), ENV_KEY);
+    if (!has) ok = false;
+    log(`project-standards/.env ${ENV_KEY}: ${has ? '있음' : '없음'}`);
+    log(`이 키를 읽는 앱: ${claudeApps(root).join(', ') || '없음'}`);
     return ok ? 0 : 1;
   }
 
   // pull
   const value = aws(['ssm', 'get-parameter', '--name', PARAMETER, '--with-decryption', '--query', 'Parameter.Value', '--output', 'text'], profile).trim();
   if (!value) throw new Error(`SSM ${PARAMETER} 값이 비어 있습니다`);
-  for (const app of apps) {
-    const dir = path.join(base, app);
-    if (!fs.existsSync(dir)) {
-      log(`${app}: ${dir}에 클론이 없어 건너뜀`);
-      continue;
-    }
-    const file = path.join(dir, '.env');
-    fs.writeFileSync(file, setEnvLine(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '', ENV_KEY, value));
-    log(`${app}/.env ${ENV_KEY}: 넣음`);
-  }
+  fs.writeFileSync(file, setEnvLine(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '', ENV_KEY, value), { mode: 0o600 });
+  log(`project-standards/.env ${ENV_KEY}: 넣음`);
   return 0;
 }
 
