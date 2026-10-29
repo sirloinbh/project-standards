@@ -38,9 +38,13 @@
 | `eslint` | 10.12.0 | `package.json` | devDependencies |
 | `eslint-config-prettier` | 10.1.8 | `package.json` | devDependencies |
 | `eslint-plugin-react-hooks` | 7.1.1 | `package.json` | devDependencies |
+| `eslint-plugin-jsx-a11y-x` | 0.2.0 | `package.json` | devDependencies |
+| `eslint-plugin-react-refresh` | 0.5.7 | `package.json` | devDependencies |
+| `eslint-plugin-simple-import-sort` | 14.0.0 | `package.json` | devDependencies |
 | `globals` | 16.5.0 | `package.json` | devDependencies |
 | `knip` | 6.41.0 | `package.json` | devDependencies |
 | `prettier` | 3.9.10 | `package.json` | devDependencies |
+| `prettier-plugin-tailwindcss` | 0.8.1 | `package.json` | devDependencies |
 | `typescript-eslint` | 8.71.2 | `package.json` | devDependencies |
 | `class-variance-authority` | 0.7.1 | `frontend/package.json` | dependencies |
 | `clsx` | 2.1.1 | `frontend/package.json` | dependencies |

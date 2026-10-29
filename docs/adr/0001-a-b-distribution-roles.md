@@ -10,7 +10,7 @@
 ## 결정
 
 - 불러올 수 있는 설정은 A안 패키지로 배포한다: `@sirloinbh/eslint-config`, `prettier-config`, `tsconfig`, `design-tokens`.
-- 파일로 있어야 하는 것은 B안 템플릿 동기화로 배포한다. 패키지를 불러오는 진입 파일(`eslint.config.mjs`, `.prettierrc.json`, `tsconfig.json`)도 B안 관리 파일로 둔다.
+- 파일로 있어야 하는 것은 B안 템플릿 동기화로 배포한다. 패키지를 불러오는 진입 파일(`eslint.config.mjs`, `prettier.config.mjs`(#246 전에는 `.prettierrc.json`), `tsconfig.json`)도 B안 관리 파일로 둔다.
 - 하위 리포의 `.standards/manifest.json` 하나가 두 경로의 기준이다. 중앙 SHA, 관리 파일 해시, 패키지 버전을 모두 여기에 기록한다.
 - 패키지 버전을 올릴 때도 B안 동기화 PR로 한다. Renovate·Dependabot의 버전 업 PR은 쓰지 않는다.
 
