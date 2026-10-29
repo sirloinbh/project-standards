@@ -156,18 +156,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File $agents -Root <리포 폴더
 
 ## 공용 Claude API 키 (tools/app-secrets.mjs)
 
-Claude API 키의 원본은 AWS SSM Parameter Store `/sirloinbh/anthropic-api-key` 하나다([ADR-0010](adr/0010-claude-api-key-ssm.md)). 이 명령은 키를 SSM에 넣고, 있는지 확인하고, 레지스트리에서 `features.claude`가 켜진 앱의 로컬 `.env`에 넣는다. 값은 화면에 출력하지 않는다.
+Claude API 키의 원본은 AWS SSM Parameter Store `/sirloinbh/anthropic-api-key` 하나다([ADR-0010](adr/0010-claude-api-key-ssm.md)). 이 명령은 키를 SSM에 넣고, 있는지 확인하고, 이 리포의 로컬 `.env`(Git 제외) 한 곳에 넣는다. 값은 화면에 출력하지 않는다.
 
 ```powershell
 $env:SIRLOINBH_AWS_PROFILE = '<개인 AWS 프로필>'   # 회사 프로필을 쓰지 않는다
 Get-Clipboard | node tools/app-secrets.mjs set     # 키 저장·교체 (값은 표준 입력으로만)
-node tools/app-secrets.mjs check                   # SSM과 앱 .env에 키가 있는지 (있음/없음만)
-node tools/app-secrets.mjs pull                    # 앱 .env에 넣기 (--app study-log로 한 앱만)
+node tools/app-secrets.mjs check                   # SSM과 project-standards/.env에 키가 있는지 (있음/없음만)
+node tools/app-secrets.mjs pull                    # project-standards/.env에 넣기
 ```
 
-- 앱 클론은 이 리포의 상위 폴더에 있다고 본다. 다르면 `--base <폴더>`를 붙인다.
+- 앱은 로컬 개발 때 `../project-standards/.env`를 읽는다(앱 클론이 이 리포와 같은 상위 폴더에 있다고 본다). 앱 `.env`에는 키를 넣지 않는다. 예: study-log 백엔드 `dev` 스크립트의 `--env-file-if-exists=../../project-standards/.env`. 이 파일이 앱 `.env`보다 나중에 읽혀 같은 키가 있으면 이긴다.
 - `set`은 값을 명령줄 인자가 아니라 권한을 좁힌 임시 파일로 AWS CLI에 넘기고 바로 지운다.
-- 운영 서버는 이 명령을 쓰지 않는다. 배포 스크립트(`deploy/ssm-get.sh`)가 배포할 때마다 SSM에서 읽는다([배포 runbook](runbooks/deploy.md)).
+- 운영 서버는 이 명령을 쓰지 않는다. 배포 스크립트(`deploy/ssm-get.sh`)가 배포할 때마다 SSM에서 읽는다. SSM을 읽는 AWS 키는 서버 공용 파일 `/opt/project-standards/.env`에 둔다([배포 runbook](runbooks/deploy.md)).
 - 키를 바꾼 뒤: 서버는 다음 배포부터 새 키를 쓴다. PC는 `pull`을 다시 실행한다.
 
 ## Dev Container (features.devcontainer)

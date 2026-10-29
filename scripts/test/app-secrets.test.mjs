@@ -1,4 +1,4 @@
-// tools/app-secrets.mjs (#265, ADR-0010): the shared Claude API key in SSM, copied into local .env files.
+// tools/app-secrets.mjs (#265, ADR-0010): the shared Claude API key in SSM, copied into the one central .env.
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -33,7 +33,11 @@ function workspace(fn, options) {
   const before = process.env.APP_SECRETS_AWS;
   process.env.APP_SECRETS_AWS = fakeAws(dir, options);
   const lines = [];
-  return Promise.resolve(fn({ dir, base: path.join(dir, 'clones'), lines, log: (l) => lines.push(l) })).finally(() => {
+  // A throwaway copy of this repository's registry, so pull never writes the real .env.
+  const central = path.join(dir, 'project-standards');
+  fs.mkdirSync(path.join(central, 'registry'), { recursive: true });
+  fs.copyFileSync(path.join(root, 'registry/projects.json'), path.join(central, 'registry/projects.json'));
+  return Promise.resolve(fn({ dir, central, lines, log: (l) => lines.push(l) })).finally(() => {
     if (before === undefined) delete process.env.APP_SECRETS_AWS;
     else process.env.APP_SECRETS_AWS = before;
     fs.rmSync(dir, { recursive: true, force: true });
@@ -52,23 +56,24 @@ test('setEnvLine replaces or appends one key and keeps other lines and CRLF', ()
   assert.ok(!hasEnvValue('ANTHROPIC_API_KEY=\n', ENV_KEY));
 });
 
-test('pull writes the SSM value into the app .env and never logs it', () =>
-  workspace(async ({ dir, base, lines, log }) => {
-    fs.mkdirSync(path.join(base, 'study-log'), { recursive: true });
-    fs.writeFileSync(path.join(base, 'study-log/.env'), 'PORT=3102\nANTHROPIC_API_KEY=\n');
-    assert.equal(await run(['pull', '--profile', 'me-personal', '--base', base], { root, log }), 0);
-    assert.equal(fs.readFileSync(path.join(base, 'study-log/.env'), 'utf8'), `PORT=3102\nANTHROPIC_API_KEY=${VALUE}\n`);
+test('pull writes the SSM value into the central .env and never logs it', () =>
+  workspace(async ({ dir, central, lines, log }) => {
+    fs.writeFileSync(path.join(central, '.env'), 'OTHER=1\nANTHROPIC_API_KEY=\n');
+    assert.equal(await run(['pull', '--profile', 'me-personal'], { root: central, log }), 0);
+    assert.equal(fs.readFileSync(path.join(central, '.env'), 'utf8'), `OTHER=1\nANTHROPIC_API_KEY=${VALUE}\n`);
     const [call] = calls(dir);
     assert.deepEqual(call.args, ['ssm', 'get-parameter', '--name', PARAMETER, '--with-decryption', '--query', 'Parameter.Value', '--output', 'text', '--region', 'ap-northeast-2', '--profile', 'me-personal']);
     assert.ok(!lines.join('\n').includes(VALUE));
-    assert.deepEqual(lines, ['study-log/.env ANTHROPIC_API_KEY: 넣음']);
+    assert.deepEqual(lines, ['project-standards/.env ANTHROPIC_API_KEY: 넣음']);
   }));
 
-test('pull skips an app that is not cloned and refuses an app without features.claude', () =>
-  workspace(async ({ base, lines, log }) => {
-    assert.equal(await run(['pull', '--profile', 'p', '--base', base], { root, log }), 0);
-    assert.match(lines[0], /^study-log: .*클론이 없어 건너뜀$/);
-    await assert.rejects(run(['pull', '--profile', 'p', '--app', 'workout-memo', '--base', base], { root, log }), /features\.claude가 꺼진 앱/);
+test('pull creates the central .env when it does not exist yet, and leaves the app clones alone', () =>
+  workspace(async ({ dir, central, lines, log }) => {
+    fs.mkdirSync(path.join(dir, 'study-log'));
+    assert.equal(await run(['pull', '--profile', 'p'], { root: central, log }), 0);
+    assert.equal(fs.readFileSync(path.join(central, '.env'), 'utf8'), `ANTHROPIC_API_KEY=${VALUE}\n`);
+    assert.deepEqual(fs.readdirSync(path.join(dir, 'study-log')), []);
+    assert.deepEqual(lines, ['project-standards/.env ANTHROPIC_API_KEY: 넣음']);
   }));
 
 test('set passes the value through a temporary file that is removed afterwards', () =>
@@ -84,20 +89,20 @@ test('set passes the value through a temporary file that is removed afterwards',
     await assert.rejects(run(['set', '--profile', 'p'], { root, log, input: async () => '\n' }), /표준 입력으로 키 값을 넘기세요/);
   }));
 
-test('check reports presence only and fails when SSM or a .env is missing', () =>
-  workspace(async ({ base, lines, log }) => {
-    fs.mkdirSync(path.join(base, 'study-log'), { recursive: true });
-    fs.writeFileSync(path.join(base, 'study-log/.env'), `ANTHROPIC_API_KEY=${VALUE}\n`);
-    assert.equal(await run(['check', '--profile', 'p', '--base', base], { root, log }), 0);
-    assert.deepEqual(lines, [`SSM ${PARAMETER}: 있음 (마지막 변경 2026-10-27T05:00:00+09:00)`, 'study-log/.env ANTHROPIC_API_KEY: 있음']);
+test('check reports presence only and names the apps that read the key', () =>
+  workspace(async ({ central, lines, log }) => {
+    fs.writeFileSync(path.join(central, '.env'), `ANTHROPIC_API_KEY=${VALUE}\n`);
+    assert.equal(await run(['check', '--profile', 'p'], { root: central, log }), 0);
+    assert.deepEqual(lines, [`SSM ${PARAMETER}: 있음 (마지막 변경 2026-10-27T05:00:00+09:00)`, 'project-standards/.env ANTHROPIC_API_KEY: 있음', '이 키를 읽는 앱: study-log']);
+    assert.ok(!lines.join('\n').includes(VALUE));
   }));
 
 test('check fails without the parameter, and a profile is required', () =>
   workspace(
-    async ({ base, lines, log }) => {
-      assert.equal(await run(['check', '--profile', 'p', '--base', base], { root, log }), 1);
+    async ({ central, lines, log }) => {
+      assert.equal(await run(['check', '--profile', 'p'], { root: central, log }), 1);
       assert.match(lines[0], /읽지 못함 — aws ssm get-parameter 실패 \(종료 코드 254\): ParameterNotFound/);
-      assert.equal(lines[1], 'study-log/.env ANTHROPIC_API_KEY: 없음');
+      assert.equal(lines[1], 'project-standards/.env ANTHROPIC_API_KEY: 없음');
       const saved = process.env.SIRLOINBH_AWS_PROFILE;
       delete process.env.SIRLOINBH_AWS_PROFILE;
       try {

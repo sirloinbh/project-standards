@@ -139,7 +139,7 @@ test('autodeploy deploys only when every check run passed', { skip: !(has('bash'
 });
 
 // Runs the rendered backup.sh with fake docker, curl and flock on PATH, in a temporary app folder.
-function backupRun(args, { env = '', restored = 'public.a|2\npublic.b|5\n', setup, failCounts = false } = {}) {
+function backupRun(args, { env = '', shared = null, restored = 'public.a|2\npublic.b|5\n', setup, failCounts = false } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'backup-'));
   const bin = path.join(dir, 'bin');
   const app = path.join(dir, 'app');
@@ -164,6 +164,9 @@ function backupRun(args, { env = '', restored = 'public.a|2\npublic.b|5\n', setu
     'esac',
   ]);
   fs.writeFileSync(path.join(app, '.env'), env);
+  // The shared server file stands in for /opt/project-standards/.env; absent unless given.
+  const sharedFile = path.join(dir, 'shared.env');
+  if (shared !== null) fs.writeFileSync(sharedFile, shared);
   // A fake deploy/notify.sh records the healthchecks.io signals (#284).
   fs.mkdirSync(path.join(app, 'deploy'));
   fs.writeFileSync(path.join(app, 'deploy/notify.sh'), 'echo "$*" >> "$FAKE_LOG.notify"\n');
@@ -173,7 +176,7 @@ function backupRun(args, { env = '', restored = 'public.a|2\npublic.b|5\n', setu
   const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
   const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script.replace(/^#!.*\n/, '')}`, 'backup.sh', ...args], {
     encoding: 'utf8',
-    env: { ...process.env, FAKE_LOG: posix(log), RESTORED: restored, FAIL_COUNTS: failCounts ? '1' : '' },
+    env: { ...process.env, FAKE_LOG: posix(log), RESTORED: restored, FAIL_COUNTS: failCounts ? '1' : '', STANDARDS_ENV_FILE: posix(sharedFile) },
   });
   const read = (suffix) => (fs.existsSync(log + suffix) ? fs.readFileSync(log + suffix, 'utf8') : '');
   const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, files: fs.readdirSync(store).sort(), curlArgs: read('.curl-args'), curlStdin: read('.curl-stdin'), docker: read('.docker'), notify: read('.notify') };
@@ -212,6 +215,16 @@ test('backup dump copies both files to S3 and passes the key pair only on standa
   assert.ok(!r.curlArgs.includes('fake-secret-value'), 'the secret must not be a curl argument');
   assert.ok(!(r.stdout + r.stderr).includes('fake-secret-value'), 'the secret must not be printed');
   assert.equal(r.curlStdin, 'user = "fake-id:fake-secret-value"\n'.repeat(2));
+});
+
+test('backup reads the S3 bucket and key pair from the shared server file first (ADR-0010)', { skip: !canRunBackup && 'bash or gzip not found' }, () => {
+  const shared = backupRun(['dump'], { shared: S3_ENV });
+  assert.equal(shared.status, 0, shared.stderr);
+  assert.equal(shared.curlArgs.trim().split('\n').length, 2);
+  assert.equal(shared.curlStdin, 'user = "fake-id:fake-secret-value"\n'.repeat(2));
+  // The shared file wins over a stale pair left in the app .env.
+  const stale = backupRun(['dump'], { shared: S3_ENV, env: 'BACKUP_AWS_ACCESS_KEY_ID=old-id\nBACKUP_AWS_SECRET_ACCESS_KEY=old-secret\n' });
+  assert.equal(stale.curlStdin, 'user = "fake-id:fake-secret-value"\n'.repeat(2));
 });
 
 test('a bucket without keys keeps the local dump and exits 3, which a deploy accepts', { skip: !canRunBackup && 'bash or gzip not found' }, () => {
@@ -257,7 +270,7 @@ test('backup timers run nightly and weekly in Seoul time and the units copy the 
 const python = has('python3') ? 'python3' : has('python') ? 'python' : null;
 
 // Runs the rendered ssm-get.sh with a fake curl that answers like SSM GetParameter.
-function ssmRun(args, { env = '', response = '{"Parameter":{"Name":"/sirloinbh/anthropic-api-key","Value":"value-from-ssm"}}' } = {}) {
+function ssmRun(args, { env = '', shared = null, response = '{"Parameter":{"Name":"/sirloinbh/anthropic-api-key","Value":"value-from-ssm"}}' } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ssm-'));
   const bin = path.join(dir, 'bin');
   const app = path.join(dir, 'app');
@@ -267,10 +280,12 @@ function ssmRun(args, { env = '', response = '{"Parameter":{"Name":"/sirloinbh/a
   tool('curl', ['echo "$*" >> "$FAKE_LOG.curl-args"', 'cat >> "$FAKE_LOG.curl-stdin"', 'printf "%s" "$RESPONSE"']);
   if (python !== 'python3') tool('python3', [`exec ${python} "$@"`]);
   fs.writeFileSync(path.join(app, '.env'), env);
+  const sharedFile = path.join(dir, 'shared.env');
+  if (shared !== null) fs.writeFileSync(sharedFile, shared);
   const script = rendered['study-log']['deploy/ssm-get.sh'].replace('cd /opt/study-log', `cd '${posix(app)}'`).replace(/^#!.*\n/, '');
   const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
   const log = path.join(dir, 'log');
-  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'ssm-get.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log), RESPONSE: response } });
+  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'ssm-get.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log), RESPONSE: response, STANDARDS_ENV_FILE: posix(sharedFile) } });
   const read = (suffix) => (fs.existsSync(log + suffix) ? fs.readFileSync(log + suffix, 'utf8') : '');
   const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, curlArgs: read('.curl-args'), curlStdin: read('.curl-stdin') };
   fs.rmSync(dir, { recursive: true, force: true });
@@ -288,6 +303,13 @@ test('ssm-get signs a GetParameter call and prints only the value', { skip: !(ha
   assert.ok(!r.curlArgs.includes('fake-reader-secret'), 'the secret must not be a curl argument');
   assert.equal(r.curlStdin, 'user = "fake-reader-id:fake-reader-secret"\n');
   assert.equal(r.stderr, '');
+});
+
+test('ssm-get takes the key pair from the shared server file, and it wins over the app .env', { skip: !(has('bash') && python) && 'bash or python not found' }, () => {
+  const r = ssmRun(['/sirloinbh/anthropic-api-key'], { shared: SECRETS_ENV, env: 'SECRETS_AWS_ACCESS_KEY_ID=old-id\nSECRETS_AWS_SECRET_ACCESS_KEY=old-secret\n' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.equal(r.stdout, 'value-from-ssm');
+  assert.equal(r.curlStdin, 'user = "fake-reader-id:fake-reader-secret"\n');
 });
 
 test('ssm-get refuses odd names and reports a missing key pair with exit 3', { skip: !(has('bash') && python) && 'bash or python not found' }, () => {
@@ -308,10 +330,16 @@ test('remote-deploy reads the Claude key from SSM only for apps with features.cl
   const block = text.match(/^if \[ "true" = true \] && grep -q[\s\S]*?^fi$/m)[0];
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-key-'));
   fs.mkdirSync(path.join(dir, 'deploy'));
-  const run = (env, fake) => {
+  const sharedFile = path.join(dir, 'shared.env');
+  const run = (env, fake, shared = '') => {
     fs.writeFileSync(path.join(dir, '.env'), env);
+    fs.writeFileSync(sharedFile, shared);
     fs.writeFileSync(path.join(dir, 'deploy/ssm-get.sh'), fake);
-    return spawnSync('bash', ['-c', `set -euo pipefail\n${block}\nbash -c 'printf %s "\${ANTHROPIC_API_KEY:-unset}"'`], { cwd: dir, encoding: 'utf8', env: { ...process.env, ANTHROPIC_API_KEY: '' } });
+    return spawnSync('bash', ['-c', `set -euo pipefail\n${block}\nbash -c 'printf %s "\${ANTHROPIC_API_KEY:-unset}"'`], {
+      cwd: dir,
+      encoding: 'utf8',
+      env: { ...process.env, ANTHROPIC_API_KEY: '', STANDARDS_ENV_FILE: sharedFile.split(path.sep).join('/') },
+    });
   };
   try {
     const ok = run(SECRETS_ENV, 'printf %s key-from-ssm');
@@ -323,6 +351,9 @@ test('remote-deploy reads the Claude key from SSM only for apps with features.cl
     const noPair = run('ANTHROPIC_API_KEY=from-env-file\n', 'echo should-not-run; exit 9');
     assert.equal(noPair.status, 0);
     assert.equal(noPair.stdout, 'unset', 'without the key pair compose keeps reading .env');
+    const shared = run('', 'printf %s key-from-ssm', SECRETS_ENV);
+    assert.equal(shared.status, 0, shared.stderr);
+    assert.equal(shared.stdout, 'key-from-ssm', 'the pair in the shared server file is enough');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
