@@ -45,5 +45,5 @@
 ## 후속 수정 (2026-10-29)
 
 - 앱 템플릿 `eslint.config.mjs`가 `eslint-plugin-react-refresh`를 default로 가져와 앱 8개의 lint가 멈췄다. 0.5의 default export는 `configs.vite`가 함수가 아니라 객체라서 `reactRefresh.configs.vite()`가 실패한다. 이름 있는 export(`import { reactRefresh }`)로 바꿨다(패키지 README와 같은 방식).
-- 앱 Prettier 설정에 `tailwindPreserveWhitespace: true`를 더했다. 없으면 prettier-plugin-tailwindcss가 `` `row${on ? ' top' : ''}` ``의 앞 공백을 지워 클래스가 `rowtop`이 된다(workout-memo·study-log에서 발견).
-- 앱 ESLint 설정에서 `label-has-associated-control`이 UI 키트의 `Input`을 입력 요소로 보게 했다(`controlComponents`). 없으면 `<label>`로 감싼 `<Input>`도 연결이 없다고 오류를 낸다(workout-memo 8건).
+- `jsx-a11y-x/label-has-associated-control`이 공통 `Input` 컴포넌트를 감싼 `<label>`을 연결되지 않은 라벨로 봤다. 템플릿 설정에 `settings['jsx-a11y-x'].components = { Input: 'input' }`을 더해 `Input`을 네이티브 `<input>`으로 알려 준다. 다음 공유 패키지 버전에서 `createConfig` 안으로 옮길 수 있다.
+- 앱 Prettier 설정에 `tailwindPreserveWhitespace: true`를 더했다. 없으면 prettier-plugin-tailwindcss가 `` `row${on ? ' top' : ''}` ``의 앞 공백을 지워 클래스가 `rowtop`이 된다(study-log 2곳에서 발견).

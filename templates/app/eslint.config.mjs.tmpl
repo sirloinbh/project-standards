@@ -11,14 +11,11 @@ import tseslint from 'typescript-eslint';
 
 // .standards/ holds central scripts copied as they are; the central repository checks them.
 // tsconfigRootDir turns on the type-aware rules (#244) for frontend/src and backend/src.
+// Input (components/ui) renders a native <input>, so a <label> wrapping it counts as labelled.
 export default [
   ...createConfig(
     { js, tseslint, globals, reactHooks, reactRefresh, jsxA11y, importSort, prettier },
     { ignores: ['.standards/**'], tsconfigRootDir: import.meta.dirname },
   ),
-  // The UI kit's Input renders a native <input>, so a label wrapped around it is associated (#246).
-  {
-    files: ['frontend/src/**/*.{ts,tsx}'],
-    rules: { 'jsx-a11y-x/label-has-associated-control': ['error', { controlComponents: ['Input'] }] },
-  },
+  { settings: { 'jsx-a11y-x': { components: { Input: 'input' } } } },
 ];
