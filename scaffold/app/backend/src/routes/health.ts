@@ -1,4 +1,5 @@
 import type express from 'express';
+
 import type { Db } from './shared.js';
 
 export function registerHealthRoutes(app: express.Express, pool: Db) {

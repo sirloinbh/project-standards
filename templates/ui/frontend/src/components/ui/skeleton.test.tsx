@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
+
 import { Skeleton, SkeletonCard, SkeletonList, SkeletonText } from './skeleton';
 
 test('skeletons are hidden from screen readers and stop moving for reduced motion', () => {

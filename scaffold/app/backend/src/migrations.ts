@@ -4,6 +4,7 @@
 import { createHash } from 'node:crypto';
 import { readdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+
 import type { ClientBase } from 'pg';
 
 export type Migration = { name: string; checksum: string; sql: string };

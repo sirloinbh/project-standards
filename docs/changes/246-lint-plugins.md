@@ -26,6 +26,18 @@
 2. 남은 위반(접근성, Promise 처리, 불필요한 타입 단언)은 직접 고친다. 중앙 관리 파일의 위반은 중앙 `templates/`에서 고친다.
 3. lockfile과 앱 수정을 동기화 PR 브랜치에 커밋하고, CI가 통과하면 병합한다.
 
+## 후속 수정 (앱 설치 뒤 첫 린트)
+
+앱 8개에 설치한 뒤 `npm run lint`를 돌려 보니 설정이 아예 실행되지 않았다. 템플릿이 `eslint-plugin-react-refresh`를 default export로 불러왔는데, `configs.vite()` 함수는 이름 있는 export `reactRefresh`에만 있다(공유 패키지 README대로 `import { reactRefresh }`).
+
+| 파일 | 내용 |
+|---|---|
+| `templates/app/eslint.config.mjs.tmpl` | `import { reactRefresh } from 'eslint-plugin-react-refresh'` |
+| `templates/ui/frontend/src/**` | import 순서 자동 수정. 컴포넌트 옆 `*Variants`·`toast` export와 Drawer의 `autoFocus`에는 이유를 적은 규칙 예외 주석 |
+| `scaffold/app/**` | import 순서, `pages`를 export하지 않음(react-refresh), 테스트의 `async` 없는 모의 함수를 `Promise.resolve`로(require-await) |
+
+중앙 관리 파일의 위반은 이 수정으로 0이 된다. 남은 위반은 앱 코드라 각 동기화 PR에서 고친다.
+
 ## 검증
 
 - `npm run check`: 아래 PR 본문에 기록

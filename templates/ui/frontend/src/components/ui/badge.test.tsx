@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { expect, test } from 'vitest';
+
 import { Badge } from './badge';
 
 test('badge variants use the shared colour tokens', () => {
