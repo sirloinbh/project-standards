@@ -227,7 +227,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 **왜 필요한가요:** Claude API 키의 원본을 AWS SSM 한 곳에 두고, 서버와 PC가 거기서 받아 씁니다([ADR-0010](adr/0010-claude-api-key-ssm.md)). 키 발급·결제·AWS 키 만들기는 사용자 계정으로만 할 수 있습니다. **키 값은 채팅이나 문서에 붙여 넣지 마세요.**
 
 1. sirloinbh/shared-aws-infrastructure#8(SSM 파라미터·읽기 전용 IAM 사용자) PR을 병합하고 `terraform apply`합니다.
-2. Anthropic Console에서 workspace를 하나 정하고 지출 한도를 겁니다. 그 workspace에서 API 키를 하나 만듭니다.
+2. Claude Max 5x의 월 $100 API 크레딧을 씁니다([안내](https://platform.claude.com/docs/en/about-claude/api-credits-for-subscribers)). Claude Code에는 쓰이지 않고, 남은 크레딧은 다음 달로 넘어가지 않습니다.
+   1. claude.ai → Settings → Billing → API credits에서 개인 Console 조직을 연결합니다. 한 번 연결하면 직접 바꿀 수 없습니다.
+   2. Console Billing의 Promotional credits에 $100이 보이는지 확인합니다. 결제 수단과 자동 충전(auto-reload)은 켜지 않습니다. 크레딧을 다 쓰면 다음 달까지 호출이 멈추고, 따로 청구되지 않습니다.
+   3. 앱 공용 workspace(예: `sirloinbh-apps`)를 하나 만들고 월 지출 한도를 겁니다. 그 workspace에서 API 키를 하나 만듭니다(예: `sirloinbh-apps-shared`). 모든 앱이 이 키 하나를 SSM에서 받아 씁니다(ADR-0010).
+   4. Console의 Workload Identity Federation 안내는 쓰지 않습니다. Lightsail에는 IAM 역할을 붙일 수 없기 때문입니다.
 3. 키를 복사한 상태에서 project-standards 폴더에서 실행합니다:
    ```powershell
    $env:SIRLOINBH_AWS_PROFILE = '<개인 AWS 프로필>'
@@ -235,7 +239,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
    node tools/app-secrets.mjs pull
    node tools/app-secrets.mjs check     # 모두 "있음"이면 성공
    ```
-4. AWS 콘솔에서 읽기 전용 IAM 사용자의 액세스 키를 만들고, 서버 `/opt/study-log/.env`에 `SECRETS_AWS_ACCESS_KEY_ID`, `SECRETS_AWS_SECRET_ACCESS_KEY`를 넣습니다. 다음 배포부터 서버가 SSM에서 키를 읽습니다. 그 뒤 서버 `.env`의 `ANTHROPIC_API_KEY` 줄은 지워도 됩니다.
+4. AWS 콘솔에서 읽기 전용 IAM 사용자(`workout-memo-secrets-reader`)의 액세스 키를 만들고, Claude API를 쓰는 앱의 서버 `.env`에 넣습니다. 지금은 `/opt/study-log/.env`이고, 다른 앱이 쓰기 시작하면 그 앱의 `.env`에도 같은 두 줄을 넣습니다. 넣을 이름은 `SECRETS_AWS_ACCESS_KEY_ID`, `SECRETS_AWS_SECRET_ACCESS_KEY`입니다. 다음 배포부터 서버가 SSM에서 키를 읽습니다. 그 뒤 서버 `.env`의 `ANTHROPIC_API_KEY` 줄은 지워도 됩니다.
 5. 예전 키가 있으면 Console에서 폐기합니다. 끝나면 #266에 "끝"이라고 댓글을 남겨 주세요(값은 쓰지 않음).
 
 ## 11. healthchecks.io 알림 켜기 (#286)
