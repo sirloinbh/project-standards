@@ -29,7 +29,7 @@ function withSlot99() {
     db: { name: 'sample', testName: 'sample_test' },
     service: { domain: null, subdomain: null },
     aws: { prefix: null },
-    features: { e2e: true, e2eVisual: false, openapi: false, contract: true, ui: true, vitest: true, claude: false, devcontainer: false, lighthouse: false, msw: false, knipStrict: false },
+    features: { e2e: true, e2eVisual: false, openapi: false, contract: true, ui: true, vitest: true, claude: false, devcontainer: false, lighthouse: false, msw: false, knipStrict: false, darkOnly: false },
     skills: [],
     allowedDifferences: [],
   });
