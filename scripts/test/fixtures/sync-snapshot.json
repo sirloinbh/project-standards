@@ -634,7 +634,7 @@
     "full skills/std-implementation/SKILL.md",
     "full skills/std-testing/SKILL.md"
   ],
-  "sirloinbh/english-study": [
+  "sirloinbh/cert-manager": [
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",

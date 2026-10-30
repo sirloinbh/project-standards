@@ -12,7 +12,7 @@
 | 개인키 보관 | 중앙 리포 Actions secret `SYNC_APP_PRIVATE_KEY` |
 | App ID 보관 | 중앙 리포 Actions variable `SYNC_APP_ID` |
 
-설치할 리포: `project-standards`, `workout-memo`, `study-log`, `health-log`, `life-journal`, `money-ledger`, `english-study`, `plan-routine`, `dev-career-portfolio`, `shared-aws-infrastructure`
+설치할 리포: `project-standards`, `workout-memo`, `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio`, `shared-aws-infrastructure`
 
 ### Repository permissions
 

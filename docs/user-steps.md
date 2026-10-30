@@ -43,7 +43,7 @@
 | health-log | 3103 | 15403 | http://localhost:8103 |
 | life-journal | 3104 | 15404 | http://localhost:8104 |
 | money-ledger | 3105 | 15405 | http://localhost:8105 |
-| english-study | 3106 | 15406 | http://localhost:8106 |
+| cert-manager | 3106 | 15406 | http://localhost:8106 |
 | plan-routine | 3107 | 15407 | http://localhost:8107 |
 | dev-career-portfolio | 3108 | 15408 | http://localhost:8108 |
 
@@ -124,7 +124,7 @@ project-standards → Settings → Secrets and variables → Actions에서 등�
 
 ### 3-3. 설치
 
-App 화면 → Install App → sirloinbh Install → Only select repositories에서 10개를 고릅니다: project-standards, workout-memo, study-log, health-log, life-journal, money-ledger, english-study, plan-routine, dev-career-portfolio, shared-aws-infrastructure.
+App 화면 → Install App → sirloinbh Install → Only select repositories에서 10개를 고릅니다: project-standards, workout-memo, study-log, health-log, life-journal, money-ledger, cert-manager, plan-routine, dev-career-portfolio, shared-aws-infrastructure.
 
 ### 3-4. 공통 CI 공유 허용
 
