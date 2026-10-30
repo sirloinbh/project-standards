@@ -110,9 +110,9 @@ test('sync targets must match registry projects and profiles', () => {
 
 test('a retired project may not stay a sync target', () => {
   const { errors } = fixture((d) => {
-    byName(d, 'english-study').status = 'retired';
+    byName(d, 'cert-manager').status = 'retired';
   });
-  assert.ok(errors.includes('sync target sirloinbh/english-study: project "english-study" is not an active registry project'));
+  assert.ok(errors.includes('sync target sirloinbh/cert-manager: project "cert-manager" is not an active registry project'));
 });
 
 test('profile packages must be listed in versions.json', () => {

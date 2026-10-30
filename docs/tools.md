@@ -24,7 +24,7 @@
 2. **10개 리포의 Git 인증을 새 위치로 바꾸기:** 여러 리포는 쉼표로 이어 한 문자열로 넘긴다. `powershell -File`은 배열을 넘기지 못해서 `-Repository $repos`처럼 쓰면 실패한다.
    ```powershell
    $tools = "$env:LOCALAPPDATA\sirloinbh-tools"
-   $repos = 'project-standards','workout-memo','study-log','health-log','life-journal','money-ledger','english-study','plan-routine','dev-career-portfolio','shared-aws-infrastructure' |
+   $repos = 'project-standards','workout-memo','study-log','health-log','life-journal','money-ledger','cert-manager','plan-routine','dev-career-portfolio','shared-aws-infrastructure' |
      ForEach-Object { "$base\$_" } | Where-Object { Test-Path $_ }
    powershell -NoProfile -ExecutionPolicy Bypass -File "$tools\set-credential-helper.ps1" -Repository ($repos -join ',')
    ```
@@ -122,7 +122,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File $agents -Root <리포 폴더
 | 리포 | `autoMerge` | 근거 |
 |---|---|---|
 | `workout-memo` | `true` (기본값, 파일에 적지 않음) | #128에서 사용자가 자동 병합을 허용 |
-| `study-log`, `health-log`, `life-journal`, `money-ledger`, `english-study`, `plan-routine`, `dev-career-portfolio` | `false` | main 병합이 곧 운영 배포이고 자동 병합을 허용한 결정이 없다 |
+| `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio` | `false` | main 병합이 곧 운영 배포이고 자동 병합을 허용한 결정이 없다 |
 | `project-standards`, `shared-aws-infrastructure` | 해당 없음 | 레지스트리 `repos`에 없어 워커가 실행되지 않는다. `project-standards`는 중앙 `AGENTS.md`대로 에이전트가 병합한다 |
 
 - **파일이 없으면 자동 병합된다.** 그래서 `false`인 리포는 워커를 도입하는 PR에 `.agents.json`(`{"autoMerge": false}` 이상)을 함께 넣고, 도입 전에 `agents.ps1 -Root <리포> doctor`의 `autoMerge false`를 확인한다.

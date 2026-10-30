@@ -276,17 +276,17 @@
     {
       "slot": 6,
       "status": "active",
-      "name": "english-study",
-      "title": "영어 공부",
-      "displayName": "영어 공부",
-      "domain": "영어",
-      "summary": "단어장 등 영어 공부를 기록하고 복습하는 개인 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
+      "name": "cert-manager",
+      "title": "자격증 관리",
+      "displayName": "자격증 관리",
+      "domain": "자격증",
+      "summary": "자격증 정보·시험 일정·공부 기록을 관리하고, 자격증과 별개로 영어 공부도 기록하고 복습하는 개인 서비스. 사용자는 본인 한 명이며 로그인은 없다. 외부 공개 전에는 사설 접속 또는 인증을 먼저 설계한다.",
       "public": false,
       "repos": {
-        "umbrella": "english-study",
-        "frontend": "english-study-frontend",
-        "backend": "english-study-backend",
-        "db": "english-study-db"
+        "umbrella": "cert-manager",
+        "frontend": "cert-manager-frontend",
+        "backend": "cert-manager-backend",
+        "db": "cert-manager-db"
       },
       "ports": {
         "web": 8106,
@@ -297,8 +297,8 @@
         "db": 15406
       },
       "db": {
-        "name": "english",
-        "testName": "english_test"
+        "name": "cert",
+        "testName": "cert_test"
       },
       "service": {
         "domain": null,
@@ -321,9 +321,9 @@
         "knipStrict": true
       },
       "skills": [
-        "english-study-foundation",
-        "english-study-implementation",
-        "english-study-testing"
+        "cert-manager-foundation",
+        "cert-manager-implementation",
+        "cert-manager-testing"
       ],
       "allowedDifferences": []
     },

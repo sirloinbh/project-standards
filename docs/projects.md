@@ -11,7 +11,7 @@
 | 03 | health-log | 식단·수면·건강 기록 | 식단·수면·건강 기록 | 건강 | active | health / health_test | 미정 | 미정 | 2 |
 | 04 | life-journal | 감상문·일기장 | 감상문·일기장 | 일기 | active | journal / journal_test | 미정 | 미정 | 2 |
 | 05 | money-ledger | 가계부·자산 포트폴리오 | 가계부·자산 포트폴리오 | 가계부 | active | money / money_test | 미정 | 미정 | 2 |
-| 06 | english-study | 영어 공부 | 영어 공부 | 영어 | active | english / english_test | 미정 | 미정 | 2 |
+| 06 | cert-manager | 자격증 관리 | 자격증 관리 | 자격증 | active | cert / cert_test | 미정 | 미정 | 2 |
 | 07 | plan-routine | 계획·실천·루틴·피드백 | 계획·실천·루틴·피드백 | 루틴 | active | plan / plan_test | 미정 | 미정 | 2 |
 | 08 | dev-career-portfolio | 개발 커리어 포트폴리오 | 개발 커리어 포트폴리오 | 커리어 | active | career / career_test | 미정 | 미정 | 2 |
 
@@ -24,7 +24,7 @@
 | health-log | 8103 | 3103 | 3203 | 5203 | 5303 | 15403 |
 | life-journal | 8104 | 3104 | 3204 | 5204 | 5304 | 15404 |
 | money-ledger | 8105 | 3105 | 3205 | 5205 | 5305 | 15405 |
-| english-study | 8106 | 3106 | 3206 | 5206 | 5306 | 15406 |
+| cert-manager | 8106 | 3106 | 3206 | 5206 | 5306 | 15406 |
 | plan-routine | 8107 | 3107 | 3207 | 5207 | 5307 | 15407 |
 | dev-career-portfolio | 8108 | 3108 | 3208 | 5208 | 5308 | 15408 |
 

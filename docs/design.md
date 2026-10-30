@@ -31,7 +31,7 @@
 | D7 | `ci.yml`은 8개 모두 다르다. 7개 앱은 DB 이름만 다르고 workout-memo는 `db:migrate`, e2e, terraform job이 더 있다. | reusable workflow + 호출부 템플릿 |
 | D8 | 스킬 이름 체계(`<proj>-foundation/implementation/testing`)는 같지만, 프로젝트 이름을 정규화해도 내용이 다르다. | 공통부를 `std-*`로 추출, 기존 스킬은 고유 스킬로 남김 |
 | D9 | `.gitignore`, `.prettierignore`는 workout-memo에만 Playwright·OpenAPI 줄이 더 있다. | 공통부 + 프로젝트 구간으로 분리 |
-| D10 | DB 이름: workout, study, health, journal, money, english, plan, career. CI는 같은 DB를 테스트에도 쓴다. | 레지스트리 고정값, 테스트 DB는 `<name>_test` |
+| D10 | DB 이름: workout, study, health, journal, money, cert, plan, career. CI는 같은 DB를 테스트에도 쓴다. | 레지스트리 고정값, 테스트 DB는 `<name>_test` |
 | D11 | 이 PC에서 TCP 50000–50059가 예약되어 있고, 55536은 Brother iPrint&Scan이 사용 중이다. 55xxx는 Windows·Linux 임시 포트 범위 안이다. | DB 포트를 임시 포트 범위 밖으로 이동 (6장) |
 
 ## 2. 핵심 결정
@@ -245,7 +245,7 @@ packages/<pkg> 변경 PR (버전·CHANGELOG 포함) → 사용자 병합
     { "repo": "sirloinbh/health-log",                "profile": "app",   "project": "health-log",           "rollout": 2 },
     { "repo": "sirloinbh/life-journal",              "profile": "app",   "project": "life-journal",         "rollout": 2 },
     { "repo": "sirloinbh/money-ledger",              "profile": "app",   "project": "money-ledger",         "rollout": 2 },
-    { "repo": "sirloinbh/english-study",             "profile": "app",   "project": "english-study",        "rollout": 2 },
+    { "repo": "sirloinbh/cert-manager",              "profile": "app",   "project": "cert-manager",         "rollout": 2 },
     { "repo": "sirloinbh/plan-routine",              "profile": "app",   "project": "plan-routine",         "rollout": 2 },
     { "repo": "sirloinbh/dev-career-portfolio",      "profile": "app",   "project": "dev-career-portfolio", "rollout": 2 },
     { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null,                   "rollout": 3 }
@@ -287,7 +287,7 @@ packages/<pkg> 변경 PR (버전·CHANGELOG 포함) → 사용자 병합
 | 03 | health-log | 건강 | 8103 | 3103 | 3203 | 5203 | 5303 | 15403 | health / health_test |
 | 04 | life-journal | 일기 | 8104 | 3104 | 3204 | 5204 | 5304 | 15404 | journal / journal_test |
 | 05 | money-ledger | 가계부 | 8105 | 3105 | 3205 | 5205 | 5305 | 15405 | money / money_test |
-| 06 | english-study | 영어 | 8106 | 3106 | 3206 | 5206 | 5306 | 15406 | english / english_test |
+| 06 | cert-manager | 자격증 | 8106 | 3106 | 3206 | 5206 | 5306 | 15406 | cert / cert_test |
 | 07 | plan-routine | 루틴 | 8107 | 3107 | 3207 | 5207 | 5307 | 15407 | plan / plan_test |
 | 08 | dev-career-portfolio | 커리어 | 8108 | 3108 | 3208 | 5208 | 5308 | 15408 | career / career_test |
 
