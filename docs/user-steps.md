@@ -20,6 +20,7 @@
 | 13 | 앱 PR 3개 병합 (스킬 정리) | 5분 | #313 | 완료 (2026-10-29, 에이전트가 병합) |
 | 14 | ESLint·Prettier 플러그인 등 설치 승인 | 10분 | #245 | 안 함 |
 | 15 | 병합된 로컬 브랜치 정리 | 5분 | — | 안 함 (2026-10-28 추가) |
+| 16 | 다른 작업 PC에 git CLI 브랜치 규칙 적용 | 5분 | #361 | `OneDrive\문서\github` PC 완료 (2026-10-31). `Documents\GitHub` PC 안 함 |
 
 **남은 권장 순서는 1 → 3 → 4입니다.** 2는 끝났습니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
 
@@ -213,6 +214,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 ```
 
 그다음 새로 시작한 Claude Code 세션에서 `npm --silent install --help`가 막히고 `npm ls`는 실행되는지 확인합니다. Claude Code가 2.1.295보다 낮으면 차단 훅이 실패했을 때 명령이 그대로 실행됩니다. 결과(PC 이름, 버전)를 #183에 댓글로 남겨 주세요.
+
+## 16. 다른 작업 PC에 git CLI 브랜치 규칙 적용 (#361)
+
+전역 지침은 리포 밖 파일이라 PC마다 한 번 실행해야 합니다. 리포 안의 권한 규칙은 `git pull`로 함께 받습니다. 그 PC의 project-standards 폴더에서 실행합니다.
+
+```powershell
+git switch main
+git pull --ff-only
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\install.ps1
+node tools\check-git-permissions.mjs
+```
+
+마지막 줄에 `All decisions match.`가 나오면 성공입니다. 출력을 #361에 댓글로 남기거나, 그 PC의 Claude Code에게 "#361 다른 PC 적용해 줘"라고 하면 됩니다. Claude Code를 이 폴더에서 처음 쓰는 PC는 먼저 대화형으로 한 번 열어 폴더 신뢰를 수락합니다.
 
 ## 9. 리포 보안 설정 켜기와 App 권한 추가 (#261)
 

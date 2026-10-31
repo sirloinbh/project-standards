@@ -215,6 +215,64 @@ test('install copies the tools and the agent worker, keeps unchanged files, and 
   }
 });
 
+test('install replaces only the branch section of the global instructions and retires the Fork memory', { skip: !windows }, () => {
+  const f = fixture();
+  try {
+    const dest = join(f.dir, 'sirloinbh-tools');
+    const home = f.env.USERPROFILE;
+    const section = readFileSync(tool('global-instructions/git-branches.md'), 'utf8').replaceAll('\r\n', '\n');
+    const claude = join(home, '.claude', 'CLAUDE.md');
+    const codex = join(home, '.codex', 'AGENTS.md');
+    const account = join(f.env.LOCALAPPDATA, 'Codex-Account-B');
+    const memory = join(home, '.claude', 'projects', 'repo', 'memory');
+    mkdirSync(memory, { recursive: true });
+    mkdirSync(join(home, '.codex'));
+    mkdirSync(account, { recursive: true });
+    writeFileSync(claude, '# 개인 지침\n\n## 로컬 브랜치는 Fork 앱으로 관리\n\n- 옛 규칙\n\n## 다른 절\n\n- 사용자 내용\n');
+    writeFileSync(codex, '# 개인 지침\n\n- 사용자 내용\n');
+    writeFileSync(join(memory, 'fork-branch-management.md'), 'old\n');
+    writeFileSync(join(memory, 'MEMORY.md'), '- [Fork](fork-branch-management.md) — old\n- [Other](other.md) — keep\n');
+
+    // A custom destination alone must never reach the home folder.
+    const skipped = powershell([tool('install.ps1'), '-Destination', dest], f.env);
+    assert.equal(skipped.status, 0, skipped.stderr);
+    assert.match(readFileSync(claude, 'utf8'), /Fork/);
+
+    const first = powershell([tool('install.ps1'), '-Destination', dest, '-UserHome', home], f.env);
+    assert.equal(first.status, 0, first.stderr);
+    const updated = readFileSync(claude, 'utf8');
+    assert.equal(updated, `# 개인 지침\n\n${section}\n## 다른 절\n\n- 사용자 내용\n`);
+    assert.equal(readFileSync(codex, 'utf8'), `# 개인 지침\n\n- 사용자 내용\n\n${section}`);
+    assert.equal(existsSync(join(account, 'AGENTS.md')), false, 'a missing file is not created');
+    assert.equal(existsSync(join(memory, 'fork-branch-management.md')), false);
+    assert.equal(readFileSync(join(memory, 'MEMORY.md'), 'utf8').replaceAll('\r\n', '\n'), '- [Other](other.md) — keep\n');
+    assert.ok(readdirSync(join(home, '.claude')).some((n) => n.startsWith('CLAUDE.md.bak-')));
+    assert.ok(readdirSync(memory).some((n) => n.startsWith('fork-branch-management.md.bak-')));
+
+    const second = powershell([tool('install.ps1'), '-Destination', dest, '-UserHome', home], f.env);
+    assert.equal(second.status, 0, second.stderr);
+    assert.match(second.stdout, /unchanged {2}.*CLAUDE\.md/);
+    assert.match(second.stdout, /unchanged {2}.*AGENTS\.md/);
+    assert.equal(readFileSync(claude, 'utf8'), updated);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test('check-git-permissions refuses to run away from a clean main', () => {
+  const f = fixture();
+  try {
+    const repo = join(f.dir, 'repo');
+    mkdirSync(repo);
+    execFileSync('git', ['init', '-q', '-b', 'work', repo]);
+    const r = spawnSync(process.execPath, [tool('check-git-permissions.mjs')], { cwd: repo, encoding: 'utf8', timeout: processTimeoutMs });
+    assert.equal(r.status, 2, r.stderr);
+    assert.match(r.stderr, /clean main/);
+  } finally {
+    f.cleanup();
+  }
+});
+
 test('set-credential-helper points only the repository config at the chosen wrapper', { skip: !windows }, () => {
   const f = fixture();
   try {

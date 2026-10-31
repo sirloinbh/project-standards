@@ -8,6 +8,8 @@
 | `project-terminal.ps1` | VS Code 터미널 초기화. 기본 `gh`는 회사 설정으로 두고, `ghp` 함수(개인 계정)를 만든다. 개인 `CODEX_HOME`을 지정한다. `ghp`는 같은 폴더의 `gh-project.ps1`을 부르므로 설치 위치에 상관없다 |
 | `open-vscode-account-b.cmd` | 개인 VS Code 실행기. `--project <폴더>`로 열면 회사 gh 설정, 토큰 제거, 개인 Codex, 개인 VS Code 데이터 폴더로 연다. 다른 폴더는 기존 환경을 그대로 둔다 |
 | `install.ps1` | 위 파일, `set-credential-helper.ps1`, 에이전트 워커(`agents.ps1`, `agents/*.mjs`, `registry/projects.json`, `versions.json`)를 `%LOCALAPPDATA%\sirloinbh-tools`에 설치한다. 바뀐 파일은 `.bak-<시각>`으로 백업하고, 예전 위치(`%LOCALAPPDATA%\gh-workout-memo`)는 건드리지 않는다 |
+| `global-instructions/git-branches.md` | PC별 전역 지침에 넣는 브랜치 규칙의 원본이다. `install.ps1`이 `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `%LOCALAPPDATA%\Codex-Account-B\AGENTS.md` 중 있는 파일의 해당 절만 바꾸고 백업한다. Fork 규칙 메모리(`fork-branch-management.md`)도 `.bak-<시각>`으로 옮긴다. `-Destination`만 지정하면 이 단계를 건너뛴다(#365) |
+| `check-git-permissions.mjs` | 이 PC의 Claude Code가 git 브랜치 명령을 실행·승인 요청·차단 중 무엇으로 판정하는지 짧은 세션으로 확인한다. 승인 요청은 모두 거부하므로 그 명령은 실행되지 않는다. 깨끗한 main에서만 돌고, 모델 사용량을 조금 쓴다(#365) |
 | `set-credential-helper.ps1` | 리포마다 `.git/config`의 credential helper를 지정한 `gh-project.ps1`로 바꾼다. 전역 Git 설정은 바꾸지 않는다 |
 | `agents.ps1`, `agents/` | 로컬 에이전트 워커의 실행기와 워커. 아래 [로컬 에이전트 워커](#로컬-에이전트-워커-toolsagents) 참고 |
 
