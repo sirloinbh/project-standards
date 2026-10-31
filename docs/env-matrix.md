@@ -1,6 +1,6 @@
 # 환경변수 한눈에 보기
 
-<!-- 자동 생성 파일(scripts/compliance.mjs). 원본은 각 리포의 .env.example이다. 비밀값은 표시하지 않는다. 생성: 2026-10-25 18:15 UTC -->
+<!-- 자동 생성 파일(scripts/compliance.mjs). 원본은 각 리포의 .env.example이다. 비밀값은 표시하지 않는다. 생성: 2026-10-31 19:10 UTC -->
 
 규칙: [env-conventions.md](env-conventions.md)
 
@@ -55,12 +55,12 @@
 | `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
 | `PORT` | (설명 없음) |  |  | `3105` |  | 공통 |
 
-## sirloinbh/english-study
+## sirloinbh/cert-manager
 
 | 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (설명 없음) |  |  | `english` |  | 공통 |
-| `POSTGRES_USER` | (설명 없음) |  |  | `english` |  | 공통 |
+| `POSTGRES_DB` | (설명 없음) |  |  | `cert` |  | 공통 |
+| `POSTGRES_USER` | (설명 없음) |  |  | `cert` |  | 공통 |
 | `POSTGRES_PASSWORD` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
 | `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
 | `PORT` | (설명 없음) |  |  | `3106` |  | 공통 |
