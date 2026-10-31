@@ -37,6 +37,23 @@ test('each ui app gets its own value in theme-init.js and theme-config.ts', () =
   }
 });
 
+test('the offline page ignores the system setting only in dark-only apps (#363)', () => {
+  for (const project of uiApps) {
+    const html = content(filesOf(project.name), 'frontend/public/offline.html');
+    assert.ok(html.includes(project.displayName), project.name);
+    assert.doesNotMatch(html, /\{\{/, project.name);
+    if (project.features.darkOnly) {
+      assert.match(html, /<meta name="theme-color" content="#0a0a0a" \/>/, project.name);
+      assert.match(html, /color-scheme: dark; --bg: #0a0a0a; --fg: #fafafa;/, project.name);
+      assert.doesNotMatch(html, /prefers-color-scheme|#ffffff|light dark/, project.name);
+    } else {
+      assert.match(html, /content="#ffffff" media="\(prefers-color-scheme: light\)"/, project.name);
+      assert.match(html, /content="#0a0a0a" media="\(prefers-color-scheme: dark\)"/, project.name);
+      assert.match(html, /color-scheme: light dark; --bg: #ffffff;/, project.name);
+    }
+  }
+});
+
 test('the PWA manifest uses the dark background only for dark-only apps', () => {
   for (const project of data.projects.projects) {
     const manifest = JSON.parse(content(filesOf(project.name), 'frontend/public/manifest.webmanifest'));
