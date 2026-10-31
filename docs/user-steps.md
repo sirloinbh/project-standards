@@ -19,7 +19,7 @@
 | 12 | 동기화 PR 8개의 lockfile 맞추기 (공유 ESLint 설정 1.1.0) | 15분 | #328 | 완료 (2026-10-29) |
 | 13 | 앱 PR 3개 병합 (스킬 정리) | 5분 | #313 | 완료 (2026-10-29, 에이전트가 병합) |
 | 14 | ESLint·Prettier 플러그인 등 설치 승인 | 10분 | #245 | 안 함 |
-| 15 | Fork에서 병합된 로컬 브랜치 정리 | 5분 | — | 안 함 (2026-10-28 추가) |
+| 15 | 병합된 로컬 브랜치 정리 | 5분 | — | 안 함 (2026-10-28 추가) |
 
 **남은 권장 순서는 1 → 3 → 4입니다.** 2는 끝났습니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
 
@@ -155,7 +155,7 @@ git push origin design-tokens/v1.0.0
 
 **태그는 한 번에 하나씩 push합니다.** GitHub는 한 번의 push에 태그가 3개보다 많으면 워크플로를 실행하지 않습니다. 2026-10-24에 4개를 한 번에 push해서 publish가 실행되지 않았습니다(#198). 이미 한꺼번에 push했다면 `git push origin --delete <태그...>`로 원격 태그를 지운 뒤 하나씩 다시 push합니다.
 
-로컬 브랜치는 Fork 앱으로 관리하므로 로컬 main을 바꾸지 않고 `origin/main`에 태그를 답니다. Fork에서 태그를 만들어 push해도 됩니다. Actions에서 publish 실행 4개가 성공하는지, Releases에 4개가 생겼는지 확인합니다. 각 Release 본문의 배포 실행 링크는 동기화가 패키지 출처를 확인하는 근거입니다.
+로컬 main을 바꾸지 않도록 `origin/main`에 태그를 답니다. Actions에서 publish 실행 4개가 성공하는지, Releases에 4개가 생겼는지 확인합니다. 각 Release 본문의 배포 실행 링크는 동기화가 패키지 출처를 확인하는 근거입니다.
 
 ### 4-2. 패키지 접근 권한
 
@@ -311,10 +311,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 
 ESLint·Prettier 플러그인 4개(#244), knip(#263), Lighthouse CI(#280), MSW(#281)의 설치 승인입니다. 패키지 목록과 검증 결과는 #245와 `docs/research/lint-rules.md`에 있습니다. 승인 전에 socket.dev 점수를 확인해 주세요. 승인하면 #246(앱 템플릿에 플러그인 넘기기)이 시작됩니다.
 
-## 15. Fork에서 로컬 브랜치 정리
+## 15. 병합된 로컬 브랜치 정리
 
-병합이 끝난 로컬 브랜치를 Fork에서 지웁니다. 먼저 main을 체크아웃해 Pull합니다.
+병합이 끝난 로컬 브랜치를 지웁니다. 먼저 `git switch main`, `git pull --ff-only`로 main을 최신으로 만든 뒤 브랜치마다 `git branch -d <브랜치>`를 실행합니다. 에이전트에게 맡겨도 됩니다.
 
 - project-standards: `docs/240-research-decisions`, `feat/303-workspace-lockfiles`, `feat/304-shared-dependency-versions`, `feat/308-eslint-config-1-1`, `feat/309-backend-http-standard`, `feat/310-frontend-api-standard`, `feat/311-confirm-dialog-notice`, `docs/307-zod4-research`, `docs/312-api-ui-code-rules`, `feat/313-std-communication`, `fix/326-zod-unbounded-arrays`, `chore/328-eslint-config-1-1-rollout`, `docs/328-pending-user-steps`, `chore/323-gitignore-tool-outputs`, `docs/248-domain-research`, `docs/328-user-steps-done`(이 문서의 PR이 병합된 뒤)
 - study-log: `fix/121-content-order-limit`
-- 앱 8개: 12·13에서는 브랜치 없는 작업 폴더만 써서 새로 생긴 로컬 브랜치는 없습니다. Fork에 `chore/standards-sync-*`나 `docs/313-skill-cleanup` 로컬 브랜치가 보이면 병합된 것이니 지워도 됩니다
+- 앱 8개: 12·13에서는 브랜치 없는 작업 폴더만 써서 새로 생긴 로컬 브랜치는 없습니다. `git branch`에 `chore/standards-sync-*`나 `docs/313-skill-cleanup`이 보이면 병합된 것이니 지워도 됩니다

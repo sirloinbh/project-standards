@@ -45,7 +45,7 @@ A로 만들 명령 예: `node tools/repos.mjs status`(리포마다 브랜치·�
 | ESLint, Prettier, EditorConfig | 이미 쓰는 검사와 같게 편집 | 넣음 (#247) |
 | GitHub Pull Requests | 편집기 안에서 PR·이슈 보기 | 권장 |
 | Error Lens | 오류를 줄 끝에 바로 표시 | 선택 |
-| GitLens | 이력 보기 (무료 기능만) | 선택. 사용자가 이력을 Fork 앱으로 보므로 필수 아님 |
+| GitLens | 이력 보기 (무료 기능만) | 선택. 필수 아님 |
 
 확장 프로그램 권장 목록은 설치를 강제하지 않는다. VS Code가 "권장 확장을 설치할까요?"라고 묻기만 한다.
 
