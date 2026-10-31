@@ -110,6 +110,7 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
       api = makeClient(await getToken(target.repo));
       const result = await syncTarget({ root, data, target, centralSha, workflowSha, api, centralApi });
       log(`${target.repo}: ${result.status}${result.pr ? ` ${result.pr}` : ''} (변경 ${result.changes.length}, 삭제 ${result.deletions.length})`);
+      if (result.status === 'kept') log(`::warning::${target.repo}: 동기화 PR에 직접 더한 커밋이 있어 갱신하지 않았습니다. ${result.pr}`);
       results.push({ target: target.repo, ...result });
     } catch (error) {
       log(`${target.repo}: 실패 — ${error.message}`);

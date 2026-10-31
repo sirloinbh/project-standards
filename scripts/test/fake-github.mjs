@@ -53,6 +53,17 @@ export function fakeRepo(fullName, files, { labels: initialLabels = [] } = {}) {
       return { sha };
     }
     if (method === 'GET' && path.startsWith(`${base}/pulls?state=open`)) return pulls.filter((p) => p.state === 'open');
+    if (method === 'GET' && (m = /\/pulls\/(\d+)\/commits\?per_page=100$/.exec(path))) {
+      const pr = pulls.find((p) => p.number === Number(m[1]));
+      const list = [];
+      for (let sha = refs.get(`heads/${pr.head.ref}`); commits.get(sha)?.message; [sha] = commits.get(sha).parents) list.unshift({ sha, commit: { message: commits.get(sha).message } });
+      return list;
+    }
+    if (method === 'POST' && (m = /\/issues\/(\d+)\/comments$/.exec(path))) {
+      const pr = pulls.find((p) => p.number === Number(m[1]));
+      (pr.comments ??= []).push(body.body);
+      return {};
+    }
     if (method === 'POST' && path === `${base}/git/refs`) {
       refs.set(body.ref.replace('refs/', ''), body.sha);
       return {};
@@ -101,7 +112,15 @@ export function fakeRepo(fullName, files, { labels: initialLabels = [] } = {}) {
     refs.set('heads/main', refs.get(`heads/${branch}`));
     for (const p of pulls) if (p.head.ref === branch) p.state = 'closed';
   };
-  return { api, calls, pulls, refs, filesAt, merge, commits, labels };
+  // Simulates a person pushing a commit to a branch.
+  const addCommit = (branch, message) => {
+    const parent = refs.get(`heads/${branch}`);
+    const sha = newSha('c');
+    commits.set(sha, { tree: commits.get(parent).tree, message, parents: [parent] });
+    refs.set(`heads/${branch}`, sha);
+    return sha;
+  };
+  return { api, calls, pulls, refs, filesAt, merge, addCommit, commits, labels };
 }
 
 // The central repository as the sync sees it once every shared package was published:

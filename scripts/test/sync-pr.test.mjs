@@ -83,6 +83,42 @@ test('a later central commit updates the same open PR instead of opening another
   assert.equal(JSON.parse(repo.filesAt(result.branch)[MANIFEST_PATH]).centralSha, SHA2);
 });
 
+test('a central commit leaves a sync branch with a direct commit untouched and says so on the PR (#367)', async () => {
+  const repo = studyRepo();
+  const { branch } = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, api: repo.api });
+  const direct = repo.addCommit(branch, 'chore: 시각 기준선 갱신 (#184)');
+  const before = repo.calls.length;
+  const result = await syncTarget({ root, data, target: studyTarget, centralSha: SHA2, api: repo.api });
+  assert.equal(result.status, 'kept');
+  assert.equal(result.branch, branch);
+  assert.equal(result.pr, repo.pulls[0].html_url);
+  assert.equal(repo.refs.get(`heads/${branch}`), direct, 'the direct commit is still the head');
+  const calls = repo.calls.slice(before);
+  for (const write of ['PATCH', 'POST /repos/sirloinbh/study-log/git']) assert.equal(calls.some((c) => c.startsWith(write)), false, write);
+  assert.equal(repo.pulls[0].title, 'chore: 중앙 표준 동기화 (project-standards@a1b2c3d)');
+  assert.equal(repo.pulls[0].comments.length, 1);
+  assert.match(repo.pulls[0].comments[0], /`b2c3d4e`.*직접 더한 커밋 1개/);
+  assert.match(repo.pulls[0].comments[0], /`sync` 워크플로/);
+});
+
+test('a sync branch whose commits cannot be listed is not overwritten (#367)', async () => {
+  const repo = studyRepo();
+  const { branch } = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, api: repo.api });
+  const head = repo.refs.get(`heads/${branch}`);
+  const api = (method, path, body) => (path.includes('/commits?per_page=100') ? Promise.resolve(null) : repo.api(method, path, body));
+  await assert.rejects(syncTarget({ root, data, target: studyTarget, centralSha: SHA2, api }));
+  assert.equal(repo.refs.get(`heads/${branch}`), head);
+});
+
+test('after a PR with a direct commit is merged, the next central commit opens a new PR (#367)', async () => {
+  const repo = studyRepo();
+  const { branch } = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, api: repo.api });
+  repo.addCommit(branch, 'chore: 시각 기준선 갱신 (#184)');
+  repo.merge(branch);
+  const result = await syncTarget({ root, data, target: studyTarget, centralSha: SHA2, api: repo.api });
+  assert.notEqual(result.status, 'kept');
+});
+
 test('after the PR is merged, a central commit that changes no synced file proposes nothing', async () => {
   const repo = studyRepo();
   const first = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, workflowSha: SHA1, api: repo.api });

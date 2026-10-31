@@ -8,6 +8,15 @@ import { loadIndex } from './templates.mjs';
 
 export const BRANCH_PREFIX = 'chore/standards-sync-';
 const CENTRAL = 'sirloinbh/project-standards';
+// Every commit the sync creates starts with this; any other commit on the branch was added by a person.
+const COMMIT_PREFIX = 'chore: 중앙 표준 동기화 (project-standards@';
+
+const renderKeptComment = (centralSha, count) => [
+  `중앙 표준 리포 커밋 \`${centralSha.slice(0, 7)}\`을 이 PR에 반영하지 않았습니다. 이 PR에 직접 더한 커밋 ${count}개가 사라지지 않게 하기 위해서입니다.`,
+  '',
+  '- 이 PR을 병합한 뒤 중앙 리포의 `sync` 워크플로를 실행하면 최신 표준이 새 PR로 열립니다.',
+  '- 직접 더한 커밋이 필요 없으면 이 PR을 닫은 뒤 같은 워크플로를 실행합니다.',
+].join('\n');
 
 /** Git blob id of a text, so unchanged files are detected without downloading them. */
 export const gitBlobSha = (text) => {
@@ -158,6 +167,19 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
   const manifestMoved = withoutSha(previous) !== withoutSha(plan.manifest);
   if (!meaningful.length && !deletions.length && !manifestMoved) return { status: 'unchanged', changes: [], deletions: [] };
 
+  const pulls = await api('GET', `${repoPath}/pulls?state=open&per_page=100`);
+  const existing = pulls.find((p) => p.head.ref.startsWith(BRANCH_PREFIX) && p.head.repo?.full_name === target.repo);
+  // The update below force-pushes and would erase commits a person added to the PR (#367).
+  // A listing that fails stops here too, so an unknown branch is never overwritten.
+  if (existing) {
+    const commits = await api('GET', `${repoPath}/pulls/${existing.number}/commits?per_page=100`);
+    const direct = commits.filter((c) => !c.commit.message.startsWith(COMMIT_PREFIX));
+    if (direct.length) {
+      await api('POST', `${repoPath}/issues/${existing.number}/comments`, { body: renderKeptComment(centralSha, direct.length) });
+      return { status: 'kept', pr: existing.html_url, branch: existing.head.ref, changes: [], deletions: [] };
+    }
+  }
+
   const newTree = await api('POST', `${repoPath}/git/trees`, {
     base_tree: baseCommit.tree.sha,
     tree: [
@@ -167,20 +189,18 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
   });
   const short = centralSha.slice(0, 7);
   const commit = await api('POST', `${repoPath}/git/commits`, {
-    message: `chore: 중앙 표준 동기화 (project-standards@${short})\n\n- 왜: 중앙 표준 리포 main이 바뀌었다\n- 변경: 중앙 관리 파일 ${changes.length + deletions.length}개`,
+    message: `${COMMIT_PREFIX}${short})\n\n- 왜: 중앙 표준 리포 main이 바뀌었다\n- 변경: 중앙 관리 파일 ${changes.length + deletions.length}개`,
     tree: newTree.sha,
     parents: [baseSha],
   });
 
-  const pulls = await api('GET', `${repoPath}/pulls?state=open&per_page=100`);
-  const existing = pulls.find((p) => p.head.ref.startsWith(BRANCH_PREFIX) && p.head.repo?.full_name === target.repo);
   const branch = existing ? existing.head.ref : `${BRANCH_PREFIX}${short}`;
   if (existing || (await api('GET', `${repoPath}/git/ref/heads/${branch}`))) {
     await api('PATCH', `${repoPath}/git/refs/heads/${branch}`, { sha: commit.sha, force: true });
   } else {
     await api('POST', `${repoPath}/git/refs`, { ref: `refs/heads/${branch}`, sha: commit.sha });
   }
-  const title = `chore: 중앙 표준 동기화 (project-standards@${short})`;
+  const title = `${COMMIT_PREFIX}${short})`;
   const body = renderBody({ target, centralSha, changes: meaningful, deletions, keptRemoved, pinNotes, packageNotes });
   const pr = existing
     ? await api('PATCH', `${repoPath}/pulls/${existing.number}`, { title, body })

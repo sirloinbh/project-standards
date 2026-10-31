@@ -7,7 +7,7 @@
 - 설계는 [docs/design.md](docs/design.md)와 [docs/adr/](docs/adr/)가 원본이다. 요구사항 원본은 [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md)다.
 - design.md "12. 단계별 적용 계획"은 끝났다(#116). `sync.config.json`의 `maxRollout`이 `3`이라 앱 8개와 인프라 리포 모두가 동기화 대상이다.
 - 지금부터 표준을 바꾸는 순서: 이 리포의 원본을 고친다 → `npm run check` → 이 리포 PR 병합(에이전트) → `sync.yml`이 하위 리포 동기화 PR을 열거나 갱신 → 에이전트가 동기화 PR을 검토해 이슈에 기록 → 사용자가 병합.
-- 동기화 PR에 직접 커밋을 더해야 할 때(공유 패키지가 늘어 lockfile 갱신이 필요한 경우 등)는, 그 PR이 병합될 때까지 이 리포 main에 병합하지 않는다. main에 새 병합이 들어가면 동기화 브랜치가 다시 만들어져 직접 커밋이 사라진다(#114).
+- 동기화 PR에 직접 커밋을 더해야 할 때(공유 패키지가 늘어 lockfile 갱신이 필요한 경우 등)는 커밋 메시지를 `chore: 중앙 표준 동기화 (project-standards@`로 시작하지 않는다. 동기화 봇은 그런 커밋이 있는 브랜치를 덮어쓰지 않고, PR 댓글과 워크플로 경고로 알린다(#114, #367). 그 PR이 열려 있는 동안 중앙 변경은 반영되지 않으므로, 병합한 뒤 `sync` 워크플로를 실행한다.
 - 매일 오는 준수 현황 PR(`chore/compliance-report`)은 에이전트가 병합한다. 새로 생긴 `✗` 항목은 해당 리포 또는 이 리포에 이슈로 등록한다.
 
 ## 작업 절차

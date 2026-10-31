@@ -210,6 +210,7 @@ packages/<pkg> 변경 PR (버전·CHANGELOG 포함) → 사용자 병합
           ├─ 레지스트리 allowedDifferences 경로는 건너뜀
           ├─ 자체 패키지 출처 확인 (4.3)
           ├─ 하위 main 기준으로 변경 계산. 변경이 없으면 종료
+          ├─ 열린 동기화 PR에 사람이 더한 커밋이 있으면: 브랜치를 건드리지 않고 PR 댓글과 워크플로 경고로 알린 뒤 종료 (#367)
           ├─ 열린 동기화 PR이 있으면: 그 브랜치를 하위 main + 렌더링 결과로 다시 만들어 force-push하고, 제목과 본문을 최신 SHA로 갱신
           │  없으면: chore/standards-sync-<중앙 SHA 7자리> 브랜치를 만들고 PR 생성
           └─ PR 본문: 중앙 SHA·비교 링크, 변경 파일 표, 패키지 CHANGELOG 발췌·Release 링크,
