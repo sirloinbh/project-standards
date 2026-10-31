@@ -1,6 +1,7 @@
 {
   "sirloinbh/workout-memo": [
     "full .claude/hooks/block-package-installs.mjs",
+    "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-communication/SKILL.md",
@@ -134,6 +135,7 @@
   ],
   "sirloinbh/study-log": [
     "full .claude/hooks/block-package-installs.mjs",
+    "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-communication/SKILL.md",
@@ -262,6 +264,7 @@
   ],
   "sirloinbh/health-log": [
     "full .claude/hooks/block-package-installs.mjs",
+    "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-communication/SKILL.md",
@@ -390,6 +393,7 @@
   ],
   "sirloinbh/life-journal": [
     "full .claude/hooks/block-package-installs.mjs",
+    "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-communication/SKILL.md",
@@ -518,6 +522,7 @@
   ],
   "sirloinbh/money-ledger": [
     "full .claude/hooks/block-package-installs.mjs",
+    "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-communication/SKILL.md",
@@ -646,6 +651,7 @@
   ],
   "sirloinbh/cert-manager": [
     "full .claude/hooks/block-package-installs.mjs",
+    "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-communication/SKILL.md",
@@ -774,6 +780,7 @@
   ],
   "sirloinbh/plan-routine": [
     "full .claude/hooks/block-package-installs.mjs",
+    "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-communication/SKILL.md",
@@ -902,6 +909,7 @@
   ],
   "sirloinbh/dev-career-portfolio": [
     "full .claude/hooks/block-package-installs.mjs",
+    "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-communication/SKILL.md",
@@ -1030,6 +1038,7 @@
   ],
   "sirloinbh/shared-aws-infrastructure": [
     "full .claude/hooks/block-package-installs.mjs",
+    "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
     "full .claude/skills/std-backlog/SKILL.md",
     "full .claude/skills/std-communication/SKILL.md",

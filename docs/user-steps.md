@@ -219,6 +219,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh
 
 전역 지침은 리포 밖 파일이라 PC마다 한 번 실행해야 합니다. 리포 안의 권한 규칙은 `git pull`로 함께 받습니다. 그 PC의 project-standards 폴더에서 실행합니다.
 
+전역 지침에 Fork 규칙이 남아 있으면 Claude Code 세션을 시작할 때 이 안내가 뜹니다(#368). 이 안내는 리포의 훅이 띄우므로, 그 PC의 리포가 훅을 받은 뒤부터 나옵니다. 적용을 마치면 더 나오지 않습니다.
+
 ```powershell
 git switch main
 git pull --ff-only
