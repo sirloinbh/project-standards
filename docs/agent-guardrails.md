@@ -62,9 +62,26 @@ npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 패키지를 �
 - **Codex 훅(#180):** 위 형태는 `.codex/hooks.json`의 훅이 막는다("Codex에서 같은 훅 쓰기"). 공식 문서는 훅을 "완전한 강제 경계가 아니라 유용한 보호 장치"로 다룬다. 훅이 실패하거나 신뢰되지 않으면 막지 않으므로 이 형태는 그때 다시 막히지 않는다. 훅이 보는 범위는 Claude Code 훅의 한계와 같다(변수에 담은 명령, 스크립트 파일 안의 명령 등). `write_stdin`으로 이미 실행 중인 셸에 넣는 입력은 `PreToolUse`를 다시 거치지 않는다(공식 문서).
 - AGENTS.md의 금지 문장은 두 도구 모두 안내로만 읽는다. 차단은 위 설정 파일이 한다.
 
+## 에이전트의 git 브랜치 명령 권한 (#361)
+
+[std-git-writing](../templates/common/skills/std-git-writing/SKILL.md)의 "로컬 브랜치 관리 (git CLI)" 명령은 에이전트가 묻지 않고 실행한다. 규칙은 PC별 전역 설정이 아니라 중앙 관리 파일에 둔다. 그래서 동기화된 리포에서는 PC마다 따로 설정하지 않아도 같게 동작한다.
+
+| 결정 | 명령 |
+|---|---|
+| 묻지 않고 실행 | `git switch`, `git pull --ff-only`, `git branch --delete`, `git fetch origin`, `git fetch --prune origin` |
+| 승인 필요 | `git switch`의 `-f`·`-C`·`--force`·`--force-create`·`--discard-changes`, `git branch`의 `-D`·`-f`·`--force`, `git reset --hard`, `git clean`, `git stash`, `git rebase` |
+| 막음 | 강제 push(`-f`, `--force`, `--force-with-lease`, `origin +브랜치`), main 직접 push |
+
+- Claude Code는 `.claude/settings.json`의 `permissions.allow`·`ask`·`deny`에 Bash와 PowerShell 도구 규칙을 같이 둔다. 우선순위는 deny, ask, allow 순서다. `scripts/test/agent-guardrails.test.mjs`가 같은 순서로 샘플 명령을 판정한다.
+- Codex는 `.codex/rules/git-branch.rules`를 쓴다. 명령 앞부분만 비교하므로 뒤에 붙인 옵션(`git switch main -f`)은 구별하지 못한다.
+- PowerShell 도구의 규칙은 대소문자를 구별하지 않는다(2026-10-31 실제 실행으로 확인). `git branch -d`는 `-D`, `git switch -c`는 `-C` 승인 규칙에 걸리므로 스킬은 `--delete`, `--create`를 쓴다.
+- 프로젝트의 `permissions.allow`는 사용자가 신뢰한 폴더에서만 적용된다. 새 PC나 새 클론은 Claude Code를 대화형으로 한 번 열어 신뢰를 수락해야 한다.
+- 합친 짧은 옵션(`git switch -fc x`)은 어느 쪽 규칙도 구별하지 못한다. 규칙은 실수를 줄이는 장치이고 보안 경계가 아니다.
+- 작업 브랜치 push, `git add`, `git commit`은 이 규칙에 넣지 않았다. 각 PC의 설정을 따른다.
+
 ## 바꾸는 법
 
-- 원본은 `templates/common/.claude/settings.json.tmpl`, `templates/common/.claude/hooks/block-package-installs.mjs`, `templates/common/.codex/rules/package-installs.rules`, `templates/common/.codex/hooks.json.tmpl`이다. Codex 훅 설정을 바꾸면 각 리포에서 사용자가 `/hooks`로 다시 신뢰해야 하므로 꼭 필요할 때만 바꾼다. 훅 스크립트는 Claude Code(`node <파일>`)와 Codex(`node -e`로 `main()` 호출)가 함께 쓰므로 `main` export를 유지한다. 거부 목록과 Codex 규칙은 같은 명령을 막아야 한다(테스트가 비교한다). 중앙 리포의 `.claude/settings.json`, `.claude/hooks/`, `.codex/rules/`도 같이 고친다.
+- 원본은 `templates/common/.claude/settings.json.tmpl`, `templates/common/.claude/hooks/block-package-installs.mjs`, `templates/common/.codex/rules/package-installs.rules`, `templates/common/.codex/rules/git-branch.rules`, `templates/common/.codex/hooks.json.tmpl`이다. Codex 훅 설정을 바꾸면 각 리포에서 사용자가 `/hooks`로 다시 신뢰해야 하므로 꼭 필요할 때만 바꾼다. 훅 스크립트는 Claude Code(`node <파일>`)와 Codex(`node -e`로 `main()` 호출)가 함께 쓰므로 `main` export를 유지한다. 거부 목록과 Codex 규칙은 같은 명령을 막아야 한다(테스트가 비교한다). 중앙 리포의 `.claude/settings.json`, `.claude/hooks/`, `.codex/rules/`도 같이 고친다.
 - npm이 명령이나 별칭을 바꾸면 훅의 `NPM_COMMANDS`·`NPM_ALIASES`, 거부 목록, Codex 규칙의 두 목록(별칭, 줄임·camelCase)을 함께 고친다. 빠진 줄임·camelCase 형태는 `scripts/test/agent-guardrails.test.mjs`가 알려 준다.
 - 훅이 막을 명령이나 허용할 명령을 바꾸면 `scripts/test/package-install-hook.test.mjs`의 목록에 예를 추가한다.
 - 리포에만 필요한 Claude Code 설정은 `.claude/settings.local.json`(커밋하지 않음)에 둔다. `.claude/settings.json`과 `.claude/hooks/`는 중앙 관리 파일이라 고치면 standards-check가 실패한다.
