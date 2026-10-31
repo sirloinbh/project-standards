@@ -66,7 +66,7 @@
 | `jsdom` | 30.1.2 | `frontend/package.json` | devDependencies |
 | `tailwindcss` | 4.3.3 | `frontend/package.json` | devDependencies |
 | `typescript` | 5.9.3 | `frontend/package.json` | devDependencies |
-| `vite` | 6.4.4 | `frontend/package.json` | devDependencies |
+| `vite` | 6.4.5 | `frontend/package.json` | devDependencies |
 | `vitest` | 5.0.3 | `frontend/package.json` | devDependencies |
 | `express` | 5.3.0 | `backend/package.json` | dependencies |
 | `pg` | 8.23.1 | `backend/package.json` | dependencies |
