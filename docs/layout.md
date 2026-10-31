@@ -7,9 +7,10 @@
 | 파일 (앱 리포) | 내용 |
 |---|---|
 | `frontend/src/components/layout/app-shell.tsx` | `AppShell`: 상단 바, 주 메뉴(LNB), 본문(`<main id="main">`), footer, 본문 바로가기 링크 |
-| `frontend/src/components/layout/theme-toggle.tsx` | 화면 모드 메뉴(시스템 설정·라이트·다크) |
-| `frontend/src/lib/theme.ts` | 모드 읽기·적용·저장 (`localStorage`의 `theme`) |
-| `frontend/public/theme-init.js` | 첫 화면을 그리기 전에 저장한 모드를 적용하는 스크립트 |
+| `frontend/src/components/layout/theme-toggle.tsx` | 화면 모드 메뉴(시스템 설정·라이트·다크). `darkOnly` 앱에서는 `AppShell`이 그리지 않는다 |
+| `frontend/src/lib/theme.ts` | 모드 읽기·적용·저장 (`localStorage`의 `theme`). `darkOnly` 앱에서 읽으면 항상 `dark` |
+| `frontend/src/lib/theme-config.ts` | 레지스트리 `features.darkOnly`를 렌더링한 `DARK_ONLY` 값([ADR-0011](adr/0011-dark-only-option.md)) |
+| `frontend/public/theme-init.js` | 첫 화면을 그리기 전에 저장한 모드를 적용하는 스크립트. `darkOnly` 앱은 저장값과 관계없이 `dark`를 붙인다 |
 | `components/ui/dialog.tsx` | 모달 |
 | `components/ui/sheet.tsx` | 화면 가장자리에서 나오는 패널(모바일 메뉴) |
 | `components/ui/drawer.tsx` | 아래에서 올라오는 패널(vaul). 끌어내려 닫을 수 있다 |

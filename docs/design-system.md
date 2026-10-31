@@ -1,6 +1,6 @@
 # 디자인 시스템 (공통부)
 
-8개 앱이 함께 지키는 화면 규칙이다. 값은 [design-tokens.md](design-tokens.md), 결정 근거는 [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)과 [ADR-0008](adr/0008-neutral-light-dark.md)에 있다. 앱마다 다른 것은 **표시 이름뿐**이다. 색은 8개 앱 모두 같은 흑백이고, 라이트·다크 두 모드를 지원한다.
+8개 앱이 함께 지키는 화면 규칙이다. 값은 [design-tokens.md](design-tokens.md), 결정 근거는 [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), [ADR-0008](adr/0008-neutral-light-dark.md), [ADR-0011](adr/0011-dark-only-option.md)에 있다. 앱마다 다른 것은 **표시 이름과 다크 고정 옵션(`features.darkOnly`)뿐**이다. 색은 8개 앱 모두 같은 흑백이고, 다크 고정을 켠 앱 외에는 라이트·다크 두 모드를 지원한다.
 
 ## 토큰 쓰는 법
 
@@ -14,6 +14,7 @@
 - 기본은 시스템 설정(`prefers-color-scheme`)을 따른다.
 - 사용자가 모드를 고르면 그 선택을 저장(`localStorage`)하고 `<html>`에 `light` 또는 `dark` 클래스를 붙인다. 첫 화면에서 색이 바뀌어 깜빡이지 않도록, 클래스를 붙이는 스크립트는 `<head>`에서 가장 먼저 실행한다(#124).
 - 클래스가 없으면 시스템 설정을 따르므로, 스크립트가 꺼져 있어도 맞는 색이 나온다.
+- 레지스트리 `features.darkOnly`를 켠 앱은 저장값과 관계없이 항상 다크로 그리고, 화면 모드 메뉴를 그리지 않는다. 앱 코드는 `frontend/src/lib/theme-config.ts`의 `DARK_ONLY`로 값을 읽는다(ADR-0011). 지금은 workout-memo만 켰다.
 
 ## 컴포넌트
 

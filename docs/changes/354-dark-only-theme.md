@@ -2,7 +2,7 @@
 
 - 이슈: [#354](https://github.com/sirloinbh/project-standards/issues/354)
 - 브랜치: `feat/354-dark-only-theme` (main `83b6d06`에서 시작)
-- 상태: **진행 중(draft PR)**. 코드·테스트는 끝났고, 문서(ADR·설계 문서) 정리가 남았다.
+- 상태: 코드·테스트·문서 완료. 병합 후 작업은 workout-memo#184에서 한다.
 
 ## 배경 — 2026-10-30
 
@@ -35,17 +35,25 @@
 - `npm run check`: 506 tests, 505 pass, 0 fail
 - 템플릿 안의 화면 테스트(`*.test.tsx`, `theme.test.ts`)는 중앙에서 돌지 않는다. 동기화 PR을 받은 앱의 CI에서 확인해야 한다(아직 안 함).
 
-## 앞으로 할 일
+## 문서·미리보기 — 2026-10-31
 
+- `docs/adr/0011-dark-only-option.md`를 추가했다. `docs/design-system.md`, `docs/layout.md`, `docs/pwa.md`에 `darkOnly`를 적었다.
+- `npm run sync:preview` 결과를 직접 확인했다.
+  - workout-memo: `theme-init.js`의 `darkOnly = true`, `DARK_ONLY = true`, manifest 색 `#0a0a0a`.
+  - study-log: `darkOnly = false`, `DARK_ONLY = false`, manifest 색 `#ffffff`.
+  - 나머지 5개 앱도 `DARK_ONLY = false`다. `shared-aws-infrastructure`에는 이 파일이 없다.
+- 사용자가 병합과 7개 앱 동기화 PR을 허용했다(2026-10-31).
+
+## 앞으로 할 일
 ### 이 PR에서 (중앙)
 
-- [ ] ADR-0011 "앱별 다크 고정 옵션"을 쓴다. ADR-0008(흑백 라이트·다크 통일) 중 "모든 앱이 두 모드 지원" 부분을 바꾼다는 점과 이유를 적는다.
-- [ ] `docs/design-system.md`를 고친다.
+- [x] ADR-0011 "앱별 다크 고정 옵션"을 쓴다. ADR-0008(흑백 라이트·다크 통일) 중 "모든 앱이 두 모드 지원" 부분을 바꾼다는 점과 이유를 적는다.
+- [x] `docs/design-system.md`를 고친다.
   - 첫 문단의 "앱마다 다른 것은 표시 이름뿐"
   - "라이트·다크 모드" 절에 `darkOnly`
-- [ ] `docs/layout.md`(`theme-init.js` 설명), `docs/pwa.md`(manifest 색이 `darkOnly`면 `#0a0a0a`)를 고친다.
-- [ ] `npm run sync:preview`로 workout-memo와 다른 앱 1개의 결과 파일을 직접 확인한다.
-- [ ] 문서까지 끝나면 `npm run check`를 다시 돌리고, draft를 해제해 병합한다(중앙 리포는 에이전트가 병합).
+- [x] `docs/layout.md`(`theme-init.js` 설명), `docs/pwa.md`(manifest 색이 `darkOnly`면 `#0a0a0a`)를 고친다.
+- [x] `npm run sync:preview`로 workout-memo와 다른 앱 1개의 결과 파일을 직접 확인한다.
+- [x] 문서까지 끝나면 `npm run check`를 다시 돌리고, draft를 해제해 병합한다(중앙 리포는 에이전트가 병합).
 
 ### 병합 후 (workout-memo, [#184](https://github.com/sirloinbh/workout-memo/issues/184))
 
@@ -60,7 +68,7 @@
 
 ### 사용자 단계
 
-- [ ] workout-memo#98 닫기. 결정 기록은 코멘트로 남겼다. 에이전트가 이슈를 닫는 동작은 권한 정책에 막혔다.
+- [x] workout-memo#98 닫기. workout-memo PR #185 병합으로 닫혔다(2026-10-31).
 - [ ] workout-memo 운영 배포 확인(#123 병합 커밋 `2239199`): 서버에서 `cat /opt/workout-memo/.deployed`. 에이전트의 SSH 접속은 권한 정책에 막혔다.
 
 ## 제한
