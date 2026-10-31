@@ -64,14 +64,15 @@ Git과 GitHub에 남기는 글은 나중에 사람이 다시 읽는 기록이다
 
 로컬 브랜치는 git CLI로 관리한다. 에이전트가 아래 명령을 직접 실행하고, 사용자에게 안내할 때도 같은 명령을 쓴다.
 
-- **작업 시작:** `git status`로 현재 브랜치와 작업 트리를 확인한 뒤 `git fetch origin`, `git switch -c <브랜치> origin/main` 순서로 만든다. 로컬 main은 건드리지 않는다.
-- **병합 후 정리:** PR이 병합됐는지 확인한 뒤(`pr view <번호> --json state,mergedAt`) `git switch main`, `git pull --ff-only`, `git branch -d <브랜치>`, `git fetch --prune origin` 순서로 실행한다.
+- **작업 시작:** `git status`로 현재 브랜치와 작업 트리를 확인한 뒤 `git fetch origin`, `git switch --create <브랜치> origin/main` 순서로 만든다. 로컬 main은 건드리지 않는다.
+- **병합 후 정리:** PR이 병합됐는지 확인한 뒤(`pr view <번호> --json state,mergedAt`) `git switch main`, `git pull --ff-only`, `git branch --delete <브랜치>`, `git fetch --prune origin` 순서로 실행한다.
 - **멈추고 사용자에게 알리는 경우:** 다음 중 하나면 브랜치를 바꾸거나 지우지 않는다.
   - 커밋하지 않은 변경이 있다.
   - 지우려는 브랜치가 병합되지 않았다.
   - 지우려는 브랜치를 다른 세션이나 worktree가 쓰고 있다(`git worktree list`로 확인).
   - `git pull --ff-only`가 실패한다.
-- **`git branch -d`가 거부되면:** `-D`로 바꾸지 않고 이유를 보고한다.
+- **`git branch --delete`가 거부되면:** `--force`나 `-D`로 바꾸지 않고 이유를 보고한다.
+- **긴 옵션을 쓴다:** PowerShell 도구의 권한 규칙은 대소문자를 구별하지 않아 `-c`·`-d`를 `-C`·`-D`와 같게 본다. 그래서 `--create`, `--delete`로 쓴다.
 - **폴더 잠금:** OneDrive 등이 파일을 잡아 git이 다시 시도할지 물으면 `n`으로 끝내고, 같은 명령을 반복하지 않는다. 브랜치가 지워졌는지 `git branch --list <브랜치>`로 확인해 결과를 보고한다.
 - **쓰지 않는 명령:** `git branch -D`, `git reset --hard`, `git clean`, `git stash`, `git rebase`는 사용자가 요청하고 승인한 경우에만 쓴다. 강제 push와 main 직접 push는 하지 않는다.
 - **`pr merge --delete-branch`는 쓰지 않는다.** 원격 브랜치는 리포 설정 "병합 후 브랜치 자동 삭제"가 지우고, 로컬 브랜치는 위 정리 절차로 지운다.
