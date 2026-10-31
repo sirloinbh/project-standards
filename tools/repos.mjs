@@ -5,7 +5,7 @@
 //   node tools/repos.mjs workspace          .local/sirloinbh.code-workspace for VS Code
 // Repositories come from sync.config.json (apps and infrastructure) plus this repository.
 // --base <folder> overrides the folder that holds the clones (the parent of this repository).
-// Branch cleanup stays with the user in the Fork app: nothing here switches, resets or deletes branches.
+// Branch cleanup follows the git CLI steps in std-git-writing: nothing here switches, resets or deletes branches.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';

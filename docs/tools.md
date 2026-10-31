@@ -15,7 +15,7 @@
 
 리포를 클론해 둔 상위 폴더는 PC마다 다르다(예: `%USERPROFILE%\Documents\GitHub`, `%USERPROFILE%\OneDrive\문서\github`). 아래 명령은 한 PowerShell 창에서 차례로 실행하고, 처음에 `$base`만 그 PC의 폴더로 바꾼다.
 
-1. **설치:** Fork에서 project-standards의 main을 체크아웃하고 Pull한 뒤 실행한다. `install.ps1`은 자기 폴더의 파일을 복사하므로 최신 main에서 실행해야 한다.
+1. **설치:** project-standards에서 `git switch main`, `git pull --ff-only`로 main을 최신으로 만든 뒤 실행한다. `install.ps1`은 자기 폴더의 파일을 복사하므로 최신 main에서 실행해야 한다.
    ```powershell
    $base = "$env:USERPROFILE\Documents\GitHub"   # 리포를 클론한 상위 폴더
    cd "$base\project-standards"
@@ -201,7 +201,7 @@ node tools/repos.mjs run -- git log -1 --oneline    # 리포마다 같은 명령
 node tools/repos.mjs workspace         # .local/sirloinbh.code-workspace를 만든다. VS Code에서 열면 리포가 한 창에 모인다
 ```
 
-- 브랜치를 바꾸거나 지우지 않는다. 브랜치 정리는 Fork 앱에서 한다.
+- 브랜치를 바꾸거나 지우지 않는다. 브랜치 정리는 std-git-writing 스킬의 git CLI 절차를 따른다.
 - 작업공간 파일은 PC마다 경로가 달라 `.local/`(git 제외)에 만든다. 폴더마다 그 리포의 `.vscode/settings.json`(개인 계정 터미널)이 그대로 적용된다.
 
 ## 앱 리포 라벨 통일 (tools/labels.mjs)
