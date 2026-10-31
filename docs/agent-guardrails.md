@@ -78,6 +78,7 @@ npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 패키지를 �
 - 프로젝트의 `permissions.allow`는 사용자가 신뢰한 폴더에서만 적용된다. 새 PC나 새 클론은 Claude Code를 대화형으로 한 번 열어 신뢰를 수락해야 한다.
 - 합친 짧은 옵션(`git switch -fc x`)은 어느 쪽 규칙도 구별하지 못한다. 규칙은 실수를 줄이는 장치이고 보안 경계가 아니다.
 - 작업 브랜치 push, `git add`, `git commit`은 이 규칙에 넣지 않았다. 각 PC의 설정을 따른다.
+- 전역 지침(`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`)에 Fork 규칙 절이 남아 있으면 Claude Code의 `SessionStart` 훅(`.claude/hooks/pc-setup-notice.mjs`)이 세션 시작 때 적용 방법을 알린다(#368). 읽기만 하고, 오류가 나도 세션을 막지 않는다. 리포의 훅을 받기 전의 클론과 Codex 세션에서는 나오지 않는다.
 
 ## 바꾸는 법
 
