@@ -19,6 +19,7 @@
     { "name": "area/ci", "color": "bfdadc", "description": "CI·reusable workflow" },
     { "name": "area/agent", "color": "bfdadc", "description": "에이전트 지침·스킬·권한" },
     { "name": "area/deploy", "color": "bfdadc", "description": "배포·운영" },
+    { "name": "area/app", "color": "bfdadc", "description": "앱 기능: 화면·API·DB" },
     { "name": "origin/added", "color": "f9d0c4", "description": "작업 중 사용자가 추가한 요구사항" },
     { "name": "needs-user", "color": "5319e7", "description": "사용자가 직접 수행할 단계 포함" }
   ]
