@@ -8,7 +8,7 @@
 |---|---|---|
 | `frontend/public/manifest.webmanifest` | 중앙 (전체 관리) | 이름은 레지스트리 `displayName`, 짧은 이름은 `title`. `display: standalone`, 시작 주소 `/`, 색은 라이트 배경 `#ffffff`(ADR-0008). `features.darkOnly` 앱은 다크 배경 `#0a0a0a`(ADR-0011) |
 | `frontend/public/sw.js` | 중앙 (전체 관리) | 서비스 워커. 아래 캐시 규칙 |
-| `frontend/public/offline.html` | 중앙 (전체 관리) | 오프라인 안내 화면. 라이트·다크 모드 |
+| `frontend/public/offline.html` | 중앙 (전체 관리) | 오프라인 안내 화면. 라이트·다크 모드. `features.darkOnly` 앱은 시스템 설정과 관계없이 다크(ADR-0011, #363) |
 | `frontend/nginx.conf` | 중앙 (전체 관리) | 캐시 헤더 |
 | `frontend/public/icons/*.png` | 앱 | 아이콘. 처음에는 공통 임시 아이콘 |
 | `frontend/index.html` | 앱 | manifest·아이콘 링크, `theme-color`, `viewport-fit=cover` |
