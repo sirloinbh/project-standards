@@ -1,93 +1,137 @@
 // OpenAPI 3.1 document built from the registered Express routes and the server's own Zod schemas.
 // `npm run openapi -w backend` writes docs/openapi.json; a test fails when it is out of date.
 import type express from 'express';
-import type { z, ZodTypeAny } from 'zod';
+import type { z } from 'zod/v4';
 
 type Json = Record<string, unknown>;
 
-// Converts the Zod v3 types the API uses. Refinements (cross-field rules) cannot be expressed
+type CheckDef = {
+  check: string;
+  format?: string;
+  pattern?: RegExp;
+  minimum?: number;
+  maximum?: number;
+  length?: number;
+  value?: number;
+  inclusive?: boolean;
+};
+const checksOf = (def: Json) =>
+  ((def.checks ?? []) as { _zod: { def: CheckDef } }[]).map((check) => check._zod.def);
+
+const STRING_FORMATS: Record<string, string> = {
+  uuid: 'uuid',
+  guid: 'uuid',
+  email: 'email',
+  url: 'uri',
+  datetime: 'date-time',
+  date: 'date',
+  time: 'time',
+};
+function stringFormat(format: string) {
+  const name = STRING_FORMATS[format];
+  if (!name) throw new Error(`Unsupported string format: ${format}`);
+  return name;
+}
+// z.number().int() is a check and z.int() is the type itself; float32 and float64 are the same kinds but not integers.
+const isIntegerFormat = (format: unknown) => typeof format === 'string' && format.includes('int');
+
+// Converts the Zod 4 types the API uses. Refinements (cross-field rules) cannot be expressed
 // here; any other unsupported type fails loudly instead of being silently dropped.
-export function jsonSchema(schema: ZodTypeAny): Json {
-  const def = schema._def as Json & { typeName: string };
-  switch (def.typeName) {
-    case 'ZodObject': {
-      const shape = (schema as z.AnyZodObject).shape as Record<string, ZodTypeAny>;
+export function jsonSchema(schema: z.ZodType): Json {
+  const def = schema._zod.def as unknown as Json & { type: string };
+  switch (def.type) {
+    case 'object': {
+      const shape = def.shape as Record<string, z.ZodType>;
       const required = Object.keys(shape).filter((key) => !shape[key].isOptional());
+      const catchall = def.catchall as z.ZodType | undefined;
       return {
         type: 'object',
         properties: Object.fromEntries(Object.entries(shape).map(([k, v]) => [k, jsonSchema(v)])),
         ...(required.length ? { required } : {}),
-        ...(def.unknownKeys === 'strict' ? { additionalProperties: false } : {}),
+        ...(catchall?._zod.def.type === 'never' ? { additionalProperties: false } : {}),
       };
     }
-    case 'ZodString': {
+    case 'string': {
       const out: Json = { type: 'string' };
-      for (const check of def.checks as { kind: string; value?: number; regex?: RegExp }[]) {
-        if (check.kind === 'min') out.minLength = check.value;
-        else if (check.kind === 'max') out.maxLength = check.value;
-        else if (check.kind === 'length') out.minLength = out.maxLength = check.value;
-        else if (check.kind === 'regex') out.pattern = check.regex!.source;
-        else if (check.kind === 'uuid') out.format = 'uuid';
-        else if (check.kind !== 'trim') throw new Error(`Unsupported string check: ${check.kind}`);
+      // z.uuid() and z.email() carry their format on the type, z.string().uuid() as a check.
+      if (def.format) out.format = stringFormat(def.format as string);
+      for (const check of checksOf(def)) {
+        if (check.check === 'min_length') out.minLength = check.minimum;
+        else if (check.check === 'max_length') out.maxLength = check.maximum;
+        else if (check.check === 'length_equals') out.minLength = out.maxLength = check.length;
+        else if (check.check === 'string_format' && check.format === 'regex')
+          out.pattern = check.pattern!.source;
+        else if (check.check === 'string_format') out.format = stringFormat(check.format!);
+        // `overwrite` is trim(); `custom` is a refinement.
+        else if (check.check !== 'overwrite' && check.check !== 'custom')
+          throw new Error(`Unsupported string check: ${check.format ?? check.check}`);
       }
       return out;
     }
-    case 'ZodNumber': {
-      const out: Json = { type: 'number' };
-      for (const check of def.checks as { kind: string; value?: number; inclusive?: boolean }[]) {
-        if (check.kind === 'int') out.type = 'integer';
-        else if (check.kind === 'min')
+    case 'number': {
+      const out: Json = { type: isIntegerFormat(def.format) ? 'integer' : 'number' };
+      for (const check of checksOf(def)) {
+        if (check.check === 'number_format') {
+          if (isIntegerFormat(check.format)) out.type = 'integer';
+        }
+        else if (check.check === 'greater_than')
           out[check.inclusive ? 'minimum' : 'exclusiveMinimum'] = check.value;
-        else if (check.kind === 'max')
+        else if (check.check === 'less_than')
           out[check.inclusive ? 'maximum' : 'exclusiveMaximum'] = check.value;
-        else if (check.kind === 'multipleOf') out.multipleOf = check.value;
-        else if (check.kind !== 'finite')
-          throw new Error(`Unsupported number check: ${check.kind}`);
+        else if (check.check === 'multiple_of') out.multipleOf = check.value;
+        else if (check.check !== 'custom')
+          throw new Error(`Unsupported number check: ${check.check}`);
       }
       return out;
     }
-    case 'ZodBoolean':
+    case 'boolean':
       return { type: 'boolean' };
-    case 'ZodArray': {
-      const length = (key: string) => (def[key] as { value: number } | null)?.value;
-      const exact = length('exactLength');
-      const min = exact ?? length('minLength');
-      const max = exact ?? length('maxLength');
+    case 'array': {
+      let min: number | undefined;
+      let max: number | undefined;
+      for (const check of checksOf(def)) {
+        if (check.check === 'min_length') min = check.minimum;
+        else if (check.check === 'max_length') max = check.maximum;
+        else if (check.check === 'length_equals') min = max = check.length;
+        else if (check.check !== 'custom')
+          throw new Error(`Unsupported array check: ${check.check}`);
+      }
       return {
         type: 'array',
-        items: jsonSchema(def.type as ZodTypeAny),
+        items: jsonSchema(def.element as z.ZodType),
         ...(min !== undefined ? { minItems: min } : {}),
         ...(max !== undefined ? { maxItems: max } : {}),
       };
     }
-    case 'ZodEnum':
-      return { type: 'string', enum: def.values };
-    case 'ZodNullable': {
-      const inner = jsonSchema(def.innerType as ZodTypeAny);
+    case 'enum':
+      return { type: 'string', enum: Object.values(def.entries as Record<string, string>) };
+    case 'nullable': {
+      const inner = jsonSchema(def.innerType as z.ZodType);
       return typeof inner.type === 'string'
         ? { ...inner, type: [inner.type, 'null'] }
         : { anyOf: [inner, { type: 'null' }] };
     }
-    case 'ZodOptional':
-      return jsonSchema(def.innerType as ZodTypeAny);
-    case 'ZodDefault':
-      return {
-        ...jsonSchema(def.innerType as ZodTypeAny),
-        default: (def.defaultValue as () => unknown)(),
-      };
-    case 'ZodEffects':
-      return jsonSchema(def.schema as ZodTypeAny);
-    case 'ZodUnknown':
+    case 'optional':
+      return jsonSchema(def.innerType as z.ZodType);
+    case 'default':
+      return { ...jsonSchema(def.innerType as z.ZodType), default: def.defaultValue };
+    // .transform() is a pipe; the request is described by what comes in. z.preprocess() is a pipe
+    // starting from a transform, which says nothing about the value, so its target describes it.
+    case 'pipe': {
+      const input = def.in as z.ZodType;
+      return jsonSchema(input._zod.def.type === 'transform' ? (def.out as z.ZodType) : input);
+    }
+    case 'unknown':
       return {};
     default:
-      throw new Error(`Unsupported Zod type for OpenAPI: ${def.typeName}`);
+      throw new Error(`Unsupported Zod type for OpenAPI: ${def.type}`);
   }
 }
 
 type Operation = {
   summary: string;
-  body?: [name: string, schema: ZodTypeAny];
-  query?: ZodTypeAny;
+  body?: [name: string, schema: z.ZodType];
+  query?: z.ZodType;
   // Success status first; the rest are documented error statuses.
   status: number[];
 };

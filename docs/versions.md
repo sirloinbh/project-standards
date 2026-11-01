@@ -70,7 +70,7 @@
 | `vitest` | 5.0.3 | `frontend/package.json` | devDependencies |
 | `express` | 5.3.0 | `backend/package.json` | dependencies |
 | `pg` | 8.23.1 | `backend/package.json` | dependencies |
-| `zod` | 3.25.76 | `backend/package.json` | dependencies |
+| `zod` | 4.6.7 | `backend/package.json` | dependencies |
 | `@types/express` | 5.0.6 | `backend/package.json` | devDependencies |
 | `@types/node` | 24.19.2 | `backend/package.json` | devDependencies |
 | `@types/pg` | 8.23.1 | `backend/package.json` | devDependencies |
