@@ -126,7 +126,7 @@ app.use(errorHandler);
 - `app.<method>('<경로>')`가 `/api`로 시작하지 않거나, 경로 조각이 소문자·하이픈이 아님
 - `res.status(4xx|5xx).json({ <error 아닌 키>: … })`
 - `req.body.<필드>`, `req.query.<필드>` 직접 읽기
-- 길이 제한(`.max()`·`.length()`)이 없는 zod 배열 스키마(`z.array(...)`, `.array()`). zod 3 보안 권고 GHSA-mrhx-c7xc-m3w5의 공격 경로다(#326)
+- 길이 제한(`.max()`·`.length()`)이 없는 zod 배열 스키마(`z.array(...)`, `.array()`). 보안 권고 GHSA-mrhx-c7xc-m3w5의 공격 경로다(#326). `.max()`는 `.refine`보다 앞에 둔다. zod 4.6.7은 앞쪽에 연속된 길이 검사로만 원소를 읽기 전에 거절한다(#386)
 - `frontend/src`의 `.ts`·`.tsx` 파일 이름이 소문자·하이픈이 아님([코드 관례](conventions/code.md), #312)
 
 ### workout-memo와 다른 점

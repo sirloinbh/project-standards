@@ -15,7 +15,7 @@ npm 공급망 공격(Shai-Hulud 계열)이 진행 중이므로 의존성은 최�
 | @playwright/test, @axe-core/playwright | 1, 4 | workout-memo | 화면 비교 이미지와 같은 버전(`versions.json` `images.playwright`) |
 | recharts | 3 | study-log | |
 
-공통 의존성의 메이저 결정 근거: tailwindcss 4·lucide-react·radix-ui·sonner·vaul·tw-animate-css는 [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), typescript·eslint·prettier는 `@sirloinbh/*` 공유 패키지의 peer 범위를 따른다. zod는 3에 머문다(#306).
+공통 의존성의 메이저 결정 근거: tailwindcss 4·lucide-react·radix-ui·sonner·vaul·tw-animate-css는 [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), typescript·eslint·prettier는 `@sirloinbh/*` 공유 패키지의 peer 범위를 따른다. zod는 4를 쓴다(#386, [조사](research/zod4.md)).
 
 ## 버전 쓰는 법
 
