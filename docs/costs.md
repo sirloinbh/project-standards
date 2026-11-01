@@ -36,6 +36,19 @@ Lightsail 사양별 기본 요금은 0.5 GB $5, 1 GB $7, 2 GB $12, 4 GB $24다. 
 
 실시간 환율이나 실제 결제액이 아니다. 결제 환율·세금·카드 수수료에 따라 달라진다.
 
+### 도메인 (구매 전)
+
+[ADR-0012](adr/0012-shared-domain-subdomains.md)대로 구매하면 아래 비용이 더해진다. 아직 구매하지 않아서 위 합계와 4장 앱별 표에는 넣지 않았다. 구매(#249)한 뒤 다시 계산한다.
+
+| 항목 | 1년 |
+|---|---:|
+| `.com` 도메인 (Route 53 등록·갱신) | $16.00 |
+| Route 53 호스팅 영역: $0.50 × 12 | $6.00 |
+| 인증서 (Let's Encrypt) | $0.00 |
+| **합계, 세전** | **$22.00** |
+
+위 환산 기준으로 1년 세전 30,800원, 세후 33,880원이고, 월로 나누면 약 $1.83이다. DNS 질의 요금은 100만 건당 $0.40이라 개인 앱 사용량에서는 합계에 넣지 않았다.
+
 ### 저장량 가정
 
 - 이미지는 서버 디스크(Lightsail 기본 SSD)에 앱마다 현재·이전 버전만 남기므로 별도 비용이 없다. 디스크 사용량은 스냅샷 크기에 들어간다.
@@ -96,7 +109,7 @@ Lightsail 사양별 기본 요금은 0.5 GB $5, 1 GB $7, 2 GB $12, 4 GB $24다. 
 
 예시 합계에 넣지 않은 항목이다. 하나라도 쓰기 시작하면 2장 표를 다시 계산한다.
 
-- 도메인 구매, 별도 관리형 DB(RDS), 로드밸런서, NAT Gateway, 추가 디스크
+- 도메인과 DNS(2장 "도메인" 표), 별도 관리형 DB(RDS), 로드밸런서, NAT Gateway, 추가 디스크
 - 유료 CloudWatch 로그, 유료 지원, 포함량을 넘은 트래픽
 - 유료 VPN (로그인이 없는 앱은 SSH 터널·사설 접속을 전제로 한다)
 
@@ -115,6 +128,7 @@ Lightsail 사양별 기본 요금은 0.5 GB $5, 1 GB $7, 2 GB $12, 4 GB $24다. 
 2026-10-15에 확인했다. 요금은 바뀔 수 있으므로 구성을 바꿀 때 다시 확인한다.
 
 - [Lightsail 요금](https://aws.amazon.com/lightsail/pricing/): Linux 공인 IPv4 기본 요금 $5/$7/$12/$24, 스냅샷 $0.05/GB-month
+- [Route 53 요금](https://aws.amazon.com/route53/pricing/) (2026-11-01 확인): 호스팅 영역 월 $0.50, 표준 질의 100만 건당 $0.40. `.com` $16은 AWS 가격표를 인용한 [Classmethod](https://dev.classmethod.jp/en/articles/route53-tld-pricing-change-2026/)와 [CostGoat](https://costgoat.com/pricing/route-53-domains) 값이고, 구매 화면에서 다시 확인한다
 - [ECR 요금](https://aws.amazon.com/ecr/pricing/): 저장 $0.10/GB-month
 - [RDS PostgreSQL 요금](https://aws.amazon.com/rds/postgresql/pricing/): 구성별 과금 항목. 서울 리전 견적은 미확정
 - [Amplify 요금](https://aws.amazon.com/amplify/pricing/): 빌드·저장·전송, SSR 요청·컴퓨팅 과금 항목. 8개 앱 사용량 견적은 미확정
