@@ -173,7 +173,7 @@ export function programName(word) {
 }
 
 const isOption = (word) => /^-/.test(word);
-const isAssignment = (word) => /^[A-Za-z_][A-Za-z0-9_]*=/.test(word);
+const isAssignment = (word) => /^[A-Za-z_][A-Za-z0-9_-]*=/.test(word);
 
 // Skips leading options; `withValue` lists options whose value is the next word.
 function skipOptions(args, withValue = []) {
@@ -188,17 +188,18 @@ function skipOptions(args, withValue = []) {
 
 const LOCKFILE_INSTALL = 'npm ci';
 const WITH_SCRIPTS = 'npm ci with install scripts';
-// npm settings that undo .npmrc's ignore-scripts=true, as environment variables. Their names ignore case.
-const SCRIPTS_ENV = /(^|\s)(\$env:)?npm_config_(ignore[-_]scripts\s*=\s*false|allow[-_]scripts\s*=|dangerously[-_]allow[-_]all[-_]scripts\s*=)/i;
+// npm settings that undo .npmrc's ignore-scripts=true, as environment variables, however a shell sets them
+// (`X=false`, `$env:X = "false"`, `Set-Item Env:X false`, `SetEnvironmentVariable('X','false')`). Names ignore case.
+const SCRIPTS_ENV = /npm_config_(ignore[-_]scripts[\s'"},=]*(false|0|null|undefined)(?![\w-])|allow[-_]scripts\s*=|dangerously[-_]allow[-_]all[-_]scripts\s*=)/i;
 
-// The same settings as options. npm also accepts one dash, unambiguous prefixes, and repeated `no-`.
+// The same settings as options. npm also accepts any number of dashes, unambiguous prefixes, and repeated `no-` in any case.
 function turnsScriptsOn(args) {
   return args.some((arg, i) => {
     if (!arg.startsWith('-')) return false;
-    const [written, writtenValue] = arg.replace(/^--?/, '').split('=');
+    const [written, writtenValue] = arg.replace(/^-+/, '').split('=');
     let name = written;
     let negated = false;
-    while (name.startsWith('no-')) {
+    while (/^no-/i.test(name)) {
       name = name.slice(3);
       negated = !negated;
     }
@@ -366,7 +367,7 @@ function scan(command, depth) {
     else if (found) return found;
   }
   if (!lockfileInstall) return null;
-  return commands.some((words) => SCRIPTS_ENV.test(words.join(' '))) ? WITH_SCRIPTS : LOCKFILE_INSTALL;
+  return SCRIPTS_ENV.test(commands.flat().join(' ')) ? WITH_SCRIPTS : LOCKFILE_INSTALL;
 }
 
 /** Returns what was blocked in a full Bash or PowerShell command line, or null when it may run. */
