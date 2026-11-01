@@ -29,6 +29,7 @@ Vitest 설정(`features.vitest`):
 - 테스트 파일은 `frontend/src/**/*.test.{ts,tsx}`다.
 - `frontend/src/test/setup.ts`가 있어야 한다(프로젝트 소유 파일. 스캐폴드의 파일을 시작점으로 쓴다).
 - `frontend/package.json`에 `"test": "vitest run"`을 둔다.
+- 테스트 하나의 시간 제한은 15초다(`testTimeout`, #390). 같은 PC에 다른 작업이 돌면 5초 제한에 닿아 코드와 상관없이 실패했기 때문이다.
 
 ## 다른 앱이 도입할 때 필요한 의존성
 
