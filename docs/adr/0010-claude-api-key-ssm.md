@@ -20,7 +20,7 @@
 | 키 수 | 1개. workspace 하나에 지출 한도를 건다. 두 번째 앱이 쓰기 시작할 때 앱별 키(`/sirloinbh/<앱>/anthropic-api-key`)로 나눌지 다시 정한다 |
 | 운영 서버 | 배포 스크립트가 배포할 때 SSM에서 읽어 앱 컨테이너 환경변수로 넘긴다. 서버 `.env`에는 값을 쓰지 않는다. 서버에는 그 파라미터 하나만 읽을 수 있는 IAM 키를 서버 공용 파일 `/opt/project-standards/.env` 한 곳에 둔다(앱 `.env`는 대체용) |
 | 로컬 개발 | 중앙 명령이 개인 AWS 프로필로 SSM을 읽어 `project-standards/.env`(git 제외) 한 곳에 넣는다. 키를 쓰는 앱은 로컬 개발 때 그 파일을 읽는다 |
-| 이름 | 서버 IAM 사용자는 특정 앱이 아니라 모든 앱 공용 이름(`sirloinbh-apps-secrets-reader`)을 쓴다. Console workspace도 앱 공용(예: `sirloinbh-apps`) |
+| 이름 | 서버 IAM 사용자는 특정 앱이 아니라 모든 앱 공용 이름(`sirloinbh-apps-secrets-reader`)을 쓴다. Console workspace도 앱 공용(`byunghk-tool`) |
 | CI | 실제 키를 두지 않는다. 테스트는 API 호출을 가짜로 바꾼다 |
 | 교체 | SSM 값만 바꾼다. 서버는 다음 배포부터, PC는 중앙 명령을 다시 실행하면 새 키를 쓴다 |
 | 환경변수 이름 | `ANTHROPIC_API_KEY`(비밀값), `CLAUDE_MODEL`(모델 이름. 코드에 하드코딩하지 않는다) |
@@ -34,4 +34,4 @@
 - 파라미터와 IAM 사용자는 shared-aws-infrastructure가 Terraform으로 만든다. 파라미터 **값**은 Terraform state에 남지 않도록 사용자가 직접 넣는다.
 - 구현은 #265(전달 도구), 사용자 단계는 #266(키 발급·지출 한도·SSM에 넣기)이다.
 - 2026-10-29 변경(#266): 사용자가 이름과 위치를 특정 앱에 묶지 말라고 정했다. 서버 IAM 사용자 이름을 `workout-memo-*`에서 `sirloinbh-apps-*`로 바꿨다. 서버의 AWS 키(SSM 읽기·S3 백업)는 앱 `.env`가 아니라 `/opt/project-standards/.env` 한 곳에 둔다. PC의 Claude 키는 앱 `.env` 대신 `project-standards/.env` 한 곳에 둔다. 키는 Claude Max 구독에 포함된 월 API 크레딧으로 쓰고, Console에 결제 수단을 두지 않는다.
-- 2026-11-01 변경(#266): 크레딧은 월 $200이고 Console 조직 `Quantified ESG`에 연결되어 있다. 사용자가 개인 조직으로 옮기지 않고 그 조직을 쓰기로 정했다. 앱 공용 workspace `sirloinbh-apps`와 키를 그 조직에 만든다. 그 조직의 관리자는 workspace·키별 사용량과 비용을 볼 수 있고 workspace를 관리할 수 있다. 관리자가 키나 한도를 바꾸거나 사용자가 조직 권한을 잃으면 앱의 Claude 호출이 멈출 수 있다. 그때는 다른 조직에서 키를 만들어 SSM 값만 바꾼다.
+- 2026-11-01 변경(#266): 크레딧은 월 $200이고 Console 조직 `Quantified ESG`에 연결되어 있다. 사용자가 개인 조직으로 옮기지 않고 그 조직을 쓰기로 정했다. 앱 공용 workspace `byunghk-tool`과 키를 그 조직에 만든다. 그 조직의 관리자는 workspace·키별 사용량과 비용을 볼 수 있고 workspace를 관리할 수 있다. 관리자가 키나 한도를 바꾸거나 사용자가 조직 권한을 잃으면 앱의 Claude 호출이 멈출 수 있다. 그때는 다른 조직에서 키를 만들어 SSM 값만 바꾼다.
