@@ -1,7 +1,7 @@
 // Works on every sirloinbh repository cloned next to this one (#276).
 //   node tools/repos.mjs status [--fetch]   branch, uncommitted changes, behind/ahead of origin/main
 //   node tools/repos.mjs pull               fast-forward main, only where main is checked out and clean
-//   node tools/repos.mjs run -- <command>   the same command in each clone (package installs refused)
+//   node tools/repos.mjs run -- <command>   the same command in each clone (package installs refused, npm ci too)
 //   node tools/repos.mjs workspace          .local/sirloinbh.code-workspace for VS Code
 // Repositories come from sync.config.json (apps and infrastructure) plus this repository.
 // --base <folder> overrides the folder that holds the clones (the parent of this repository).
@@ -10,7 +10,7 @@ import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findInstall } from '../.claude/hooks/block-package-installs.mjs';
+import { findAnyInstall } from '../.claude/hooks/block-package-installs.mjs';
 
 const central = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -95,7 +95,7 @@ export function run(argv, { root = central, log = console.log } = {}) {
     const at = rest.indexOf('--');
     const line = (at >= 0 ? rest.slice(at + 1) : rest).join(' ').trim();
     if (!line) throw new Error('사용법: node tools/repos.mjs run -- <명령>');
-    const blocked = findInstall(line);
+    const blocked = findAnyInstall(line);
     if (blocked) throw new Error(`패키지 설치·삭제·실행 명령은 여러 리포에 한꺼번에 실행하지 않습니다(${blocked}). docs/dependency-policy.md`);
     let failed = 0;
     for (const name of names) {

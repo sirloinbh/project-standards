@@ -34,7 +34,7 @@ Vitest 설정(`features.vitest`):
 
 workout-memo `package-lock.json`의 설치 버전이다(2026-10-22). 새 버전을 들이지 않는다.
 
-**설치는 사용자 승인을 받은 뒤 사용자가 직접 한다.** 에이전트는 설치 명령을 실행하지 않는다. 승인된 설치도 `--ignore-scripts`로 하고([의존성 정책](dependency-policy.md)), lockfile 변경과 `ioc-scan` 결과를 앱 PR에 적는다.
+**새 패키지 설치는 사용자 승인을 받은 뒤 사용자가 직접 한다.** 에이전트가 실행할 수 있는 설치 명령은 잠금 파일대로 설치하는 `npm ci`뿐이다(#375). 승인된 설치도 `--ignore-scripts`로 하고([의존성 정책](dependency-policy.md)), lockfile 변경과 `ioc-scan` 결과를 앱 PR에 적는다.
 
 | 플래그 | 위치 | 패키지 | 버전 | 쓰는 곳 |
 |---|---|---|---|---|

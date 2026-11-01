@@ -178,7 +178,7 @@ node tools/app-secrets.mjs pull                    # project-standards/.env에 �
 
 - 준비: Docker Desktop(WSL2)과 VS Code 확장 "Dev Containers". 앱 루트에 `.env`가 있어야 한다(`POSTGRES_PASSWORD`).
 - 열기: VS Code에서 앱 폴더를 열고 "Reopen in Container". 앱 `compose.yaml`의 `db`와 Node 컨테이너(`dev`)가 함께 뜨고, 컨테이너 안에서 DB는 `db:5432`다(`DATABASE_URL`이 그렇게 설정된다).
-- 처음 한 번 컨테이너 터미널에서 `npm ci --ignore-scripts`. 자동 설치(`postCreateCommand`)는 넣지 않았다. 설치는 사용자가 승인하고 직접 한다([의존성 정책](dependency-policy.md)).
+- 처음 한 번 컨테이너 터미널에서 `npm ci --ignore-scripts`. 자동 설치(`postCreateCommand`)는 넣지 않았다. `npm ci`는 에이전트도 실행할 수 있고, 새 패키지를 들이거나 버전을 바꾸는 설치는 사용자가 승인하고 직접 한다([의존성 정책](dependency-policy.md), #375).
 - Node 이미지는 `versions.json`의 `images.devcontainerNode`(bookworm, digest 고정)다. Node·npm 버전은 `versions.json`과 같다(Node 24.21.0, npm 11.19.0, git 포함).
 - vite·api 포트(레지스트리 값)는 VS Code가 PC로 전달한다.
 - 한글이 들어간 폴더 경로(`문서` 등)는 Docker Desktop 바인드 마운트에서 문제가 될 수 있다. 문제가 생기면 영문 경로에 클론해서 연다.
@@ -199,7 +199,7 @@ node tools/app-secrets.mjs pull                    # project-standards/.env에 �
 ```powershell
 node tools/repos.mjs status            # 브랜치, 커밋 안 한 변경, origin/main보다 뒤/앞 (--fetch로 먼저 fetch)
 node tools/repos.mjs pull              # main에 있고 깨끗한 클론만 fast-forward. 나머지는 이유를 보여 주고 건너뜀
-node tools/repos.mjs run -- git log -1 --oneline    # 리포마다 같은 명령 (패키지 설치·삭제·npx는 거부)
+node tools/repos.mjs run -- git log -1 --oneline    # 리포마다 같은 명령 (패키지 설치·삭제·npx와 npm ci는 거부)
 node tools/repos.mjs workspace         # .local/sirloinbh.code-workspace를 만든다. VS Code에서 열면 리포가 한 창에 모인다
 ```
 

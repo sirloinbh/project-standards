@@ -86,7 +86,7 @@ test('run executes the same command in each clone and refuses package installs',
     const lines = [];
     assert.equal(run(['run', '--', 'git rev-parse --abbrev-ref HEAD'], { root: s.centralDir, log: (l) => lines.push(l) }), 0);
     assert.deepEqual(lines, ['== project-standards', 'main', '== app-a', 'main', '== app-b', 'main', '== app-c: 클론 없음']);
-    for (const bad of ['npm install', 'npm --silent i react', 'npx prettier .']) assert.throws(() => run(['run', '--', ...bad.split(' ')], { root: s.centralDir, log: () => {} }), /한꺼번에 실행하지 않습니다/, bad);
+    for (const bad of ['npm install', 'npm --silent i react', 'npx prettier .', 'npm ci', 'npm ic --ignore-scripts']) assert.throws(() => run(['run', '--', ...bad.split(' ')], { root: s.centralDir, log: () => {} }), /한꺼번에 실행하지 않습니다/, bad);
   } finally {
     s.cleanup();
   }

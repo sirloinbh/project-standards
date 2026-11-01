@@ -15,7 +15,7 @@
 - 작업 흐름: 이슈 → `<type>/<번호>-<slug>` 브랜치 → 구현 + 테스트 + `docs/changes/` 기록 → PR. **PR 병합은 사용자만 한다.** 앱 리포의 main 병합은 곧 운영 배포다.
 
 # 보안 제약 (최우선)
-- npm 공급망 공격(Shai-Hulud 계열) 때문에 `npm install/ci/update`, `npx <pkg>`, `pnpm/yarn/bun install`은 사용자가 명시적으로 재확인하기 전까지 실행하지 않는다. 자체 패키지도 예외가 아니다.
+- npm 공급망 공격(Shai-Hulud 계열) 때문에 `npm install/ci/update`, `npx <pkg>`, `pnpm/yarn/bun install`은 사용자가 명시적으로 재확인하기 전까지 실행하지 않는다. 자체 패키지도 예외가 아니다. (#375 이후 `npm ci`는 허용한다. [에이전트의 패키지 설치 차단](agent-guardrails.md) 참고)
 - 새 외부 도구를 도입하려면 고정 버전, 릴리스 후 14일 경과, `--ignore-scripts` 조건을 지키고, 도입 전에 게시자·저장소·검증 결과를 보고한다.
 - `.env` 값, 토큰, GitHub App 개인키, Terraform state, 백업은 리포·문서·로그에 넣지 않는다. 키 이름과 설명만 다룬다.
 - 외부 GitHub Action은 커밋 SHA로 고정한다.

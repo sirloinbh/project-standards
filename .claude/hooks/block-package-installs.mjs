@@ -186,9 +186,28 @@ function skipOptions(args, withValue = []) {
   return i;
 }
 
-// .npmrc sets ignore-scripts=true; these options would undo it for one command.
+const LOCKFILE_INSTALL = 'npm ci';
+const WITH_SCRIPTS = 'npm ci with install scripts';
+// npm settings that undo .npmrc's ignore-scripts=true, as environment variables. Their names ignore case.
+const SCRIPTS_ENV = /(^|\s)(\$env:)?npm_config_(ignore[-_]scripts\s*=\s*false|allow[-_]scripts\s*=|dangerously[-_]allow[-_]all[-_]scripts\s*=)/i;
+
+// The same settings as options. npm also accepts one dash, unambiguous prefixes, and repeated `no-`.
 function turnsScriptsOn(args) {
-  return args.some((arg, i) => /^--(no-ignore-scripts|ignore-scripts=false|dangerously-allow-all-scripts|allow-scripts)(=|$)/.test(arg) || (arg === '--ignore-scripts' && args[i + 1] === 'false'));
+  return args.some((arg, i) => {
+    if (!arg.startsWith('-')) return false;
+    const [written, writtenValue] = arg.replace(/^--?/, '').split('=');
+    let name = written;
+    let negated = false;
+    while (name.startsWith('no-')) {
+      name = name.slice(3);
+      negated = !negated;
+    }
+    // Long enough not to catch other options such as `--all` or `-d`.
+    if ((name.length >= 6 && 'allow-scripts'.startsWith(name)) || (name.length >= 3 && 'dangerously-allow-all-scripts'.startsWith(name))) return !negated;
+    if (!name || !'ignore-scripts'.startsWith(name)) return false;
+    const value = writtenValue ?? (args[i + 1] === 'false' ? 'false' : 'true');
+    return (value === 'false') !== negated;
+  });
 }
 
 function checkNpm(args, viaXargs) {
@@ -204,7 +223,7 @@ function checkNpm(args, viaXargs) {
     // A word that is not a command is the value of an option such as `--prefix dir`.
     if (!command) continue;
     if (command === 'audit') return args.slice(i + 1).includes('fix') ? 'npm audit fix' : null;
-    if (command === 'ci') return turnsScriptsOn(args) ? 'npm ci with install scripts' : null;
+    if (command === 'ci') return turnsScriptsOn(args) ? WITH_SCRIPTS : LOCKFILE_INSTALL;
     return NPM_BLOCKED.has(command) ? `npm ${command}` : null;
   }
   // `xargs npm` takes the subcommand from its input, so the hook cannot see it.
@@ -258,7 +277,7 @@ function checkWords(words, depth, viaXargs = false) {
   if (program === 'npm') return checkNpm(args, viaXargs);
   if (RUNNERS.has(program)) return program;
 
-  const nested = (command) => (command ? findInstall(command, depth + 1) : null);
+  const nested = (command) => (command ? scan(command, depth + 1) : null);
   const wrapped = (rest, xargs = viaXargs) => checkWords(rest, depth, xargs);
 
   switch (program) {
@@ -335,14 +354,30 @@ function checkWords(words, depth, viaXargs = false) {
   return null;
 }
 
-/** Returns what was blocked in a full Bash or PowerShell command line, or null when it may run. */
-export function findInstall(command, depth = 0) {
+// The first blocked command, else `npm ci` when one runs, else null. A later command can still be blocked,
+// so `npm ci` does not end the search.
+function scan(command, depth) {
   if (depth > MAX_DEPTH) return null;
-  for (const words of splitCommands(command)) {
+  const commands = splitCommands(command);
+  let lockfileInstall = false;
+  for (const words of commands) {
     const found = checkWords(words, depth);
-    if (found) return found;
+    if (found === LOCKFILE_INSTALL) lockfileInstall = true;
+    else if (found) return found;
   }
-  return null;
+  if (!lockfileInstall) return null;
+  return commands.some((words) => SCRIPTS_ENV.test(words.join(' '))) ? WITH_SCRIPTS : LOCKFILE_INSTALL;
+}
+
+/** Returns what was blocked in a full Bash or PowerShell command line, or null when it may run. */
+export function findInstall(command) {
+  const found = scan(command, 0);
+  return found === LOCKFILE_INSTALL ? null : found;
+}
+
+/** Like findInstall, but `npm ci` counts too: tools that run a command in many repositories refuse it. */
+export function findAnyInstall(command) {
+  return scan(command, 0);
 }
 
 /**
