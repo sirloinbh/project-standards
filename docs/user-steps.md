@@ -246,7 +246,7 @@ node tools\check-git-permissions.mjs
 2. Claude 구독에 포함된 월 $200 API 크레딧을 씁니다([안내](https://platform.claude.com/docs/en/about-claude/api-credits-for-subscribers)). 대화형 Claude Code에는 쓰이지 않고, 남은 크레딧은 다음 달로 넘어가지 않습니다.
    1. 크레딧은 Console 조직 `Quantified ESG`에 연결되어 있습니다(2026-10-29 연결). 다시 연결하지 않습니다. 다른 조직으로 옮기려면 지원팀에 문의해야 합니다.
    2. Console 왼쪽 위에서 조직이 `Quantified ESG`인지 확인하고, Billing의 Promotional credits에 크레딧이 보이는지 확인합니다. 결제 수단과 자동 충전(auto-reload)은 켜지 않습니다. 크레딧을 다 쓰면 다음 지급일까지 호출이 멈추고, 구독 요금에 더해 청구되지 않습니다. 조직에 다른 결제 수단이나 자동 충전이 이미 있으면 크레딧을 다 쓴 뒤 그쪽으로 넘어갈 수 있으므로 먼저 확인합니다.
-   3. 앱 공용 workspace `sirloinbh-apps`를 하나 만들고 월 지출 한도를 겁니다. workspace 이름은 조직 이름과 같지 않아도 됩니다. 그 workspace에서 API 키를 하나 만듭니다(예: `sirloinbh-apps-shared`). 모든 앱이 이 키 하나를 SSM에서 받아 씁니다(ADR-0010).
+   3. 앱 공용 workspace `byunghk-tool`을 하나 만들고 월 지출 한도를 겁니다. 그 workspace에서 API 키를 하나 만듭니다(예: `byunghk-tool-shared`). 모든 앱이 이 키 하나를 SSM에서 받아 씁니다(ADR-0010).
    4. Console의 Workload Identity Federation 안내는 쓰지 않습니다. Lightsail에는 IAM 역할을 붙일 수 없기 때문입니다.
 3. 키를 복사한 상태에서 project-standards 폴더에서 실행합니다:
    ```powershell

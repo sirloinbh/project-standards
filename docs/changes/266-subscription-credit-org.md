@@ -9,7 +9,7 @@
 
 ## 정한 것
 
-- 사용자가 크레딧이 이미 연결된 `Quantified ESG` 조직을 그대로 쓰기로 정했다(2026-11-01). workspace 이름은 문서에 있던 `sirloinbh-apps`를 그대로 쓴다.
+- 사용자가 크레딧이 이미 연결된 `Quantified ESG` 조직을 그대로 쓰기로 정했다(2026-11-01). workspace 이름은 처음에 문서에 있던 `sirloinbh-apps`로 했다가, 사용자 요청으로 `byunghk-tool`로 바꿨다. 서버 IAM 사용자 이름(`sirloinbh-apps-*`)은 별개라 바꾸지 않았다.
 - ADR-0010의 2026-10-29 기록은 당시 사실이므로 고치지 않고 새 기록을 더했다.
 
 ## 확인
