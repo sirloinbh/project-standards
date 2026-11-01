@@ -1,6 +1,6 @@
 # 공용 도메인과 앱별 서브도메인 방식 (#248)
 
-2026-10-28 조사. 가격은 웹 검색으로 확인한 값이다(아래 "출처"). 등록 업체 가격은 자주 바뀌므로 구매 직전에 다시 확인한다. 아무것도 구매·설정하지 않았다. 사용자가 고른 결과는 맨 아래 "결정"에 적고, ADR(`docs/adr/0011-shared-domain-subdomains.md`)로 옮긴다.
+2026-10-28 조사. 가격은 웹 검색으로 확인한 값이다(아래 "출처"). 등록 업체 가격은 자주 바뀌므로 구매 직전에 다시 확인한다. 아무것도 구매·설정하지 않았다. 사용자가 고른 결과는 맨 아래 "결정"과 [ADR-0012](../adr/0012-shared-domain-subdomains.md)에 있다. 8장의 권장안과 결정은 등록 업체가 다르다.
 
 ## 1. 지금 상태
 
@@ -16,9 +16,10 @@
 | Cloudflare Registrar | 약 $10.46 | 무료 | 원가 판매(도매가 + ICANN 수수료). DNS를 Cloudflare에 두어야 함 |
 | Porkbun | 갱신 약 $11.08 | 무료 | |
 | Namecheap | 갱신 $19.98 (2026-11-01부터) | 무료 | |
-| Route 53 | 확인 필요 | 무료 | 같은 AWS 계정에서 관리 |
+| Route 53 | $16 (2026-07-01부터. 2026-11-01 확인) | 무료 | 같은 AWS 계정에서 관리. 등록할 때 호스팅 영역이 함께 만들어진다 |
 
-- .com 도매가는 2026-11-01에 $10.26 → $10.97로 오른다. 그 전에 사면 첫해가 조금 싸다.
+- .com 도매가는 2026-11-01에 $10.26 → $10.97로 오른다. 위 다른 업체 가격 중 이 인상이 반영되지 않은 값이 있을 수 있다.
+- Route 53 가격은 AWS 가격표를 인용한 글 두 편에서 확인했다. AWS 가격표 PDF의 본문은 직접 읽지 못했으므로 구매 화면에서 다시 확인한다.
 - 도메인 이름 후보는 사용자가 정한다(짧고 개인 이름과 겹치지 않는 것).
 
 ## 3. DNS 관리 위치
@@ -89,8 +90,17 @@ Cloudflare에서 사면 DNS도 Cloudflare여야 하므로, 권장 조합(Route 5
 
 - Route 53 요금: [costgoat](https://costgoat.com/pricing/route-53), [wring.co](https://wring.co/blog/aws-route53-pricing-guide)
 - .com 가격: [Cloudflare (costgoat)](https://costgoat.com/pricing/cloudflare-domains), [Namecheap 공지](https://www.namecheap.com/support/knowledgebase/article.aspx/10840/2201/com-price-change-november-1-2026/), [Verisign 인상](https://osir.com/en/blog/verisign-com-price-update-2026/), [dev.to 비교](https://dev.to/devtoolpicks/best-domain-registrars-for-indie-hackers-in-2026-cloudflare-vs-porkbun-vs-namecheap-2ebm)
+- Route 53 .com 가격: [AWS 요금 페이지](https://aws.amazon.com/route53/pricing/)(가격표 PDF로 연결), [Classmethod](https://dev.classmethod.jp/en/articles/route53-tld-pricing-change-2026/), [CostGoat](https://costgoat.com/pricing/route-53-domains)
 - Lightsail DNS: [AWS 문서](https://docs.aws.amazon.com/lightsail/latest/userguide/amazon-lightsail-register-new-domain.html), [re:Post](https://repost.aws/questions/QUPqWChU-JS_6Rtba5mAwv8w/i-want-to-increase-the-limit-of-lightsail-domains-with-route-53)
 
 ## 결정
 
-- (사용자 확인 전)
+2026-11-01. 사용자가 "AWS로 모두 관리"를 골랐다. 그래서 등록 업체는 권장안의 Porkbun 대신 Route 53이고, 합계는 1년 약 $22(약 30,800원)다. 나머지는 권장안대로다.
+
+| 항목 | 결정 |
+|---|---|
+| 도메인 | `.com` 하나, Route 53에서 등록. 이름은 구매할 때 정함(#249) |
+| DNS | Route 53 |
+| 서브도메인 | 레지스트리 `name` 그대로 |
+| 프록시·인증서 | nginx 하나, Let's Encrypt 와일드카드, certbot `dns-route53` |
+| 접속 | 443도 허용 IP만. 앱 로그인이 생기면 앱별로 공개 |

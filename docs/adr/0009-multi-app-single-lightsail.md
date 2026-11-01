@@ -3,6 +3,8 @@
 - 상태: 채택 (이슈 #36)
 - 날짜: 2026-10-23
 
+> "접속" 결정은 [ADR-0012](0012-shared-domain-subdomains.md)가 대체한다(#248). 서브도메인 전환(#254)이 끝날 때까지는 이 문서의 앱별 웹 포트 접속을 그대로 쓴다.
+
 ## 맥락
 
 - workout-memo만 배포되어 있다. Lightsail 1 GB 한 대에서 Docker Compose(web·api·postgres)를 돌리고, 서버가 이미지를 직접 빌드하며, `workout-autodeploy.timer`가 2분마다 CI를 통과한 `origin/main`을 배포한다. 방화벽은 허용 IP에서 22·80만 연다.
