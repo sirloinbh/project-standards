@@ -18,7 +18,7 @@
 | `spinner.tsx` | `Spinner`, `spinnerVariants` | `size`: sm(16px), md(24px), lg(32px). `role="status"`, 기본 이름 "불러오는 중" |
 | `empty-state.tsx` | `EmptyState` | 아이콘, 제목, 설명, 다음 행동(버튼). 제목 단계는 `headingLevel` |
 | `dialog.tsx` | `Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`, `DialogClose` | 모달. [공통 레이아웃](layout.md) |
-| `confirm-dialog.tsx` | `ConfirmDialog` | 삭제처럼 되돌릴 수 없는 동작 전에 묻는다(#311). 브라우저 `confirm()` 대신 쓴다. `trigger`(여는 버튼) 또는 `open`·`onOpenChange`로 연다. `onConfirm`이 Promise를 돌려주면 끝날 때까지 버튼을 막고, 성공하면 닫고 실패하면 열어 둔다. 기본 문구는 "삭제"·"취소", `destructive`(기본 `true`)이면 확인 버튼이 파괴적 모양 |
+| `confirm-dialog.tsx` | `ConfirmDialog` | 삭제처럼 되돌릴 수 없는 동작 전에 묻는다(#311). 브라우저 `confirm()` 대신 쓴다. `trigger`(여는 버튼) 또는 `open`·`onOpenChange`로 연다. `trigger` 없이 열면 닫은 뒤 포커스가 돌아갈 곳이 없으니 `returnFocusRef`로 지정한다(#356). `onConfirm`이 Promise를 돌려주면 끝날 때까지 버튼을 막고, 성공하면 닫고 실패하면 열어 둔다. 기본 문구는 "삭제"·"취소", `destructive`(기본 `true`)이면 확인 버튼이 파괴적 모양 |
 | `notice.tsx` | `Notice` | 화면 안 알림(#311). `notice.kind`가 `status`이면 `role="status"`, `error`이면 `role="alert"`. 값이 없으면 아무것도 그리지 않는다. 한곳에 묶이지 않는 지나가는 알림은 `toast` |
 | `sheet.tsx` | `Sheet`, `SheetTrigger`, `SheetContent`(`side`), `SheetHeader`, `SheetFooter`, `SheetTitle`, `SheetDescription`, `SheetClose` | 가장자리 패널 |
 | `drawer.tsx` | `Drawer`, `DrawerTrigger`, `DrawerContent`, `DrawerHeader`, `DrawerFooter`, `DrawerTitle`, `DrawerDescription`, `DrawerClose` | 아래 패널(vaul). 열면 포커스가 안으로 이동 |
