@@ -289,3 +289,10 @@ test('API rule warnings reach runCheck without failing it; tests are not scanned
   assert.equal(result.warnings.length, 8);
   assert.ok(!result.warnings.some((w) => w.includes('app.test.ts')));
 });
+
+test('checkZodArrays warns when an array limit comes after a refinement', () => {
+  const check = (chain) => checkZodArrays([{ file: 'backend/src/x.ts', text: `import { z } from 'zod/v4';\nconst a = z.array(z.string())${chain};` }]);
+  assert.match(check('.refine(ok).max(3)')[0], /backend\/src\/x\.ts:2: 배열의 \.max\(\)가 \.refine 뒤에/);
+  assert.match(check('.superRefine(ok).length(3)')[0], /배열의 \.length\(\)가 \.refine 뒤에/);
+  assert.deepEqual(check('.min(1).max(3).refine(ok)'), []);
+});

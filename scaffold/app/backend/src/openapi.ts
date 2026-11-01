@@ -18,6 +18,23 @@ type CheckDef = {
 const checksOf = (def: Json) =>
   ((def.checks ?? []) as { _zod: { def: CheckDef } }[]).map((check) => check._zod.def);
 
+const STRING_FORMATS: Record<string, string> = {
+  uuid: 'uuid',
+  guid: 'uuid',
+  email: 'email',
+  url: 'uri',
+  datetime: 'date-time',
+  date: 'date',
+  time: 'time',
+};
+function stringFormat(format: string) {
+  const name = STRING_FORMATS[format];
+  if (!name) throw new Error(`Unsupported string format: ${format}`);
+  return name;
+}
+// z.number().int() is a check and z.int() is the type itself; float32 and float64 are the same kinds but not integers.
+const isIntegerFormat = (format: unknown) => typeof format === 'string' && format.includes('int');
+
 // Converts the Zod 4 types the API uses. Refinements (cross-field rules) cannot be expressed
 // here; any other unsupported type fails loudly instead of being silently dropped.
 export function jsonSchema(schema: z.ZodType): Json {
@@ -36,12 +53,15 @@ export function jsonSchema(schema: z.ZodType): Json {
     }
     case 'string': {
       const out: Json = { type: 'string' };
+      // z.uuid() and z.email() carry their format on the type, z.string().uuid() as a check.
+      if (def.format) out.format = stringFormat(def.format as string);
       for (const check of checksOf(def)) {
         if (check.check === 'min_length') out.minLength = check.minimum;
         else if (check.check === 'max_length') out.maxLength = check.maximum;
         else if (check.check === 'length_equals') out.minLength = out.maxLength = check.length;
         else if (check.check === 'string_format' && check.format === 'regex')
           out.pattern = check.pattern!.source;
+        else if (check.check === 'string_format') out.format = stringFormat(check.format!);
         // `overwrite` is trim(); `custom` is a refinement.
         else if (check.check !== 'overwrite' && check.check !== 'custom')
           throw new Error(`Unsupported string check: ${check.format ?? check.check}`);
@@ -49,9 +69,11 @@ export function jsonSchema(schema: z.ZodType): Json {
       return out;
     }
     case 'number': {
-      const out: Json = { type: 'number' };
+      const out: Json = { type: isIntegerFormat(def.format) ? 'integer' : 'number' };
       for (const check of checksOf(def)) {
-        if (check.check === 'number_format') out.type = 'integer';
+        if (check.check === 'number_format') {
+          if (isIntegerFormat(check.format)) out.type = 'integer';
+        }
         else if (check.check === 'greater_than')
           out[check.inclusive ? 'minimum' : 'exclusiveMinimum'] = check.value;
         else if (check.check === 'less_than')
@@ -93,9 +115,12 @@ export function jsonSchema(schema: z.ZodType): Json {
       return jsonSchema(def.innerType as z.ZodType);
     case 'default':
       return { ...jsonSchema(def.innerType as z.ZodType), default: def.defaultValue };
-    // .transform() is a pipe; the request is described by what comes in.
-    case 'pipe':
-      return jsonSchema(def.in as z.ZodType);
+    // .transform() is a pipe; the request is described by what comes in. z.preprocess() is a pipe
+    // starting from a transform, which says nothing about the value, so its target describes it.
+    case 'pipe': {
+      const input = def.in as z.ZodType;
+      return jsonSchema(input._zod.def.type === 'transform' ? (def.out as z.ZodType) : input);
+    }
     case 'unknown':
       return {};
     default:

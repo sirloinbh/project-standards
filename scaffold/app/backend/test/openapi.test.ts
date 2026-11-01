@@ -25,8 +25,27 @@ test('API paths start with /api and use lowercase words joined by hyphens', () =
     assert.match(route, /^[A-Z]+ \/api(\/(:\w+|[a-z0-9]+(-[a-z0-9]+)*(\.[a-z0-9]+)?))*$/);
 });
 
+test('formats stay in the document whether they are the type or a check', () => {
+  assert.deepEqual(jsonSchema(z.int().min(1)), { type: 'integer', minimum: 1 });
+  assert.deepEqual(jsonSchema(z.number().int()), { type: 'integer' });
+  assert.deepEqual(jsonSchema(z.uuid()), { type: 'string', format: 'uuid' });
+  assert.deepEqual(jsonSchema(z.guid()), { type: 'string', format: 'uuid' });
+  assert.deepEqual(jsonSchema(z.string().uuid()), { type: 'string', format: 'uuid' });
+  assert.deepEqual(jsonSchema(z.email()), { type: 'string', format: 'email' });
+  assert.deepEqual(jsonSchema(z.iso.date()), { type: 'string', format: 'date' });
+  assert.deepEqual(jsonSchema(z.iso.datetime()), { type: 'string', format: 'date-time' });
+});
+
+test('a preprocessed value is described by its target', () => {
+  assert.deepEqual(jsonSchema(z.preprocess((value) => value, z.string().min(1))), {
+    type: 'string',
+    minLength: 1,
+  });
+});
+
 test('unsupported schemas and undocumented routes fail instead of being skipped', () => {
   assert.throws(() => jsonSchema(z.date()), /Unsupported Zod type for OpenAPI: date/);
+  assert.throws(() => jsonSchema(z.ulid()), /Unsupported string format: ulid/);
   const extended = app();
   extended.get('/api/undocumented', (_req, res) => void res.json({}));
   assert.throws(() => buildOpenApi(extended), /\+GET \/api\/undocumented/);
