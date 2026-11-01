@@ -1,17 +1,17 @@
 # 준수 현황
 
-<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-10-29 06:40 UTC, 중앙 e91112c -->
+<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: 2026-11-01 19:25 UTC, 중앙 c831095 -->
 
 | 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example | 리포 설정 |
 |---|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | ✓ | `e91112c` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/study-log | ✓ | `e91112c` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/health-log | ✓ | `e91112c` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/life-journal | ✓ | `e91112c` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/money-ledger | ✓ | `e91112c` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/english-study | ✓ | `e91112c` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/plan-routine | ✓ | `e91112c` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/dev-career-portfolio | ✓ | `e91112c` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
-| sirloinbh/shared-aws-infrastructure | ✓ | `e91112c` | ✓ 일치 | — | 없음 | — | ✓ |
+| sirloinbh/workout-memo | ✓ | `b85f96f` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/study-log | 확인 못 함 (GitHub API GET /repos/sirloinbh/study-log/git/blobs/922cd87dbf18b06e7a691752cfca24e4b7dbffde failed: 403 You have exceeded a secondary rate limit. Please wait a few minutes before you try again. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) If you reach out to GitHub Support for help, please include the request ID 5088:3ACCCC:356CE2E:AEEB79D:6AE7923B.) | — | — | — | — | — | — |
+| sirloinbh/health-log | 확인 못 함 (GitHub API GET /repos/sirloinbh/health-log/git/blobs/666ad1305e6ed72f8e993e3328ad95727f48e4a0 failed: 403 You have exceeded a secondary rate limit. Please wait a few minutes before you try again. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) If you reach out to GitHub Support for help, please include the request ID 50AD:16BCA6:36B644D:B2C3EA5:6AE7923E.) | — | — | — | — | — | — |
+| sirloinbh/life-journal | 확인 못 함 (GitHub API GET /repos/sirloinbh/life-journal/git/blobs/0ba9e9dfd15438e9a20b251d84c23e92b20c34e2 failed: 403 You have exceeded a secondary rate limit. Please wait a few minutes before you try again. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) If you reach out to GitHub Support for help, please include the request ID 50BF:21180C:388E5DF:BBFC28C:6AE79240.) | — | — | — | — | — | — |
+| sirloinbh/money-ledger | 확인 못 함 (GitHub API GET /repos/sirloinbh/money-ledger/git/blobs/36cbdda593b8bba078e1602830b6830f2462dc17 failed: 403 You have exceeded a secondary rate limit. Please wait a few minutes before you try again. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) If you reach out to GitHub Support for help, please include the request ID 50B5:10B50:36340DA:B1B3F29:6AE79241.) | — | — | — | — | — | — |
+| sirloinbh/cert-manager | ✓ | `b85f96f` | ✓ 일치 | ✓ | 없음 | ✓ | ✓ |
+| sirloinbh/plan-routine | 확인 못 함 (GitHub API GET /repos/sirloinbh/plan-routine/git/blobs/7a4ac9c451268133eb9aecfaa3212c9dfee923ab failed: 403 You have exceeded a secondary rate limit. Please wait a few minutes before you try again. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) If you reach out to GitHub Support for help, please include the request ID 5069:383021:1A983FF:571851F:6AE79245.) | — | — | — | — | — | — |
+| sirloinbh/dev-career-portfolio | 확인 못 함 (GitHub API GET /repos/sirloinbh/dev-career-portfolio/git/blobs/20cb67ffe31a93846d02e436dd8f2381ac3569e1 failed: 403 You have exceeded a secondary rate limit. Please wait a few minutes before you try again. For more on scraping GitHub and how it may affect your rights, please review our Terms of Service (https://docs.github.com/en/site-policy/github-terms/github-terms-of-service) If you reach out to GitHub Support for help, please include the request ID 5092:11A830:380265D:B736A19:6AE79247.) | — | — | — | — | — | — |
+| sirloinbh/shared-aws-infrastructure | ✓ | `b85f96f` | ✓ 일치 | — | 없음 | — | ✓ |
 
 고치는 방법은 [README](../README.md)의 "하위 리포에서 standards-check가 실패했을 때"를 따른다.
