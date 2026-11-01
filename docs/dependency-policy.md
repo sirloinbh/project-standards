@@ -21,7 +21,7 @@ npm 공급망 공격(Shai-Hulud 계열)이 진행 중이므로 의존성은 최�
 
 - `package.json`의 모든 의존성은 정확한 버전으로 쓴다(`^`, `~` 금지). `.npmrc`의 `save-exact=true`가 새로 설치할 때 이렇게 만든다. 기존 범위 버전은 첫 동기화 때 설치된 버전으로 고정된다(#63).
 - 설치는 항상 `--ignore-scripts`로 한다. `.npmrc`의 `ignore-scripts=true`가 이를 강제한다.
-- 에이전트(Claude Code, Codex)는 설치 명령을 실행할 수 없게 설정으로 막혀 있다([에이전트의 패키지 설치 차단](agent-guardrails.md)). 승인된 설치는 사용자가 직접 실행한다.
+- 에이전트(Claude Code, Codex)는 잠금 파일대로 설치하는 `npm ci`만 실행할 수 있고, 다른 설치 명령은 설정으로 막혀 있다([에이전트의 패키지 설치 차단](agent-guardrails.md), #375). 새 패키지를 들이거나 버전을 바꾸는 승인된 설치는 사용자가 직접 실행한다.
 
 ## 새 외부 패키지·도구 도입 절차
 

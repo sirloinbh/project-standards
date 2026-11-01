@@ -30,8 +30,9 @@ const NPM_ALIASES = {
   'install-clean': 'ci', 'isntall-clean': 'ci', hlep: 'help', 'dist-tags': 'dist-tag', upgrade: 'update',
   udpate: 'update', rum: 'run', sit: 'install-ci-test', urn: 'run', ogr: 'org', 'add-user': 'adduser',
 };
-// npm commands that install, remove, or run packages (`audit` only with `fix`).
-const NPM_BLOCKED = new Set(['install', 'ci', 'install-test', 'install-ci-test', 'update', 'uninstall', 'exec', 'init', 'rebuild', 'dedupe', 'link']);
+// npm commands that install, remove, or run packages (`audit` only with `fix`). `ci` installs exactly what
+// the lockfile pins, so it stays allowed unless an option turns install scripts on (#375).
+const NPM_BLOCKED = new Set(['install', 'install-test', 'install-ci-test', 'update', 'uninstall', 'exec', 'init', 'rebuild', 'dedupe', 'link']);
 // Other package managers and runners are not used in these repositories: every call is blocked.
 const RUNNERS = new Set(['npx', 'pnpm', 'pnpx', 'yarn', 'yarnpkg', 'bun', 'bunx', 'corepack']);
 // npm options whose value is the next word, e.g. `npm -w app install`.
@@ -185,6 +186,11 @@ function skipOptions(args, withValue = []) {
   return i;
 }
 
+// .npmrc sets ignore-scripts=true; these options would undo it for one command.
+function turnsScriptsOn(args) {
+  return args.some((arg, i) => /^--(no-ignore-scripts|ignore-scripts=false|dangerously-allow-all-scripts|allow-scripts)(=|$)/.test(arg) || (arg === '--ignore-scripts' && args[i + 1] === 'false'));
+}
+
 function checkNpm(args, viaXargs) {
   let positional = 0;
   for (let i = 0; i < args.length; i++) {
@@ -198,6 +204,7 @@ function checkNpm(args, viaXargs) {
     // A word that is not a command is the value of an option such as `--prefix dir`.
     if (!command) continue;
     if (command === 'audit') return args.slice(i + 1).includes('fix') ? 'npm audit fix' : null;
+    if (command === 'ci') return turnsScriptsOn(args) ? 'npm ci with install scripts' : null;
     return NPM_BLOCKED.has(command) ? `npm ${command}` : null;
   }
   // `xargs npm` takes the subcommand from its input, so the hook cannot see it.
@@ -359,7 +366,7 @@ export async function main() {
   const found = findInstall(command);
   if (!found) process.exit(0);
   process.stderr.write(
-    `패키지 설치·삭제·실행 명령이라 막았습니다(${found}). 에이전트는 패키지를 설치하지 않습니다. ` +
+    `패키지 설치·삭제·실행 명령이라 막았습니다(${found}). 에이전트는 잠금 파일대로 설치하는 npm ci만 실행합니다. ` +
       '설치가 필요하면 사용자에게 요청하세요. 자세한 내용: docs/agent-guardrails.md (sirloinbh/project-standards)\n',
   );
   process.exit(2);

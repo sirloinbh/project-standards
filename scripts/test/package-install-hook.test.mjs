@@ -15,9 +15,9 @@ const BLOCKED = {
   'npm --silent install': 'npm install',
   'npm --silent install --help': 'npm install',
   'sh -c "npm i x"': 'npm install',
-  "bash -lc 'npm ci'": 'npm ci',
+  "bash -lc 'npm ci --ignore-scripts=false'": 'npm ci with install scripts',
   '"C:\\Program Files\\nodejs\\npm.cmd" install': 'npm install',
-  '& "C:\\Program Files\\nodejs\\npm.cmd" ci': 'npm ci',
+  '& "C:\\Program Files\\nodejs\\npm.cmd" ci --no-ignore-scripts': 'npm ci with install scripts',
   'C:\\nodejs\\NPM.CMD i react': 'npm install',
   '/c/Program\\ Files/Volta/npm install': 'npm install',
   // Options with values, aliases and abbreviations npm accepts.
@@ -26,7 +26,10 @@ const BLOCKED = {
   'npm --loglevel=silent add react': 'npm install',
   'npm u': 'npm update',
   'npm upd': 'npm update',
-  'npm ic': 'npm ci',
+  'npm ic --ignore-scripts false': 'npm ci with install scripts',
+  'npm ci --allow-scripts=esbuild': 'npm ci with install scripts',
+  'npm --no-ignore-scripts ci': 'npm ci with install scripts',
+  'npm ci --dangerously-allow-all-scripts': 'npm ci with install scripts',
   'npm sit': 'npm install-ci-test',
   'npm unlink x': 'npm uninstall',
   'npm rb': 'npm rebuild',
@@ -45,23 +48,30 @@ const BLOCKED = {
   'echo install | xargs npm': 'xargs npm',
   'cmd /c "npm.cmd install"': 'npm install',
   'pwsh -NoProfile -ExecutionPolicy Bypass -Command "npm i"': 'npm install',
-  'powershell.exe -c npm ci': 'npm ci',
+  'powershell.exe -c npm i': 'npm install',
   [`pwsh -EncodedCommand ${Buffer.from('npm install', 'utf16le').toString('base64')}`]: 'npm install',
   'Invoke-Expression "npm i x"': 'npm install',
-  "iex 'npm ci'": 'npm ci',
+  "iex 'npm i'": 'npm install',
   'eval "npm i"': 'npm install',
   'Start-Process npm -ArgumentList "install","x" -Wait': 'npm install',
-  'Start-Process -FilePath npm.cmd -ArgumentList "ci"': 'npm ci',
+  'Start-Process -FilePath npm.cmd -ArgumentList "update"': 'npm update',
   'Get-ChildItem | ForEach-Object { npm i $_.Name }': 'npm install',
   'node C:/nodejs/node_modules/npm/bin/npm-cli.js i': 'npm install',
   'volta run npm install': 'npm install',
   'pnpm add x': 'pnpm',
   'bunx x': 'bunx',
   'corepack enable': 'corepack',
-  'cd frontend\nnpm ci': 'npm ci',
+  'cd frontend\nnpm i': 'npm install',
 };
 
 const ALLOWED = [
+  // #375: installs exactly what the lockfile pins, with install scripts off.
+  'npm ci',
+  'npm ci --ignore-scripts',
+  'npm --silent ci',
+  'npm -w backend ci',
+  'npm clean-install',
+  'npm ic',
   'npm run check',
   'npm run install-deps',
   'npm ls',
@@ -168,7 +178,8 @@ test('the Codex hook command blocks installs from the repository root and from a
     const blocked = run(cwd, 'npm --silent install');
     assert.equal(blocked.status, 2, blocked.stderr);
     assert.match(blocked.stderr, /npm install/);
-    assert.equal(run(cwd, '& "C:\\Program Files\\nodejs\\npm.cmd" ci').status, 2);
+    assert.equal(run(cwd, '& "C:\\Program Files\\nodejs\\npm.cmd" update').status, 2);
+    assert.equal(run(cwd, 'npm ci').status, 0);
     const allowed = run(cwd, 'npm ls');
     assert.equal(allowed.status, 0, allowed.stderr);
   }
