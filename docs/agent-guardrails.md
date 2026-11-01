@@ -1,6 +1,6 @@
 # 에이전트의 패키지 설치 차단
 
-npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 패키지를 설치·삭제·실행하지 않는다([의존성 정책](dependency-policy.md)). 이 규칙을 문장(AGENTS.md)만이 아니라 도구 설정으로도 막는다(#16, #162, #178, #180). 아래 파일은 9개 리포에 중앙 관리 파일로 동기화되고, 중앙 리포에도 같은 파일이 있다.
+npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 잠금 파일대로 설치하는 `npm ci`(#375)를 빼고는 패키지를 설치·삭제·실행하지 않는다([의존성 정책](dependency-policy.md)). 이 규칙을 문장(AGENTS.md)만이 아니라 도구 설정으로도 막는다(#16, #162, #178, #180). 아래 파일은 9개 리포에 중앙 관리 파일로 동기화되고, 중앙 리포에도 같은 파일이 있다.
 
 | 도구 | 파일 | 동작 |
 |---|---|---|
@@ -11,11 +11,13 @@ npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 패키지를 �
 
 ## 막는 명령
 
-- `npm` 하위 명령과 npm 11의 별칭(`lib/utils/cmd-list.js`) 45개: `install`(`i`, `add`, 줄임·오타 `in`, `ins`, `inst`, `insta`, `instal`, `isnt`, `isnta`, `isntal`, `isntall`), `ci`(`clean-install`, `ic`, `install-clean`, `isntall-clean`), `install-test`(`it`), `install-ci-test`(`cit`, `clean-install-test`, `sit`), `update`(`up`, `u`, `upgrade`, `udpate`), `uninstall`(`un`, `remove`, `rm`, `r`, `unlink`), `exec`(`x`), `init`(`create`, `innit`), `rebuild`(`rb`), `dedupe`(`ddp`), `link`(`ln`), 그리고 `audit fix`. 거부 목록과 Codex 규칙이 모두 막는다
-- 위 명령의 줄임(`npm upd`, `npm uni`)과 camelCase(`npm installTest`) 102개: npm은 다른 명령과 겹치지 않는 앞부분과 camelCase 이름도 받아들인다. Codex 규칙은 이 형태를 모두 나열해서 막고(#178), Claude Code는 훅이 해석해서 막는다
+- `npm` 하위 명령과 npm 11의 별칭(`lib/utils/cmd-list.js`) 41개: `install`(`i`, `add`, 줄임·오타 `in`, `ins`, `inst`, `insta`, `instal`, `isnt`, `isnta`, `isntal`, `isntall`), `install-test`(`it`), `install-ci-test`(`cit`, `clean-install-test`, `sit`), `update`(`up`, `u`, `upgrade`, `udpate`), `uninstall`(`un`, `remove`, `rm`, `r`, `unlink`), `exec`(`x`), `init`(`create`, `innit`), `rebuild`(`rb`), `dedupe`(`ddp`), `link`(`ln`), 그리고 `audit fix`. 거부 목록과 Codex 규칙이 모두 막는다
+- 위 명령의 줄임(`npm upd`, `npm uni`)과 camelCase(`npm installTest`) 84개: npm은 다른 명령과 겹치지 않는 앞부분과 camelCase 이름도 받아들인다. Codex 규칙은 이 형태를 모두 나열해서 막고(#178), Claude Code는 훅이 해석해서 막는다
 - 명령 전체: `npx`, `pnpm`, `pnpx`, `yarn`, `bun`, `bunx`, `corepack`
 
-`npm run`, `npm ls`, `npm view`, `npm outdated`, `npm audit`(보고만), `npm test`는 막지 않는다. `scripts/test/agent-guardrails.test.mjs`는 Codex 목록의 모든 단어가 훅의 해석으로 설치 명령이 되는지, 목록에 있는 단어의 줄임·camelCase 형태가 빠지지 않았는지 확인한다.
+`npm ci`와 그 별칭(`clean-install`, `ic`, `install-clean`, `isntall-clean`)은 막지 않는다(#375). 잠금 파일에 고정된 버전만 설치하고 `.npmrc`의 `ignore-scripts=true`로 설치 스크립트가 돌지 않기 때문이다. 다만 훅은 스크립트를 켜는 옵션(`--no-ignore-scripts`, `--ignore-scripts=false`, `--allow-scripts`, `--dangerously-allow-all-scripts`와 그 줄임)과 같은 뜻의 환경변수(`npm_config_ignore_scripts=false` 등)가 같은 명령에 있는 `npm ci`를 막는다. 여러 리포에 한꺼번에 실행하는 `tools/repos.mjs run`은 `npm ci`도 거부한다.
+
+`npm run`, `npm ls`, `npm view`, `npm outdated`, `npm audit`(보고만), `npm test`도 막지 않는다. `scripts/test/agent-guardrails.test.mjs`는 Codex 목록의 모든 단어가 훅의 해석으로 설치 명령이 되는지, 목록에 있는 단어의 줄임·camelCase 형태가 빠지지 않았는지 확인한다.
 
 ## 명령을 해석하는 훅 (#162)
 
@@ -43,10 +45,12 @@ npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 패키지를 �
 
 - Claude Code(중앙 리포): `npm install --dry-run`이 Bash와 PowerShell 모두에서 거부됐다. `FOO=1 npx --version`(환경변수를 앞에 붙임)도 거부됐다. `npm run`, `npm ls`는 실행됐다.
 - Claude Code 2.1.308 훅(중앙 리포, Windows): `claude -p` 세션에서 Bash의 `npm --silent install --help`, `sh -c "npm i --help"`, `"/c/Program Files/Volta/npm.exe" install --help`와 PowerShell의 `npm --silent install --help`, `& "C:\Program Files\Volta\npm.cmd" ci --help`가 훅 메시지로 거부됐다. Bash·PowerShell의 `npm ls --depth=0`, `npm run`은 실행됐다. 설치가 실제로 일어나지 않도록 `--help`를 붙여 확인했다.
-- 훅 판정은 `scripts/test/package-install-hook.test.mjs`가 막을 명령 45개, 허용할 명령 20개로 확인한다.
-- #180 Codex 훅: 같은 테스트가 `.codex/hooks.json`의 명령을 Codex 실행 방식대로(Windows `cmd /C "<명령>"`, 그 밖 `$SHELL -lc`) 리포 루트와 하위 폴더에서 실행해 `npm --silent install`, `& "C:\…\npm.cmd" ci`는 종료 코드 2, `npm ls`는 0인 것을 확인한다. 중앙 PC(Windows, 한글 경로)에서 cmd와 Git Bash 모두 통과했다. Codex CLI가 없어 실제 Codex 세션에서의 차단과 신뢰 절차는 확인하지 못했다.
+- 훅 판정은 `scripts/test/package-install-hook.test.mjs`가 막을 명령 72개, 허용할 명령 34개로 확인한다.
+- #180 Codex 훅: 같은 테스트가 `.codex/hooks.json`의 명령을 Codex 실행 방식대로(Windows `cmd /C "<명령>"`, 그 밖 `$SHELL -lc`) 리포 루트와 하위 폴더에서 실행해 `npm --silent install`, `& "C:\…\npm.cmd" update`는 종료 코드 2, `npm ls`, `npm ci`는 0인 것을 확인한다(#375 전에는 `npm.cmd ci`로 확인했다). 중앙 PC(Windows, 한글 경로)에서 cmd와 Git Bash 모두 통과했다. Codex CLI가 없어 실제 Codex 세션에서의 차단과 신뢰 절차는 확인하지 못했다.
 - #178·#180 Codex CLI 0.144.4 `codex execpolicy check`(2026-10-23, 중앙 PC): 새 별칭 `npm u react`, `ic`, `sit`, `install-clean`, `unlink x`, `rb`, `ddp`, `innit`과 줄임·camelCase `npm upd`, `npm uni x`, `npm installTest`는 `forbidden`, `npm run check`, `npm ls`, `npm audit`, `npm test`는 규칙에 걸리지 않았다. 옵션을 앞에 둔 `npm --silent install`은 규칙에 걸리지 않아(한계 절) 훅이 막는다. `scripts/test/agent-guardrails.test.mjs`의 Codex CLI 판정 테스트가 건너뛰지 않고 통과했다.
 - Codex CLI 0.144.4 `codex execpolicy check`(#16): `npm install`, `npm i react`, `npm ci`, `npm audit fix`, `npx shadcn add button`, `yarn`, `corepack enable`은 `forbidden`, `npm run check`, `npm ls`, `npm audit`는 규칙에 걸리지 않았다. 이 검사는 Codex CLI가 있는 PC에서 `scripts/test/agent-guardrails.test.mjs`가 다시 실행한다.
+
+- #375(2026-11-01): 위 기록에서 `npm ci`가 막힌 것은 그때의 결과다. 이후 `npm ci`는 허용하고, `npm install` 등 다른 설치 명령은 계속 막는다.
 
 ## 한계
 
@@ -60,6 +64,7 @@ npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 패키지를 �
   - 전체 경로(`/usr/bin/npm install`, `C:\…\npm.cmd install`): 공식 문서는 명령을 `execvp`가 받는 인자 목록으로 비교한다고만 하고, 경로를 프로그램 이름으로 줄인다는 말이 없다. 경로는 PC마다 달라 나열할 수 없다.
   - `bash -lc`·`sh -c`·`zsh -c`: 스크립트가 단어와 `&&` `||` `;` `|`로만 이어져 있으면 Codex가 나눠서 규칙을 적용하므로 막힌다(공식 문서). 리다이렉션, `$( )`, 환경변수, 와일드카드, 제어문이 있으면 나누지 않고 `["bash", "-lc", "<스크립트 전체>"]` 하나로 비교하므로 걸리지 않는다. `pwsh -Command`, `cmd /c`는 문서에 나오지 않는다.
 - **Codex 훅(#180):** 위 형태는 `.codex/hooks.json`의 훅이 막는다("Codex에서 같은 훅 쓰기"). 공식 문서는 훅을 "완전한 강제 경계가 아니라 유용한 보호 장치"로 다룬다. 훅이 실패하거나 신뢰되지 않으면 막지 않으므로 이 형태는 그때 다시 막히지 않는다. 훅이 보는 범위는 Claude Code 훅의 한계와 같다(변수에 담은 명령, 스크립트 파일 안의 명령 등). `write_stdin`으로 이미 실행 중인 셸에 넣는 입력은 `PreToolUse`를 다시 거치지 않는다(공식 문서).
+- **`npm ci`의 옵션:** Claude Code 거부 목록과 Codex 규칙은 단어만 비교하므로 스크립트를 켜는 옵션을 볼 수 없다. 이 옵션과 환경변수는 훅만 막는다. Codex 훅은 신뢰해야 실행되고 실패하면 막지 않으므로, 그때는 막히지 않는다. 훅은 명령 한 번만 보므로, 앞선 명령에서 환경변수를 설정해 둔 경우나 `.npmrc`를 고친 경우도 막지 못한다.
 - AGENTS.md의 금지 문장은 두 도구 모두 안내로만 읽는다. 차단은 위 설정 파일이 한다.
 
 ## 에이전트의 git 브랜치 명령 권한 (#361)
@@ -86,7 +91,7 @@ npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 패키지를 �
 - npm이 명령이나 별칭을 바꾸면 훅의 `NPM_COMMANDS`·`NPM_ALIASES`, 거부 목록, Codex 규칙의 두 목록(별칭, 줄임·camelCase)을 함께 고친다. 빠진 줄임·camelCase 형태는 `scripts/test/agent-guardrails.test.mjs`가 알려 준다.
 - 훅이 막을 명령이나 허용할 명령을 바꾸면 `scripts/test/package-install-hook.test.mjs`의 목록에 예를 추가한다.
 - 리포에만 필요한 Claude Code 설정은 `.claude/settings.local.json`(커밋하지 않음)에 둔다. `.claude/settings.json`과 `.claude/hooks/`는 중앙 관리 파일이라 고치면 standards-check가 실패한다.
-- 사용자가 승인한 설치는 사용자가 직접 터미널에서 `npm install --ignore-scripts <패키지>@<버전>`으로 실행한다.
+- 새 패키지를 들이거나 버전을 바꾸는 설치는 사용자 승인이 필요하고, 사용자가 직접 터미널에서 `npm install --ignore-scripts <패키지>@<버전>`으로 실행한다.
 
 ## 출처
 

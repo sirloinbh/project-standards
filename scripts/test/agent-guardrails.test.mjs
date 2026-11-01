@@ -11,11 +11,11 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8').replace(/\
 const TEMPLATE = 'templates/common/.claude/settings.json.tmpl';
 const RULES = 'templates/common/.codex/rules/package-installs.rules';
 const GIT_RULES = 'templates/common/.codex/rules/git-branch.rules';
-const REQUIRED = ['npm install', 'npm i', 'npm in', 'npm ins', 'npm inst', 'npm insta', 'npm instal', 'npm isnt', 'npm isnta', 'npm isntal', 'npm isntall', 'npm udpate', 'npm link', 'npm ln', 'npm add', 'npm ci', 'npm update', 'npm uninstall', 'npm remove', 'npm rm', 'npm exec', 'npx', 'pnpm', 'yarn', 'bun', 'corepack',
+const REQUIRED = ['npm install', 'npm i', 'npm in', 'npm ins', 'npm inst', 'npm insta', 'npm instal', 'npm isnt', 'npm isnta', 'npm isntal', 'npm isntall', 'npm udpate', 'npm link', 'npm ln', 'npm add', 'npm update', 'npm uninstall', 'npm remove', 'npm rm', 'npm exec', 'npx', 'pnpm', 'yarn', 'bun', 'corepack',
   // npm 11 aliases added in #178 (lib/utils/cmd-list.js).
-  'npm u', 'npm ic', 'npm install-clean', 'npm isntall-clean', 'npm clean-install-test', 'npm sit', 'npm rb', 'npm ddp', 'npm unlink', 'npm innit'];
+  'npm u', 'npm clean-install-test', 'npm sit', 'npm rb', 'npm ddp', 'npm unlink', 'npm innit'];
 // npm commands that install, remove, or run packages, as the hook resolves them (`audit` only with `fix`).
-const NPM_BLOCKED = new Set(['install', 'ci', 'install-test', 'install-ci-test', 'update', 'uninstall', 'exec', 'init', 'rebuild', 'dedupe', 'link']);
+const NPM_BLOCKED = new Set(['install', 'install-test', 'install-ci-test', 'update', 'uninstall', 'exec', 'init', 'rebuild', 'dedupe', 'link']);
 // Every prefix of a word, each `-x` also written as camelCase `X`: the forms npm resolves (#178).
 const prefixForms = (word) => {
   const camel = (w) => {
@@ -128,7 +128,7 @@ test('the Codex CLI forbids installs and allows npm run', { skip: codex.status !
   const check = (...cmd) =>
     JSON.parse(spawnSync('codex', ['execpolicy', 'check', '--rules', path.join(root, RULES), '--', ...cmd], { shell: process.platform === 'win32', encoding: 'utf8' }).stdout);
   const forbidden = [['npm', 'install'], ['npm', 'i', 'react'], ['npx', 'shadcn'], ['yarn'], ['npm', 'audit', 'fix'],
-    ['npm', 'u'], ['npm', 'ic'], ['npm', 'sit'], ['npm', 'rb'], ['npm', 'ddp'], ['npm', 'unlink'], ['npm', 'innit'], ['npm', 'upd'], ['npm', 'installTest']];
+    ['npm', 'u'], ['npm', 'sit'], ['npm', 'rb'], ['npm', 'ddp'], ['npm', 'unlink'], ['npm', 'innit'], ['npm', 'upd'], ['npm', 'installTest']];
   for (const cmd of forbidden) assert.equal(check(...cmd).decision, 'forbidden', cmd.join(' '));
-  for (const cmd of [['npm', 'run', 'check'], ['npm', 'ls'], ['npm', 'audit'], ['npm', 'test']]) assert.deepEqual(check(...cmd).matchedRules, [], cmd.join(' '));
+  for (const cmd of [['npm', 'ci'], ['npm', 'ic'], ['npm', 'run', 'check'], ['npm', 'ls'], ['npm', 'audit'], ['npm', 'test']]) assert.deepEqual(check(...cmd).matchedRules, [], cmd.join(' '));
 });
