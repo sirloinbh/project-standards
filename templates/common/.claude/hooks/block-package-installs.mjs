@@ -213,9 +213,14 @@ function turnsScriptsOn(args) {
 
 function checkNpm(args, viaXargs) {
   let positional = 0;
+  // `--` before the command only ends the options: `npm -- install` still installs (#381).
+  let optionsEnded = false;
   for (let i = 0; i < args.length; i++) {
-    if (args[i] === '--') break;
-    if (isOption(args[i])) {
+    if (!optionsEnded && args[i] === '--') {
+      optionsEnded = true;
+      continue;
+    }
+    if (!optionsEnded && isOption(args[i])) {
       if (NPM_VALUE_OPTIONS.has(args[i])) i++;
       continue;
     }
