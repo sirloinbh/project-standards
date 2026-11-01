@@ -34,3 +34,4 @@
 - 파라미터와 IAM 사용자는 shared-aws-infrastructure가 Terraform으로 만든다. 파라미터 **값**은 Terraform state에 남지 않도록 사용자가 직접 넣는다.
 - 구현은 #265(전달 도구), 사용자 단계는 #266(키 발급·지출 한도·SSM에 넣기)이다.
 - 2026-10-29 변경(#266): 사용자가 이름과 위치를 특정 앱에 묶지 말라고 정했다. 서버 IAM 사용자 이름을 `workout-memo-*`에서 `sirloinbh-apps-*`로 바꿨다. 서버의 AWS 키(SSM 읽기·S3 백업)는 앱 `.env`가 아니라 `/opt/project-standards/.env` 한 곳에 둔다. PC의 Claude 키는 앱 `.env` 대신 `project-standards/.env` 한 곳에 둔다. 키는 Claude Max 구독에 포함된 월 API 크레딧으로 쓰고, Console에 결제 수단을 두지 않는다.
+- 2026-11-01 변경(#266): 크레딧은 월 $200이고 Console 조직 `Quantified ESG`에 연결되어 있다. 사용자가 개인 조직으로 옮기지 않고 그 조직을 쓰기로 정했다. 앱 공용 workspace `sirloinbh-apps`와 키를 그 조직에 만든다. 그 조직의 관리자는 workspace·키별 사용량과 비용을 볼 수 있고 workspace를 관리할 수 있다. 관리자가 키나 한도를 바꾸거나 사용자가 조직 권한을 잃으면 앱의 Claude 호출이 멈출 수 있다. 그때는 다른 조직에서 키를 만들어 SSM 값만 바꾼다.
