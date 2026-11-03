@@ -10,7 +10,7 @@
 | 02 | study-log | 공부 기록 | 공부 기록 | 공부 | active | study / study_test | 미정 | 미정 | 2 |
 | 03 | health-log | 식단·수면·건강 기록 | 식단·수면·건강 기록 | 건강 | active | health / health_test | 미정 | 미정 | 2 |
 | 04 | life-journal | 감상문·일기장 | 감상문·일기장 | 일기 | active | journal / journal_test | 미정 | 미정 | 2 |
-| 05 | money-ledger | 가계부·자산 포트폴리오 | 가계부·자산 포트폴리오 | 가계부 | active | money / money_test | 미정 | 미정 | 2 |
+| 05 | money-ledger | 가계부·자산·모의투자 | 가계부·자산·모의투자 | 재무 | active | money / money_test | 미정 | 미정 | 2 |
 | 06 | cert-manager | 자격증 관리 | 자격증 관리 | 자격증 | active | cert / cert_test | 미정 | 미정 | 2 |
 | 07 | plan-routine | 계획·실천·루틴·피드백 | 계획·실천·루틴·피드백 | 루틴 | active | plan / plan_test | 미정 | 미정 | 2 |
 | 08 | dev-career-portfolio | 개발 커리어 포트폴리오 | 개발 커리어 포트폴리오 | 커리어 | active | career / career_test | 미정 | 미정 | 2 |
