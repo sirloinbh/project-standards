@@ -127,15 +127,21 @@ test('rendered shell scripts pass bash -n', { skip: !has('bash') && 'bash not fo
   }
 });
 
-test('autodeploy deploys only when every check run passed', { skip: !(has('bash') && has('python3')) && 'bash or python3 not found' }, () => {
+test('autodeploy deploys only when every workflow run of the repository passed', { skip: !(has('bash') && has('python3')) && 'bash or python3 not found' }, () => {
   const script = rendered['study-log']['deploy/autodeploy.sh'];
-  const state = (runs) => spawnSync('bash', ['-c', script, 'autodeploy.sh', 'ci-state'], { input: JSON.stringify({ check_runs: runs }), encoding: 'utf8' }).stdout.trim();
-  const run = (status, conclusion) => ({ status, conclusion });
+  assert.ok(script.includes('actions/runs?head_sha=$full'), 'autodeploy reads workflow runs');
+  const state = (runs) => spawnSync('bash', ['-c', script, 'autodeploy.sh', 'ci-state'], { input: JSON.stringify({ workflow_runs: runs }), encoding: 'utf8' }).stdout.trim();
+  const run = (status, conclusion, event = 'push') => ({ status, conclusion, event });
   assert.equal(state([]), 'pending');
   assert.equal(state([run('completed', 'success'), run('in_progress', null)]), 'pending');
   assert.equal(state([run('completed', 'success'), run('completed', 'skipped'), run('completed', 'neutral')]), 'pass');
   assert.equal(state([run('completed', 'success'), run('completed', 'failure')]), 'fail');
   assert.equal(state([run('completed', 'cancelled')]), 'fail');
+  // #417: Dependabot updates and CodeQL default setup run as event "dynamic" and do not count.
+  assert.equal(state([run('completed', 'success'), run('completed', 'failure', 'dynamic')]), 'pass');
+  assert.equal(state([run('completed', 'success'), run('in_progress', null, 'dynamic')]), 'pass');
+  assert.equal(state([run('completed', 'failure', 'dynamic')]), 'pending');
+  assert.equal(state([run('completed', 'failure'), run('completed', 'success', 'dynamic')]), 'fail');
 });
 
 // Runs the rendered backup.sh with fake docker, curl and flock on PATH, in a temporary app folder.
