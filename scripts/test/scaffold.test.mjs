@@ -62,6 +62,10 @@ test('includes the standard tree, operations docs, managed files and the manifes
   assert.match(byPath.get('.npmrc'), /^ignore-scripts=true$/m);
 });
 
+test('the db health check asks over TCP, so the first-run temporary server is not taken as ready (#392)', () => {
+  assert.match(byPath.get('compose.yaml'), /test: \['CMD-SHELL', 'pg_isready -h 127\.0\.0\.1 /);
+});
+
 test('the backend follows the API rules: app.ts, routes/, contract copy, OpenAPI document', () => {
   for (const file of ['backend/src/app.ts', 'backend/src/routes/shared.ts', 'backend/src/contract.ts', 'backend/src/openapi.ts', 'backend/src/openapi-cli.ts', 'backend/test/openapi.test.ts', 'docs/openapi.json']) assert.ok(byPath.has(file), file);
   const app = byPath.get('backend/src/app.ts');

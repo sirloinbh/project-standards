@@ -247,6 +247,8 @@ test('backup verify restores the newest dump and compares its row counts', { ski
   assert.match(ok.stdout, /restore check passed: study-2026-10-26-033000\.sql\.gz, 2 tables/);
   assert.match(ok.docker, /run -d --rm --name study-restore-check .* postgres:17/);
   assert.match(ok.docker, /rm -f study-restore-check/);
+  // Over TCP, so the first-run temporary server (no TCP listener) is not taken as ready (#392).
+  assert.match(ok.docker, /exec study-restore-check pg_isready -q -h 127\.0\.0\.1 /);
   const bad = backupRun(['verify'], { setup: seed, restored: 'public.a|2\npublic.b|4\n' });
   assert.equal(bad.status, 1);
   assert.match(bad.stderr, /row counts of study-2026-10-26-033000\.sql\.gz differ/);
