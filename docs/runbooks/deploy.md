@@ -90,7 +90,7 @@ terraform output                      # static_ip, url, ssh
 
 ## 4. main 자동 배포
 
-main에 병합되면 서버가 2분마다 `origin/main`을 확인해서, 그 커밋의 GitHub Actions 결과가 모두 성공이면 3번 순서로 배포합니다. GitHub에는 AWS·SSH 키를 두지 않습니다. 다른 앱이 배포 중이면(공용 잠금) 다음 회차에 다시 확인합니다.
+main에 병합되면 서버가 2분마다 `origin/main`을 확인해서, 그 커밋의 GitHub Actions 워크플로 실행이 모두 성공이면 3번 순서로 배포합니다. GitHub가 직접 돌리는 실행(Dependabot 업데이트, CodeQL 기본 설정. API의 `event`가 `dynamic`)은 결과에 넣지 않습니다(#417). CodeQL 경보는 code scanning에서 따로 봅니다. GitHub에는 AWS·SSH 키를 두지 않습니다. 다른 앱이 배포 중이면(공용 잠금) 다음 회차에 다시 확인합니다.
 
 배포 스크립트(`deploy/`)는 중앙 템플릿이고, 이 리포의 `compose.yaml`이 다음 조건을 지켜야 동작합니다.
 
