@@ -1,20 +1,20 @@
-# 0006. 슬롯 번호 기반 포트 배정
+# 0006. Slot-number-based port allocation
 
-- 상태: 제안 (이슈 #1)
-- 날짜: 2026-10-22
+- Status: Proposed (issue #1)
+- Date: 2026-10-22
 
-## 맥락
+## Context
 
-- 지금은 프로젝트를 만들 때마다 포트를 그때그때 골랐다. 그 결과 workout-memo vite(지정 안 함, 기본 5173)와 health-log vite 5173이 겹치고, workout-memo e2e web 5174와 life-journal vite 5174가 겹친다.
-- 요구사항 표의 health-log vite(5183)는 실제 설정과 달랐다.
-- DB 포트(554xx)는 Windows(49152 이상)와 Linux(32768–60999)의 임시 포트 범위 안에 있다. 이 PC에서는 55536을 프린터 프로그램이 이미 쓰고 있다.
-- e2e 포트는 workout-memo에만 있어서, 나머지 앱에 Playwright를 붙일 때 다시 충돌할 수 있다.
+- Until now, ports were picked ad hoc each time a project was created. As a result, workout-memo vite (not specified, default 5173) and health-log vite 5173 collide, and workout-memo e2e web 5174 and life-journal vite 5174 collide.
+- The health-log vite (5183) in the requirements table differed from the actual config.
+- DB ports (554xx) are inside the ephemeral port ranges of Windows (49152 and above) and Linux (32768–60999). On this PC, a printer program already uses 55536.
+- The e2e ports exist only in workout-memo, so they could collide again when Playwright is added to the other apps.
 
-## 결정
+## Decision
 
-프로젝트마다 슬롯 `n`(01–99)을 주고, 포트는 `종류별 기준값 + n`으로 정한다.
+Each project gets a slot `n` (01–99), and its ports are `base value per kind + n`.
 
-| 종류 | 기준값 | 범위 |
+| Kind | Base | Range |
 |---|---|---|
 | web | 8100 | 8101–8199 |
 | api | 3100 | 3101–3199 |
@@ -23,13 +23,13 @@
 | e2eWeb | 5300 | 5301–5399 |
 | db | 15400 | 15401–15499 |
 
-- 슬롯은 workout-memo 01부터 dev-career-portfolio 08까지 기존 순서대로 준다. 신규 프로젝트는 지금까지 쓴 가장 큰 슬롯 + 1을 받는다. 은퇴한 슬롯은 다시 쓰지 않는다.
-- `registry/platform.json`의 `reservedPorts`(3000, 4173, 5173, 5432, 8080)는 배정하지 않는다. 이 목록은 99개 슬롯의 공식 포트와 하나도 겹치지 않는다(검증 결과는 docs/changes/1-design-doc.md).
-- Vite는 `strictPort: true`로 실행해서, 포트가 겹치면 다른 포트로 넘어가지 않고 바로 실패하게 한다.
-- 레지스트리에는 포트를 명시적으로 적고, 중앙 CI가 공식과 일치하는지 검사한다.
+- Slots are given in the existing order, from workout-memo 01 to dev-career-portfolio 08. A new project gets the largest slot used so far + 1. Retired slots are not reused.
+- The `reservedPorts` in `registry/platform.json` (3000, 4173, 5173, 5432, 8080) are not assigned. None of this list overlaps the official ports of the 99 slots (see docs/changes/1-design-doc.md for the verification result).
+- Vite runs with `strictPort: true`, so if a port collides it fails immediately instead of moving to another port.
+- The registry lists ports explicitly, and central CI checks that they match the formula.
 
-## 결과
+## Consequences
 
-- 99개 프로젝트까지 서로 충돌하지 않는다. 포트 번호의 끝 두 자리만 보면 어느 프로젝트인지 알 수 있다.
-- 8개 앱의 포트가 모두 바뀐다. 각 앱 리포에서 compose, vite, playwright, server 기본값, nginx, Dockerfile, README·AGENTS 문서를 고쳐야 하고, 사용자는 로컬 `.env`의 `DATABASE_URL` 포트를 직접 바꿔야 한다.
-- 운영 서버의 노출 포트는 서버 `.env`(`WEB_BIND`, `WEB_PORT`)가 정하므로 영향이 없다. SSH 터널 예시 명령의 로컬 포트는 문서에서 바꾼다.
+- Up to 99 projects never collide with each other. The last two digits of a port number tell you which project it belongs to.
+- The ports of all 8 apps change. Each app repo must update compose, vite, playwright, server defaults, nginx, Dockerfile, and the README and AGENTS docs, and the user must change the port in `DATABASE_URL` in the local `.env` by hand.
+- The production server's exposed ports are decided by the server `.env` (`WEB_BIND`, `WEB_PORT`), so they are unaffected. The local port in the SSH tunnel example commands is changed in the docs.

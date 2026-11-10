@@ -1,31 +1,31 @@
-# 다음 작업
+# Next steps
 
-최종 갱신일: **YYYY-MM-DD (Asia/Seoul)**. 이 파일은 `docs/next-steps/README.md`로 쓰고, 날짜별로 새로 만들지 않고 같은 파일을 갱신한다. 실행 전에 GitHub의 실제 상태를 다시 확인한다.
+Last updated: **YYYY-MM-DD (Asia/Seoul)**. This file is used as `docs/next-steps/README.md`. Do not create a new one per date; update the same file. Before acting, check the actual state on GitHub again.
 
-## 갱신 규칙
+## Update rules
 
-- 일일 기록을 쓸 때 우선순위·선행 조건·차단 원인·다음 행동을 함께 고친다. 상황이 바뀌면 같은 날에도 고친다.
-- 우선순위는 이슈 라벨(`priority/*`)과 std-backlog 스킬의 순서를 따른다. 이 문서는 그 결과를 사람이 읽기 쉽게 요약할 뿐이다.
-- 끝난 항목은 여기서 지우고, 결과·PR·검증은 그날의 [일일 기록](../daily/README.md)에 남긴다.
-- 이 문서를 고친다고 이슈가 등록되거나 작업이 실행되지는 않는다.
+- When writing the daily log, also update the priorities, prerequisites, blockers, and next actions. Update them on the same day too if the situation changes.
+- Priorities follow the issue labels (`priority/*`) and the order of the std-backlog skill. This document only summarizes that result in a form that is easy to read.
+- Remove finished items from here, and leave the result, PRs, and verification in that day's [daily log](../daily/README.md).
+- Editing this document does not file an issue or run any work.
 
-## 우선 처리
+## Top priority
 
-| 순서 | 대상 | 현재 상태 | 다음 행동·선행 조건 |
+| Order | Item | Current state | Next action and prerequisites |
 |---|---|---|---|
-| 1 | [#번호 제목](https://github.com/sirloinbh/{{project.repos.umbrella}}/issues/번호) | 확인한 사실 | 무엇을 하면 되는지, 무엇을 기다리는지 |
+| 1 | [#number Title](https://github.com/sirloinbh/{{project.repos.umbrella}}/issues/number) | Facts confirmed | What to do and what is being waited on |
 
-## 사용자가 할 일
+## What the user needs to do
 
-- [ ] 사용자 결정·승인·직접 실행이 필요한 일. 관련 이슈 번호와 안내 문서 링크
+- [ ] Work that needs a user decision, approval, or direct action. Related issue number and link to the guide document
 
-## 후속 작업
+## Follow-up work
 
-- 지금 착수하지 않지만 잊으면 안 되는 일. 이슈가 없으면 등록하고 번호를 적는다.
+- Work not started now but not to be forgotten. If there is no issue, file one and write its number.
 
-## 운영 상태
+## Operating state
 
-| 항목 | 확인한 값 | 확인한 날 |
+| Item | Value checked | Date checked |
 |---|---|---|
-| 배포 중인 커밋 | `/opt/{{project.name}}/.deployed` | YYYY-MM-DD |
-| 마지막 DB 덤프 | `/var/backups/{{project.db.name}}/` | YYYY-MM-DD |
+| Deployed commit | `/opt/{{project.name}}/.deployed` | YYYY-MM-DD |
+| Last DB dump | `/var/backups/{{project.db.name}}/` | YYYY-MM-DD |

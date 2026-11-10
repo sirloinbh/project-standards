@@ -1,101 +1,101 @@
-# DB 마이그레이션 규칙
+# DB migration rules
 
-모든 앱은 PostgreSQL 스키마를 `database/migrations/NNN_<설명>.sql` 파일로만 바꾸고, 같은 실행기(`npm run db:migrate`)로 적용한다. 실행기는 workout-memo `backend/src/migrations.ts`를 기준으로 만들었고, 새 프로젝트는 스캐폴드(`scaffold/app/backend/src/migrations.ts`, `migrate.ts`)로 받는다(#27).
+Every app changes the PostgreSQL schema only through `database/migrations/NNN_<description>.sql` files and applies them with the same runner (`npm run db:migrate`). The runner was built on workout-memo `backend/src/migrations.ts`, and new projects get it from the scaffold (`scaffold/app/backend/src/migrations.ts`, `migrate.ts`) (#27).
 
-## 1. 파일 번호 규칙
+## 1. File numbering rules
 
-- 위치: 우산 리포의 `database/migrations/`. 하위 리포 `<project>-db`로 나뉜다([디렉토리 규칙](../directory-rules.md)).
-- 이름: `^(\d{3})_[a-z0-9_]+\.sql$`. 세 자리 번호, 밑줄, 영문 소문자·숫자·밑줄 설명. 예: `001_initial.sql`, `014_biceps_triceps.sql`.
-- 번호는 001부터 빈칸 없이 하나씩 늘린다. 같은 번호를 두 파일에 쓰지 않는다.
-- 이미 적용된 파일보다 앞선 번호의 새 파일은 만들지 않는다. 두 브랜치가 같은 번호를 쓰면, 나중에 병합하는 쪽이 다음 번호로 바꾼다.
-- `.sql`이 아닌 파일(예: `README.md`)은 실행기가 무시한다. `.sql`인데 이름 형식이 틀리면 실패한다.
+- Location: `database/migrations/` in the umbrella repo. It is split out to the sub-repo `<project>-db` ([directory rules](../directory-rules.md)).
+- Name: `^(\d{3})_[a-z0-9_]+\.sql$`. A three-digit number, an underscore, and a description of lowercase English letters, digits, and underscores. Examples: `001_initial.sql`, `014_biceps_triceps.sql`.
+- Numbers start at 001 and increase one at a time with no gaps. Do not use the same number in two files.
+- Do not create a new file with a number lower than an already applied file. If two branches use the same number, the one merged later changes to the next number.
+- Files that are not `.sql` (for example, `README.md`) are ignored by the runner. A `.sql` file with a wrong name format causes a failure.
 
-## 2. 파일 작성 규칙
+## 2. File writing rules
 
-- **다시 실행해도 안전하게 쓴다.** `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, `INSERT … ON CONFLICT`를 쓴다. 빈 볼륨에서는 Docker 초기화(`/docker-entrypoint-initdb.d`)가 기록 없이 모든 파일을 먼저 실행하고, 뒤이어 실행기가 같은 파일을 다시 적용하며 기록하기 때문이다.
-- **한 파일은 한 트랜잭션이다.** 실행기가 파일마다 `BEGIN`·`COMMIT`으로 감싼다. 트랜잭션 안에서 쓸 수 없는 문장(`CREATE INDEX CONCURRENTLY`, `VACUUM` 등)은 쓰지 않는다. 파일 안에 `BEGIN`·`COMMIT`을 직접 쓰지 않는다.
-- **psql 전용 명령을 쓰지 않는다.** 실행기는 `pg` 드라이버로 SQL을 보낸다. `\i`, `\set`, `:'변수'` 같은 psql 메타 명령은 동작하지 않는다.
-- **UTF-8로 저장한다.** 줄바꿈(CRLF·LF)과 UTF-8 BOM은 체크섬에 영향을 주지 않는다.
-- **적용한 파일은 고치지 않는다.** 바꿀 내용은 새 번호의 파일로 추가한다. 주석 한 글자만 바꿔도 체크섬이 달라져 실행기가 멈춘다.
-- **기존 데이터의 의미를 보존한다.** 열을 추가할 때는 기존 행의 값을 정하는 `DEFAULT`나 `UPDATE`를 같은 파일에 쓴다.
+- **Write it to be safe to run again.** Use `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, and `INSERT … ON CONFLICT`. This is because, on an empty volume, Docker initialization (`/docker-entrypoint-initdb.d`) first runs all files without recording them, and then the runner applies the same files again and records them.
+- **One file is one transaction.** The runner wraps each file in `BEGIN` and `COMMIT`. Do not use statements that cannot run inside a transaction (`CREATE INDEX CONCURRENTLY`, `VACUUM`, and so on). Do not write `BEGIN` or `COMMIT` in the file yourself.
+- **Do not use psql-only commands.** The runner sends SQL through the `pg` driver. psql meta commands such as `\i`, `\set`, and `:'variable'` do not work.
+- **Save as UTF-8.** Line endings (CRLF or LF) and the UTF-8 BOM do not affect the checksum.
+- **Do not edit an applied file.** Add what you want to change as a new numbered file. Changing even one character in a comment changes the checksum and the runner stops.
+- **Preserve the meaning of existing data.** When adding a column, write in the same file a `DEFAULT` or `UPDATE` that sets the values of existing rows.
 
-## 3. 적용 기록 테이블
+## 3. Applied-records table
 
-실행기가 처음 실행될 때 만든다. 앱 코드는 이 테이블을 읽거나 쓰지 않는다.
+The runner creates it the first time it runs. App code neither reads nor writes this table.
 
 ```sql
 CREATE TABLE IF NOT EXISTS schema_migrations (
-  name text PRIMARY KEY,                 -- 파일 이름 (예: 001_initial.sql)
-  checksum text NOT NULL,                -- 줄바꿈·BOM을 정규화한 내용의 SHA-256 (16진수)
+  name text PRIMARY KEY,                 -- file name (e.g. 001_initial.sql)
+  checksum text NOT NULL,                -- SHA-256 (hex) of the content with line endings and BOM normalized
   applied_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
 )
 ```
 
-- 파일 하나를 적용하는 것과 그 기록 행을 넣는 것은 한 트랜잭션으로 커밋된다. 실패하면 그 파일만 되돌리고 멈춘다. 앞서 적용한 파일은 기록된 채로 남는다.
-- 실행기는 advisory lock(고정 키 `581_003`, workout-memo와 같음)을 잡는다. CI와 로컬 명령이 동시에 실행돼도 한 번에 하나씩 적용한다.
-- 다음 경우에는 아무것도 적용하지 않고 실패한다.
-  - 기록된 파일이 없어졌다.
-  - 기록된 파일의 체크섬이 다르다(내용이 바뀌었다).
-  - 기록된 마지막 파일보다 앞선 번호의 새 파일이 있다.
-  - 이름 형식이 틀렸거나 번호가 중복된다.
-- 기록 테이블이 없는 DB(이전에 psql로 적용한 DB)에서 처음 실행하면 001부터 모두 다시 적용하고 기록한다. 그래서 2절의 "다시 실행해도 안전" 규칙이 필요하다.
+- Applying one file and inserting its record row are committed in one transaction. On failure, only that file is rolled back and the runner stops. Files applied earlier stay recorded.
+- The runner takes an advisory lock (fixed key `581_003`, same as workout-memo). Even if CI and a local command run at the same time, they apply one at a time.
+- In the following cases, it fails without applying anything.
+  - A recorded file is missing.
+  - A recorded file's checksum differs (the content changed).
+  - There is a new file with a number lower than the last recorded file.
+  - The name format is wrong or a number is duplicated.
+- The first run on a DB without the records table (a DB previously applied with psql) applies everything again from 001 and records it. That is why the "safe to run again" rule in section 2 is needed.
 
-## 4. 실행 방법
+## 4. How to run
 
-| 상황 | 명령 | 비고 |
+| Situation | Command | Note |
 |---|---|---|
-| 로컬 | `npm run db:migrate` | 우산 리포 루트에서. `.env`의 `DATABASE_URL`을 쓴다 |
-| 로컬 확인 | `npm run db:migrate -- --status` | 적용됨·대기 목록과 오류만 출력. DB를 바꾸지 않는다 |
-| 빈 볼륨 첫 실행 | Docker 초기화 → `npm run db:migrate` | compose가 `database/migrations`를 `/docker-entrypoint-initdb.d`로 마운트한다 |
-| 공통 CI | 아래 5절 | `reusable-app-ci.yml`의 verify·e2e job |
-| 운영 배포 | 배포 스크립트가 덤프 뒤 적용 | [배포 런북](../runbooks/deploy.md) 3절 4단계 |
+| Local | `npm run db:migrate` | From the umbrella repo root. Uses `DATABASE_URL` from `.env` |
+| Local check | `npm run db:migrate -- --status` | Prints only the applied and pending lists and errors. Does not change the DB |
+| First run on an empty volume | Docker initialization → `npm run db:migrate` | compose mounts `database/migrations` to `/docker-entrypoint-initdb.d` |
+| Shared CI | Section 5 below | The verify and e2e jobs of `reusable-app-ci.yml` |
+| Production deploy | The deploy script applies after the dump | [Deploy runbook](../runbooks/deploy.md) section 3, step 4 |
 
-- PowerShell 파이프(`Get-Content … | psql`)로 SQL을 넘기지 않는다. Windows PowerShell 5.1이 한글을 깨뜨린다. 실행기는 Node가 파일을 UTF-8로 직접 읽는다.
+- Do not pass SQL through a PowerShell pipe (`Get-Content … | psql`). Windows PowerShell 5.1 corrupts Korean text. The runner has Node read the file directly as UTF-8.
 
-## 5. 공통 CI의 마이그레이션 단계
+## 5. The migration step in shared CI
 
-`.github/workflows/reusable-app-ci.yml`의 verify job과 e2e job은 같은 스크립트로 테스트 DB를 준비한다.
+The verify job and e2e job in `.github/workflows/reusable-app-ci.yml` prepare the test DB with the same script.
 
-1. `psql -v ON_ERROR_STOP=1`로 `database/migrations/*.sql`을 파일 이름 순서대로 한 번 적용한다. 빈 볼륨의 Docker 초기화와 같은 동작이다.
-2. 루트 `package.json`에 `db:migrate` 스크립트가 있으면 실행기를 실행한다. 1번에서 이미 적용된 파일을 다시 적용하며 기록하므로, 다시 실행해도 안전한지 함께 확인된다.
-3. `db:migrate`가 없으면 psql로 한 번 더 적용하고 경고(`::warning`)를 남긴다. 아직 실행기를 들이지 않은 앱의 CI가 깨지지 않게 하기 위해서다(이전 동작과 호환).
+1. Apply `database/migrations/*.sql` once in file name order with `psql -v ON_ERROR_STOP=1`. This is the same behavior as Docker initialization on an empty volume.
+2. If the root `package.json` has a `db:migrate` script, run the runner. It re-applies the files already applied in step 1 and records them, so it also confirms that running again is safe.
+3. If there is no `db:migrate`, apply once more with psql and leave a warning (`::warning`). This is so CI does not break for apps that have not adopted the runner yet (compatible with the earlier behavior).
 
-실행기가 있는지는 스크립트 이름으로 판단한다. 앱마다 CI 입력값을 따로 두지 않는다. 8개 앱이 모두 실행기를 들이면 3번 분기를 지운다.
+Whether the runner exists is decided by the script name. There is no per-app CI input. When all 8 apps have adopted the runner, delete the step 3 branch.
 
-## 6. 되돌리기 정책
+## 6. Rollback policy
 
-- **되돌리기(down) 파일을 쓰지 않는다.** 앞으로만 간다. 잘못 적용한 변경은 그것을 바로잡는 새 번호의 파일로 고친다.
-- **데이터를 되돌려야 하면 백업으로 복원한다.** 운영 배포는 마이그레이션 전에 DB 덤프를 만든다. 복원은 [백업·복구 런북](../runbooks/backup-restore.md)을 따른다.
-- **앱 롤백은 스키마를 되돌리지 않는다.** 배포 롤백은 이전 이미지로 다시 시작할 뿐이다. 그래서 새 파일은 이전 버전 앱도 계속 동작하도록 쓴다(열 추가는 `DEFAULT` 포함, 열·테이블 삭제는 그 열을 쓰지 않는 앱이 배포된 뒤 별도 파일로).
-- **실패한 적용:** 오류 메시지의 파일 이름과 원인을 확인한다. 실패한 파일은 기록되지 않았으므로 원인을 고친 뒤 다시 실행하면 그 파일부터 이어서 적용한다. 데이터 문제라면 먼저 백업을 만든다.
-- **체크섬 불일치:** 파일을 git의 원래 내용으로 되돌리면 해결된다. 바꾸려던 내용은 새 파일로 옮긴다. 기록 테이블의 체크섬을 손으로 고치지 않는다.
+- **Do not use rollback (down) files.** Only go forward. Fix a wrongly applied change with a new numbered file that corrects it.
+- **If data must be rolled back, restore from a backup.** A production deploy makes a DB dump before migrating. Restore by following the [backup and recovery runbook](../runbooks/backup-restore.md).
+- **An app rollback does not roll back the schema.** A deploy rollback only restarts with the previous image. So write new files so the previous version of the app keeps working (include a `DEFAULT` when adding a column; drop a column or table in a separate file after an app that no longer uses it has been deployed).
+- **Failed application:** Check the file name and cause in the error message. The failed file was not recorded, so after fixing the cause, running again continues applying from that file. If it is a data problem, make a backup first.
+- **Checksum mismatch:** Restoring the file to its original content in git fixes it. Move what you wanted to change into a new file. Do not edit the checksum in the records table by hand.
 
-## 7. workout-memo 방식과의 차이
+## 7. Differences from the workout-memo way
 
-규칙과 기록 테이블은 workout-memo와 같다. 그래서 workout-memo DB는 표준 실행기로 바꿔도 다시 적용할 파일이 없다.
+The rules and the records table are the same as workout-memo's. So even if the workout-memo DB switches to the standard runner, there are no files to apply again.
 
-| 항목 | workout-memo (`backend/src/migrations.ts`, `migrate.ts`) | 표준 (스캐폴드) |
+| Item | workout-memo (`backend/src/migrations.ts`, `migrate.ts`) | Standard (scaffold) |
 |---|---|---|
-| 파일 이름·번호 검사 | `^(\d{3})_[a-z0-9_]+\.sql$`, 번호 중복 실패 | 같음 |
-| 기록 테이블 | `schema_migrations(name, checksum, applied_at)` | 같음 |
-| 체크섬 | 줄바꿈·BOM 정규화 후 SHA-256 | 같음 |
-| 순서 검사 | 기록된 마지막 파일보다 앞선 새 파일은 실패 | 같음 |
-| 잠금 | advisory lock 고정 키 `581_003` | 같음 |
-| 트랜잭션 | 파일마다 `BEGIN`·`COMMIT`, 실패 시 그 파일만 `ROLLBACK` | 같음 |
-| DB 연결 | `pg`의 `Pool`을 만들고 연결 하나를 빌린다 | `pg`의 `Client` 하나. 연결 하나만 쓰므로 풀이 필요 없다 |
-| 연결 타입 | `PoolClient` | `ClientBase`(`Client`와 `PoolClient`의 공통 타입). workout-memo 코드에도 그대로 넘길 수 있다 |
-| 단위 테스트 | `backend/test/migrations.test.ts`. 리포 파일이 9개 이상이고 001의 한글 시드가 읽히는지 확인 | 같은 규칙 테스트. 리포 파일은 001로 시작하는지만 확인한다(새 프로젝트는 파일이 하나다) |
-| CI | `npm run db:migrate` 한 번. e2e는 Playwright 컨테이너 안에서 같은 명령 | psql로 한 번 적용한 뒤 `db:migrate`(5절). 다시 실행해도 안전한지 함께 확인한다 |
-| 문서 | `database/README.md`에 파일별 적용 안내가 쌓여 있다(실행기 도입 전 psql 절차 포함) | `database/README.md`는 일반 규칙만. 파일별 설명은 SQL 파일 맨 위 주석에 쓴다 |
+| File name and number checks | `^(\d{3})_[a-z0-9_]+\.sql$`, duplicate numbers fail | Same |
+| Records table | `schema_migrations(name, checksum, applied_at)` | Same |
+| Checksum | SHA-256 after normalizing line endings and BOM | Same |
+| Order check | A new file before the last recorded file fails | Same |
+| Lock | advisory lock fixed key `581_003` | Same |
+| Transaction | `BEGIN` and `COMMIT` per file, only that file is `ROLLBACK`ed on failure | Same |
+| DB connection | Creates a `pg` `Pool` and borrows one connection | A single `pg` `Client`. It uses only one connection, so no pool is needed |
+| Connection type | `PoolClient` | `ClientBase` (the common type of `Client` and `PoolClient`). It can also be passed to workout-memo code as is |
+| Unit test | `backend/test/migrations.test.ts`. Checks that the repo has 9 or more files and that the Korean seed in 001 is read | The same rules test. For repo files, it only checks that they start with 001 (a new project has one file) |
+| CI | `npm run db:migrate` once. e2e runs the same command inside the Playwright container | Apply once with psql, then `db:migrate` (section 5). It also confirms that running again is safe |
+| Docs | `database/README.md` has accumulated per-file apply instructions (including the psql procedure from before the runner) | `database/README.md` has only general rules. Per-file descriptions go in the comment at the top of the SQL file |
 
-나머지 7개 앱은 실행기가 없고, 각 리포 CI에서 `psql` 반복문으로 모든 파일을 적용한다. 기록 테이블이 없다. study-log는 같은 반복문을 두 번 돌려 다시 실행해도 안전한지 확인한다. 2026-10-22에 각 앱의 로컬 사본으로 확인한 결과, 7개 앱의 마이그레이션은 모두 `IF NOT EXISTS`로 쓰여 있어 실행기를 처음 실행할 때 001부터 다시 적용해도 안전하다.
+The other 7 apps have no runner, and each repo's CI applies all files with a `psql` loop. There is no records table. study-log runs the same loop twice to confirm that running again is safe. As checked on 2026-10-22 against each app's local copy, the migrations of all 7 apps are written with `IF NOT EXISTS`, so it is safe to re-apply from 001 on the first runner run.
 
-## 8. 기존 앱에 실행기 들이기
+## 8. Adopting the runner in existing apps
 
-각 앱 리포의 이슈·PR로 진행한다. 중앙에서 앱 리포에 직접 push하지 않는다.
+Proceed through each app repo's issue and PR. Do not push directly to app repos from the center.
 
-1. 스캐폴드의 `backend/src/migrations.ts`, `backend/src/migrate.ts`, `backend/test/migrations.test.ts`를 복사한다.
-2. `backend/package.json`에 `"db:migrate": "tsx --env-file-if-exists=../.env src/migrate.ts"`, 루트 `package.json`에 `"db:migrate": "npm run db:migrate -w backend --"`를 추가한다. `pg`, `tsx`는 이미 의존성에 있어 새 패키지가 필요 없다.
-3. 로컬 DB에서 `npm run db:migrate -- --status`로 대기 목록을 보고, `npm run db:migrate`로 기준선을 기록한다.
-4. 운영 DB는 배포 스크립트가 덤프를 만든 뒤 같은 명령으로 기록한다.
-5. 공통 CI는 `db:migrate`가 생기면 자동으로 실행기를 쓴다(5절). CI 설정을 따로 바꿀 필요가 없다.
+1. Copy the scaffold's `backend/src/migrations.ts`, `backend/src/migrate.ts`, and `backend/test/migrations.test.ts`.
+2. Add `"db:migrate": "tsx --env-file-if-exists=../.env src/migrate.ts"` to `backend/package.json` and `"db:migrate": "npm run db:migrate -w backend --"` to the root `package.json`. `pg` and `tsx` are already dependencies, so no new packages are needed.
+3. On the local DB, view the pending list with `npm run db:migrate -- --status` and record the baseline with `npm run db:migrate`.
+4. For the production DB, the deploy script records it with the same command after making a dump.
+5. Shared CI uses the runner automatically once `db:migrate` exists (section 5). There is no need to change the CI settings separately.

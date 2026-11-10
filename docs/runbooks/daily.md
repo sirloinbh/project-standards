@@ -1,42 +1,42 @@
-# 일일 작업 기록
+# Daily work log
 
-작업일별 총정리를 `docs/daily/YYYY-MM-DD.md`로 누적한다. 날짜는 Asia/Seoul 기준이다. 이 파일은 `docs/daily/README.md`로 쓴다.
+Accumulate a summary for each workday as `docs/daily/YYYY-MM-DD.md`. Dates are in Asia/Seoul time. This file is used as `docs/daily/README.md`.
 
-## 작성·보존 규칙
+## Writing and retention rules
 
-- 작업일의 마무리, 또는 사용자가 총정리를 요청할 때 그날의 기록을 쓰거나 고친다.
-- 같은 날의 추가 작업은 기존 파일에 덧붙이고, 작업이 없는 날은 파일을 만들지 않는다.
-- 실제로 실행한 검증 결과만 적는다. 실행하지 않은 작업은 완료로 적지 않는다.
-- PR 생성, CI 통과, 병합, 배포는 서로 다른 상태로 적는다.
-- 과거 날짜의 상태를 오늘 상태로 덮어쓰지 않는다. 사실 오류를 고칠 때는 정정 사유를 남긴다.
-- 새 기록은 아래 목록의 맨 위에 추가한다. 앞으로 할 일은 [다음 작업](../next-steps/README.md)에서 관리한다.
-- 이슈별 상세 기록은 `docs/changes/`에 따로 둔다.
+- At the end of a workday, or when the user asks for a summary, write or update that day's record.
+- Add further work from the same day to the existing file, and do not create a file for a day with no work.
+- Record only verification results that were actually run. Do not record work that was not run as done.
+- Record PR creation, CI passing, merge, and deployment as separate states.
+- Do not overwrite the state of a past date with today's state. When fixing a factual error, leave the reason for the correction.
+- Add the new record at the top of the list below. Manage upcoming work in [Next steps](../next-steps/README.md).
+- Keep detailed per-issue records separately in `docs/changes/`.
 
-## 날짜별 총정리
+## Summaries by date
 
-<!-- 새 날짜를 맨 위에: - [YYYY-MM-DD](YYYY-MM-DD.md) -->
+<!-- Add a new date at the top: - [YYYY-MM-DD](YYYY-MM-DD.md) -->
 
 ---
 
-## 날짜 파일 형식 (`docs/daily/YYYY-MM-DD.md`)
+## Date file format (`docs/daily/YYYY-MM-DD.md`)
 
 ```markdown
-# YYYY-MM-DD 작업 요약
+# YYYY-MM-DD work summary
 
-Asia/Seoul 기준. 이 기록을 쓴 시점의 상태이며, 병합 여부는 GitHub에서 다시 조회한다.
+Asia/Seoul time. This is the state at the time this record was written; check GitHub again for whether things were merged.
 
-## 한 일
+## Done
 
-| 이슈 | PR | 내용 | 검증 | 상태 |
+| Issue | PR | Description | Verification | Status |
 |---|---|---|---|---|
-| #번호 | #번호 | 한 줄 요약 | 실행한 명령과 결과 | PR 생성 / CI 통과 / 병합 / 배포 |
+| #number | #number | One-line summary | Commands run and results | PR created / CI passed / merged / deployed |
 
-## 발견한 문제
+## Problems found
 
-- 새로 등록한 이슈와 그 이유. 고치지 않았으면 고치지 않았다고 적는다.
+- Newly filed issues and why. If something was not fixed, say it was not fixed.
 
-## 남은 일과 경계
+## Remaining work and boundaries
 
-- 사용자 결정·승인을 기다리는 것
-- 이번에 일부러 하지 않은 것(배포, 동기화, 비용이 드는 작업 등)
+- Items waiting on a user decision or approval
+- Things deliberately not done this time (deployment, sync, work that costs money, and so on)
 ```

@@ -20,7 +20,7 @@ const REPORT_BRANCH = 'chore/compliance-report';
 const OUTPUTS = ['docs/compliance.md', 'docs/env-matrix.md'];
 
 // The generated-at comment changes every run; compare reports without it.
-export const withoutStamp = (text) => text.replace(/<!-- 자동 생성 파일[^>]*-->/g, '');
+export const withoutStamp = (text) => text.replace(/<!-- Generated file[^>]*-->/g, '');
 
 export function renderReports(statuses, meta) {
   return { 'docs/compliance.md': renderCompliance(statuses, meta), 'docs/env-matrix.md': renderEnvMatrix(statuses, meta) };
@@ -31,7 +31,7 @@ const projectOf = (data, target) => data.projects.projects.find((p) => p.name ==
 function localStatuses(data, local, now) {
   return data.sync.targets.map((target) => {
     const dir = local[target.repo.split('/')[1]];
-    if (!dir) return { repo: target.repo, profile: target.profile, unknown: '로컬 클론 없음' };
+    if (!dir) return { repo: target.repo, profile: target.profile, unknown: 'no local clone' };
     const read = (rel) => (fs.existsSync(path.join(dir, rel)) ? fs.readFileSync(path.join(dir, rel), 'utf8') : null);
     return repoStatus({ target, project: projectOf(data, target), read, now });
   });

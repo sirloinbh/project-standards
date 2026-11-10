@@ -65,7 +65,7 @@ test('a public repository that meets the standard passes every item', async () =
   const { api } = fakeApi('sirloinbh/good', goodPublic);
   const rows = evaluateSettings(await collectSettings(api, 'sirloinbh/good'), { secrets: ['DEPLOY_KEY'] });
   assert.deepEqual(rows.filter((r) => r.status !== 'ok'), []);
-  assert.equal(byId(rows)['branch-protection'].actual, '필수 검사 ci / verify');
+  assert.equal(byId(rows)['branch-protection'].actual, 'required checks ci / verify');
 });
 
 test('a private repository on GitHub Free marks protection and secret scanning as plan limits, not failures', async () => {
@@ -81,7 +81,7 @@ test('a private repository on GitHub Free marks protection and secret scanning a
   assert.equal(rows['delete-branch'].status, 'warn');
   assert.equal(rows['workflow-permissions'].status, 'ok');
   assert.equal(rows.variables.status, 'warn');
-  assert.equal(rows.variables.actual, '목록에 없는 이름: DEPLOY_HOST');
+  assert.equal(rows.variables.actual, 'not in the list: DEPLOY_HOST');
 });
 
 test('missing protection on a public repository, missing secrets and unreadable endpoints are reported', async () => {
@@ -89,13 +89,13 @@ test('missing protection on a public repository, missing secrets and unreadable 
   const { api } = fakeApi('sirloinbh/x', routes);
   const rows = byId(evaluateSettings(await collectSettings(api, 'sirloinbh/x'), { secrets: ['NODE_AUTH_TOKEN'] }));
   assert.equal(rows['branch-protection'].status, 'fail');
-  assert.equal(rows['branch-protection'].actual, '없음');
+  assert.equal(rows['branch-protection'].actual, 'none');
   assert.equal(rows.secrets.status, 'unknown');
   const weak = byId(evaluateSettings(await collectSettings(fakeApi('sirloinbh/y', { ...goodPublic, '/branches/main/protection': { required_status_checks: null, allow_force_pushes: { enabled: true }, allow_deletions: { enabled: false } } }).api, 'sirloinbh/y')));
-  assert.equal(weak['branch-protection'].actual, '필수 검사 없음, 강제 push 허용');
+  assert.equal(weak['branch-protection'].actual, 'no required checks, force push allowed');
   const missing = byId(evaluateSettings(await collectSettings(fakeApi('sirloinbh/z', goodPublic).api, 'sirloinbh/z'), { secrets: ['DEPLOY_KEY', 'NODE_AUTH_TOKEN'] }));
   assert.equal(missing.secrets.status, 'fail');
-  assert.equal(missing.secrets.actual, '없음: NODE_AUTH_TOKEN');
+  assert.equal(missing.secrets.actual, 'missing: NODE_AUTH_TOKEN');
 });
 
 test('CodeQL default setup must be configured on a public repository; an unreadable endpoint is unknown', async () => {
@@ -117,10 +117,10 @@ test('only names are collected: variable values are dropped and never reach the 
   const reports = renderReports([status], meta);
   for (const text of Object.values(reports)) assert.ok(!text.includes(VALUE));
   const compliance = reports['docs/compliance.md'];
-  assert.match(compliance, /\| sirloinbh\/workout-memo \| 아직 안 됨 \|.*\| ✗ 2 △ 4 \|$/m);
-  assert.match(compliance, /## 리포 설정/);
-  assert.match(compliance, /\| — 요금제 \| main 브랜치 보호 \| 비공개 리포라 Free 요금제에서 쓸 수 없음 \| 켬 \|/);
-  assert.match(compliance, /\| △ 권장 \| Actions variable 이름 \| 목록에 없는 이름: DEPLOY_HOST \| 없음 \|/);
+  assert.match(compliance, /\| sirloinbh\/workout-memo \| not yet \|.*\| ✗ 2 △ 4 \|$/m);
+  assert.match(compliance, /## Repo settings/);
+  assert.match(compliance, /\| — plan \| main branch protection \| not available for private repos on the Free plan \| on \|/);
+  assert.match(compliance, /\| △ recommended \| Actions variable names \| not in the list: DEPLOY_HOST \| none \|/);
 });
 
 test('every sync target can list expected secret and variable names (schema)', () => {

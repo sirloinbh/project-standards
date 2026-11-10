@@ -1,39 +1,39 @@
-# Git 컨벤션
+# Git conventions
 
-이슈·브랜치·커밋·PR을 쓰는 방법은 [std-git-writing](../templates/common/skills/std-git-writing/SKILL.md) 스킬이 원본이다. 이 문서는 그 요약과, 리포 설정·병합 정책을 다룬다.
+The [std-git-writing](../templates/common/skills/std-git-writing/SKILL.md) skill is the source of truth for how to write issues, branches, commits, and PRs. This document summarizes it and covers the repo settings and the merge policy.
 
-## 요약
+## Summary
 
-| 대상 | 규칙 | 예 |
+| Item | Rule | Example |
 |---|---|---|
-| 이슈 제목 | 접두어 없이 "무엇을 하는지" 영어 명령형 한 문장 | `Add registry source files and conflict check` |
-| 이슈 본문 | 템플릿 6개 절: Summary, Why, Tasks, Done when, Blocked by, Notes (영어) | `.github/ISSUE_TEMPLATE/task.md` |
-| 라벨 | 우선순위 1개, `type` 1개, `area` 1개 이상 | [std-backlog](../templates/common/skills/std-backlog/SKILL.md) |
-| 브랜치 | `<type>/<이슈번호>-<영문-요약>` | `feat/44-registry-files` |
-| 커밋 | Conventional Commits, 영어 설명(명령형), 이슈 번호 | `feat: add registry conflict check (#44)` |
-| PR 제목 | 커밋 제목과 같은 형식 | |
-| PR 본문 | 템플릿 6개 절 + `Closes #번호` | `.github/pull_request_template.md` |
-| 작업 기록 | `docs/changes/<이슈번호>-<slug>.md`를 구현·테스트와 같은 커밋에 | |
+| Issue title | No prefix; one English imperative sentence saying "what it does" | `Add registry source files and conflict check` |
+| Issue body | The 6 template sections: Summary, Why, Tasks, Done when, Blocked by, Notes (in English) | `.github/ISSUE_TEMPLATE/task.md` |
+| Labels | 1 priority, 1 `type`, at least 1 `area` | [std-backlog](../templates/common/skills/std-backlog/SKILL.md) |
+| Branch | `<type>/<issue-number>-<english-summary>` | `feat/44-registry-files` |
+| Commit | Conventional Commits, English description (imperative), issue number | `feat: add registry conflict check (#44)` |
+| PR title | Same format as the commit title | |
+| PR body | The 6 template sections + `Closes #number` | `.github/pull_request_template.md` |
+| Work record | `docs/changes/<issue-number>-<slug>.md` in the same commit as the implementation and tests | |
 
 `type`: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`
 
-## 병합 정책
+## Merge policy
 
-| 리포 | 병합하는 사람 | 이유 |
+| Repo | Who merges | Why |
 |---|---|---|
-| project-standards | 에이전트 (CI 통과 후 merge commit) | 사용자 결정(2026-10-22, #128). 문서·텍스트·스크립트 작업이다 |
-| 앱 리포 8개 | 사용자만 | main 병합이 곧 운영 배포다 |
-| shared-aws-infrastructure | 사용자만 | 인프라 변경은 plan 확인이 필요하다 |
+| project-standards | The agent (merge commit after CI passes) | User decision (2026-10-22, #128). The work is docs, text, and scripts |
+| The 8 app repos | The user only | Merging to main is a production deploy |
+| shared-aws-infrastructure | The user only | Infrastructure changes need a plan review |
 
-- 동기화 PR(`chore/standards-sync-*`)도 앱·인프라 리포에서는 사용자가 병합한다.
-- 에이전트는 자신의 PR을 승인해서 리뷰를 대신하지 않는다.
+- Sync PRs (`chore/standards-sync-*`) are also merged by the user in app and infrastructure repos.
+- The agent does not approve its own PR as a substitute for review.
 
-## 브랜치 보호 체크리스트
+## Branch protection checklist
 
-각 리포 main에 다음을 설정한다. 설정은 사용자가 하고, 준수 현황(#22)이 확인한다.
+Set the following on each repo's main. The user makes the settings, and the compliance report (#22) checks them.
 
-- [ ] main에 직접 push 금지: Require a pull request before merging
-- [ ] CI 통과 필수: Require status checks to pass (`ci`)
-- [ ] force push 금지, 브랜치 삭제 금지
-- [ ] 병합 방식: merge commit 허용(지금까지의 이력과 같게)
-- [ ] 병합 후 브랜치 자동 삭제: Automatically delete head branches
+- [ ] No direct push to main: Require a pull request before merging
+- [ ] CI must pass: Require status checks to pass (`ci`)
+- [ ] No force push, no branch deletion
+- [ ] Merge method: allow merge commits (same as the history so far)
+- [ ] Automatically delete the branch after merge: Automatically delete head branches

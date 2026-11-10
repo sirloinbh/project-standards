@@ -1,59 +1,59 @@
-# 디자인 시스템 (공통부)
+# Design system (common part)
 
-8개 앱이 함께 지키는 화면 규칙이다. 값은 [design-tokens.md](design-tokens.md), 결정 근거는 [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), [ADR-0008](adr/0008-neutral-light-dark.md), [ADR-0011](adr/0011-dark-only-option.md)에 있다. 앱마다 다른 것은 **표시 이름과 다크 고정 옵션(`features.darkOnly`)뿐**이다. 색은 8개 앱 모두 같은 흑백이고, 다크 고정을 켠 앱 외에는 라이트·다크 두 모드를 지원한다.
+These are the screen rules all 8 apps follow. Values are in [design-tokens.md](design-tokens.md), and the reasoning behind decisions is in [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), [ADR-0008](adr/0008-neutral-light-dark.md), and [ADR-0011](adr/0011-dark-only-option.md). The only things that differ per app are the **display name and the dark-only option (`features.darkOnly`)**. All 8 apps use the same black and white colors, and every app except those with dark-only turned on supports both light and dark modes.
 
-## 토큰 쓰는 법
+## How to use tokens
 
-- 앱 메인 CSS에서 `@sirloinbh/design-tokens/tailwind.css`를 불러온다. Tailwind가 없는 앱은 `tokens.css`만 불러온다. 사용 예는 패키지 README에 있다.
-- 색은 토큰 이름으로 쓴다: `bg-primary`, `text-muted-foreground`, `border-border`. 색 코드를 직접 쓰지 않는다.
-- 토큰(색, 글꼴, 크기, 간격, 모서리, 그림자)은 앱에서 덮어쓰지 않는다. 바꿔야 하면 중앙 리포의 `design/tokens.json`을 고친다.
-- 다크 모드는 토큰이 처리한다. 색을 모드별로 따로 쓰지 말고 토큰 이름만 쓴다. 꼭 필요할 때만 `dark:` 유틸리티를 쓴다.
+- Import `@sirloinbh/design-tokens/tailwind.css` in the app's main CSS. Apps without Tailwind import only `tokens.css`. Usage examples are in the package README.
+- Use colors by token name: `bg-primary`, `text-muted-foreground`, `border-border`. Do not write color codes directly.
+- Do not override tokens (colors, fonts, sizes, spacing, corners, shadows) in an app. If one must change, edit `design/tokens.json` in the central repo.
+- Tokens handle dark mode. Do not write colors separately per mode; use only token names. Use the `dark:` utility only when truly necessary.
 
-## 라이트·다크 모드
+## Light and dark modes
 
-- 기본은 시스템 설정(`prefers-color-scheme`)을 따른다.
-- 사용자가 모드를 고르면 그 선택을 저장(`localStorage`)하고 `<html>`에 `light` 또는 `dark` 클래스를 붙인다. 첫 화면에서 색이 바뀌어 깜빡이지 않도록, 클래스를 붙이는 스크립트는 `<head>`에서 가장 먼저 실행한다(#124).
-- 클래스가 없으면 시스템 설정을 따르므로, 스크립트가 꺼져 있어도 맞는 색이 나온다.
-- 레지스트리 `features.darkOnly`를 켠 앱은 저장값과 관계없이 항상 다크로 그리고, 화면 모드 메뉴를 그리지 않는다. 앱 코드는 `frontend/src/lib/theme-config.ts`의 `DARK_ONLY`로 값을 읽는다(ADR-0011). 지금은 workout-memo만 켰다.
+- By default it follows the system setting (`prefers-color-scheme`).
+- If the user chooses a mode, that choice is saved (`localStorage`) and a `light` or `dark` class is put on `<html>`. So that colors do not flash and change on the first screen, the script that sets the class runs first in `<head>` (#124).
+- With no class, it follows the system setting, so the right colors appear even if scripts are off.
+- An app with the registry's `features.darkOnly` turned on always renders dark regardless of the saved value, and does not render the screen mode menu. App code reads the value through `DARK_ONLY` in `frontend/src/lib/theme-config.ts` (ADR-0011). Only workout-memo has it on for now.
 
-## 컴포넌트
+## Components
 
-1. 새 화면 요소는 `frontend/src/components/ui/`의 shadcn/ui 컴포넌트를 먼저 쓴다. 이 폴더는 중앙 관리 파일이다. 목록과 앱에 켜는 방법은 [공통 UI 컴포넌트](ui-components.md)에 있다(#123).
-2. 공통 컴포넌트에 없는 것이 필요하면 앱 고유 폴더(`frontend/src/components/`)에 만든다. 여러 앱에 필요해지면 중앙 리포에 이슈를 연다.
-3. 레이아웃(상단 메뉴, LNB, footer, 모달, drawer, 메뉴)은 [공통 레이아웃](layout.md)(#124)을 쓴다.
+1. For a new screen element, use the shadcn/ui components in `frontend/src/components/ui/` first. This folder holds centrally managed files. The list and how to turn it on for an app are in [Shared UI components](ui-components.md) (#123).
+2. If you need something the shared components lack, build it in the app's own folder (`frontend/src/components/`). If several apps come to need it, open an issue in the central repo.
+3. For layout (top menu, LNB, footer, modal, drawer, menu), use [Shared layout](layout.md) (#124).
 
-## 글자
+## Text
 
-- 제목은 `h1`–`h4` 요소를 쓴다. 기본 스타일이 적용된다. `h1`은 페이지마다 하나다.
-- 본문은 `text-body`, 좁은 영역은 `text-body-sm`을 쓴다.
-- 보조·주석 텍스트는 `text-caption`, 날짜·개수 같은 메타 정보는 `text-meta`를 쓴다.
+- Use the `h1`–`h4` elements for headings. The default styles apply. There is one `h1` per page.
+- Use `text-body` for body text and `text-body-sm` for narrow areas.
+- Use `text-caption` for secondary and annotation text, and `text-meta` for meta information such as dates and counts.
 
-## 아이콘과 이모지
+## Icons and emoji
 
-- 아이콘은 `lucide-react`만 쓴다. 의미 있는 아이콘 버튼에는 `aria-label`을 단다.
-- 이모지는 Fluent Emoji Flat SVG를 `<img>`로 쓴다. 문자 이모지는 쓰지 않는다. 의미가 있으면 `alt`에 한국어 설명을, 장식용이면 `alt=""`를 쓴다.
+- Use only `lucide-react` for icons. Give meaningful icon buttons an `aria-label`.
+- Use Fluent Emoji Flat SVGs as `<img>` for emoji. Do not use text emoji. If the emoji carries meaning, use an English description in `alt`; if it is decorative, use `alt=""`.
 
-## 로딩 표시
+## Loading indicators
 
-- 처음 불러오는 화면: 실제 내용과 같은 모양의 Skeleton
-- 버튼 안 저장 중, 짧은 대기: `Loader2Icon` 스피너
-- 300ms 안에 끝나는 작업은 표시하지 않는다. 화면 전체를 가리는 로딩은 쓰지 않는다.
+- Screens loading for the first time: a Skeleton shaped like the real content
+- Saving inside a button, short waits: the `Loader2Icon` spinner
+- Work that finishes within 300ms shows no indicator. Do not use loading that covers the whole screen.
 
-## 반응형과 접근성
+## Responsive and accessibility
 
-- 모바일 우선으로 작성한다. 가장 좁은 화면은 360px이다. `md`(768px) 이상에서 LNB가 사이드바로 바뀐다.
-- 터치 기기에서 누를 수 있는 요소는 44×44px 이상이다.
-- 키보드만으로 메뉴·모달·drawer를 열고 닫을 수 있어야 한다. 포커스 표시(`ring`)를 지우지 않는다.
-- 화면을 바꾸면 390×844(모바일)와 1440×900(PC)에서 확인하고 결과를 PR에 적는다.
-- 화면 구조를 크게 바꿀 때는 전후로 [UX·접근성 점검](conventions/ux-audit.md)을 한다.
+- Write mobile first. The narrowest screen is 360px. At `md` (768px) and above, the LNB turns into a sidebar.
+- On touch devices, pressable elements are at least 44×44px.
+- Menus, modals, and drawers must be openable and closable with the keyboard alone. Do not remove the focus indicator (`ring`).
+- When you change a screen, check it at 390×844 (mobile) and 1440×900 (PC) and write the result in the PR.
+- When you change the screen structure significantly, do a [UX and accessibility audit](conventions/ux-audit.md) before and after.
 
-## 기존 앱 전환
+## Migrating existing apps
 
-workout-memo의 기존 토큰(`--color-ink` 등)이 새 토큰 중 무엇에 해당하는지는 [design-tokens.md](design-tokens.md)의 대응표에 있다. 전환은 #126에서 앱별로 한다. workout-memo(workout-memo#159)에서 정한 방법은 다음과 같다. 다른 앱도 같은 순서를 따른다.
+What workout-memo's legacy tokens (`--color-ink` and so on) correspond to among the new tokens is in the mapping table in [design-tokens.md](design-tokens.md). The migration is done per app in #126. The method decided in workout-memo (workout-memo#159) is as follows. Other apps follow the same order.
 
-1. **공통 파일:** 중앙에서 그 앱의 `features.ui`를 켠 상태로 `node scripts/sync.mjs --dry-run --out <폴더> --target sirloinbh/<앱> --local <앱>=<checkout>`을 돌려 나온 `components/`, `lib/`, `theme-init.js`를 앱 PR에 그대로 넣는다. 앱 PR이 병합된 뒤 중앙 `features.ui` PR을 병합하면 동기화 PR에는 manifest만 남는다.
-2. **기존 CSS:** `index.css`에서 `@import './style.css' layer(components);`로 불러와 공통 컴포넌트의 유틸리티가 이기게 한다. 셸 규칙(사이드바·헤더·footer·모달 틀)은 지우고, 요소 규칙(`button`, `p`, `h1`)은 `:where(.legacy)` 안으로 한정한 뒤 페이지 본문과 모달 내용에 `legacy` 클래스를 단다. 직접 쓴 색은 모두 토큰으로 바꾼다.
-3. **대비:** `--muted` 바탕 위 `--muted-foreground` 글자는 라이트 모드에서 4.35:1로 AA(4.5:1)에 못 미친다. 그런 바탕의 글자는 전경색을 더 섞거나 `--foreground`를 쓴다. 상태 배지는 바탕에만 `--success`·`--warning`을 옅게 쓰고 글자는 `--foreground`로 둔다.
-4. **모달:** 공통 Dialog는 열려 있는 동안 뒤쪽 화면을 막는다. 모달을 연 채 뒤쪽을 조작하던 테스트는 실제 흐름(닫고 조작)으로 고친다.
-5. **가짜 React 테스트:** Vitest가 없던 앱은 백엔드 테스트가 가짜 React로 `main.tsx`를 실행해 화면을 검사했다(`backend/test/app-ui.test.ts`, study-log의 `ui-harness.ts`). 셸이 `AppShell`·React Router로 바뀌면 이 방식으로는 돌릴 수 없다. 셸만 검사하던 것은 프론트엔드 Vitest 테스트로 옮기고 지운다. 페이지 검사가 많으면 하네스가 예전 최소 셸(테스트용)로 페이지를 열게 한다(study-log#110).
-6. **브라우저 테스트:** 메뉴 이름은 '주 메뉴'이고, 768px 미만에서는 "메뉴 열기"로 Sheet를 연다. 접근성·화면 비교 검사는 모달과 Sheet의 등장 애니메이션이 끝난 뒤에 한다(반투명 중간 프레임에서는 뒤 화면 색이 섞여 대비가 잘못 측정된다).
+1. **Shared files:** From the center, with that app's `features.ui` turned on, run `node scripts/sync.mjs --dry-run --out <folder> --target sirloinbh/<app> --local <app>=<checkout>` and put the resulting `components/`, `lib/`, and `theme-init.js` into the app PR as they are. After the app PR is merged, merge the central `features.ui` PR, and the sync PR will contain only the manifest.
+2. **Existing CSS:** Import it in `index.css` with `@import './style.css' layer(components);` so the shared components' utilities win. Delete the shell rules (sidebar, header, footer, modal frame), scope element rules (`button`, `p`, `h1`) inside `:where(.legacy)`, and then put the `legacy` class on the page body and modal content. Replace all hand-written colors with tokens.
+3. **Contrast:** `--muted-foreground` text on a `--muted` background is 4.35:1 in light mode, short of AA (4.5:1). For text on such backgrounds, mix in more of the foreground color or use `--foreground`. For status badges, use `--success` and `--warning` lightly on the background only, and keep the text `--foreground`.
+4. **Modal:** The shared Dialog blocks the screen behind it while open. Fix tests that operated the background with a modal open so they follow the real flow (close, then operate).
+5. **Fake React tests:** In apps that had no Vitest, backend tests ran `main.tsx` with a fake React to check the screen (`backend/test/app-ui.test.ts`, study-log's `ui-harness.ts`). Once the shell changes to `AppShell` and React Router, this approach can no longer run. Move what only checked the shell to frontend Vitest tests and delete it. If there are many page checks, have the harness open pages with the old minimal shell (for tests) (study-log#110).
+6. **Browser tests:** The menu name is '주 메뉴', and below 768px, "메뉴 열기" opens the Sheet. Run accessibility and visual comparison checks after the modal and Sheet entrance animations finish (in a translucent in-between frame, the color of the screen behind is mixed in and contrast is measured wrongly).

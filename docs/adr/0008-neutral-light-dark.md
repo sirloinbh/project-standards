@@ -1,26 +1,26 @@
-# 0008. 앱별 테마 색 없이 흑백 라이트·다크 모드로 통일
+# 0008. Unify on black-and-white light and dark modes with no per-app theme color
 
-- 상태: 채택 (이슈 #122)
-- 날짜: 2026-10-22
-- 바꾸는 결정: 원래 요구사항 4-1("웹사이트 이름과 테마 색상만 구별되고, 중복되지 않게")의 테마 색 부분
+- Status: Accepted (issue #122)
+- Date: 2026-10-22
+- Changes a decision: the theme color part of original requirement 4-1 ("distinguish only by website name and theme color, with no duplicates")
 
-## 맥락
+## Context
 
-- 처음에는 8개 앱이 같은 레이아웃·컴포넌트를 쓰고, 이름과 테마 색으로만 구별하기로 했다. 그래서 디자인 토큰에 앱별 테마 색 자리 6개를 두었다(#121).
-- 색상환에서 45°씩 떨어뜨린 8개 색을 제안했으나, 사용자가 "그냥 다 흰-검 다크모드, 화이트 모드로 통일"로 정했다(2026-10-22).
+- At first, the 8 apps were to share the same layout and components and be distinguished only by name and theme color. So the design tokens got 6 slots for per-app theme colors (#121).
+- 8 colors spaced 45° apart on the color wheel were proposed, but the user decided "just unify everything on white-and-black dark mode and light mode" (2026-10-22).
 
-## 결정
+## Decision
 
-- 8개 앱 모두 같은 흑백(shadcn/ui neutral) 색을 쓴다. 앱별 테마 색은 없다. 앱은 **표시 이름**(레지스트리 `displayName`)으로만 구별한다.
-- 라이트·다크 두 모드를 지원한다.
-  - 기본은 시스템 설정(`prefers-color-scheme`)을 따른다.
-  - 사용자가 고르면 그 선택을 저장하고 `<html>`에 `light` 또는 `dark` 클래스를 붙인다.
-  - 클래스가 없으면 시스템 설정을 따른다. 그래서 스크립트가 실행되기 전에도 맞는 색이 나온다.
-- Tailwind의 `dark:` 변형도 같은 조건을 따른다. 조건은 두 가지다: `.dark` 클래스가 있거나, `.light`가 없는 상태에서 시스템이 다크 모드일 때.
-- 모드 전환 UI(토글)와 첫 화면 깜빡임 방지는 공통 레이아웃(#124)에서 만든다.
+- All 8 apps use the same black-and-white (shadcn/ui neutral) colors. There is no per-app theme color. Apps are distinguished only by **display name** (registry `displayName`).
+- Both light and dark modes are supported.
+  - By default, the system setting (`prefers-color-scheme`) is followed.
+  - When the user chooses, that choice is saved and a `light` or `dark` class is added to `<html>`.
+  - With no class, the system setting is followed. So the right colors appear even before the script runs.
+- Tailwind's `dark:` variant follows the same condition. There are two cases: the `.dark` class is present, or the system is in dark mode while `.light` is absent.
+- The mode switch UI (toggle) and prevention of the first-paint flash are built in the common layout (#124).
 
-## 결과
+## Consequences
 
-- 토큰의 색은 라이트 30개, 다크 30개로 모든 앱이 같다. 앱 CSS에서 덮어쓰는 색은 없다.
-- 레지스트리에서 앱별 색 값과 색 차이 검사가 빠진다. 대신 표시 이름 중복 검사가 들어간다.
-- 앱마다 브랜드 느낌을 낼 수 없다. 나중에 필요해지면 이 ADR을 바꾸는 새 ADR로 다시 정한다.
+- The token colors are 30 for light and 30 for dark, the same for all apps. No colors are overridden in app CSS.
+- Per-app color values and the color-difference check are removed from the registry. A display name duplicate check is added instead.
+- Apps cannot have their own brand feel. If it becomes necessary later, decide again with a new ADR that changes this one.

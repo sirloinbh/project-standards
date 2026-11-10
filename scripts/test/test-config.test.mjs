@@ -87,7 +87,7 @@ test('the dependency list in docs/test-config.md matches the scaffold package ve
     const json = JSON.parse(fs.readFileSync(path.join(root, 'scaffold/app', file), 'utf8'));
     return { ...json.dependencies, ...json.devDependencies };
   };
-  const where = { 루트: pkg('package.json.tmpl'), frontend: pkg('frontend/package.json.tmpl'), backend: pkg('backend/package.json.tmpl') };
+  const where = { root: pkg('package.json.tmpl'), frontend: pkg('frontend/package.json.tmpl'), backend: pkg('backend/package.json.tmpl') };
   for (const [, , place, name, version] of rows) {
     const deps = where[Object.keys(where).find((key) => place.includes(key))];
     assert.equal(deps?.[name.replace(/`/g, '')], version, `${place} ${name}`);

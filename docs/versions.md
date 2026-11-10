@@ -1,38 +1,38 @@
-# 버전 원본
+# Version source
 
-<!-- 자동 생성 파일. 수정은 versions.json에서 하고 `npm run docs` 로 다시 생성한다. -->
+<!-- Generated file. Edit versions.json, then regenerate with `npm run docs`. -->
 
-중앙이 정하는 도구·패키지 버전이다. 바꾸는 절차는 [의존성 정책](dependency-policy.md)을 따른다.
+Tool and package versions set centrally. To change them, follow the [dependency policy](dependency-policy.md).
 
-## 도구
+## Tools
 
-| 항목 | 버전 |
+| Item | Version |
 |---|---|
 | Node | 24.21.0 |
 | npm | 11.19.0 |
 | PostgreSQL | 17 |
 | Terraform | >= 1.6.0 (CI 1.16.5) |
-| GitHub 러너 | `ubuntu-24.04` |
-| 이미지 node | `node:24.21.0-alpine` |
-| 이미지 nginx | `nginx:1.27-alpine` |
-| 이미지 postgres | `postgres:17-alpine` |
-| 이미지 devcontainerNode | `node:24.21.0-bookworm` (digest 고정) |
-| 이미지 playwright | `mcr.microsoft.com/playwright:v1.63.0-noble` (digest 고정) |
+| GitHub runner | `ubuntu-24.04` |
+| Image node | `node:24.21.0-alpine` |
+| Image nginx | `nginx:1.27-alpine` |
+| Image postgres | `postgres:17-alpine` |
+| Image devcontainerNode | `node:24.21.0-bookworm` (digest pinned) |
+| Image playwright | `mcr.microsoft.com/playwright:v1.63.0-noble` (digest pinned) |
 
-## 공유 설정 패키지 (@sirloinbh)
+## Shared config packages (@sirloinbh)
 
-| 패키지 | 버전 |
+| Package | Version |
 |---|---|
 | `@sirloinbh/eslint-config` | 1.1.0 |
 | `@sirloinbh/prettier-config` | 1.0.0 |
 | `@sirloinbh/tsconfig` | 1.0.0 |
 | `@sirloinbh/design-tokens` | 1.0.0 |
 
-## 앱 공통 의존성
+## Common app dependencies
 
-앱 8개와 스캐폴드가 같은 파일·같은 칸에 같은 버전으로 쓰는 외부 의존성이다. 앱 `package.json`의 관리 필드라서, 앱 하나만 버전이 다르면 `standards-check`가 실패한다(#304). 한 앱만 쓰는 의존성은 여기에 없다.
+External dependencies that the 8 apps and the scaffold use at the same version, in the same file and the same section. They are managed fields of each app `package.json`, so if even one app has a different version, `standards-check` fails (#304). Dependencies used by a single app are not listed here.
 
-| 패키지 | 버전 | 파일 | 칸 |
+| Package | Version | File | Section |
 |---|---|---|---|
 | `@eslint/js` | 10.0.1 | `package.json` | devDependencies |
 | `eslint` | 10.12.0 | `package.json` | devDependencies |

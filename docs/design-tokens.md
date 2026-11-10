@@ -1,190 +1,190 @@
-# 디자인 토큰
+# Design tokens
 
-<!-- 자동 생성 파일. 수정은 design/tokens.json에서 하고 `npm run docs` 로 다시 생성한다. -->
+<!-- Generated file. Edit design/tokens.json, then regenerate with `npm run docs`. -->
 
-8개 앱이 함께 쓰는 값이다. 이름은 shadcn/ui와 Tailwind CSS 4 규칙을 따른다([ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)). 앱마다 다른 것은 표시 이름뿐이고, 색은 모든 앱이 같은 흑백을 쓴다([ADR-0008](adr/0008-neutral-light-dark.md)).
+Values shared by the 8 apps. Names follow the shadcn/ui and Tailwind CSS 4 conventions ([ADR-0007](adr/0007-shadcn-ui-icons-emoji.md)). The only thing that differs per app is the display name; all apps use the same black-and-white colors ([ADR-0008](adr/0008-neutral-light-dark.md)).
 
-## 글꼴
+## Fonts
 
-- 본문·제목: `"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif`
-- 고정폭: `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`
-- Pretendard 1.3.9 (2023-11-05), SIL Open Font License 1.1. 공식 릴리스 zip의 PretendardVariable.woff2(가변 폰트 전체, 2.0MB) 하나를 @sirloinbh/design-tokens 패키지에 넣어 직접 제공한다. 외부 CDN을 쓰지 않는다(오프라인·PWA 동작, 외부 의존 없음). 동적 서브셋은 npm 패키지·CDN으로만 배포되어 쓰지 않는다. `font-display: swap`.
+- Body and headings: `"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif`
+- Monospace: `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`
+- Pretendard 1.3.9 (2023-11-05), SIL Open Font License 1.1. A single PretendardVariable.woff2 from the official release zip (the full variable font, 2.0MB) is placed in the @sirloinbh/design-tokens package and served directly. No external CDN is used (works offline and as a PWA, no external dependency). The dynamic subset is distributed only as an npm package or CDN, so it is not used. `font-display: swap`.
 
-## 글자 크기
+## Font sizes
 
-| 이름 | 크기 | 줄 높이 | 쓰는 곳 |
+| Name | Size | Line height | Used for |
 |---|---|---|---|
-| `text-xs` | 0.75rem (12px) | 1rem | 메타 정보(시간, 개수) |
-| `text-sm` | 0.875rem (14px) | 1.25rem | 보조·주석 텍스트, 표, 폼 설명 |
-| `text-base` | 1rem (16px) | 1.6 | 본문 (한국어 가독성을 위해 줄 높이 1.6) |
-| `text-lg` | 1.125rem (18px) | 1.75rem | 제목 4단계, 강조 본문 |
-| `text-xl` | 1.25rem (20px) | 1.75rem | 제목 3단계 |
-| `text-2xl` | 1.5rem (24px) | 2rem | 제목 2단계, 모바일 제목 1단계 |
-| `text-3xl` | 1.875rem (30px) | 2.25rem | 데스크톱 제목 1단계 |
+| `text-xs` | 0.75rem (12px) | 1rem | Meta information (time, counts) |
+| `text-sm` | 0.875rem (14px) | 1.25rem | Secondary and caption text, tables, form descriptions |
+| `text-base` | 1rem (16px) | 1.6 | Body text (line height 1.6 for Korean readability) |
+| `text-lg` | 1.125rem (18px) | 1.75rem | Heading level 4, emphasized body text |
+| `text-xl` | 1.25rem (20px) | 1.75rem | Heading level 3 |
+| `text-2xl` | 1.5rem (24px) | 2rem | Heading level 2, mobile heading level 1 |
+| `text-3xl` | 1.875rem (30px) | 2.25rem | Desktop heading level 1 |
 
-## 글자 굵기
+## Font weights
 
-| 이름 | 값 | 쓰는 곳 |
+| Name | Value | Used for |
 |---|---|---|
-| `font-normal` | 400 | 본문 |
-| `font-medium` | 500 | 버튼, 메뉴, 라벨 |
-| `font-semibold` | 600 | 제목 2–4단계, 카드 제목 |
-| `font-bold` | 700 | 제목 1단계, 숫자 강조 |
+| `font-normal` | 400 | Body text |
+| `font-medium` | 500 | Buttons, menus, labels |
+| `font-semibold` | 600 | Heading levels 2-4, card titles |
+| `font-bold` | 700 | Heading level 1, emphasized numbers |
 
-## 글자 스타일 (제목 단계, 본문, 주석)
+## Text styles (heading levels, body, caption)
 
-모바일 크기가 기본이고, `md`(768px) 이상에서 오른쪽 크기로 커진다.
+The mobile size is the default, and from `md` (768px) up it grows to the size on the right.
 
-| 스타일 | 요소 | 모바일 | md 이상 | 굵기 | 자간 | 색 | 쓰는 곳 |
+| Style | Element | Mobile | md and up | Weight | Tracking | Color | Used for |
 |---|---|---|---|---|---|---|---|
-| `h1` | `h1` | 24px | 30px | 700 | -0.02em | `foreground` | 페이지 제목. 페이지마다 하나 |
-| `h2` | `h2` | 20px | 24px | 600 | -0.02em | `foreground` | 섹션 제목 |
-| `h3` | `h3` | 18px | 20px | 600 | -0.01em | `foreground` | 카드·하위 섹션 제목 |
-| `h4` | `h4` | 16px | 18px | 600 | 0 | `foreground` | 작은 묶음 제목 |
-| `body` | `p` | 16px | 16px | 400 | 0 | `foreground` | 본문 |
-| `body-sm` | `p` | 14px | 14px | 400 | 0 | `foreground` | 표, 좁은 영역의 본문 |
-| `caption` | `p` | 14px | 14px | 400 | 0 | `muted-foreground` | 보조·주석 텍스트, 입력란 설명 |
-| `meta` | `span` | 12px | 12px | 400 | 0 | `muted-foreground` | 날짜·시간·개수 같은 메타 정보 |
+| `h1` | `h1` | 24px | 30px | 700 | -0.02em | `foreground` | Page title. One per page |
+| `h2` | `h2` | 20px | 24px | 600 | -0.02em | `foreground` | Section title |
+| `h3` | `h3` | 18px | 20px | 600 | -0.01em | `foreground` | Card and subsection titles |
+| `h4` | `h4` | 16px | 18px | 600 | 0 | `foreground` | Small group title |
+| `body` | `p` | 16px | 16px | 400 | 0 | `foreground` | Body text |
+| `body-sm` | `p` | 14px | 14px | 400 | 0 | `foreground` | Tables, body text in narrow areas |
+| `caption` | `p` | 14px | 14px | 400 | 0 | `muted-foreground` | Secondary and caption text, input descriptions |
+| `meta` | `span` | 12px | 12px | 400 | 0 | `muted-foreground` | Meta information such as dates, times, and counts |
 
-## 간격
+## Spacing
 
-- 간격은 4px 단위(Tailwind spacing 1 = 4px)만 쓴다. 자주 쓰는 값: 1(4px), 2(8px), 3(12px), 4(16px), 6(24px), 8(32px), 12(48px).
+- Use spacing only in 4px units (Tailwind spacing 1 = 4px). Common values: 1 (4px), 2 (8px), 3 (12px), 4 (16px), 6 (24px), 8 (32px), 12 (48px).
 
-| 이름 | 모바일 | md | lg | 쓰는 곳 |
+| Name | Mobile | md | lg | Used for |
 |---|---|---|---|---|
-| `page-x` | 1rem | 1.5rem | 2rem | 페이지 좌우 여백 |
-| `section-gap` | 1.5rem | 2rem | 2rem | 섹션 사이 간격 |
-| `stack-gap` | 0.75rem | 1rem | 1rem | 카드·폼 항목 사이 간격 |
-| `content-max` | 100% | 48rem | 72rem | 본문 최대 너비 |
+| `page-x` | 1rem | 1.5rem | 2rem | Page side margins |
+| `section-gap` | 1.5rem | 2rem | 2rem | Gap between sections |
+| `stack-gap` | 0.75rem | 1rem | 1rem | Gap between cards and form items |
+| `content-max` | 100% | 48rem | 72rem | Maximum body width |
 
-## 모서리 둥글기
+## Corner radius
 
-| 이름 | CSS 변수 | 값 | px | 쓰는 곳 |
+| Name | CSS variable | Value | px | Used for |
 |---|---|---|---|---|
-| `rounded-base` | `--radius` | `0.625rem` | 10 | 기준값 (shadcn/ui --radius) |
-| `rounded-sm` | `--radius-sm` | `calc(var(--radius) - 4px)` | 6 | 배지, 작은 입력 요소 |
-| `rounded-md` | `--radius-md` | `calc(var(--radius) - 2px)` | 8 | 버튼, 입력란 |
-| `rounded-lg` | `--radius-lg` | `var(--radius)` | 10 | 카드, 메뉴 |
-| `rounded-xl` | `--radius-xl` | `calc(var(--radius) + 4px)` | 14 | 모달, drawer |
+| `rounded-base` | `--radius` | `0.625rem` | 10 | Base value (shadcn/ui --radius) |
+| `rounded-sm` | `--radius-sm` | `calc(var(--radius) - 4px)` | 6 | Badges, small input elements |
+| `rounded-md` | `--radius-md` | `calc(var(--radius) - 2px)` | 8 | Buttons, input fields |
+| `rounded-lg` | `--radius-lg` | `var(--radius)` | 10 | Cards, menus |
+| `rounded-xl` | `--radius-xl` | `calc(var(--radius) + 4px)` | 14 | Modals, drawers |
 
-## 그림자와 테두리
+## Shadows and borders
 
-| 이름 | 쓰는 곳 |
+| Name | Used for |
 |---|---|
-| `shadow-xs` | 입력란 |
-| `shadow-sm` | 카드 |
-| `shadow-md` | 드롭다운 메뉴, 팝오버 |
-| `shadow-lg` | 모달, drawer |
+| `shadow-xs` | Input fields |
+| `shadow-sm` | Cards |
+| `shadow-md` | Dropdown menus, popovers |
+| `shadow-lg` | Modals, drawers |
 
-- 테두리는 1px, 색은 border(구분선)와 input(입력란)만 쓴다.
+- Borders are 1px, and only the colors border (dividers) and input (input fields) are used.
 
-## 반응형
+## Responsive
 
-- 모바일 우선. 기본 스타일은 360px 너비 기준으로 쓰고, 넓은 화면은 md·lg 접두어로 더한다. 가장 좁은 화면은 360px이다.
-- 터치 기기(pointer: coarse)에서 누를 수 있는 요소는 가로·세로 최소 44px. 보이는 크기가 작으면 여백으로 누르는 영역을 넓힌다.
-- 고정 헤더·하단 탭·drawer는 env(safe-area-inset-*)만큼 안쪽 여백을 둔다(viewport-fit=cover와 함께).
-- 변경한 화면은 390×844(모바일)와 1440×900(PC)에서 확인한다.
+- Mobile first. Write the base styles for a 360px width, and add wider screens with the md and lg prefixes. The narrowest screen is 360px.
+- On touch devices (pointer: coarse), tappable elements are at least 44px wide and tall. If the visible size is smaller, enlarge the tap area with padding.
+- Fixed headers, bottom tabs, and drawers get inner padding of env(safe-area-inset-*) (together with viewport-fit=cover).
+- Check changed screens at 390×844 (mobile) and 1440×900 (PC).
 
-| 기준점 | 최소 너비 | 쓰는 곳 |
+| Breakpoint | Min width | Used for |
 |---|---|---|
-| `sm` | 40rem (640px) | 큰 휴대폰 가로 |
-| `md` | 48rem (768px) | 태블릿. 이 너비부터 LNB가 사이드바로 고정되고, 그보다 좁으면 drawer로 열린다 |
-| `lg` | 64rem (1024px) | 작은 노트북 |
-| `xl` | 80rem (1280px) | 데스크톱 |
+| `sm` | 40rem (640px) | Large phone in landscape |
+| `md` | 48rem (768px) | Tablet. From this width the LNB is fixed as a sidebar; narrower than this, it opens as a drawer |
+| `lg` | 64rem (1024px) | Small laptop |
+| `xl` | 80rem (1280px) | Desktop |
 
-## 아이콘 크기
+## Icon sizes
 
-| 이름 | px | 쓰는 곳 |
+| Name | px | Used for |
 |---|---|---|
-| `sm` | 16 | 버튼·입력란 안 |
-| `md` | 20 | 메뉴, 목록 |
-| `lg` | 24 | 빈 상태, 강조 |
+| `sm` | 16 | Inside buttons and input fields |
+| `md` | 20 | Menus, lists |
+| `lg` | 24 | Empty states, emphasis |
 
-## 쌓임 순서 (z-index)
+## Stacking order (z-index)
 
-| 이름 | 값 | 쓰는 곳 |
+| Name | Value | Used for |
 |---|---|---|
 | `base` | 0 |  |
-| `sticky` | 10 | 고정 헤더, 하단 탭 |
+| `sticky` | 10 | Fixed header, bottom tabs |
 | `drawer` | 40 | LNB drawer, Sheet |
-| `modal` | 50 | Dialog와 그 배경 (shadcn/ui 기본) |
-| `popover` | 60 | 드롭다운 메뉴, 팝오버 (모달 위에서도 열림) |
-| `toast` | 70 | Sonner 토스트 |
+| `modal` | 50 | Dialog and its backdrop (shadcn/ui default) |
+| `popover` | 60 | Dropdown menus, popovers (also open above modals) |
+| `toast` | 70 | Sonner toast |
 
-## 움직임
+## Motion
 
-- 빠름 150ms, 보통 200ms, 느림 300ms, easing `cubic-bezier(0.16, 1, 0.3, 1)`.
-- hover·focus는 fast, 메뉴·토스트는 normal, 모달·drawer는 slow. prefers-reduced-motion이면 애니메이션을 끈다.
+- Fast 150ms, normal 200ms, slow 300ms, easing `cubic-bezier(0.16, 1, 0.3, 1)`.
+- Use fast for hover and focus, normal for menus and toasts, and slow for modals and drawers. Turn animations off under prefers-reduced-motion.
 
-## 로딩 표시
+## Loading indicators
 
-- 스켈레톤: shadcn/ui Skeleton(bg-accent, animate-pulse). 실제 내용과 같은 크기·모양(텍스트 줄, 카드, 목록)으로 그린다. 처음 불러오는 화면에 쓴다.
-- 스피너: lucide-react Loader2Icon + animate-spin. 크기는 icon sm·md·lg. 버튼 안 저장 중 표시와 짧은 대기에 쓴다.
-- 300ms 안에 끝나는 작업은 로딩 표시를 하지 않는다. 화면 전체를 가리는 로딩은 쓰지 않는다.
+- Skeleton: shadcn/ui Skeleton (bg-accent, animate-pulse). Draw it at the same size and shape as the real content (text lines, cards, lists). Use it on a screen that loads for the first time.
+- Spinner: lucide-react Loader2Icon + animate-spin. Sizes are icon sm, md, and lg. Use it for a saving indicator inside a button and for short waits.
+- Do not show a loading indicator for work that finishes within 300ms. Do not use a loading indicator that covers the whole screen.
 
-## 색
+## Colors
 
-값은 oklch이다. 앱마다 다른 색은 없다. 8개 앱이 모두 같은 흑백(neutral) 색을 쓰고, 앱은 표시 이름으로만 구별한다(ADR-0008).
+Values are in oklch. No app has its own colors. All 8 apps use the same black-and-white (neutral) colors, and apps are distinguished only by their display names (ADR-0008).
 
-- 라이트·다크 두 모드. 기본은 시스템 설정을 따르고, 사용자가 고르면 그 선택을 저장해 <html>에 light 또는 dark 클래스를 붙인다. 클래스가 없으면 prefers-color-scheme을 따른다.
+- Two modes, light and dark. By default it follows the system setting; if the user chooses, that choice is saved and a light or dark class is added to <html>. With no class, it follows prefers-color-scheme.
 
-| 토큰 | 라이트 | 다크 | 쓰는 곳 |
+| Token | Light | Dark | Used for |
 |---|---|---|---|
-| `--background` | `oklch(1 0 0)` | `oklch(0.145 0 0)` | 페이지 배경 |
-| `--foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | 기본 글자 |
-| `--card` | `oklch(1 0 0)` | `oklch(0.205 0 0)` | 카드 배경 |
-| `--card-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | 카드 글자 |
-| `--popover` | `oklch(1 0 0)` | `oklch(0.205 0 0)` | 메뉴·팝오버·모달 배경 |
-| `--popover-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | 메뉴·팝오버 글자 |
-| `--primary` | `oklch(0.205 0 0)` | `oklch(0.922 0 0)` | 주 버튼, 링크, 선택 상태 (모든 앱 공통 검정) |
-| `--primary-foreground` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | 주 버튼 위의 글자 |
-| `--secondary` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | 보조 버튼 배경 |
-| `--secondary-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | 보조 버튼 글자 |
-| `--muted` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | 비활성·옅은 면 |
-| `--muted-foreground` | `oklch(0.556 0 0)` | `oklch(0.708 0 0)` | 보조·주석 텍스트 (흰 배경 대비 4.5:1 이상) |
-| `--accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | hover·선택된 메뉴 배경 |
-| `--accent-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | hover·선택된 메뉴 글자 |
-| `--destructive` | `oklch(0.577 0.245 27.325)` | `oklch(0.704 0.191 22.216)` | 삭제·오류 |
-| `--success` | `oklch(0.527 0.154 150.069)` | `oklch(0.723 0.219 149.579)` | 성공·완료 (Tailwind green-700, 흰 글자 대비 4.5:1 이상) |
-| `--success-foreground` | `oklch(1 0 0)` | `oklch(0.145 0 0)` | 성공 색 위의 글자 |
-| `--warning` | `oklch(0.828 0.189 84.429)` | `oklch(0.828 0.189 84.429)` | 주의 (Tailwind amber-400) |
-| `--warning-foreground` | `oklch(0.279 0.077 45.635)` | `oklch(0.279 0.077 45.635)` | 주의 색 위의 글자 (Tailwind amber-950) |
-| `--border` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` | 구분선, 카드 테두리 |
-| `--input` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 15%)` | 입력란 테두리 |
-| `--ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` | 키보드 포커스 표시 |
-| `--sidebar` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | LNB 배경 |
-| `--sidebar-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | LNB 글자 |
-| `--sidebar-primary` | `oklch(0.205 0 0)` | `oklch(0.922 0 0)` | LNB 선택 항목 강조 |
-| `--sidebar-primary-foreground` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | LNB 선택 항목 글자 |
-| `--sidebar-accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | LNB hover 배경 |
-| `--sidebar-accent-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | LNB hover 글자 |
-| `--sidebar-border` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` | LNB 구분선 |
-| `--sidebar-ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` | LNB 포커스 표시 |
+| `--background` | `oklch(1 0 0)` | `oklch(0.145 0 0)` | Page background |
+| `--foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | Default text |
+| `--card` | `oklch(1 0 0)` | `oklch(0.205 0 0)` | Card background |
+| `--card-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | Card text |
+| `--popover` | `oklch(1 0 0)` | `oklch(0.205 0 0)` | Menu, popover, and modal background |
+| `--popover-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | Menu and popover text |
+| `--primary` | `oklch(0.205 0 0)` | `oklch(0.922 0 0)` | Primary button, links, selected state (black shared by all apps) |
+| `--primary-foreground` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | Text on the primary button |
+| `--secondary` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | Secondary button background |
+| `--secondary-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | Secondary button text |
+| `--muted` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | Disabled and faint surfaces |
+| `--muted-foreground` | `oklch(0.556 0 0)` | `oklch(0.708 0 0)` | Secondary and caption text (4.5:1 or more against a white background) |
+| `--accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | Hovered and selected menu background |
+| `--accent-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | Hovered and selected menu text |
+| `--destructive` | `oklch(0.577 0.245 27.325)` | `oklch(0.704 0.191 22.216)` | Delete and error |
+| `--success` | `oklch(0.527 0.154 150.069)` | `oklch(0.723 0.219 149.579)` | Success and completion (Tailwind green-700, 4.5:1 or more against white text) |
+| `--success-foreground` | `oklch(1 0 0)` | `oklch(0.145 0 0)` | Text on the success color |
+| `--warning` | `oklch(0.828 0.189 84.429)` | `oklch(0.828 0.189 84.429)` | Warning (Tailwind amber-400) |
+| `--warning-foreground` | `oklch(0.279 0.077 45.635)` | `oklch(0.279 0.077 45.635)` | Text on the warning color (Tailwind amber-950) |
+| `--border` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` | Dividers, card borders |
+| `--input` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 15%)` | Input field border |
+| `--ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` | Keyboard focus indicator |
+| `--sidebar` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | LNB background |
+| `--sidebar-foreground` | `oklch(0.145 0 0)` | `oklch(0.985 0 0)` | LNB text |
+| `--sidebar-primary` | `oklch(0.205 0 0)` | `oklch(0.922 0 0)` | LNB selected item highlight |
+| `--sidebar-primary-foreground` | `oklch(0.985 0 0)` | `oklch(0.205 0 0)` | LNB selected item text |
+| `--sidebar-accent` | `oklch(0.97 0 0)` | `oklch(0.269 0 0)` | LNB hover background |
+| `--sidebar-accent-foreground` | `oklch(0.205 0 0)` | `oklch(0.985 0 0)` | LNB hover text |
+| `--sidebar-border` | `oklch(0.922 0 0)` | `oklch(1 0 0 / 10%)` | LNB divider |
+| `--sidebar-ring` | `oklch(0.708 0 0)` | `oklch(0.556 0 0)` | LNB focus indicator |
 
-## workout-memo 기존 토큰 대응표
+## workout-memo legacy token mapping
 
-workout-memo의 기존 토큰(frontend/src/theme.css)이 새 토큰 중 무엇에 해당하는지. 디자인 시스템 적용(#126) 때 이 표대로 바꾼다.
+Which new token each of workout-memo's existing tokens (frontend/src/theme.css) corresponds to. When the design system is applied (#126), switch according to this table.
 
-| 기존 | 새 토큰 | 비고 |
+| Legacy | New token | Note |
 |---|---|---|
-| `--color-primary` | --primary | 모든 앱 공통 검정. 앱별 테마 색은 없다(ADR-0008) |
+| `--color-primary` | --primary | Black shared by all apps. There are no per-app theme colors (ADR-0008) |
 | `--color-on-primary` | --primary-foreground |  |
-| `--color-accent` | --primary (옅게) 또는 차트 색 | shadcn/ui의 accent는 hover 배경이라 의미가 다르다 |
+| `--color-accent` | --primary (lightened) or a chart color | The shadcn/ui accent is a hover background, so the meaning differs |
 | `--color-focus` | --ring |  |
 | `--color-ink` | --foreground |  |
 | `--color-ink-muted` | --muted-foreground |  |
-| `--color-ink-subtle` | --muted-foreground | 두 단계를 하나로 합친다 |
-| `--color-link` | --primary | 링크는 테마 색 |
+| `--color-ink-subtle` | --muted-foreground | Merge the two levels into one |
+| `--color-link` | --primary | Links use the theme color |
 | `--color-icon` | --muted-foreground |  |
 | `--color-surface-sidebar` | --sidebar |  |
 | `--color-surface-modal` | --popover |  |
-| `--color-line / --color-line-soft` | --border | 두 단계를 하나로 합친다 |
+| `--color-line / --color-line-soft` | --border | Merge the two levels into one |
 | `--color-line-input` | --input |  |
-| `--color-backdrop` | 모달 배경 bg-black/50 | shadcn/ui Dialog 기본 |
+| `--color-backdrop` | Modal backdrop bg-black/50 | shadcn/ui Dialog default |
 | `--color-nav-active / -ink` | --sidebar-accent / --sidebar-accent-foreground |  |
 | `--color-subtle / -line / -ink` | --secondary / --border / --secondary-foreground |  |
 | `--color-danger / -ink` | --destructive |  |
-| `--color-danger-surface / -line` | --destructive을 10% / 30% 투명도로 | bg-destructive/10, border-destructive/30 |
-| `--radius-sm 5px, md 6px, lg 9px, xl 12px` | 6px, 8px, 10px, 14px | shadcn/ui 기준값 --radius 10px에서 계산 |
-| `--shadow-card / --shadow-modal` | shadow-sm / shadow-lg | Tailwind 기본 그림자 |
-| `글꼴 DM Sans, Noto Sans KR` | Pretendard Variable |  |
+| `--color-danger-surface / -line` | --destructive at 10% / 30% opacity | bg-destructive/10, border-destructive/30 |
+| `--radius-sm 5px, md 6px, lg 9px, xl 12px` | 6px, 8px, 10px, 14px | Calculated from the shadcn/ui base value --radius 10px |
+| `--shadow-card / --shadow-modal` | shadow-sm / shadow-lg | Tailwind default shadow |
+| `Fonts DM Sans, Noto Sans KR` | Pretendard Variable |  |

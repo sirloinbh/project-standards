@@ -1,153 +1,153 @@
-# 배포·운영 ({{project.title}})
+# Deployment and operations ({{project.title}})
 
-개인 계정의 Lightsail 서버 한 대에서 Docker Compose(웹·API·PostgreSQL)로 운영합니다. 같은 서버에 앱 8개가 각자의 compose로 함께 돌아갑니다([ADR-0009](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0009-multi-app-single-lightsail.md)). 허용한 IP에서만 접속할 수 있습니다.
+It runs on a single personal-account Lightsail server with Docker Compose (web, API, PostgreSQL). All 8 apps run on the same server, each with its own compose ([ADR-0009](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0009-multi-app-single-lightsail.md)). Access is possible only from allowed IPs.
 
-## 값 요약
+## Value summary
 
-| 항목 | 값 |
+| Item | Value |
 |---|---|
-| 서버 앱 폴더 | `/opt/{{project.name}}` |
-| 로컬 웹 / DB 포트 | `127.0.0.1:{{project.ports.web}}` / `127.0.0.1:{{project.ports.db}}` |
-| 서버 웹 | `0.0.0.0:{{project.ports.web}}` (서버 `.env`의 `WEB_BIND`·`WEB_PORT`. 배포 스크립트도 이 `WEB_PORT`로 health를 확인) |
-| DB 이름 | `{{project.db.name}}` |
-| 자동 배포 timer | `{{project.db.name}}-autodeploy.timer` (부팅 후 `3min {{project.slot}}0s`에 시작, 이후 2분마다) |
-| 배포 잠금 | `/run/lock/apps-deploy.lock` (서버의 모든 앱이 함께 씀. 한 번에 한 앱만 빌드·배포) |
-| AWS CLI 프로필 | `{{project.db.name}}-personal` (개인 계정, 회사 프로필과 분리) |
-| SSH 키 | `~/.ssh/{{project.name}}-lightsail` (PC에만 보관) |
+| Server app folder | `/opt/{{project.name}}` |
+| Local web / DB ports | `127.0.0.1:{{project.ports.web}}` / `127.0.0.1:{{project.ports.db}}` |
+| Server web | `0.0.0.0:{{project.ports.web}}` (`WEB_BIND` and `WEB_PORT` in the server `.env`. The deploy script also checks health on this `WEB_PORT`) |
+| DB name | `{{project.db.name}}` |
+| Auto-deploy timer | `{{project.db.name}}-autodeploy.timer` (starts at `3min {{project.slot}}0s` after boot, then every 2 minutes) |
+| Deploy lock | `/run/lock/apps-deploy.lock` (shared by every app on the server. Only one app builds and deploys at a time) |
+| AWS CLI profile | `{{project.db.name}}-personal` (personal account, separate from the company profile) |
+| SSH key | `~/.ssh/{{project.name}}-lightsail` (kept only on the PC) |
 
-## 서버 `.env` 키
+## Server `.env` keys
 
-값은 서버에서만 만들고 저장소·채팅·로그에 남기지 않습니다. 키를 추가하면 `.env.example`, 쓰는 코드, 이 표를 같은 PR에서 고칩니다([환경변수 규칙](https://github.com/sirloinbh/project-standards/blob/main/docs/env-conventions.md)).
+Create the values only on the server and never leave them in the repository, chat, or logs. When you add a key, update `.env.example`, the code that uses it, and this table in the same PR ([environment variable rules](https://github.com/sirloinbh/project-standards/blob/main/docs/env-conventions.md)).
 
-| 키 | 만드는 곳 | 설명 |
+| Key | Where it is created | Description |
 |---|---|---|
-| `POSTGRES_DB` | user-data (첫 부팅) | `{{project.db.name}}` |
+| `POSTGRES_DB` | user-data (first boot) | `{{project.db.name}}` |
 | `POSTGRES_USER` | user-data | `{{project.db.name}}` |
-| `POSTGRES_PASSWORD` | user-data (서버에서 무작위 생성) | 비밀값. 서버 밖으로 꺼내지 않는다 |
+| `POSTGRES_PASSWORD` | user-data (generated randomly on the server) | Secret value. Never take it off the server |
 | `WEB_BIND` | user-data | `0.0.0.0` |
-| `WEB_PORT` | user-data | `{{project.ports.web}}`. 방화벽에 이 포트가 열려 있어야 합니다(shared-aws-infrastructure) |
-| `NODE_AUTH_TOKEN` | [사용자] 직접 입력 | GitHub Packages 읽기용 classic PAT(`read:packages`만). 비밀값 |
-| `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION` | [사용자] 공용 파일에 입력 | DB 덤프 S3 사본 버킷과 리전. 없으면 서버에만 보관([백업·복구](backup-restore.md)) |
-| `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | [사용자] 공용 파일에 입력 | 버킷에 올리기만 되는 키. 비밀값 |
-| `SECRETS_AWS_ACCESS_KEY_ID`, `SECRETS_AWS_SECRET_ACCESS_KEY` | [사용자] 공용 파일에 입력 | SSM의 `/sirloinbh/anthropic-api-key` 하나만 읽을 수 있는 키. 비밀값. 있으면 Claude API를 쓰는 앱의 배포 스크립트가 배포할 때마다 SSM에서 `ANTHROPIC_API_KEY`를 읽어 앱에 넘깁니다([ADR-0010](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0010-claude-api-key-ssm.md)). 이 키가 있으면 서버 `.env`의 `ANTHROPIC_API_KEY`는 지워도 됩니다 |
-| `HEALTHCHECK_URL_HEALTH`, `HEALTHCHECK_URL_DEPLOY`, `HEALTHCHECK_URL_BACKUP`, `HEALTHCHECK_URL_RESTORE`, `HEALTHCHECK_URL_REPORT` | [사용자] 직접 입력 | healthchecks.io 체크별 신호 주소. 주소에 비밀 UUID가 들어 있어 비밀값으로 다룹니다. 없는 키의 신호는 보내지 않습니다(아래 "알림") |
+| `WEB_PORT` | user-data | `{{project.ports.web}}`. This port must be open in the firewall (shared-aws-infrastructure) |
+| `NODE_AUTH_TOKEN` | [User] enter directly | Classic PAT for reading GitHub Packages (`read:packages` only). Secret value |
+| `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION` | [User] enter in the shared file | Bucket and region for the S3 copy of DB dumps. If absent, backups stay only on the server ([Backup and restore](backup-restore.md)) |
+| `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | [User] enter in the shared file | Upload-only key for the bucket. Secret value |
+| `SECRETS_AWS_ACCESS_KEY_ID`, `SECRETS_AWS_SECRET_ACCESS_KEY` | [User] enter in the shared file | A key that can read only `/sirloinbh/anthropic-api-key` in SSM. Secret value. If present, the deploy script of an app that uses the Claude API reads `ANTHROPIC_API_KEY` from SSM on every deploy and passes it to the app ([ADR-0010](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0010-claude-api-key-ssm.md)). With this key in place, `ANTHROPIC_API_KEY` in the server `.env` can be removed |
+| `HEALTHCHECK_URL_HEALTH`, `HEALTHCHECK_URL_DEPLOY`, `HEALTHCHECK_URL_BACKUP`, `HEALTHCHECK_URL_RESTORE`, `HEALTHCHECK_URL_REPORT` | [User] enter directly | Per-check ping URLs from healthchecks.io. The URL contains a secret UUID, so treat it as a secret value. No ping is sent for a key that is absent (see "Alerts" below) |
 
-`IMAGE_TAG`는 배포 스크립트가 커밋으로 정하므로 `.env`에 두지 않습니다.
+`IMAGE_TAG` is decided by the deploy script from the commit, so do not put it in `.env`.
 
-"공용 파일"은 서버의 `/opt/project-standards/.env` 하나입니다(ADR-0010). 모든 앱이 같이 쓰는 AWS 키(`BACKUP_*`, `SECRETS_AWS_*`)를 앱마다 넣지 않고 여기에 한 번만 둡니다. 처음 한 번 만듭니다:
+The "shared file" is the single file `/opt/project-standards/.env` on the server (ADR-0010). Instead of putting the AWS keys that every app shares (`BACKUP_*`, `SECRETS_AWS_*`) into each app, keep them here once. Create it once at the start:
 
 ```bash
 sudo install -d -o ubuntu -g ubuntu -m 700 /opt/project-standards
-install -m 600 /dev/null /opt/project-standards/.env   # 그 뒤 편집기로 키를 넣습니다
+install -m 600 /dev/null /opt/project-standards/.env   # then put the keys in with an editor
 ```
 
-스크립트는 공용 파일을 먼저 읽고, 키가 없을 때만 앱 `.env`를 읽습니다.
+Scripts read the shared file first, and read the app `.env` only when a key is missing.
 
-## 1. 처음 한 번 준비 [사용자]
+## 1. One-time setup [User]
 
-1. **AWS CLI 프로필**
+1. **AWS CLI profile**
    ```powershell
    aws configure --profile {{project.db.name}}-personal
-   aws sts get-caller-identity --profile {{project.db.name}}-personal   # 개인 계정 ID인지 확인
+   aws sts get-caller-identity --profile {{project.db.name}}-personal   # confirm it is the personal account ID
    ```
-2. **SSH 키**
+2. **SSH key**
    ```powershell
    ssh-keygen -t ed25519 -f $HOME/.ssh/{{project.name}}-lightsail -C {{project.name}}
    ```
-3. **변수 파일:** `infrastructure/terraform.tfvars.example`을 `infrastructure/terraform.tfvars`로 복사하고 `aws_profile`, `expected_account_id`, `allowed_cidrs`, `budget_emails`를 채웁니다. 이 파일과 `terraform.tfstate`는 git에서 제외됩니다.
+3. **Variables file:** copy `infrastructure/terraform.tfvars.example` to `infrastructure/terraform.tfvars` and fill in `aws_profile`, `expected_account_id`, `allowed_cidrs`, and `budget_emails`. This file and `terraform.tfstate` are excluded from git.
 
-## 2. 인프라 적용 [사용자]
+## 2. Apply the infrastructure [User]
 
 ```powershell
 cd infrastructure
 terraform init
-terraform plan -out=deploy.tfplan     # 생성 목록과 계정 확인
+terraform plan -out=deploy.tfplan     # check the list of resources to create and the account
 terraform apply deploy.tfplan
 terraform output                      # static_ip, url, ssh
 ```
 
-- 첫 부팅 때 user-data가 swap, Docker, 저장소 clone, 서버 `.env`, 백업 cron, 자동 배포 timer를 설정합니다.
-- state를 잃으면 리소스를 Terraform으로 관리할 수 없으므로 PC 밖의 안전한 곳에 따로 백업합니다.
+- On first boot, user-data sets up swap, Docker, the repository clone, the server `.env`, the backup cron, and the auto-deploy timer.
+- If you lose the state, Terraform can no longer manage the resources, so back it up separately in a safe place off the PC.
 
-## 3. 앱 배포·롤백
+## 3. App deploy and rollback
 
 ```powershell
-./scripts/deploy.ps1 -Server <static_ip> -Ref origin/main   # 배포
-./scripts/deploy.ps1 -Server <static_ip> -Rollback          # 직전 배포로 되돌림
+./scripts/deploy.ps1 -Server <static_ip> -Ref origin/main   # deploy
+./scripts/deploy.ps1 -Server <static_ip> -Rollback          # return to the previous deploy
 ```
 
-배포 순서(`deploy/remote-deploy.sh`):
+Deploy order (`deploy/remote-deploy.sh`):
 
-1. 서버 초기화가 끝날 때까지 기다린다(`cloud-init status --wait`).
-2. ref를 fetch·checkout하고 커밋 태그(12자리)로 이미지를 빌드한다.
-3. 이전 배포가 있으면 DB 덤프를 먼저 만든다.
-4. 마이그레이션을 적용한다(`schema_migrations` 기록).
-5. 전체를 시작하고 `http://127.0.0.1:<WEB_PORT>/api/health`를 최대 60초 확인한다.
-6. health가 실패하면 이전 이미지로 다시 시작하고 실패로 끝난다.
-7. 성공하면 `.deployed`·`.previous`를 기록하고 현재·직전 이미지만 남긴다.
+1. Wait until server initialization finishes (`cloud-init status --wait`).
+2. Fetch and check out the ref, and build images tagged with the commit (12 characters).
+3. If there is a previous deploy, make a DB dump first.
+4. Apply migrations (recorded in `schema_migrations`).
+5. Start everything and check `http://127.0.0.1:<WEB_PORT>/api/health` for up to 60 seconds.
+6. If health fails, restart with the previous images and finish as a failure.
+7. On success, record `.deployed` and `.previous` and keep only the current and previous images.
 
-- 롤백은 다시 빌드하지 않습니다. 마이그레이션은 되돌리지 않으므로, 데이터를 되돌려야 하면 배포 직전 덤프로 복원합니다([백업·복구](backup-restore.md)).
+- A rollback does not rebuild. Migrations are not reverted, so if you need to roll data back, restore from the dump taken just before the deploy ([Backup and restore](backup-restore.md)).
 
-## 4. main 자동 배포
+## 4. Auto deploy from main
 
-main에 병합되면 서버가 2분마다 `origin/main`을 확인해서, 그 커밋의 GitHub Actions 워크플로 실행이 모두 성공이면 3번 순서로 배포합니다. GitHub가 직접 돌리는 실행(Dependabot 업데이트, CodeQL 기본 설정. API의 `event`가 `dynamic`)은 결과에 넣지 않습니다(#417). CodeQL 경보는 code scanning에서 따로 봅니다. GitHub에는 AWS·SSH 키를 두지 않습니다. 다른 앱이 배포 중이면(공용 잠금) 다음 회차에 다시 확인합니다.
+When a change is merged to main, the server checks `origin/main` every 2 minutes, and if all GitHub Actions workflow runs for that commit succeeded, it deploys in the order of step 3. Runs that GitHub itself starts (Dependabot updates and the CodeQL default setup, where the API `event` is `dynamic`) are not counted in the result (#417). CodeQL alerts are viewed separately in code scanning. No AWS or SSH keys are kept on GitHub. If another app is deploying (shared lock), it checks again on the next round.
 
-배포 스크립트(`deploy/`)는 중앙 템플릿이고, 이 리포의 `compose.yaml`이 다음 조건을 지켜야 동작합니다.
+The deploy scripts (`deploy/`) are central templates, and they work only if this repo's `compose.yaml` meets the following conditions.
 
-- 이미지 이름: `{{project.db.name}}-backend:${IMAGE_TAG:-local}`, `{{project.db.name}}-frontend:${IMAGE_TAG:-local}`
-- 웹 포트: `'${WEB_BIND:-127.0.0.1}:${WEB_PORT:-{{project.ports.web}}}:80'`
-- DB 서비스 이름 `db`, API 서비스 이름 `api`, API 이미지 안의 `node dist/migrate.js`
+- Image names: `{{project.db.name}}-backend:${IMAGE_TAG:-local}`, `{{project.db.name}}-frontend:${IMAGE_TAG:-local}`
+- Web port: `'${WEB_BIND:-127.0.0.1}:${WEB_PORT:-{{project.ports.web}}}:80'`
+- DB service named `db`, API service named `api`, and `node dist/migrate.js` inside the API image
 
-timer 설치(서버에서 한 번):
+Install the timer (once, on the server):
 
 ```bash
 sudo bash /opt/{{project.name}}/deploy/install-autodeploy.sh
 ```
 
 ```bash
-systemctl list-timers {{project.db.name}}-autodeploy.timer        # 다음 실행 시각
-journalctl -u {{project.db.name}}-autodeploy -n 50 --no-pager     # 최근 기록
-cat /opt/{{project.name}}/.deployed                                # 배포 중인 커밋
-sudo systemctl stop {{project.db.name}}-autodeploy.timer           # 일시 중지
-sudo systemctl start {{project.db.name}}-autodeploy.timer          # 재개
-rm /opt/{{project.name}}/.autodeploy-failed                        # 건너뛴 커밋 다시 시도
+systemctl list-timers {{project.db.name}}-autodeploy.timer        # next run time
+journalctl -u {{project.db.name}}-autodeploy -n 50 --no-pager     # recent log
+cat /opt/{{project.name}}/.deployed                                # deployed commit
+sudo systemctl stop {{project.db.name}}-autodeploy.timer           # pause
+sudo systemctl start {{project.db.name}}-autodeploy.timer          # resume
+rm /opt/{{project.name}}/.autodeploy-failed                        # retry a skipped commit
 ```
 
-## 4-1. 알림 (healthchecks.io)
+## 4-1. Alerts (healthchecks.io)
 
-방화벽이 허용 IP에서만 열려 있어 바깥 감시 서비스가 서버에 들어올 수 없습니다. 그래서 서버가 바깥으로 신호를 보내고, 신호가 끊기거나 실패 신호가 오면 healthchecks.io가 메일을 보냅니다(#284). 서버가 통째로 멈춰도 신호가 끊기므로 알 수 있습니다.
+The firewall is open only to allowed IPs, so an outside monitoring service cannot reach the server. So the server sends pings outward, and healthchecks.io sends an email if pings stop or a failure ping arrives (#284). Even if the whole server stops, the pings stop, so you will know.
 
-| 체크 | 서버 `.env` 키 | 신호를 보내는 곳 | healthchecks.io 주기 / 유예 |
+| Check | Server `.env` key | Where the ping is sent from | healthchecks.io period / grace |
 |---|---|---|---|
-| health | `HEALTHCHECK_URL_HEALTH` | `{{project.db.name}}-health.timer` 5분마다 `/api/health` | 5분 / 10분 |
-| deploy | `HEALTHCHECK_URL_DEPLOY` | 자동 배포 2분마다 (최신, CI 대기, 배포 성공은 ok, CI·배포 실패는 fail) | 2분 / 10분 |
-| backup | `HEALTHCHECK_URL_BACKUP` | 매일 덤프 (S3 사본 실패도 fail) | 1일 / 2시간 |
-| restore | `HEALTHCHECK_URL_RESTORE` | 매주 복구 확인 | 7일 / 1일 |
-| report | `HEALTHCHECK_URL_REPORT` | 매일 서버 상태 보고 (#285) | 1일 / 2시간 |
+| health | `HEALTHCHECK_URL_HEALTH` | `{{project.db.name}}-health.timer` every 5 minutes, `/api/health` | 5 minutes / 10 minutes |
+| deploy | `HEALTHCHECK_URL_DEPLOY` | Auto deploy every 2 minutes (up to date, waiting for CI, and deploy success are ok; CI or deploy failure is fail) | 2 minutes / 10 minutes |
+| backup | `HEALTHCHECK_URL_BACKUP` | Daily dump (an S3 copy failure is also fail) | 1 day / 2 hours |
+| restore | `HEALTHCHECK_URL_RESTORE` | Weekly restore check | 7 days / 1 day |
+| report | `HEALTHCHECK_URL_REPORT` | Daily server status report (#285) | 1 day / 2 hours |
 
-- 설치: `sudo bash /opt/{{project.name}}/deploy/install-backup.sh` (백업·복구 확인·health timer). `.env`에 주소를 나중에 넣어도 다시 실행할 필요가 없습니다.
-- 수동 확인: `bash /opt/{{project.name}}/deploy/notify.sh health` (주소는 출력하지 않습니다)
-- 매일 보고(#285, 04:00): `memory=..% disk=..% deployed=<커밋> containers: <컨테이너> <메모리>` 한 줄이 report 체크 기록에 남습니다. 서버 메모리 사용률이 `REPORT_MEMORY_PERCENT`(기본 85) 또는 디스크가 `REPORT_DISK_PERCENT`(기본 90)를 넘으면 실패 신호로 보내 메일이 옵니다. 지금 값만 보려면 `bash /opt/{{project.name}}/deploy/report.sh line`.
-- 신호 본문(덤프 이름, 실패 이유)은 healthchecks.io의 체크 기록에 남습니다. 비밀값은 넣지 않습니다.
+- Install: `sudo bash /opt/{{project.name}}/deploy/install-backup.sh` (backup, restore check, and health timers). You do not need to run it again if you add the URLs to `.env` later.
+- Manual check: `bash /opt/{{project.name}}/deploy/notify.sh health` (the URL is not printed)
+- Daily report (#285, 04:00): one line, `memory=..% disk=..% deployed=<commit> containers: <container> <memory>`, is left in the report check's log. If server memory usage exceeds `REPORT_MEMORY_PERCENT` (default 85) or disk usage exceeds `REPORT_DISK_PERCENT` (default 90), it is sent as a failure ping and an email arrives. To see only the current values, run `bash /opt/{{project.name}}/deploy/report.sh line`.
+- The ping body (dump name, failure reason) is left in the check's log on healthchecks.io. Do not put secret values in it.
 
-## 4-2. API 요청 횟수 제한
+## 4-2. API rate limiting
 
-웹 컨테이너의 nginx(`frontend/nginx.conf`, 중앙 관리 파일)가 `/api/` 요청을 클라이언트 IP마다 초당 평균 10개로 제한합니다. 한 번에 40개까지는 바로 통과하고, 넘는 요청은 `429`를 받습니다(#291). API 서버 자체에는 제한이 없습니다.
+The nginx in the web container (`frontend/nginx.conf`, a centrally managed file) limits `/api/` requests to an average of 10 per second per client IP. Up to 40 at once pass immediately, and requests beyond that receive `429` (#291). The API server itself has no limit.
 
-- 정상 사용(화면 하나가 API 몇 개를 동시에 부름)에서는 걸리지 않습니다. 화면에서 429가 보이면 그 화면이 API를 반복 호출하는지 먼저 확인합니다.
-- 나중에 서버 앞에 리버스 프록시를 두면(도메인 작업 #251) 모든 요청이 프록시 IP로 보입니다. 그때 nginx에 `real_ip`(프록시가 넘긴 실제 IP 사용) 설정을 함께 넣습니다.
+- Normal use (one screen calling several APIs at the same time) does not hit it. If you see a 429 on a screen, first check whether that screen calls the API repeatedly.
+- If you later put a reverse proxy in front of the server (domain work #251), every request will appear to come from the proxy IP. At that point, add a `real_ip` setting (use the real IP the proxy passes on) to nginx as well.
 
-## 5. 접속
+## 5. Access
 
-- **브라우저:** `http://<static_ip>:<WEB_PORT>` (허용 IP에서만)
+- **Browser:** `http://<static_ip>:<WEB_PORT>` (from allowed IPs only)
 - **SSH:** `ssh -i ~/.ssh/{{project.name}}-lightsail ubuntu@<static_ip>`
-- **SSH 터널(전송 암호화):** `ssh -i ~/.ssh/{{project.name}}-lightsail -L {{project.ports.web}}:127.0.0.1:<WEB_PORT> ubuntu@<static_ip>` 후 `http://localhost:{{project.ports.web}}`
-- **로그:** 서버에서 `cd /opt/{{project.name}} && docker compose logs --tail 100 api`
+- **SSH tunnel (encrypted transport):** `ssh -i ~/.ssh/{{project.name}}-lightsail -L {{project.ports.web}}:127.0.0.1:<WEB_PORT> ubuntu@<static_ip>`, then `http://localhost:{{project.ports.web}}`
+- **Logs:** on the server, `cd /opt/{{project.name}} && docker compose logs --tail 100 api`
 
-## 6. 허용 IP 바꾸기
+## 6. Changing the allowed IPs
 
-`terraform.tfvars`의 `allowed_cidrs`를 고친 뒤 `terraform apply`를 실행합니다. 전체 공개(`/0`)는 변수 검증에서 거부됩니다.
+Edit `allowed_cidrs` in `terraform.tfvars`, then run `terraform apply`. Opening to everyone (`/0`) is rejected by variable validation.
 
-## 7. 철거 [사용자]
+## 7. Teardown [User]
 
-필요한 백업을 PC로 가져온 뒤 `terraform destroy`를 실행합니다. 자동 스냅샷은 인스턴스 삭제 후에도 남아 비용이 나올 수 있으므로 Lightsail 콘솔에서 확인합니다.
+After bringing the backups you need to the PC, run `terraform destroy`. Automatic snapshots remain after the instance is deleted and can incur costs, so check in the Lightsail console.

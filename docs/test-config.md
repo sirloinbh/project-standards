@@ -1,69 +1,68 @@
-# 테스트 설정 템플릿 (Playwright, Vitest)
+# Test config templates (Playwright, Vitest)
 
-workout-memo의 테스트 설정을 중앙 관리 파일로 만든 것이다(#33). 레지스트리 기능 플래그가 켜진 앱에만 동기화한다. 의존성이 없는 앱에 넣으면 타입 검사가 깨지기 때문이다.
+These are workout-memo's test configs made into centrally managed files (#33). They are synced only to apps whose registry feature flag is on, because putting them in an app that lacks the dependencies would break type checking.
 
-| 관리 파일 | 원본 | 켜는 플래그 | 프로젝트마다 다른 값 |
+| Managed file | Source | Flag that turns it on | Value that differs per project |
 |---|---|---|---|
-| `playwright.config.ts` | `templates/e2e/playwright.config.ts.tmpl` | `features.e2e` | e2e API 포트(`ports.e2eApi`), e2e 웹 포트(`ports.e2eWeb`) |
-| `frontend/vitest.config.ts` | `templates/vitest/frontend/vitest.config.ts.tmpl` | `features.vitest` | 없음 |
+| `playwright.config.ts` | `templates/e2e/playwright.config.ts.tmpl` | `features.e2e` | e2e API port (`ports.e2eApi`), e2e web port (`ports.e2eWeb`) |
+| `frontend/vitest.config.ts` | `templates/vitest/frontend/vitest.config.ts.tmpl` | `features.vitest` | None |
 
-- 포트는 [ADR-0006](adr/0006-port-slot-allocation.md)의 슬롯 공식으로 정한 레지스트리 값이다. 개발 서버(`api`, `vite`)와 겹치지 않아서 개발 서버를 켠 채로 e2e를 돌릴 수 있다.
-- `features.e2e`는 CI의 e2e 작업도 켠다(`reusable-app-ci.yml`).
-- `features.e2eVisual`을 함께 켜면 CI가 e2e를 `versions.json`의 `images.playwright`(digest 고정) 컨테이너에서 `E2E_VISUAL=1`로 실행해 스크린샷까지 비교한다(#203). 실패하면 `playwright-report`와 기준 이미지 후보 `visual-baselines` artifact를 올린다. 이 컨테이너에는 `psql`이 없으므로 `db:migrate` 실행기가 있어야 한다. 이미지 버전은 앱의 `@playwright/test` 버전과 맞춘다. 지금은 workout-memo만 켜져 있다.
-- 두 파일 모두 `.prettierignore`의 중앙 구간에 들어 있다. 앱에서 포맷하면 해시 검사가 실패하기 때문이다(#154).
-- 지금은 workout-memo만 두 플래그가 켜져 있다. 스캐폴드로 만드는 새 프로젝트는 처음부터 두 플래그를 켜고 등록한다. 스캐폴드의 `package.json`에 아래 의존성과 e2e 시작 파일이 들어 있다.
+- The ports are registry values set by the slot formula in [ADR-0006](adr/0006-port-slot-allocation.md). They do not overlap with the dev servers (`api`, `vite`), so e2e can run while the dev servers are on.
+- `features.e2e` also turns on the e2e job in CI (`reusable-app-ci.yml`).
+- If `features.e2eVisual` is also on, CI runs e2e in the container for `images.playwright` in `versions.json` (pinned by digest) with `E2E_VISUAL=1` and also compares screenshots (#203). On failure it uploads the `playwright-report` and `visual-baselines` artifacts, which hold baseline image candidates. This container has no `psql`, so a `db:migrate` runner must exist. Match the image version to the app's `@playwright/test` version. Currently only workout-memo has it on.
+- Both files are in the central section of `.prettierignore`, because formatting them in an app would fail the hash check (#154).
+- Currently only workout-memo has both flags on. A new project made by the scaffold is registered with both flags on from the start. The scaffold's `package.json` includes the dependencies below and the e2e starter files.
 
-## 템플릿이 기대하는 것
+## What the templates expect
 
-Playwright 설정(`features.e2e`):
+Playwright config (`features.e2e`):
 
-- 테스트 파일은 `e2e/` 폴더에 둔다. `e2e/tsconfig.json`이 `../playwright.config.ts`를 포함하면 루트 `npm run typecheck`가 설정 파일도 검사한다.
-- 백엔드 `backend/src/server.ts`가 `PORT`, `DATABASE_URL` 환경 변수를 읽고 `/api/health`에 응답한다.
-- 프론트엔드 `npm run dev`(Vite)가 `API_PROXY_TARGET`으로 `/api`를 프록시한다.
-- `E2E_DATABASE_URL` 또는 `TEST_DATABASE_URL`에 `db:migrate`로 준비한 테스트 DB를 지정한다. 개인 DB는 쓰지 않는다.
-- 브라우저는 PC에 설치된 Chrome을 쓴다(`channel: 'chrome'`). 브라우저를 내려받지 않는다. `E2E_VISUAL=1`일 때만 Playwright 컨테이너에 든 Chromium으로 화면 비교를 한다.
-- 루트 `package.json`에 `"test:e2e": "playwright test"`, `.gitignore` 프로젝트 구간에 `test-results/`, `playwright-report/`를 둔다.
+- Test files go in the `e2e/` folder. If `e2e/tsconfig.json` includes `../playwright.config.ts`, the root `npm run typecheck` also checks the config file.
+- The backend `backend/src/server.ts` reads the `PORT` and `DATABASE_URL` environment variables and responds on `/api/health`.
+- The frontend `npm run dev` (Vite) proxies `/api` to `API_PROXY_TARGET`.
+- Set `E2E_DATABASE_URL` or `TEST_DATABASE_URL` to a test DB prepared with `db:migrate`. Do not use a personal DB.
+- The browser is the Chrome installed on the PC (`channel: 'chrome'`). No browser is downloaded. Only when `E2E_VISUAL=1` is the screenshot comparison done with the Chromium inside the Playwright container.
+- Put `"test:e2e": "playwright test"` in the root `package.json`, and `test-results/` and `playwright-report/` in the project section of `.gitignore`.
 
-Vitest 설정(`features.vitest`):
+Vitest config (`features.vitest`):
 
-- 테스트 파일은 `frontend/src/**/*.test.{ts,tsx}`다.
-- `frontend/src/test/setup.ts`가 있어야 한다(프로젝트 소유 파일. 스캐폴드의 파일을 시작점으로 쓴다).
-- `frontend/package.json`에 `"test": "vitest run"`을 둔다.
-- 테스트 하나의 시간 제한은 15초다(`testTimeout`, #390). 같은 PC에 다른 작업이 돌면 5초 제한에 닿아 코드와 상관없이 실패했기 때문이다.
+- Test files are `frontend/src/**/*.test.{ts,tsx}`.
+- `frontend/src/test/setup.ts` must exist (a project-owned file. Use the scaffold's file as a starting point).
+- Put `"test": "vitest run"` in `frontend/package.json`.
+- The time limit for one test is 15 seconds (`testTimeout`, #390). When other work ran on the same PC, tests hit the 5-second limit and failed regardless of the code.
 
-## 다른 앱이 도입할 때 필요한 의존성
+## Dependencies needed when another app adopts them
 
-workout-memo `package-lock.json`의 설치 버전이다(2026-10-22). 새 버전을 들이지 않는다.
+These are the versions installed in workout-memo's `package-lock.json` (2026-10-22). No new versions are brought in.
 
-**새 패키지 설치는 사용자 승인을 받은 뒤 사용자가 직접 한다.** 에이전트가 실행할 수 있는 설치 명령은 잠금 파일대로 설치하는 `npm ci`뿐이다(#375). 승인된 설치도 `--ignore-scripts`로 하고([의존성 정책](dependency-policy.md)), lockfile 변경과 `ioc-scan` 결과를 앱 PR에 적는다.
+**Installing new packages is done by the user directly, after user approval.** The only install command an agent can run is `npm ci`, which installs exactly what the lockfile says (#375). Approved installs are also done with `--ignore-scripts` ([dependency policy](dependency-policy.md)), and the lockfile changes and the `ioc-scan` result are written in the app PR.
 
-| 플래그 | 위치 | 패키지 | 버전 | 쓰는 곳 |
+| Flag | Location | Package | Version | Used for |
 |---|---|---|---|---|
-| vitest | `frontend` devDependencies | `vitest` | 5.0.3 | `vitest.config.ts`, 테스트 실행 |
+| vitest | `frontend` devDependencies | `vitest` | 5.0.3 | `vitest.config.ts`, running tests |
 | vitest | `frontend` devDependencies | `jsdom` | 30.1.2 | `environment: 'jsdom'` |
-| vitest | `frontend` devDependencies | `@testing-library/react` | 16.3.3 | 화면 테스트, `setup.ts`의 `cleanup` |
-| vitest | `frontend` devDependencies | `@testing-library/dom` | 10.4.2 | `@testing-library/react`의 peer |
-| vitest | `frontend` devDependencies | `@testing-library/jest-dom` | 7.0.1 | `setup.ts`의 `toBeInTheDocument` 등 |
-| e2e | 루트 devDependencies | `@playwright/test` | 1.63.0 | `playwright.config.ts`, `npm run test:e2e` |
-| e2e | 루트 devDependencies | `@axe-core/playwright` | 4.13.0 | 접근성 검사. 스캐폴드 `e2e/overview.spec.ts`가 쓴다 |
-| e2e | 루트 devDependencies | `@types/node` | 24.19.2 | `e2e/tsconfig.json`의 `types: ["node"]` |
-| e2e | `backend` devDependencies | `tsx` | 4.23.15 | `webServer`의 `npx --no-install tsx backend/src/server.ts` |
+| vitest | `frontend` devDependencies | `@testing-library/react` | 16.3.3 | Screen tests, `cleanup` in `setup.ts` |
+| vitest | `frontend` devDependencies | `@testing-library/dom` | 10.4.2 | Peer of `@testing-library/react` |
+| vitest | `frontend` devDependencies | `@testing-library/jest-dom` | 7.0.1 | `toBeInTheDocument` and others in `setup.ts` |
+| e2e | root devDependencies | `@playwright/test` | 1.63.0 | `playwright.config.ts`, `npm run test:e2e` |
+| e2e | root devDependencies | `@axe-core/playwright` | 4.13.0 | Accessibility check. Used by the scaffold's `e2e/overview.spec.ts` |
+| e2e | root devDependencies | `@types/node` | 24.19.2 | `types: ["node"]` in `e2e/tsconfig.json` |
+| e2e | `backend` devDependencies | `tsx` | 4.23.15 | `npx --no-install tsx backend/src/server.ts` in `webServer` |
 
-- `@testing-library/user-event`(14.6.7)는 workout-memo가 쓰지만 템플릿과 공통 UI 테스트에는 필요 없다. 앱이 쓸 때만 들인다.
-- 표에 없는 `vite`, `typescript`, `react`는 이미 모든 앱에 있다. 메이저 버전은 [의존성 정책](dependency-policy.md)의 통일표를 따른다.
-- `tsx`가 이미 있는 백엔드는 그대로 둔다.
+- workout-memo uses `@testing-library/user-event` (14.6.7), but the templates and common UI tests do not need it. Bring it in only when an app uses it.
+- `vite`, `typescript`, and `react`, which are not in the table, are already in every app. Major versions follow the unification table in the [dependency policy](dependency-policy.md).
+- A backend that already has `tsx` is left as is.
 
-## 앱에 켜는 순서
+## Order for turning them on in an app
 
-1. 앱 리포에 이슈를 열고 위 표의 패키지를 적어 사용자 승인을 받는다.
-2. 사용자가 설치한다. `setup.ts`, `e2e/` 테스트, `test:e2e` 스크립트처럼 프로젝트 소유 파일을 앱 PR로 추가한다.
-3. 중앙 리포에서 `registry/projects.json`의 그 앱 `features.vitest` 또는 `features.e2e`를 `true`로 바꾸는 PR을 연다. 다음 동기화 PR에 설정 파일이 들어간다.
+1. Open an issue in the app repo, list the packages in the table above, and get user approval.
+2. The user installs them. Add project-owned files such as `setup.ts`, the `e2e/` tests, and the `test:e2e` script in the app PR.
+3. In the central repo, open a PR that changes that app's `features.vitest` or `features.e2e` in `registry/projects.json` to `true`. The config files come in with the next sync PR.
 
-## 접근성·성능 점수 (Lighthouse CI, #280)
+## Accessibility and performance scores (Lighthouse CI, #280)
 
-레지스트리 `features.lighthouse`가 켜진 앱(지금은 workout-memo)은 `lighthouserc.json`을 받습니다. 공통 CI `verify` job이 `npm run check`로 만든 `frontend/dist`를 Lighthouse CI(`@lhci/cli`)로 재고, 점수를 작업 요약에 씁니다. 기준(접근성 0.9, 모범 사례 0.9, 성능 0.8)보다 낮아도 경고만 냅니다. 보고서는 artifact `lighthouse-report`에 7일 남습니다. 자세한 결정은 [변경 기록](changes/280-lighthouse.md)에 있습니다.
+Apps with the registry `features.lighthouse` on (currently workout-memo) receive `lighthouserc.json`. The common CI `verify` job measures `frontend/dist`, built by `npm run check`, with Lighthouse CI (`@lhci/cli`) and writes the scores to the job summary. Scores below the thresholds (accessibility 0.9, best practices 0.9, performance 0.8) only produce a warning. The report is kept for 7 days in the `lighthouse-report` artifact. The detailed decision is in the [change record](changes/280-lighthouse.md).
 
-## 백엔드 없는 화면 테스트 (MSW 계약 목, #281)
+## Screen tests without a backend (MSW contract mock, #281)
 
-레지스트리 `features.msw`가 켜진 앱(지금은 workout-memo)은 `frontend/src/test/contract-api.ts`를 받습니다. 테스트 파일에서 `setupContractApi()`를 부르면 MSW가 `docs/openapi.json`의 모든 API에 답하고, 계약에 없는 요청은 테스트를 실패시킵니다. 데이터는 `contractHandlers({ 'GET /api/…': … })`로 테스트마다 넣습니다. 계약에 성공 응답 스키마가 없으면 본문이 비므로, 목록 화면은 `setupContractApi({ emptyBody: [] })`처럼 기본값을 줍니다. 자세한 내용은 [변경 기록](changes/281-msw.md)에 있습니다.
-
+Apps with the registry `features.msw` on (currently workout-memo) receive `frontend/src/test/contract-api.ts`. When a test file calls `setupContractApi()`, MSW answers every API in `docs/openapi.json`, and a request not in the contract fails the test. Data is supplied per test with `contractHandlers({ 'GET /api/…': … })`. If the contract has no success response schema, the body is empty, so list screens give a default such as `setupContractApi({ emptyBody: [] })`. Details are in the [change record](changes/281-msw.md).

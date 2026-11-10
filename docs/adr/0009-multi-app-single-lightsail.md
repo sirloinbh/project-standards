@@ -1,48 +1,48 @@
-# 0009. 앱 8개를 Lightsail 한 대에 앱별 compose로 배포
+# 0009. Deploy 8 apps to a single Lightsail instance with one compose per app
 
-- 상태: 채택 (이슈 #36)
-- 날짜: 2026-10-23
+- Status: Accepted (issue #36)
+- Date: 2026-10-23
 
-> "접속" 결정은 [ADR-0012](0012-shared-domain-subdomains.md)가 대체한다(#248). 서브도메인 전환(#254)이 끝날 때까지는 이 문서의 앱별 웹 포트 접속을 그대로 쓴다.
+> The "access" decision is superseded by [ADR-0012](0012-shared-domain-subdomains.md) (#248). Until the subdomain switch (#254) is finished, this document's per-app web port access continues to be used as is.
 
-## 맥락
+## Context
 
-- workout-memo만 배포되어 있다. Lightsail 1 GB 한 대에서 Docker Compose(web·api·postgres)를 돌리고, 서버가 이미지를 직접 빌드하며, `workout-autodeploy.timer`가 2분마다 CI를 통과한 `origin/main`을 배포한다. 방화벽은 허용 IP에서 22·80만 연다.
-- 나머지 앱 7개도 같은 서버에 올리기로 했다([costs.md](../costs.md)). 배포 템플릿을 만들려면 DB·접속·빌드 방식을 먼저 정해야 한다.
-- `registry/platform.json`의 `rootDomain`이 아직 없다.
-- 비교한 선택지는 #36 댓글에 있다. 사용자가 권장안을 그대로 골랐다(2026-10-23).
+- Only workout-memo is deployed. A single 1 GB Lightsail instance runs Docker Compose (web, api, postgres), the server builds images itself, and `workout-autodeploy.timer` deploys `origin/main` that passed CI every 2 minutes. The firewall opens only 22 and 80 to allowed IPs.
+- The other 7 apps are also to be put on the same server ([costs.md](../costs.md)). To build the deployment templates, the DB, access, and build approach must be decided first.
+- `rootDomain` in `registry/platform.json` does not exist yet.
+- The options compared are in the #36 comments. The user chose the recommended option as is (2026-10-23).
 
-## 결정
+## Decision
 
-| 항목 | 결정 |
+| Item | Decision |
 |---|---|
-| 앱 배치 | 앱마다 `/opt/<앱 이름>`에 자기 리포를 두고 자기 `compose.yaml`로 실행한다 |
-| DB | 앱마다 postgres 컨테이너를 둔다. 공유 postgres는 쓰지 않는다 |
-| 접속 | 앱별 웹 포트(레지스트리 `ports.web`, 8101–8108)를 허용 IP에만 연다. 도메인이 생기면 호스트 리버스 프록시와 서브도메인으로 바꾸는 새 ADR을 쓴다 |
-| 이미지 빌드 | 지금처럼 서버에서 빌드한다. 서버 전체 공용 잠금(`/run/lock/apps-deploy.lock`)으로 한 번에 한 앱만 빌드·배포한다 |
-| 자동 배포 | 앱마다 `<앱 이름>-autodeploy.timer`. 시작 시각을 슬롯마다 조금씩 어긋나게 둔다 |
-| 서버 사양 | 두 번째 앱을 올릴 때 2 GB(`small_3_0`)로 옮긴다 |
+| App placement | Each app keeps its own repo in `/opt/<app name>` and runs with its own `compose.yaml` |
+| DB | Each app has its own postgres container. A shared postgres is not used |
+| Access | Open each app's web port (registry `ports.web`, 8101–8108) only to allowed IPs. When a domain exists, write a new ADR to switch to a host reverse proxy and subdomains |
+| Image build | Build on the server as now. A server-wide shared lock (`/run/lock/apps-deploy.lock`) lets only one app build and deploy at a time |
+| Auto deploy | One `<app name>-autodeploy.timer` per app. Start times are staggered slightly by slot |
+| Server spec | Move to 2 GB (`small_3_0`) when the second app is put on |
 
-## 결과
+## Consequences
 
-- 마이그레이션·백업·롤백이 앱 단위로 나뉜다. 한 앱의 실패가 다른 앱의 DB에 닿지 않는다.
-- postgres가 8개 떠서 공유 postgres보다 메모리를 더 쓴다. 2 GB에서 실제 사용량을 측정하고, 부족하면 4 GB로 올리거나 공유 postgres로 바꾸는 새 ADR을 쓴다.
-- 앱 프런트엔드의 base 경로·API 경로를 바꿀 필요가 없다. 방화벽에 앱 포트를 추가하는 일은 shared-aws-infrastructure에서 한다.
-- 서버가 계속 빌드하므로 공유 패키지를 받으려면 서버 `.env`에 `NODE_AUTH_TOKEN`(`read:packages`)이 필요하다(design.md 4.3). ECR 같은 이미지 레지스트리 비용은 없다.
-- Lightsail은 사양을 제자리에서 바꿀 수 없다. 2 GB로 옮길 때는 스냅샷에서 새 인스턴스를 만들고 고정 IP를 다시 붙인다. 이 단계는 사용자가 한다.
-- 배포 스크립트 템플릿(`templates/app/deploy/`)은 #94 이후에 이 결정대로 만든다.
+- Migration, backup, and rollback are split per app. One app's failure does not reach another app's DB.
+- 8 postgres instances run, which uses more memory than a shared postgres. Measure actual usage on 2 GB, and if it is not enough, raise to 4 GB or write a new ADR to switch to a shared postgres.
+- There is no need to change the apps' frontend base path or API path. Adding app ports to the firewall is done in shared-aws-infrastructure.
+- Because the server keeps building, it needs `NODE_AUTH_TOKEN` (`read:packages`) in the server `.env` to fetch the shared packages (design.md 4.3). There is no cost for an image registry such as ECR.
+- Lightsail cannot change its spec in place. When moving to 2 GB, create a new instance from a snapshot and reattach the static IP. The user does this step.
+- The deploy script templates (`templates/app/deploy/`) are built per this decision after #94.
 
-## 보충 (2026-10-24, #36)
+## Addendum (2026-10-24, #36)
 
-`templates/app/deploy/`를 만들면서 다음을 정했다.
+While building `templates/app/deploy/`, the following was decided.
 
-- **timer 이름은 `<DB 이름>-autodeploy`다**(예: `workout-autodeploy`, `study-autodeploy`). 결정 표의 "`<앱 이름>-autodeploy`"와 다르다. 운영 중인 workout-memo 서버의 timer 이름을 바꾸지 않고 동기화하려고 이렇게 정했다. DB 이름도 레지스트리에서 앱마다 겹치지 않는다.
-- **timer 시작 시각:** 부팅 후 `3min <슬롯>0s`에 시작하고, 이후 2분마다 확인한다. 공용 잠금이 이미 잡혀 있으면 그 회차는 건너뛴다.
-- **health 확인 포트:** 서버 `.env`의 `WEB_PORT`를 따르고, 값이 없으면 레지스트리 `ports.web`을 쓴다. workout-memo 서버는 지금 `WEB_PORT=80`이라 동작이 바뀌지 않는다. 8101로 옮기는 것은 방화벽 변경과 함께 따로 한다.
-- **배포 전 덤프:** 서버에 `/usr/local/bin/<DB 이름>-backup`이 있으면 그 명령을 쓴다(workout-memo). 없으면 앱 폴더의 `backups/`에 `pg_dump`로 저장하고 14일 지난 파일을 지운다.
+- **The timer name is `<DB name>-autodeploy`** (for example `workout-autodeploy`, `study-autodeploy`). This differs from "`<app name>-autodeploy`" in the decision table. It was chosen so that sync works without renaming the timer on the running workout-memo server. DB names are also unique per app in the registry.
+- **Timer start time:** It starts at `3min <slot>0s` after boot, then checks every 2 minutes. If the shared lock is already held, that round is skipped.
+- **Health check port:** It follows `WEB_PORT` in the server `.env`, and uses the registry `ports.web` if there is no value. The workout-memo server currently has `WEB_PORT=80`, so behavior does not change. Moving to 8101 is done separately together with a firewall change.
+- **Pre-deploy dump:** If the server has `/usr/local/bin/<DB name>-backup`, that command is used (workout-memo). If not, `pg_dump` saves to `backups/` in the app folder and deletes files older than 14 days.
 
-## 보충 (2026-10-27, #262)
+## Addendum (2026-10-27, #262)
 
-- **DB 덤프를 앱마다 매일 한다.** 위 "배포 전 덤프" 규칙은 바뀌었다. 이전에는 workout-memo만 인프라 user-data의 cron으로 매일 덤프했고, 나머지 앱은 배포할 때만 덤프했다. 이제 `deploy/backup.sh`가 매일 덤프(`<DB 이름>-backup.timer`, 03:30)와 배포 전 덤프를 같은 폴더 `/var/backups/<DB 이름>`에 만든다. 앱들은 `/run/lock/apps-backup.lock`을 차례로 잡는다.
-- **서버 밖 사본은 S3다.** 사용자가 S3를 골랐다(#262). 서버에는 버킷에 올리기만 되는 키를 두고, 업로드는 `curl --aws-sigv4`로 해서 서버에 AWS CLI를 설치하지 않는다. 버킷과 키는 shared-aws-infrastructure가 만든다.
-- **매주 복구를 확인한다.** `<DB 이름>-restore-check.timer`(일요일 04:30)가 최신 덤프를 임시 postgres 컨테이너에 복구하고, 덤프할 때 저장한 테이블별 행 수와 비교한다.
+- **DB dumps are taken daily for every app.** The "pre-deploy dump" rule above changed. Previously only workout-memo was dumped daily by cron in the infrastructure user-data, and the other apps were dumped only at deploy time. Now `deploy/backup.sh` makes the daily dump (`<DB name>-backup.timer`, 03:30) and the pre-deploy dump in the same folder `/var/backups/<DB name>`. The apps take `/run/lock/apps-backup.lock` in turn.
+- **The off-server copy is S3.** The user chose S3 (#262). The server holds a key that can only upload to the bucket, and uploads use `curl --aws-sigv4`, so the AWS CLI is not installed on the server. The bucket and key are created by shared-aws-infrastructure.
+- **Restore is verified weekly.** `<DB name>-restore-check.timer` (Sunday 04:30) restores the latest dump into a temporary postgres container and compares it with the per-table row counts saved when the dump was taken.

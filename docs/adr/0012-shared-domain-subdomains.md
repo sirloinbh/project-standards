@@ -1,43 +1,43 @@
-# 0012. 공용 도메인 하나에 앱별 서브도메인으로 접속
+# 0012. Access through per-app subdomains of one shared domain
 
-- 상태: 채택 (이슈 #248)
-- 날짜: 2026-11-01
-- 바꾸는 결정: [ADR-0009](0009-multi-app-single-lightsail.md)의 "접속". 서브도메인 전환(#254)이 끝날 때까지는 ADR-0009의 앱별 웹 포트 접속을 그대로 쓴다.
+- Status: Accepted (issue #248)
+- Date: 2026-11-01
+- Changes a decision: the "access" part of [ADR-0009](0009-multi-app-single-lightsail.md). Until the subdomain switch (#254) is finished, ADR-0009's per-app web port access continues to be used as is.
 
-## 맥락
+## Context
 
-- `registry/platform.json`의 `rootDomain`과 앱별 `service.subdomain`이 비어 있다. ADR-0009는 도메인이 생기면 호스트 리버스 프록시와 서브도메인으로 바꾸는 새 ADR을 쓰기로 했다.
-- 방화벽은 허용 IP에만 열려 있고, 앱에는 로그인이 없다(workout-memo#107 예정). 공개하면 누구나 데이터를 볼 수 있다.
-- 비교는 [docs/research/domain.md](../research/domain.md)에 있다. 사용자가 "AWS로 모두 관리"를 골랐고, 나머지 항목은 권장안을 골랐다(2026-11-01).
+- `rootDomain` in `registry/platform.json` and each app's `service.subdomain` are empty. ADR-0009 decided to write a new ADR switching to a host reverse proxy and subdomains once a domain exists.
+- The firewall is open only to allowed IPs, and the apps have no login (workout-memo#107 planned). If made public, anyone could see the data.
+- The comparison is in [docs/research/domain.md](../research/domain.md). The user chose "manage everything on AWS" and chose the recommended option for the other items (2026-11-01).
 
-## 결정
+## Decision
 
-| 항목 | 결정 |
+| Item | Decision |
 |---|---|
-| 도메인 | `.com` 하나를 Route 53에서 등록한다. 이름은 구매할 때 사용자가 정한다(#249) |
-| DNS | 등록할 때 Route 53이 만드는 호스팅 영역을 쓴다. 영역과 레코드는 shared-aws-infrastructure Terraform으로 관리한다 |
-| DNS 레코드 | 앱마다 서브도메인 A 레코드를 둔다. 와일드카드 A 레코드는 두지 않아서, 등록하지 않은 이름은 서버로 가지 않는다 |
-| 서브도메인 | 레지스트리 `name` 그대로(`workout-memo.<도메인>`) |
-| 프록시 | 서버에 nginx 하나를 두고 443을 받아 앱 웹 포트로 넘긴다. 설정은 레지스트리에서 생성한다 |
-| 인증서 | Let's Encrypt 와일드카드(`*.<도메인>`) 하나. certbot `dns-route53`으로 DNS 검증한다 |
-| 접속 | 443도 허용 IP에만 연다. 앱 로그인이 생기면 앱별로 공개를 정한다 |
+| Domain | Register one `.com` in Route 53. The user decides the name at purchase (#249) |
+| DNS | Use the hosted zone that Route 53 creates at registration. The zone and records are managed with shared-aws-infrastructure Terraform |
+| DNS records | One subdomain A record per app. No wildcard A record is set, so names that are not registered do not reach the server |
+| Subdomain | The registry `name` as is (`workout-memo.<domain>`) |
+| Proxy | One nginx on the server takes 443 and forwards to each app's web port. The config is generated from the registry |
+| Certificate | One Let's Encrypt wildcard (`*.<domain>`). DNS validation with certbot `dns-route53` |
+| Access | 443 is also opened only to allowed IPs. When app login exists, decide public access per app |
 
-Lightsail DNS도 AWS 안에 있지만 certbot 공식 플러그인이 없어 인증서 자동 갱신이 어려우므로 쓰지 않는다.
+Lightsail DNS is also inside AWS, but it is not used because certbot has no official plugin for it, which makes automatic certificate renewal hard.
 
-## 결과
+## Consequences
 
-- **비용:** 1년 약 $22(도메인 $16, 호스팅 영역 $6)다. 다른 업체에서 사는 조합보다 1년 약 $5 비싸지만, 계정과 결제가 AWS 하나로 모인다. 금액은 [costs.md](../costs.md)에 있다.
-- **방화벽:** 인증서를 받으려고 80을 전체에 열 필요가 없다. shared-aws-infrastructure의 `/0` 금지 검사를 그대로 둔다.
-- **접속 범위:** 휴대폰 데이터망처럼 IP가 바뀌는 곳에서는 지금처럼 접속할 수 없다. Play 스토어(TWA)는 Google이 `assetlinks.json`을 읽어야 하므로, 앱을 공개하기 전에는 진행할 수 없다.
-- **서버 키:** Lightsail 서버가 인증서를 갱신하려면 AWS 키가 하나 더 필요하다. 이 호스팅 영역의 레코드만 바꿀 수 있게 권한을 좁히고, 값은 서버에만 둔다.
-- **장애 범위:** 프록시나 인증서에 문제가 생기면 앱 8개의 접속이 함께 끊긴다. 갱신 실패를 알아차릴 방법을 #251에서 정한다.
+- **Cost:** About $22 per year ($16 for the domain, $6 for the hosted zone). This is about $5 per year more than buying from another provider, but the account and billing are consolidated in AWS. The amounts are in [costs.md](../costs.md).
+- **Firewall:** There is no need to open 80 to everyone to get the certificate. The `/0` ban check in shared-aws-infrastructure stays as is.
+- **Access scope:** Places where the IP changes, such as a phone's mobile data network, cannot connect the way they do now. The Play Store (TWA) needs Google to read `assetlinks.json`, so it cannot proceed before the apps are made public.
+- **Server key:** For the Lightsail server to renew the certificate, one more AWS key is needed. Its permission is narrowed so it can only change records in this hosted zone, and the value is kept only on the server.
+- **Failure scope:** If the proxy or certificate has a problem, access to all 8 apps breaks together. How to notice a renewal failure is decided in #251.
 
-## 이어지는 작업
+## Follow-up work
 
-| 이슈 | 이 결정으로 정해진 것 |
+| Issue | What this decision settled |
 |---|---|
-| #249 | Route 53에서 구매한다. 호스팅 영역이 함께 만들어지고 네임서버도 연결되므로 위임 단계가 없다 |
-| #250 | 서브도메인 값은 `name`과 같다 |
-| #251 | nginx와 certbot `dns-route53` 공식 이미지로 템플릿을 만든다 |
-| #252 | 자동으로 만들어진 호스팅 영역을 Terraform으로 가져온다. 새 영역을 만들면 네임서버가 어긋난다. 80은 전체에 열지 않고, 443을 허용 IP에 연다 |
-| #254 | 전환이 끝나면 앱 웹 포트(8101–8108)와 80을 외부에서 닫는다 |
+| #249 | Buy in Route 53. The hosted zone is created with it and the name servers are connected, so there is no delegation step |
+| #250 | The subdomain value is the same as `name` |
+| #251 | Build the template with the official nginx and certbot `dns-route53` images |
+| #252 | Import the automatically created hosted zone into Terraform. Creating a new zone would mismatch the name servers. 80 is not opened to everyone, and 443 is opened to allowed IPs |
+| #254 | When the switch is finished, close the app web ports (8101–8108) and 80 externally |

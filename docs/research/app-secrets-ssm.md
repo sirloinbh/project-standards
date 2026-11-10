@@ -1,178 +1,178 @@
-# 사용자 단계의 키·OAuth 발급과 SSM 보관 (#422)
+# User-step key and OAuth issuance, and SSM storage (#422)
 
-- 조사일: 2026-11-08. 발급 조건과 한도는 바뀔 수 있으므로 발급 직전에 공식 안내로 다시 확인한다.
-- 사용자 결정(2026-11-08): 환경변수와 API 키는 AWS SSM Parameter Store로 관리한다.
-- 근거 수준: **공식**은 제공처 페이지에서 직접 읽은 값, **2차**는 블로그·검색 결과에서만 본 값, **미확인**은 찾지 못한 값이다.
+- Survey date: 2026-11-08. Issuance conditions and limits can change, so check the official guidance again right before issuing.
+- User decision (2026-11-08): environment variables and API keys are managed in AWS SSM Parameter Store.
+- Evidence level: **official** is a value read directly from the provider's page, **secondary** is a value seen only in blogs or search results, and **unconfirmed** is a value I could not find.
 
-## 요약
+## Summary
 
-| 이슈 | 발급할 것 | 승인 | 만료 | SSM 경로 (제안) | 앱 환경변수 |
+| Issue | What to issue | Approval | Expiry | SSM path (proposed) | App environment variable |
 |---|---|---|---|---|---|
-| project-standards#266 | Anthropic API 키 | 즉시 | 만들 때 고름(Never 가능) | `/sirloinbh/shared/anthropic-api-key` | `ANTHROPIC_API_KEY` |
-| project-standards#286 | healthchecks.io 프로젝트 ping key | 즉시 | 없음 | `/sirloinbh/shared/healthchecks-ping-key` | 서버 설치 스크립트가 읽음 |
-| study-log#129, life-journal#40(TourAPI), health-log#118 | 공공데이터포털 인증키 **하나** | 개발계정 자동, 첫 사용까지 1시간~반나절 | 2년(2차) | `/sirloinbh/shared/data-go-kr-service-key` | `HOLIDAY_API_KEY`, `TOURAPI_SERVICE_KEY` 등 |
-| life-journal#38 | Google OAuth 클라이언트 ID·비밀값 | 즉시, 검수 없이 게시 | 없음 | `/sirloinbh/life-journal/google-oauth-client-id`, `-secret` | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` |
-| life-journal#40 | YES24 키, TMDB 읽기 토큰 | 즉시 | 없음(미확인 포함) | `/sirloinbh/life-journal/yes24-api-key`, `tmdb-read-access-token` | `YES24_API_KEY`, `TMDB_READ_ACCESS_TOKEN` |
-| life-journal#44 | KOPIS 키 | 이메일 발급(2차) | 1년(2차) | `/sirloinbh/life-journal/kopis-service-key` | `KOPIS_SERVICE_KEY` |
-| money-ledger#85 | KRX 키, Tiingo 토큰, 수출입은행 키 | KRX는 키·API마다 관리자 승인(약 1일), 나머지 즉시 | KRX 1년(연장 요청), 수출입은행 2년(재동의) | `/sirloinbh/money-ledger/krx-api-key`, `tiingo-api-key`, `koreaexim-api-key` | `KRX_API_KEY`, `TIINGO_API_KEY`, `KOREAEXIM_API_KEY` |
-| health-log#28 | Garmin Personal API 키 | 즉시(승인 없음) | 30일~1년 중 고름 | `/sirloinbh/health-log/garmin-personal-api-key` | `GARMIN_PERSONAL_API_KEY` |
+| project-standards#266 | Anthropic API key | Immediate | Chosen at creation (Never is possible) | `/sirloinbh/shared/anthropic-api-key` | `ANTHROPIC_API_KEY` |
+| project-standards#286 | healthchecks.io project ping key | Immediate | None | `/sirloinbh/shared/healthchecks-ping-key` | Read by the server install script |
+| study-log#129, life-journal#40 (TourAPI), health-log#118 | **One** Public Data Portal (data.go.kr) auth key | Development account is automatic, 1 hour to half a day until first use | 2 years (secondary) | `/sirloinbh/shared/data-go-kr-service-key` | `HOLIDAY_API_KEY`, `TOURAPI_SERVICE_KEY`, etc. |
+| life-journal#38 | Google OAuth client ID and secret | Immediate, publish without review | None | `/sirloinbh/life-journal/google-oauth-client-id`, `-secret` | `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET` |
+| life-journal#40 | YES24 key, TMDB read token | Immediate | None (including unconfirmed) | `/sirloinbh/life-journal/yes24-api-key`, `tmdb-read-access-token` | `YES24_API_KEY`, `TMDB_READ_ACCESS_TOKEN` |
+| life-journal#44 | KOPIS key | Issued by email (secondary) | 1 year (secondary) | `/sirloinbh/life-journal/kopis-service-key` | `KOPIS_SERVICE_KEY` |
+| money-ledger#85 | KRX key, Tiingo token, Korea Eximbank key | KRX needs administrator approval per key and per API (about 1 day), the rest are immediate | KRX 1 year (request an extension), Korea Eximbank 2 years (re-consent) | `/sirloinbh/money-ledger/krx-api-key`, `tiingo-api-key`, `koreaexim-api-key` | `KRX_API_KEY`, `TIINGO_API_KEY`, `KOREAEXIM_API_KEY` |
+| health-log#28 | Garmin Personal API key | Immediate (no approval) | Choose from 30 days to 1 year | `/sirloinbh/health-log/garmin-personal-api-key` | `GARMIN_PERSONAL_API_KEY` |
 
-환경변수 이름은 각 앱 문서에 이미 정한 것을 따랐다. life-journal#38과 health-log#28은 아직 이름이 없어 이 문서가 제안한다.
+Environment variable names follow the ones already set in each app's docs. life-journal#38 and health-log#28 have no names yet, so this document proposes them.
 
-## 조사에서 새로 알게 된 것
+## What the survey newly found
 
-- **공공데이터포털 키는 계정에 하나다.** 특일정보, TourAPI, 식품영양성분 API를 각각 활용신청하면 같은 키로 부른다(2차). 그래서 SSM에는 공용 경로 하나로 두고, 앱마다 다른 환경변수로 넘긴다.
-- **Garmin이 개인용 공식 API(Personal)를 열었다.** 신청·승인 없이 Garmin Connect 설정에서 키를 받는다. 비공식 라이브러리(garth)는 더 관리되지 않는다. health-log#28은 이 방식이 1순위다.
-- **Google OAuth는 "테스트" 상태로 두면 refresh token이 7일 뒤 만료된다.** 혼자 쓰는 앱은 검수 없이 "프로덕션"으로 게시할 수 있다(경고 화면은 뜬다). 리디렉션 주소는 localhost가 아니면 공개 도메인의 https여야 해서, 서버에서 쓰려면 서브도메인(#406)이 먼저 있어야 한다.
-- **알라딘 Open API는 2026-10-30에 끝났다.** YES24는 개인에게 키를 바로 발급한다.
-- **KRX 약관은 비상업 목적만 허용하고 받은 정보를 제3자에게 줄 수 없다.** money-ledger를 혼자 쓰는 동안은 괜찮지만 다른 사람에게 시세를 보여 주면 약관 위반 소지가 있다. 화면에 "한국거래소 통계정보" 표시가 필요하다.
-- **만료 주기가 서비스마다 다르다.** 만료 알림 메일을 받을 주소를 정확히 등록하고, 아래 "갱신 일정"을 따른다.
+- **The Public Data Portal key is one per account.** If you apply for use of the special-day information, TourAPI, and food nutrition APIs separately, they are all called with the same key (secondary). So SSM keeps one shared path, and each app passes it under a different environment variable.
+- **Garmin opened an official personal API (Personal).** You get the key in Garmin Connect settings with no application or approval. The unofficial library (garth) is no longer maintained. For health-log#28, this approach is the first choice.
+- **If Google OAuth is left in the "Testing" state, the refresh token expires after 7 days.** An app used only by yourself can be published as "Production" without review (a warning screen still appears). Unless the redirect address is localhost, it must be https on a public domain, so to use it on the server the subdomain (#406) must exist first.
+- **The Aladin Open API ended on 2026-10-30.** YES24 issues keys to individuals right away.
+- **The KRX terms allow non-commercial use only and do not allow giving the received information to third parties.** It is fine while you use money-ledger alone, but showing the prices to other people could violate the terms. The label "한국거래소 통계정보" (Korea Exchange statistics) must be shown on screen.
+- **Expiry cycles differ per service.** Register the address that receives expiry notification emails accurately, and follow the "Renewal schedule" below.
 
-## 서비스별 발급 절차
+## Issuing steps per service
 
-### Anthropic API 키 (#266)
-1. Console(`platform.claude.com`)에서 앱 공용 workspace(`byunghk-tool`, ADR-0010)를 만든다. Default Workspace에는 지출 한도를 걸 수 없다(공식).
-2. Workspaces → 그 workspace → Spend limits에서 월 한도와 알림을 정한다. 한도에 닿으면 API가 400을 준다(공식).
-3. API keys → Create key. 그 workspace로 한정하고, 만료는 Never 또는 1년을 고른다. 만든 뒤에는 만료를 바꿀 수 없다(공식).
-4. 값은 화면에서 바로 SSM에 넣는다(아래 "SSM에 넣는 명령").
+### Anthropic API key (#266)
+1. In the Console (`platform.claude.com`), create the shared workspace for the apps (`byunghk-tool`, ADR-0010). You cannot set a spending limit on the Default Workspace (official).
+2. Under Workspaces → that workspace → Spend limits, set the monthly limit and alerts. When the limit is reached, the API returns 400 (official).
+3. API keys → Create key. Restrict it to that workspace, and choose Never or 1 year for expiry. You cannot change the expiry after creation (official).
+4. Put the value into SSM straight from the screen (see "Commands to put values in SSM" below).
 
 ### healthchecks.io (#286)
-- 무료 Hobbyist는 체크 20개까지다(공식). 앱 8개 × (health, 백업, 복구 확인)과 매일 보고를 합치면 20개를 넘을 수 있어 #284의 체크 수를 다시 센다.
-- 신호 주소는 두 형식이 있다(공식). UUID 형식(`hc-ping.com/<uuid>`)은 체크마다 비밀 주소가 하나씩 생긴다. **ping key + slug 형식**(`hc-ping.com/<ping-key>/<slug>`)은 프로젝트의 ping key 하나만 비밀이고 slug는 공개해도 된다. SSM에 값 하나만 두면 되므로 slug 형식을 쓴다.
-- 프로젝트 Settings에서 ping key를 만든다. API 키는 쓰지 않는다.
+- The free Hobbyist plan allows up to 20 checks (official). 8 apps × (health, backup, restore check) plus the daily report can exceed 20, so recount the number of checks in #284.
+- There are two signal address formats (official). The UUID format (`hc-ping.com/<uuid>`) gives one secret address per check. In the **ping key + slug format** (`hc-ping.com/<ping-key>/<slug>`), only the project's one ping key is secret and the slug can be public. Only one value has to be kept in SSM, so use the slug format.
+- Create the ping key in the project Settings. Do not use the API key.
 
-### 공공데이터포털 인증키 (study-log#129, life-journal#40 TourAPI, health-log#118)
-1. data.go.kr 가입 → 각 API 상세 페이지에서 "활용신청". 개발계정은 자동승인이다(공식). 셋을 한 번에 신청한다.
-   - 특일 정보(15012690): 개발 하루 10,000건
-   - 국문 관광정보 TourAPI(15101578): 개발 **하루 1,000건**. 운영계정은 심의
-   - 식품영양성분DB(15127578): 개발 하루 10,000건
-2. 마이페이지에서 "일반 인증키(Decoding)"를 SSM에 넣는다. 코드의 HTTP 라이브러리가 쿼리를 인코딩하므로 Encoding 키를 쓰면 이중 인코딩으로 키 오류가 난다(공식 지침, 2차 사례).
-3. 승인 직후 1시간~반나절은 `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`(30)가 날 수 있다(2차). 기다렸다가 다시 확인한다.
-4. 키는 쿼리 문자열(`serviceKey`, 특일정보는 `ServiceKey`)로만 보낸다(공식). 로그에 URL을 남길 때 지운다.
-- health-log#118은 아직 "나중에 검토"다. 키는 같으므로 그 API만 활용신청하면 된다.
+### Public Data Portal (data.go.kr) auth key (study-log#129, life-journal#40 TourAPI, health-log#118)
+1. Sign up at data.go.kr → on each API detail page, click "Apply for use" (활용신청). Development accounts are approved automatically (official). Apply for all three at once.
+   - Special day information (15012690): development 10,000 calls per day
+   - Korean tourism information TourAPI (15101578): development **1,000 calls per day**. Operation accounts need review
+   - Food nutrition DB (15127578): development 10,000 calls per day
+2. From My Page, put the "General auth key (Decoding)" (일반 인증키(Decoding)) into SSM. The HTTP library in the code encodes the query, so using the Encoding key causes double encoding and a key error (official guidance, secondary reports).
+3. For 1 hour to half a day right after approval, `SERVICE_KEY_IS_NOT_REGISTERED_ERROR` (30) may occur (secondary). Wait and check again.
+4. Send the key only as a query string (`serviceKey`, `ServiceKey` for special day information) (official). Remove it when leaving URLs in logs.
+- health-log#118 is still "review later". The key is the same, so you only need to apply for use of that API.
 
-### Google 캘린더 OAuth 클라이언트 (life-journal#38)
-1. Google Cloud에서 프로젝트를 만들고 Calendar API를 켠다.
-2. OAuth 동의 화면: 사용자 유형 "외부", 범위는 구현에 필요한 최소(`calendar.events` 등). `calendar.events`는 민감 범위다(2차).
-3. **게시 상태를 "프로덕션"으로 바꾼다.** 검수는 신청하지 않는다. 100명 미만 개인 사용은 검수가 필수가 아니다(공식). 로그인 때 "확인되지 않은 앱" 경고를 넘겨야 한다. "테스트"로 두면 refresh token이 7일마다 만료된다(공식).
-4. OAuth 클라이언트(웹 애플리케이션)를 만든다. 리디렉션 URI 규칙(공식):
-   - 로컬 개발: `http://localhost:<레지스트리 api 포트>/...`는 허용
-   - 서버: 공개 도메인의 https만 허용. IP 주소나 사설 도메인은 안 된다. #406(서브도메인·HTTPS)이 끝나야 등록할 수 있다
-5. 클라이언트 ID와 비밀값을 SSM에 넣는다. 사용자가 연결한 뒤 받는 refresh token은 앱이 DB에 저장한다(SSM에 넣지 않음).
-- 대안: 서비스 계정에 개인 캘린더를 공유해 OAuth 없이 쓰는 방법은 동작한다는 보고와 안 된다는 보고가 엇갈린다(2차). 쓰지 않는다.
+### Google Calendar OAuth client (life-journal#38)
+1. Create a project in Google Cloud and enable the Calendar API.
+2. OAuth consent screen: user type "External" (외부), scopes are the minimum the implementation needs (`calendar.events` and so on). `calendar.events` is a sensitive scope (secondary).
+3. **Change the publishing status to "Production" (프로덕션).** Do not apply for review. For personal use under 100 users, review is not required (official). At sign-in you have to get past the "unverified app" (확인되지 않은 앱) warning. If left in "Testing" (테스트), the refresh token expires every 7 days (official).
+4. Create the OAuth client (web application). Redirect URI rules (official):
+   - Local development: `http://localhost:<registry api port>/...` is allowed
+   - Server: only https on a public domain is allowed. IP addresses and private domains are not. It can only be registered after #406 (subdomain and HTTPS) is done
+5. Put the client ID and secret into SSM. The refresh token received after the user connects is stored by the app in the DB (not put in SSM).
+- Alternative: sharing a personal calendar with a service account to use it without OAuth has conflicting reports of working and not working (secondary). Not used.
 
 ### YES24, TMDB (life-journal#40)
-- **YES24:** `developers.yes24.com`에서 로그인, 이용 목적 입력, 약관 동의 후 즉시 발급. `X-Api-Key` 헤더, 기본키 하루 20,000회·초당 10회, 1인 1키. 화면에 출처와 상품 상세페이지 링크를 달아야 하고, 별도 DB로 대량 수집하면 안 된다(공식).
-- **TMDB:** 계정 설정 → API에서 신청. v4 읽기 액세스 토큰을 `Authorization: Bearer`로 쓴다. 비상업 무료, 로고와 고지 문구 표시, 캐시는 6개월 이하(공식). 만료는 미확인.
+- **YES24:** Log in at `developers.yes24.com`, enter the purpose of use, and agree to the terms for immediate issuance. `X-Api-Key` header, the basic key allows 20,000 calls per day and 10 per second, one key per person. The screen must show the source and a link to the product detail page, and you must not bulk-collect into a separate DB (official).
+- **TMDB:** Apply under account settings → API. Use the v4 read access token as `Authorization: Bearer`. Free for non-commercial use, the logo and notice text must be shown, and the cache must be 6 months or less (official). Expiry is unconfirmed.
 
 ### KOPIS (life-journal#44)
-- kopis.or.kr에서 PC로만 신청, 1인 1키(공식). 키는 쿼리 `service`로 보내고, 명세가 http로만 나온다(공식, 개발가이드 v5.0). 출처 표기 의무.
-- 호출 한도 수치, 만료, 상업 조건은 미확인이다. 신청할 때 약관에서 확인해 이슈에 적는다.
+- Apply only from a PC at kopis.or.kr, one key per person (official). The key is sent as the query `service`, and the specification is published only over http (official, development guide v5.0). Source attribution is required.
+- The call limit figures, expiry, and commercial conditions are unconfirmed. Check the terms when applying and write them in the issue.
 
-### KRX, Tiingo, 수출입은행 (money-ledger#85)
-- **KRX:** Data Marketplace 가입 → 인증키 신청(관리자 승인) → 유가증권·코스닥·ETF 일별매매정보를 **각각** 이용신청(관리자 승인, 약 1일, 2차). 키만 있고 API 승인이 없으면 401이다(2차). 키당 하루 10,000회, 이용기간 1년이고 만료 전에 연장 요청, 12개월 안 쓰면 삭제될 수 있다(공식 약관). 헤더 `AUTH_KEY`로 보낸다(2차).
-- **Tiingo:** 가입 후 무료 Starter 토큰 확인. 시간당 50회, 하루 1,000회, 월 500종목, 본인 개인 용도만(공식). `Authorization: Token <토큰>` 헤더.
-- **수출입은행:** `oapi.koreaexim.go.kr`에서 개인정보 동의와 본인인증 후 발급. 하루 1,000회, 넘으면 `result:4`(공식). 개인정보 보유기간 2년이 지나기 전에 메일로 재동의해야 하고, 놓치면 키가 파기돼 `result:3`(인증 오류와 같은 값)이 온다(공식). 오류도 HTTP 200이라 `result`를 꼭 검사한다.
+### KRX, Tiingo, Korea Eximbank (money-ledger#85)
+- **KRX:** Sign up at Data Marketplace → apply for an auth key (administrator approval) → apply for use of the daily trading information for the KOSPI, KOSDAQ, and ETF **each separately** (administrator approval, about 1 day, secondary). With a key but no API approval you get 401 (secondary). 10,000 calls per day per key, the usage period is 1 year and you request an extension before expiry, and it can be deleted if unused for 12 months (official terms). Sent in the `AUTH_KEY` header (secondary).
+- **Tiingo:** After signing up, check the free Starter token. 50 calls per hour, 1,000 per day, 500 symbols per month, for your own personal use only (official). `Authorization: Token <token>` header.
+- **Korea Eximbank:** Issued at `oapi.koreaexim.go.kr` after consent to personal information and identity verification. 1,000 calls per day, and beyond that you get `result:4` (official). Before the 2-year personal information retention period ends you must re-consent by email, and if you miss it the key is destroyed and you get `result:3` (the same value as an authentication error) (official). Errors also come as HTTP 200, so always check `result`.
 
 ### Garmin Personal API (health-log#28)
-- Garmin Connect 웹 → 설정 → Personal API Token에서 키를 만든다. 신청·승인 없음, 본인 데이터만, pull 방식만(공식).
-- 만료를 30일·90일·180일·1년 중 고른다. 1년을 고르고 갱신 일정에 넣는다. 키는 한 번만 보이므로 바로 SSM에 넣는다.
-- 앱은 키로 24시간짜리 액세스 토큰을 받는다(refresh token 없음). 토큰은 저장하지 않고 필요할 때 다시 받는다.
-- 호출 한도와 약관 세부는 미확인이다. #26 조사의 결정과 다르면 #28을 시작할 때 다시 정한다.
+- Create the key in the Garmin Connect web → Settings → Personal API Token. No application or approval, your own data only, pull method only (official).
+- Choose the expiry from 30, 90, 180 days, or 1 year. Choose 1 year and add it to the renewal schedule. The key is shown only once, so put it into SSM right away.
+- The app uses the key to get a 24-hour access token (no refresh token). It does not store the token and gets a new one when needed.
+- The call limits and terms details are unconfirmed. If they differ from the decision in the #26 survey, decide again when starting #28.
 
-## 갱신 일정
+## Renewal schedule
 
-| 키 | 주기 | 할 일 |
+| Key | Cycle | What to do |
 |---|---|---|
-| KRX | 1년 | 만료 전 연장 요청 |
-| 수출입은행 | 2년 | 메일 재동의 |
-| 공공데이터포털 | 2년(2차) | 포털에서 활용기간 연장 |
-| KOPIS | 1년(2차) | 미확인. 발급 때 확인 |
-| Garmin | 고른 기간(최대 1년) | 새 키 만들어 SSM 값 교체 |
-| Anthropic | 고른 기간 | Never가 아니면 새 키 만들어 교체 |
+| KRX | 1 year | Request an extension before expiry |
+| Korea Eximbank | 2 years | Re-consent by email |
+| Public Data Portal | 2 years (secondary) | Extend the usage period on the portal |
+| KOPIS | 1 year (secondary) | Unconfirmed. Check at issuance |
+| Garmin | Chosen period (up to 1 year) | Create a new key and replace the SSM value |
+| Anthropic | Chosen period | Unless Never, create a new key and replace it |
 
-교체는 SSM 값만 바꾼다. 서버는 다음 배포부터, PC는 `pull`을 다시 실행하면 새 값을 쓴다.
+Replacing means changing only the SSM value. The server uses the new value from the next deploy, and a PC uses it when you run `pull` again.
 
-## SSM에 넣는 명령
+## Commands to put values in SSM
 
-값이 셸 기록과 채팅에 남지 않게, 지금 `tools/app-secrets.mjs set`처럼 표준 입력으로 받는다. 일반화한 명령(`set <경로>`)은 구현 이슈에서 만든다. 그전까지는 AWS CLI로 직접 넣는다.
+So that values do not stay in shell history or chat, take them from standard input, like the current `tools/app-secrets.mjs set`. The generalized command (`set <path>`) is built in the implementation issue. Until then, put them in directly with the AWS CLI.
 
 ```powershell
-# 값을 묻고 화면에 보이지 않게 받는다
-$v = Read-Host -AsSecureString '값'
+# Ask for the value and receive it without showing it on screen
+$v = Read-Host -AsSecureString 'Value'
 $plain = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($v))
-aws ssm put-parameter --profile <개인 프로필> --region ap-northeast-2 --type SecureString --overwrite --name /sirloinbh/<앱>/<이름> --value $plain
+aws ssm put-parameter --profile <personal profile> --region ap-northeast-2 --type SecureString --overwrite --name /sirloinbh/<app>/<name> --value $plain
 Remove-Variable v, plain
-# 확인: 값 없이 이름과 수정 시각만
-aws ssm describe-parameters --profile <개인 프로필> --region ap-northeast-2 --parameter-filters Key=Name,Option=BeginsWith,Values=/sirloinbh/
+# Check: only the name and modified time, without the value
+aws ssm describe-parameters --profile <personal profile> --region ap-northeast-2 --parameter-filters Key=Name,Option=BeginsWith,Values=/sirloinbh/
 ```
 
-`--value`로 넘긴 값은 그 PowerShell 창의 명령 기록에 남지 않지만(`Read-Host`로 받은 변수), 같은 PC의 다른 프로세스가 명령줄 인자를 볼 수 있다. 구현 이슈에서는 표준 입력으로 넘기는 명령을 만든다.
+A value passed with `--value` does not stay in that PowerShell window's command history (the variable received with `Read-Host`), but other processes on the same PC can see command line arguments. In the implementation issue, build a command that passes it through standard input.
 
-## 후속 구현 (제안)
+## Follow-up implementation (proposed)
 
-1. ADR-0010을 넓히는 새 ADR: 경로 규칙, `@ssm=` 태그, 권한
-2. shared-aws-infrastructure: 서버 읽기 권한을 `/sirloinbh/shared/*`, `/sirloinbh/<앱>/*`로 넓히고 사용자 정책에 쓰기 권한
-3. 배포 템플릿: `@ssm=` 태그를 읽어 넘기기(`remote-deploy.sh`, `ssm-get.sh`), 서버 설치 스크립트가 healthchecks ping key 읽기
-4. `tools/app-secrets.mjs`: `set <경로>`, `check`, `pull <앱>`
-5. `standards-check`, `docs/env-matrix.md`: `@ssm=` 검사와 표시
+1. A new ADR that extends ADR-0010: path rules, the `@ssm=` tag, permissions
+2. shared-aws-infrastructure: widen the server read permission to `/sirloinbh/shared/*` and `/sirloinbh/<app>/*`, and add write permission to the user policy
+3. Deploy templates: read the `@ssm=` tag and pass it on (`remote-deploy.sh`, `ssm-get.sh`), and have the server install script read the healthchecks ping key
+4. `tools/app-secrets.mjs`: `set <path>`, `check`, `pull <app>`
+5. `standards-check`, `docs/env-matrix.md`: check and display `@ssm=`
 
-## 출처
+## Sources
 
 - Google OAuth: https://developers.google.com/identity/protocols/oauth2 , https://support.google.com/cloud/answer/13464323 , https://developers.google.com/identity/protocols/oauth2/web-server
 - TMDB: https://developer.themoviedb.org/docs/faq , https://www.themoviedb.org/api-terms-of-use
-- YES24: https://developers.yes24.com/docs/apikey , https://developers.yes24.com/support/terms ; 알라딘 종료: https://blog.aladin.co.kr/openapi
+- YES24: https://developers.yes24.com/docs/apikey , https://developers.yes24.com/support/terms ; Aladin shutdown: https://blog.aladin.co.kr/openapi
 - Tiingo: https://www.tiingo.com/about/pricing , https://www.tiingo.com/documentation/general/connecting
 - healthchecks.io: https://healthchecks.io/pricing/ , https://healthchecks.io/docs/slug_urls/
 - Garmin: https://developer.garmin.com/gc-developer-program/overview/ , https://developer.garmin.com/gc-developer-program/personal/personal-faq/ , https://github.com/matin/garth
 - Anthropic: https://platform.claude.com/docs/en/manage-claude/authentication , https://platform.claude.com/docs/en/manage-claude/workspaces
-- 공공데이터포털: https://www.data.go.kr/data/15012690/openapi.do , https://www.data.go.kr/data/15101578/openapi.do , https://www.data.go.kr/data/15127578/openapi.do
+- Public Data Portal: https://www.data.go.kr/data/15012690/openapi.do , https://www.data.go.kr/data/15101578/openapi.do , https://www.data.go.kr/data/15127578/openapi.do
 - KOPIS: https://www.kopis.or.kr/por/cs/openapi/openApiInfo.do?menuId=MNU_00074
-- KRX: https://openapi.krx.co.kr/contents/OPP/INFO/OPPINFO003.jsp , 약관 https://openapi.krx.co.kr/contents/OPP/INFO/OPPINFO002.jsp
-- 수출입은행: https://www.koreaexim.go.kr/ir/HPHKIR020M01?apino=2&viewtype=C
+- KRX: https://openapi.krx.co.kr/contents/OPP/INFO/OPPINFO003.jsp , terms https://openapi.krx.co.kr/contents/OPP/INFO/OPPINFO002.jsp
+- Korea Eximbank: https://www.koreaexim.go.kr/ir/HPHKIR020M01?apino=2&viewtype=C
 
-## SSM 보관 방식 (제안)
+## How to store in SSM (proposed)
 
-지금은 Claude API 키 하나만 SSM에 있다([ADR-0010](../adr/0010-claude-api-key-ssm.md)). 서버 IAM 사용자 `sirloinbh-apps-secrets-reader`는 그 파라미터 하나만 읽을 수 있고, 배포 스크립트는 그 이름을 직접 적어 읽는다. 키가 앱 5개, 10개 이상으로 늘어나므로 아래처럼 넓힌다. 이 문서는 제안이며, 채택하면 ADR-0010을 고치는 새 ADR과 구현 이슈로 진행한다.
+Right now only one Claude API key is in SSM ([ADR-0010](../adr/0010-claude-api-key-ssm.md)). The server IAM user `sirloinbh-apps-secrets-reader` can read only that one parameter, and the deploy script reads it by writing that name directly. Keys will grow to 5 apps and then 10 or more, so widen it as below. This document is a proposal; if adopted, it proceeds as a new ADR that amends ADR-0010 plus implementation issues.
 
-### 이름
+### Names
 
-| 종류 | 경로 | 예 |
+| Kind | Path | Example |
 |---|---|---|
-| 여러 앱이 같은 값을 쓰는 키 | `/sirloinbh/shared/<이름>` | `/sirloinbh/shared/anthropic-api-key`, `/sirloinbh/shared/data-go-kr-service-key` |
-| 한 앱만 쓰는 키 | `/sirloinbh/<앱>/<이름>` | `/sirloinbh/money-ledger/tiingo-api-key` |
+| A key that several apps use with the same value | `/sirloinbh/shared/<name>` | `/sirloinbh/shared/anthropic-api-key`, `/sirloinbh/shared/data-go-kr-service-key` |
+| A key that only one app uses | `/sirloinbh/<app>/<name>` | `/sirloinbh/money-ledger/tiingo-api-key` |
 
-- `<이름>`은 소문자와 하이픈으로 쓴다. 앱이 읽는 환경변수 이름과 따로 두어, 공공데이터포털 키 하나를 앱마다 다른 변수(`HOLIDAY_API_KEY`, `TOURAPI_SERVICE_KEY`)로 넘길 수 있게 한다.
-- 모두 `SecureString`, AWS 관리형 KMS 키(`alias/aws/ssm`), 표준 파라미터(무료), 리전 `ap-northeast-2`.
-- 기존 `/sirloinbh/anthropic-api-key`는 #266에서 아직 값을 넣지 않았으므로, 넣기 전에 `/sirloinbh/shared/anthropic-api-key`로 옮기면 옮길 값이 없다.
+- Write `<name>` in lowercase and hyphens. Keep it separate from the environment variable name the app reads, so that one Public Data Portal key can be passed under a different variable per app (`HOLIDAY_API_KEY`, `TOURAPI_SERVICE_KEY`).
+- All are `SecureString`, the AWS managed KMS key (`alias/aws/ssm`), standard parameters (free), region `ap-northeast-2`.
+- The existing `/sirloinbh/anthropic-api-key` has no value put in it yet in #266, so if you move it to `/sirloinbh/shared/anthropic-api-key` before putting it in, there is nothing to move.
 
-### 어느 변수에 어느 파라미터를 넣는지
+### Which parameter goes into which variable
 
-앱의 `.env.example`이 환경변수의 원본이므로([env-conventions.md](../env-conventions.md)) 거기에 태그 하나를 더한다.
+The app's `.env.example` is the source of environment variables ([env-conventions.md](../env-conventions.md)), so add one more tag there.
 
 ```dotenv
-# @desc 공휴일 조회용 공공데이터포털 인증키(Decoding) @secret @used=backend @ssm=/sirloinbh/shared/data-go-kr-service-key
+# @desc Public Data Portal auth key (Decoding) for holiday lookup @secret @used=backend @ssm=/sirloinbh/shared/data-go-kr-service-key
 HOLIDAY_API_KEY=
 ```
 
-- 배포 스크립트는 `@ssm=` 태그가 있는 키마다 SSM을 읽어 compose 환경변수로 넘긴다. 서버 `.env`에는 값을 쓰지 않는다. 지금 Claude 키를 읽는 방식(`deploy/ssm-get.sh`)을 태그 목록으로 넓힌 것이다.
-- 로컬 개발은 `node tools/app-secrets.mjs pull <앱>`이 같은 태그를 읽어 그 앱의 `.env`에 넣는다. 지금은 Claude 키 하나를 `project-standards/.env`에 넣는다.
-- `standards-check`가 `@ssm=` 경로 모양을 검사하고, `docs/env-matrix.md`에 경로를 함께 보여 준다. 값은 나오지 않는다.
+- The deploy script reads SSM for every key that has an `@ssm=` tag and passes it on as compose environment variables. No value is written to the server `.env`. This widens the way the Claude key is read now (`deploy/ssm-get.sh`) to a list of tags.
+- For local development, `node tools/app-secrets.mjs pull <app>` reads the same tags and puts them in that app's `.env`. Right now it puts one Claude key into `project-standards/.env`.
+- `standards-check` checks the shape of the `@ssm=` path, and `docs/env-matrix.md` shows the path alongside. Values are not shown.
 
-### 권한
+### Permissions
 
-| 주체 | 권한 | 범위 |
+| Principal | Permissions | Scope |
 |---|---|---|
-| 사용자 PC(개인 AWS 프로필) | `ssm:PutParameter`, `GetParameter`, `GetParametersByPath`, `DeleteParameter` | `parameter/sirloinbh/*` |
-| 서버 `sirloinbh-apps-secrets-reader` | `ssm:GetParameter`, `GetParametersByPath` | `parameter/sirloinbh/shared/*`, `parameter/sirloinbh/<앱>/*`(서버에 있는 앱) |
-| CI | 없음 | 테스트는 외부 API를 가짜로 바꾼다 |
-| 에이전트 | 없음 | 값을 보거나 옮기지 않는다. 존재 여부 확인(`check`)만 한다 |
+| User PC (personal AWS profile) | `ssm:PutParameter`, `GetParameter`, `GetParametersByPath`, `DeleteParameter` | `parameter/sirloinbh/*` |
+| Server `sirloinbh-apps-secrets-reader` | `ssm:GetParameter`, `GetParametersByPath` | `parameter/sirloinbh/shared/*`, `parameter/sirloinbh/<app>/*` (apps on the server) |
+| CI | None | Tests replace external APIs with fakes |
+| Agents | None | They do not view or move values. They only check existence (`check`) |
 
-- 앱이 모두 서버 하나에 있으므로 앱별로 IAM 사용자를 나누지 않는다. 서버 키가 유출되면 모든 앱 키를 함께 교체한다(ADR-0010과 같은 판단).
-- 지금 사용자 IAM(`terraform-workout` 정책)에는 SSM 쓰기 권한이 없어 #266에서 거부됐다. 위 범위로 권한을 더해야 한다.
+- All apps are on one server, so IAM users are not split per app. If the server key leaks, all app keys are replaced together (the same judgment as ADR-0010).
+- The current user IAM (the `terraform-workout` policy) has no SSM write permission, so it was denied in #266. Permissions must be added with the scope above.
 
-### SSM에 넣지 않는 것
+### What is not put in SSM
 
-- **OAuth refresh token처럼 앱이 실행 중에 받는 값:** 사용자가 처음 연결할 때 앱이 받아 저장하고, 만료되면 앱이 다시 받는다. 서버가 SSM에 쓰려면 쓰기 권한이 필요해지므로 앱 DB에 둔다. SSM에는 OAuth 클라이언트 ID·비밀값만 둔다.
-- **DB 비밀번호처럼 서버에서 정하는 값:** 지금처럼 서버 `.env`에 둔다. 이 이슈의 범위 밖이다.
-- **healthchecks.io 신호 주소:** 서버 timer가 쓰는 값이라 앱 compose가 아니라 서버 설치 스크립트가 읽는다. SSM에 두면 설치 스크립트도 SSM을 읽어야 한다(아래 표 참고).
+- **Values the app receives while running, like an OAuth refresh token:** The app receives and stores it when the user first connects, and receives it again when it expires. For the server to write to SSM it would need write permission, so keep it in the app DB. SSM holds only the OAuth client ID and secret.
+- **Values decided on the server, like a DB password:** Keep them in the server `.env` as now. Outside the scope of this issue.
+- **The healthchecks.io signal address:** The server timer uses this value, so the server install script reads it, not the app compose. If kept in SSM, the install script would also have to read SSM (see the table below).

@@ -1,24 +1,24 @@
-# 0003. 하위 리포 수정은 감지와 안내만 한다
+# 0003. Sub-repo edits are only detected and guided
 
-- 상태: 제안 (이슈 #1)
-- 날짜: 2026-10-22
+- Status: Proposed (issue #1)
+- Date: 2026-10-22
 
-## 맥락
+## Context
 
-하위 리포에서 중앙 관리 파일을 고칠 수 있다. 이를 자동으로 되돌리거나 중앙으로 PR을 자동 생성하면 다음 문제가 생긴다.
+A sub-repo can edit a centrally managed file. Automatically reverting that edit, or automatically creating a PR to the central repo, causes these problems:
 
-- 앱 리포의 main 병합은 곧 운영 배포다. 자동으로 되돌리는 커밋이 의도하지 않은 배포를 일으킬 수 있다.
-- 역방향 자동 PR을 만들려면 하위 리포에 중앙 리포 쓰기 권한을 줘야 한다.
-- 하위의 수정이 실수인지, 프로젝트 고유 요구인지 기계가 판단할 수 없다.
+- Merging to main in an app repo is a production deploy. An automatic revert commit could trigger an unintended deploy.
+- Creating reverse automatic PRs would require giving sub-repos write access to the central repo.
+- A machine cannot judge whether a sub-repo's edit is a mistake or a project-specific need.
 
-## 결정
+## Decision
 
-- 하위 리포 CI의 `standards-check`가 위반을 감지해 실패시킨다. 출력에는 다른 파일, 중앙 경로, 중앙 리포에 이슈·PR을 여는 명령 예시, `allowedDifferences` 등록 방법을 담는다.
-- 검사 스크립트는 하위 리포에 복사해 둔다(`.standards/check.mjs`, 관리 파일). 오프라인에서도 `npm run standards:check`로 같은 결과를 볼 수 있고, CI가 중앙 private 리포를 checkout하는 토큰도 필요 없다.
-- 디렉토리·라우터 규칙은 처음에는 경고로만 낸다.
+- `standards-check` in sub-repo CI detects violations and fails. The output contains the differing files, the central path, an example command for opening an issue or PR in the central repo, and how to register `allowedDifferences`.
+- The check script is copied into each sub-repo (`.standards/check.mjs`, a managed file). The same result is available offline with `npm run standards:check`, and no token is needed for CI to check out the central private repo.
+- Directory and router rules are only reported as warnings at first.
 
-## 결과
+## Consequences
 
-- 하위 리포에는 중앙 쓰기 권한이 없다.
-- 위반을 고치는 일은 사람이 중앙 PR로 처리해야 한다. 그 대신 규칙이 바뀐 이유가 중앙 리포의 이슈·ADR에 남는다.
-- 검사 스크립트 자체가 관리 파일이므로, 하위에서 스크립트를 고쳐 검사를 통과시키는 것도 해시 비교로 감지된다. 단, 스크립트가 자기 해시를 검사하는 구조라서 고의적 우회까지는 막지 못한다. 중앙 `compliance.yml`이 하위 파일 해시를 독립적으로 다시 확인한다.
+- Sub-repos have no write access to the central repo.
+- Fixing a violation must be handled by a person through a central PR. In return, the reason a rule changed is recorded in the central repo's issues and ADRs.
+- The check script itself is a managed file, so editing the script in a sub-repo to pass the check is also detected by hash comparison. However, the script checks its own hash, so deliberate bypass is not prevented. The central `compliance.yml` independently re-checks the sub-repo file hashes.

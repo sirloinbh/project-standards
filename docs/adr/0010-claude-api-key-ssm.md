@@ -1,37 +1,37 @@
-# 0010. Claude API 키를 AWS SSM Parameter Store 한 곳에 두고 앱이 받아 쓰기
+# 0010. Keep the Claude API key in one place in AWS SSM Parameter Store and have apps fetch it
 
-- 상태: 채택 (이슈 #264)
-- 날짜: 2026-10-27
+- Status: Accepted (issue #264)
+- Date: 2026-10-27
 
-## 맥락
+## Context
 
-- 사용자가 Claude API 키를 project-standards에서 한 번 세팅하고 여러 앱에서 쓰기를 원했다(2026-10-27).
-- 지금 Claude API를 쓰는 앱은 study-log 하나다(`backend/src/translation.ts`, 서버 `.env`의 `ANTHROPIC_API_KEY`).
-- 리포가 모두 공개라 키 **값**은 중앙 리포에 둘 수 없다. 중앙 리포는 명령과 규칙을 제공하고, 값은 리포 밖 한 곳에 둔다.
-- Lightsail 서버에는 IAM 역할을 붙일 수 없어서, 서버가 AWS를 읽으려면 서버에 키가 하나 필요하다.
-- 개인 계정에는 조직 단위 Actions secret이 없다.
-- 비교한 선택지(SSM, 서버 공용 파일 + PC 사용자 폴더)와 키 나누기는 #264 댓글에 있다. 사용자가 권장안을 그대로 골랐다.
+- The user wanted to set up the Claude API key once in project-standards and use it from several apps (2026-10-27).
+- The only app that uses the Claude API now is study-log (`backend/src/translation.ts`, `ANTHROPIC_API_KEY` in the server `.env`).
+- All repos are public, so the key **value** cannot be kept in the central repo. The central repo provides commands and rules, and the value is kept in one place outside the repo.
+- An IAM role cannot be attached to the Lightsail server, so the server needs one key to read AWS.
+- A personal account has no organization-level Actions secrets.
+- The options compared (SSM, a server shared file + PC user folder) and the key split are in the #264 comments. The user chose the recommended option as is.
 
-## 결정
+## Decision
 
-| 항목 | 결정 |
+| Item | Decision |
 |---|---|
-| 원본 | AWS SSM Parameter Store SecureString `/sirloinbh/anthropic-api-key` (ap-northeast-2, AWS 관리형 KMS 키). 표준 파라미터라 비용이 없다 |
-| 키 수 | 1개. workspace 하나에 지출 한도를 건다. 두 번째 앱이 쓰기 시작할 때 앱별 키(`/sirloinbh/<앱>/anthropic-api-key`)로 나눌지 다시 정한다 |
-| 운영 서버 | 배포 스크립트가 배포할 때 SSM에서 읽어 앱 컨테이너 환경변수로 넘긴다. 서버 `.env`에는 값을 쓰지 않는다. 서버에는 그 파라미터 하나만 읽을 수 있는 IAM 키를 서버 공용 파일 `/opt/project-standards/.env` 한 곳에 둔다(앱 `.env`는 대체용) |
-| 로컬 개발 | 중앙 명령이 개인 AWS 프로필로 SSM을 읽어 `project-standards/.env`(git 제외) 한 곳에 넣는다. 키를 쓰는 앱은 로컬 개발 때 그 파일을 읽는다 |
-| 이름 | 서버 IAM 사용자는 특정 앱이 아니라 모든 앱 공용 이름(`sirloinbh-apps-secrets-reader`)을 쓴다. Console workspace도 앱 공용(`byunghk-tool`) |
-| CI | 실제 키를 두지 않는다. 테스트는 API 호출을 가짜로 바꾼다 |
-| 교체 | SSM 값만 바꾼다. 서버는 다음 배포부터, PC는 중앙 명령을 다시 실행하면 새 키를 쓴다 |
-| 환경변수 이름 | `ANTHROPIC_API_KEY`(비밀값), `CLAUDE_MODEL`(모델 이름. 코드에 하드코딩하지 않는다) |
-| 공통 호출 코드 | 만들지 않는다. 쓰는 앱이 늘면 #241(API 형태 조사)에서 다시 판단한다 |
+| Source of truth | AWS SSM Parameter Store SecureString `/sirloinbh/anthropic-api-key` (ap-northeast-2, AWS managed KMS key). It is a standard parameter, so there is no cost |
+| Number of keys | 1. A spending limit is set on one workspace. When a second app starts using it, decide again whether to split into per-app keys (`/sirloinbh/<app>/anthropic-api-key`) |
+| Production server | The deploy script reads it from SSM at deploy time and passes it to the app container as an environment variable. The value is not written to the server `.env`. The server keeps an IAM key that can read only that one parameter in one server shared file, `/opt/project-standards/.env` (the app `.env` is a fallback) |
+| Local development | A central command reads SSM with the personal AWS profile and puts it in one place, `project-standards/.env` (git-ignored). Apps that use the key read that file during local development |
+| Names | The server IAM user uses a name shared by all apps (`sirloinbh-apps-secrets-reader`), not tied to a specific app. The Console workspace is also shared by all apps (`byunghk-tool`) |
+| CI | No real key is kept. Tests replace the API call with a fake |
+| Rotation | Only the SSM value is changed. The server uses the new key from the next deploy, and the PC uses it after rerunning the central command |
+| Environment variable names | `ANTHROPIC_API_KEY` (secret), `CLAUDE_MODEL` (model name; not hard-coded in code) |
+| Shared call code | Not built. If more apps use it, decide again in #241 (API shape survey) |
 
-## 결과
+## Consequences
 
-- 키를 교체할 때 고칠 곳이 SSM 하나다. 교체 기록은 AWS(CloudTrail)에 남는다.
-- 서버에 AWS 읽기 키가 하나 늘어난다. 그 키로는 이 파라미터 하나만 읽을 수 있어서, 유출되어도 다른 AWS 자원에는 닿지 않는다. 다만 Claude API 키는 읽을 수 있으므로, 서버 키가 유출되면 두 키를 함께 교체한다.
-- 서버는 AWS CLI 없이 `curl --aws-sigv4`로 SSM을 부른다(#262 S3 업로드와 같은 방식).
-- 파라미터와 IAM 사용자는 shared-aws-infrastructure가 Terraform으로 만든다. 파라미터 **값**은 Terraform state에 남지 않도록 사용자가 직접 넣는다.
-- 구현은 #265(전달 도구), 사용자 단계는 #266(키 발급·지출 한도·SSM에 넣기)이다.
-- 2026-10-29 변경(#266): 사용자가 이름과 위치를 특정 앱에 묶지 말라고 정했다. 서버 IAM 사용자 이름을 `workout-memo-*`에서 `sirloinbh-apps-*`로 바꿨다. 서버의 AWS 키(SSM 읽기·S3 백업)는 앱 `.env`가 아니라 `/opt/project-standards/.env` 한 곳에 둔다. PC의 Claude 키는 앱 `.env` 대신 `project-standards/.env` 한 곳에 둔다. 키는 Claude Max 구독에 포함된 월 API 크레딧으로 쓰고, Console에 결제 수단을 두지 않는다.
-- 2026-11-01 변경(#266): 크레딧은 월 $200이고 Console 조직 `Quantified ESG`에 연결되어 있다. 사용자가 개인 조직으로 옮기지 않고 그 조직을 쓰기로 정했다. 앱 공용 workspace `byunghk-tool`과 키를 그 조직에 만든다. 그 조직의 관리자는 workspace·키별 사용량과 비용을 볼 수 있고 workspace를 관리할 수 있다. 관리자가 키나 한도를 바꾸거나 사용자가 조직 권한을 잃으면 앱의 Claude 호출이 멈출 수 있다. 그때는 다른 조직에서 키를 만들어 SSM 값만 바꾼다.
+- When rotating the key, SSM is the only place to fix. The rotation record stays in AWS (CloudTrail).
+- The server gains one more AWS read key. That key can read only this one parameter, so even if it leaks, it cannot reach other AWS resources. However, it can read the Claude API key, so if the server key leaks, rotate both keys together.
+- The server calls SSM with `curl --aws-sigv4` without the AWS CLI (the same way as the #262 S3 upload).
+- The parameter and IAM user are created by shared-aws-infrastructure with Terraform. The parameter **value** is entered by the user directly so that it does not remain in the Terraform state.
+- Implementation is #265 (delivery tool), and the user steps are #266 (issuing the key, spending limit, putting it in SSM).
+- Change on 2026-10-29 (#266): The user decided not to tie names and locations to a specific app. The server IAM user name was changed from `workout-memo-*` to `sirloinbh-apps-*`. The server's AWS keys (SSM read, S3 backup) are kept in one place, `/opt/project-standards/.env`, not in the app `.env`. The PC's Claude key is kept in one place, `project-standards/.env`, instead of the app `.env`. The key uses the monthly API credit included in the Claude Max subscription, and no payment method is set in the Console.
+- Change on 2026-11-01 (#266): The credit is $200 per month and is linked to the Console organization `Quantified ESG`. The user decided to use that organization instead of moving to a personal one. The app-shared workspace `byunghk-tool` and the key are created in that organization. That organization's administrators can see usage and cost per workspace and key and can manage the workspace. If an administrator changes the key or limit, or the user loses organization permission, the apps' Claude calls may stop. In that case, create a key in another organization and change only the SSM value.

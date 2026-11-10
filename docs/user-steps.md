@@ -1,43 +1,43 @@
-# 직접 하실 일 (사용자 단계 모음)
+# Steps only you can do (user step list)
 
-에이전트가 대신할 수 없는 단계(비밀값, 원격 계정 설정, 로컬에만 있는 파일)를 모았습니다. 끝낸 항목은 이슈 번호와 함께 채팅으로 알려 주세요. **개인키·토큰 같은 비밀값은 채팅이나 문서에 붙여 넣지 마세요.**
+These are the steps an agent cannot do for you (secrets, remote account settings, files that exist only on your PC). When you finish an item, tell me in chat with the issue number. **Never paste secrets such as private keys or tokens into chat or documents.**
 
-| 순서 | 할 일 | 시간 | 이슈 | 상태 (2026-10-23 확인) |
+| Order | Task | Time | Issue | Status (checked 2026-10-23) |
 |---|---|---|---|---|
-| 0 | 로컬 `.env` 포트 바꾸기 | 5분 | (#95 후속) | 확인 안 함 (로컬 파일) |
-| 1 | 개인 계정 도구를 새 위치로 설치 | 5분 | #21 | 안 함: `%LOCALAPPDATA%\sirloinbh-tools` 없음 |
-| 2 | shared-aws-infrastructure 최신화와 Terraform state 준비 | 끝남 | #92 | 완료(2026-10-24): import로 state 재구성, plan "No changes" |
-| 3 | GitHub App 만들기와 Actions 공유 설정 | 10분 | #86 | 안 함: `SYNC_APP_ID` 변수·`SYNC_APP_PRIVATE_KEY` secret 없음 |
-| 4 | 공유 패키지 첫 배포와 접근 권한 | 10분 | #88 | 안 함: 패키지 태그·Release 없음 |
-| 5 | 리포 설정 맞추기 (Dependabot, 병합 방식, workout-memo 보안) | 10분 | #22 | 안 함: Dependabot 알림 꺼짐 |
-| 6 | (3을 이미 했다면) GitHub App에 Issues 쓰기 권한 추가 | 3분 | #40 | 3을 아직 안 해서 건너뜀 |
-| 7 | Codex 훅 신뢰와 차단 확인 | 3분 | #180 | 안 함 (Codex CLI 0.144.4 설치됨, 규칙 판정은 PR #185로 기록) |
-| 8 | 작업 PC 점검 (Claude Code 버전, 에이전트 실행기) | 3분 | #183 | 일부: Claude Code 2.1.309 확인. 실행기는 1 이후 |
-| 9 | 리포 11개 secret scanning·push protection·CodeQL 켜기, App에 Code scanning 읽기 권한 추가 | 15분 | #261 | 안 함 (2026-10-27 추가) |
-| 10 | Claude API 키 발급·지출 한도, SSM에 넣기, 서버 읽기 키 넣기 | 15분 | #266 | 안 함 (2026-10-27 추가) |
-| 11 | healthchecks.io 계정·앱별 체크 만들고 서버 `.env`에 신호 주소 넣기 | 20분 | #286 | 안 함 (2026-10-27 추가) |
-| 12 | 동기화 PR 8개의 lockfile 맞추기 (공유 ESLint 설정 1.1.0) | 15분 | #328 | 완료 (2026-10-29) |
-| 13 | 앱 PR 3개 병합 (스킬 정리) | 5분 | #313 | 완료 (2026-10-29, 에이전트가 병합) |
-| 14 | ESLint·Prettier 플러그인 등 설치 승인 | 10분 | #245 | 안 함 |
-| 15 | 병합된 로컬 브랜치 정리 | 5분 | — | 안 함 (2026-10-28 추가) |
-| 16 | 다른 작업 PC에 git CLI 브랜치 규칙 적용 | 5분 | #361 | `OneDrive\문서\github` PC 완료 (2026-10-31). `Documents\GitHub` PC 안 함 |
+| 0 | Change the local `.env` ports | 5 min | (follow-up to #95) | Not checked (local file) |
+| 1 | Install the personal-account tools to the new location | 5 min | #21 | Not done: `%LOCALAPPDATA%\sirloinbh-tools` does not exist |
+| 2 | Update shared-aws-infrastructure and prepare the Terraform state | Done | #92 | Done (2026-10-24): state rebuilt by import, plan shows "No changes" |
+| 3 | Create the GitHub App and set up Actions sharing | 10 min | #86 | Not done: no `SYNC_APP_ID` variable or `SYNC_APP_PRIVATE_KEY` secret |
+| 4 | First publish of the shared packages and access permissions | 10 min | #88 | Not done: no package tags or Releases |
+| 5 | Align repo settings (Dependabot, merge method, workout-memo security) | 10 min | #22 | Not done: Dependabot alerts are off |
+| 6 | (If you already did 3) Add Issues write permission to the GitHub App | 3 min | #40 | Skipped because 3 is not done yet |
+| 7 | Trust the Codex hooks and check blocking | 3 min | #180 | Not done (Codex CLI 0.144.4 installed; rule decisions recorded in PR #185) |
+| 8 | Check the work PC (Claude Code version, agent runner) | 3 min | #183 | Partly: Claude Code 2.1.309 confirmed. The runner comes after 1 |
+| 9 | Turn on secret scanning, push protection, and CodeQL for 11 repos, and add Code scanning read permission to the App | 15 min | #261 | Not done (added 2026-10-27) |
+| 10 | Issue a Claude API key and set a spending limit, put it in SSM, and put the server read key in place | 15 min | #266 | Not done (added 2026-10-27) |
+| 11 | Create a healthchecks.io account and one check per app, and put the ping URLs in the server `.env` | 20 min | #286 | Not done (added 2026-10-27) |
+| 12 | Fix the lockfiles of the 8 sync PRs (shared ESLint config 1.1.0) | 15 min | #328 | Done (2026-10-29) |
+| 13 | Merge 3 app PRs (skill cleanup) | 5 min | #313 | Done (2026-10-29, merged by the agent) |
+| 14 | Approve installing the ESLint and Prettier plugins and more | 10 min | #245 | Not done |
+| 15 | Clean up merged local branches | 5 min | — | Not done (added 2026-10-28) |
+| 16 | Apply the git CLI branch rules on the other work PC | 5 min | #361 | `OneDrive\문서\github` PC done (2026-10-31). `Documents\GitHub` PC not done |
 
-**남은 권장 순서는 1 → 3 → 4입니다.** 2는 끝났습니다. 1–4가 끝나면 첫 동기화(#97: workout-memo, `maxRollout` 1)를 시작할 수 있습니다. 0, 5, 7은 순서와 상관없이 언제든 하면 됩니다. 8은 1 직후에 합니다.
+**The recommended order for what remains is 1 → 3 → 4.** 2 is done. Once 1–4 are finished, you can start the first sync (#97: workout-memo, `maxRollout` 1). 0, 5, and 7 can be done at any time, in any order. Do 8 right after 1.
 
-단계를 끝내면 "#21 끝"처럼 알려 주세요. 에이전트가 이어서 하는 일:
+When you finish a step, tell me something like "#21 done". What the agent does next:
 
-| 끝난 단계 | 에이전트가 이어서 하는 일 |
+| Finished step | What the agent does next |
 |---|---|
-| 1 (#21) | 8(#183) 확인 안내 |
-| 2 (#92) | 끝남: #93 인프라 리포 정비, #94 workout-memo에서 `infrastructure/` 제거. 다음은 #36 배포 템플릿 |
-| 4 (#88) | `versions.json`에 패키지 버전 1.0.0을 넣는 PR |
-| 1–4 모두 | #97 workout-memo 첫 동기화 PR (병합 전에 4-3 서버 토큰 필요) |
+| 1 (#21) | Guides you through the check in 8 (#183) |
+| 2 (#92) | Done: #93 cleanup of the infrastructure repo, #94 removal of `infrastructure/` from workout-memo. Next is the #36 deployment template |
+| 4 (#88) | A PR that puts package version 1.0.0 into `versions.json` |
+| All of 1–4 | #97 first sync PR for workout-memo (the 4-3 server token is needed before merging) |
 
-## 0. 로컬 `.env` 포트 바꾸기
+## 0. Change the local `.env` ports
 
-포트를 슬롯 체계로 다시 배정했습니다([프로젝트 표](projects.md)). 각 리포의 로컬 `.env`에서 `DATABASE_URL`의 포트와 `PORT`를 아래 값으로 바꿉니다.
+Ports were reassigned with a slot scheme ([project table](projects.md)). In each repo's local `.env`, change the port in `DATABASE_URL` and `PORT` to the values below.
 
-| 리포 | `PORT` (API) | `DATABASE_URL` 포트 (DB) | 웹 접속 |
+| Repo | `PORT` (API) | `DATABASE_URL` port (DB) | Web address |
 |---|---|---|---|
 | workout-memo | 3101 | 15401 | http://localhost:8101 |
 | study-log | 3102 | 15402 | http://localhost:8102 |
@@ -48,101 +48,101 @@
 | plan-routine | 3107 | 15407 | http://localhost:8107 |
 | dev-career-portfolio | 3108 | 15408 | http://localhost:8108 |
 
-예: workout-memo는 `DATABASE_URL=postgres://workout:<비밀번호>@localhost:15401/workout`, `PORT=3101`.
+Example for workout-memo: `DATABASE_URL=postgres://workout:<password>@localhost:15401/workout`, `PORT=3101`.
 
-그다음 각 리포에서 `docker compose up -d`를 실행하면 DB 컨테이너가 새 포트로 다시 열립니다. 데이터 볼륨은 그대로입니다.
+Then run `docker compose up -d` in each repo, and the DB container reopens on the new port. The data volume is unchanged.
 
-## 1. 개인 계정 도구를 새 위치로 설치 (#21)
+## 1. Install the personal-account tools to the new location (#21)
 
-절차는 [tools.md](tools.md)의 "옮기는 절차" 1–4단계입니다. 설치(`tools\install.ps1`), 10개 리포의 Git 인증 경로 변경(`set-credential-helper.ps1`), 확인, 바탕화면 실행기 교체 순서입니다. **첫 동기화(#97)보다 먼저** 해야 합니다. 동기화가 VS Code 터미널 설정을 새 위치로 바꾸기 때문입니다.
+The procedure is steps 1–4 of "Migration steps" in [tools.md](tools.md). The order is: install (`tools\install.ps1`), change the Git credential path in 10 repos (`set-credential-helper.ps1`), verify, and replace the desktop launchers. You must do this **before the first sync (#97)**, because the sync changes the VS Code terminal settings to the new location.
 
-## 2. shared-aws-infrastructure 최신화와 Terraform state 준비 (#92, 완료)
+## 2. Update shared-aws-infrastructure and prepare the Terraform state (#92, done)
 
-**2026-10-24에 끝났습니다.** 처음 apply한 PC에 접근할 수 없어 state를 잃었고, 지금 작업 PC에서 import로 다시 만들었습니다. 결과는 다음과 같습니다.
+**Finished on 2026-10-24.** The PC that did the first apply was no longer accessible, so the state was lost, and I rebuilt it by import on the current work PC. The results:
 
-- shared-aws-infrastructure main을 workout-memo의 최신 `infrastructure/`로 fast-forward했습니다(`684542a`).
-- AWS provider를 v6.68.0으로 올렸습니다(sirloinbh/shared-aws-infrastructure#2). v5는 고정 IP를 import할 수 없습니다.
-- 4개를 import하고 3개를 새로 만든 뒤 `terraform plan` 결과가 "No changes"입니다. 고정 IP 주소는 그대로입니다.
-- 이후 인프라 원본 정비(#93)와 workout-memo의 `infrastructure/` 제거(#94)도 끝났습니다.
+- I fast-forwarded the shared-aws-infrastructure main to the latest `infrastructure/` from workout-memo (`684542a`).
+- I upgraded the AWS provider to v6.68.0 (sirloinbh/shared-aws-infrastructure#2). v5 cannot import the static IP.
+- After importing 4 resources and creating 3 new ones, `terraform plan` shows "No changes". The static IP address is unchanged.
+- Cleanup of the infrastructure source (#93) and removal of `infrastructure/` from workout-memo (#94) are also done.
 
-### 다른 PC에서 인프라를 다룰 때
+### When working on the infrastructure from another PC
 
-절차의 원본은 shared-aws-infrastructure의 `docs/operations.md`입니다. 상황별로 아래 장을 따릅니다.
+The source of truth for the procedure is `docs/operations.md` in shared-aws-infrastructure. Follow the chapter below for your situation.
 
-| 상황 | `docs/operations.md` |
+| Situation | `docs/operations.md` |
 |---|---|
-| 새 PC 준비: Terraform·AWS CLI 설치, Terraform 전용 IAM 사용자와 최소 권한 정책(루트 키를 만들지 않음), SSH 키, `terraform.tfvars` | 1장 |
-| state 백업과 다른 PC로 옮기기 | 3장 |
-| state를 잃었을 때 import로 다시 만들기 | 4장 |
-| 새 PC의 SSH 키를 서버에 추가하기(브라우저 SSH 잠깐 허용) | 5장 |
+| Preparing a new PC: install Terraform and the AWS CLI, a Terraform-only IAM user with a minimal-permission policy (do not create root keys), an SSH key, `terraform.tfvars` | Chapter 1 |
+| Backing up the state and moving it to another PC | Chapter 3 |
+| Rebuilding the state by import after losing it | Chapter 4 |
+| Adding the new PC's SSH key to the server (briefly allow browser SSH) | Chapter 5 |
 
-순서를 정할 때 알아 둘 점:
+Points to know when choosing the order:
 
-1. **state가 어디 있는지 먼저 확인합니다.** 있으면 백업한 파일을 새 PC로 복사하고 plan이 "No changes"인지 봅니다. 없으면 4장의 import 절차로 갑니다. state 없이 apply하면 리소스가 중복으로 생깁니다.
-2. **import할 수 없는 리소스가 둘 있습니다.** SSH 키 쌍은 콘솔에서 지운 뒤 다시 만들고, 방화벽 규칙은 apply가 같은 값으로 덮어씁니다. 그래서 import 직후 plan은 "4 to import, 3 to add, 0 to change, 0 to destroy"가 정상입니다. 교체(`-/+`)나 삭제가 보이면 apply하지 않습니다.
-3. **provider 버전을 올렸다면 PR을 먼저 병합하고 apply합니다.** apply하면 state가 새 형식으로 저장되어 되돌릴 수 없습니다.
-4. **허용 IP를 확인합니다.** 새 PC의 공인 IP가 `allowed_cidrs`에 없으면 SSH와 웹 접속이 막힙니다.
+1. **First check where the state is.** If it exists, copy the backed-up file to the new PC and confirm that plan shows "No changes". If it does not, go to the import procedure in chapter 4. If you apply without state, resources get duplicated.
+2. **Two resources cannot be imported.** Delete the SSH key pair in the console and create it again, and the firewall rules are overwritten with the same values by apply. So right after the import, a plan of "4 to import, 3 to add, 0 to change, 0 to destroy" is normal. If you see a replacement (`-/+`) or a deletion, do not apply.
+3. **If you upgraded the provider version, merge the PR first and then apply.** Applying saves the state in the new format, and you cannot go back.
+4. **Check the allowed IPs.** If the new PC's public IP is not in `allowed_cidrs`, SSH and web access are blocked.
 
-### PowerShell 5.1에서 명령을 붙여 넣을 때
+### When pasting commands in PowerShell 5.1
 
-#92를 진행하면서 실제로 겪은 문제입니다.
+These are problems we actually hit while working on #92.
 
-- **명령은 한 줄로 붙여 넣습니다.** 줄이 끊기면(`>>` 표시) 따옴표 안에 줄바꿈이 들어갑니다. `ssh-keygen -C` 주석이 두 줄이 되거나, `git config` 값이 두 항목으로 나뉘어 저장되었습니다.
-- **빈 문자열 인수(`""`)는 실행 파일에 넘어가지 않습니다.** `git config --add credential.https://github.com.helper ""`를 PowerShell에서 실행하면 빈 helper 줄이 저장되지 않습니다. 인증 설정은 [tools.md](tools.md)의 `set-credential-helper.ps1`로 하고, 결과는 `git config --local --get-all credential.https://github.com.helper`로 확인합니다(첫 줄이 비어 있어야 함).
-- **`<` 입력 리디렉션이 없습니다.** 파일 내용을 명령에 넘길 때는 웹 화면을 쓰거나 `Get-Content -Raw`를 씁니다.
-- **파일은 BOM 없는 UTF-8로 씁니다.** `Set-Content`·`Out-File` 대신 `[IO.File]::WriteAllText(<경로>, <내용>, (New-Object Text.UTF8Encoding $false))`를 씁니다.
-- **`ssh-keygen`은 `.ssh` 폴더를 만들지 않습니다.** 먼저 `New-Item -ItemType Directory -Force "$HOME\.ssh"`를 실행합니다.
-- **AWS CLI가 처음 실행될 때 AI 에이전트용 스킬과 MCP 서버 설치를 묻습니다.** 필요하지 않으면 `n`으로 답합니다. `y`로 답하면 모든 프로젝트에 스킬 24개와 버전이 고정되지 않은 MCP 서버(`@latest`)가 등록됩니다.
+- **Paste commands as a single line.** If a line breaks (the `>>` prompt appears), a newline ends up inside the quotes. The `ssh-keygen -C` comment became two lines, and a `git config` value was stored as two entries.
+- **An empty string argument (`""`) is not passed to the executable.** If you run `git config --add credential.https://github.com.helper ""` in PowerShell, the empty helper line is not stored. Set up credentials with `set-credential-helper.ps1` in [tools.md](tools.md), and check the result with `git config --local --get-all credential.https://github.com.helper` (the first line must be empty).
+- **There is no `<` input redirection.** To pass a file's contents to a command, use the web page or `Get-Content -Raw`.
+- **Write files as UTF-8 without BOM.** Use `[IO.File]::WriteAllText(<path>, <content>, (New-Object Text.UTF8Encoding $false))` instead of `Set-Content` or `Out-File`.
+- **`ssh-keygen` does not create the `.ssh` folder.** First run `New-Item -ItemType Directory -Force "$HOME\.ssh"`.
+- **The first time the AWS CLI runs, it asks whether to install skills for AI agents and an MCP server.** Answer `n` if you do not need them. If you answer `y`, 24 skills and an MCP server with an unpinned version (`@latest`) are registered for all projects.
 
-## 3. GitHub App 만들기와 Actions 공유 설정 (#86)
+## 3. Create the GitHub App and set up Actions sharing (#86)
 
-**왜 필요한가요:** 중앙 리포가 9개 리포에 동기화 PR을 열려면 권한이 좁은 전용 App이 필요합니다. 하위 리포가 중앙의 공통 CI를 불러 쓰려면 공유 설정도 필요합니다. 자세한 절차와 키 교체 방법은 [github-app.md](github-app.md)에 있습니다.
+**Why it is needed:** For the central repo to open sync PRs in 9 repos, it needs a dedicated App with narrow permissions. The sharing setting is also needed so that downstream repos can call the central common CI. The detailed procedure and how to rotate the key are in [github-app.md](github-app.md).
 
-### 3-1. App 만들기
+### 3-1. Create the App
 
-GitHub에 `sirloinbh`로 로그인한 상태에서 Settings → Developer settings → GitHub Apps → New GitHub App.
+With GitHub logged in as `sirloinbh`, go to Settings → Developer settings → GitHub Apps → New GitHub App.
 
-| 항목 | 값 |
+| Field | Value |
 |---|---|
 | GitHub App name | `project-standards-sync` |
 | Homepage URL | `https://github.com/sirloinbh/project-standards` |
-| Webhook | Active 체크 해제 |
-| Repository permissions | Contents: Read and write / Pull requests: Read and write / Workflows: Read and write / Issues: Read and write / Administration: Read-only / Secrets: Read-only / Variables: Read-only (나머지는 No access, Metadata는 자동) |
+| Webhook | Uncheck Active |
+| Repository permissions | Contents: Read and write / Pull requests: Read and write / Workflows: Read and write / Issues: Read and write / Administration: Read-only / Secrets: Read-only / Variables: Read-only (everything else is No access; Metadata is automatic) |
 | Where can this App be installed? | Only on this account |
 
-Create 후 화면의 **App ID**(숫자)를 적어 둡니다.
+After you click Create, write down the **App ID** (a number) shown on the page.
 
-### 3-2. 개인키 만들기와 등록
+### 3-2. Create and register the private key
 
-App 화면 아래 Generate a private key를 누르면 `.pem` 파일이 내려받아집니다.
+At the bottom of the App page, click Generate a private key, and a `.pem` file is downloaded.
 
-project-standards → Settings → Secrets and variables → Actions에서 등록합니다.
+Register it in project-standards → Settings → Secrets and variables → Actions.
 
-- **Secrets** 탭 → New repository secret: 이름 `SYNC_APP_PRIVATE_KEY`, 값은 `.pem` 파일을 메모장으로 열어 `-----BEGIN`부터 `END-----`까지 전체를 붙여 넣습니다.
-- **Variables** 탭 → New repository variable: 이름 `SYNC_APP_ID`, 값은 App ID 숫자입니다.
+- **Secrets** tab → New repository secret: the name is `SYNC_APP_PRIVATE_KEY`, and for the value, open the `.pem` file in Notepad and paste everything from `-----BEGIN` to `END-----`.
+- **Variables** tab → New repository variable: the name is `SYNC_APP_ID`, and the value is the App ID number.
 
-`.pem` 파일은 등록 직후 지웁니다. 다시 필요하면 새로 만들면 됩니다. PowerShell에는 `<` 입력 리디렉션이 없어서 명령줄 대신 웹 화면을 씁니다.
+Delete the `.pem` file right after registering it. If you need it again, just create a new one. PowerShell has no `<` input redirection, so use the web page instead of the command line.
 
-### 3-3. 설치
+### 3-3. Install
 
-App 화면 → Install App → sirloinbh Install → Only select repositories에서 10개를 고릅니다: project-standards, workout-memo, study-log, health-log, life-journal, money-ledger, cert-manager, plan-routine, dev-career-portfolio, shared-aws-infrastructure.
+App page → Install App → sirloinbh Install → under Only select repositories, choose these 10: project-standards, workout-memo, study-log, health-log, life-journal, money-ledger, cert-manager, plan-routine, dev-career-portfolio, shared-aws-infrastructure.
 
-### 3-4. 공통 CI 공유 허용
+### 3-4. Allow sharing of the common CI
 
-project-standards → Settings → Actions → General → Access에서 "Accessible from repositories owned by the user 'sirloinbh'"를 고르고 Save합니다.
+In project-standards → Settings → Actions → General → Access, choose "Accessible from repositories owned by the user 'sirloinbh'" and Save.
 
-### 3-5. 확인
+### 3-5. Verify
 
-project-standards → Actions → sync → Run workflow, 또는 `ghp workflow run sync.yml -R sirloinbh/project-standards`. 로그에 "설치 토큰 발급 확인. maxRollout 0이라 동기화할 대상이 없습니다."가 나오면 성공입니다. 지금은 `maxRollout`이 0이라 어느 리포에도 PR이 열리지 않습니다. 실패하면 App ID 오타, 개인키 전체가 들어갔는지, 설치 범위를 확인하세요.
+Go to project-standards → Actions → sync → Run workflow, or run `ghp workflow run sync.yml -R sirloinbh/project-standards`. It succeeded if the log shows "설치 토큰 발급 확인. maxRollout 0이라 동기화할 대상이 없습니다." (log message: installation token issued; with `maxRollout` 0 there is nothing to sync). Right now `maxRollout` is 0, so no PR is opened in any repo. If it fails, check for a typo in the App ID, whether the whole private key went in, and the installation scope.
 
-## 4. 공유 패키지 첫 배포와 접근 권한 (#88)
+## 4. First publish of the shared packages and access permissions (#88)
 
-**왜 필요한가요:** 하위 리포가 공유 설정 패키지 4종을 설치하려면 먼저 배포돼 있어야 하고, 각 리포가 읽을 권한이 있어야 합니다. 배포는 태그 push로만 하도록 정했기 때문에 직접 하셔야 합니다.
+**Why it is needed:** For downstream repos to install the 4 shared config packages, the packages must be published first, and each repo needs permission to read them. We decided that publishing happens only by pushing a tag, so you have to do it yourself.
 
-### 4-1. 태그 4개 push (배포 시작)
+### 4-1. Push 4 tags (starts the publish)
 
 ```powershell
-cd <project-standards 폴더>
+cd <project-standards folder>
 git fetch origin
 git tag eslint-config/v1.0.0 origin/main
 git tag prettier-config/v1.0.0 origin/main
@@ -154,72 +154,72 @@ git push origin tsconfig/v1.0.0
 git push origin design-tokens/v1.0.0
 ```
 
-**태그는 한 번에 하나씩 push합니다.** GitHub는 한 번의 push에 태그가 3개보다 많으면 워크플로를 실행하지 않습니다. 2026-10-24에 4개를 한 번에 push해서 publish가 실행되지 않았습니다(#198). 이미 한꺼번에 push했다면 `git push origin --delete <태그...>`로 원격 태그를 지운 뒤 하나씩 다시 push합니다.
+**Push tags one at a time.** GitHub does not run workflows when a single push has more than 3 tags. On 2026-10-24 I pushed 4 at once and publish did not run (#198). If you already pushed them all at once, delete the remote tags with `git push origin --delete <tags...>` and push them again one by one.
 
-로컬 main을 바꾸지 않도록 `origin/main`에 태그를 답니다. Actions에서 publish 실행 4개가 성공하는지, Releases에 4개가 생겼는지 확인합니다. 각 Release 본문의 배포 실행 링크는 동기화가 패키지 출처를 확인하는 근거입니다.
+The tags go on `origin/main` so that your local main is not changed. Check in Actions that all 4 publish runs succeed, and that 4 Releases appear in Releases. The deployment run link in each Release body is how the sync verifies where a package came from.
 
-### 4-2. 패키지 접근 권한
+### 4-2. Package access permissions
 
-GitHub 프로필 → Packages에서 패키지 4개 각각에 대해 Package settings → Manage Actions access → Add repository로 앱 리포 8개를 추가하고 Role은 Read로 둡니다. 그래야 각 앱 CI가 패키지를 설치할 수 있습니다.
+In your GitHub profile → Packages, for each of the 4 packages, go to Package settings → Manage Actions access → Add repository, add the 8 app repos, and leave the Role as Read. This lets each app's CI install the packages.
 
-### 4-3. Lightsail 서버 토큰 (workout-memo 첫 동기화 PR을 병합하기 전에만 하면 됨)
+### 4-3. Lightsail server token (only needed before merging the first workout-memo sync PR)
 
 1. Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token (classic)
-   - 이름: `lightsail-read-packages`
-   - 만료: 예) 1년
-   - 권한: `read:packages` 하나만
-2. 서버에 설정합니다.
+   - Name: `lightsail-read-packages`
+   - Expiration: for example, 1 year
+   - Scope: `read:packages` only
+2. Set it on the server.
    ```powershell
    ssh -i ~/.ssh/workout-memo-lightsail ubuntu@<static_ip>
-   sudo nano /opt/workout-memo/.env    # 맨 아래에 NODE_AUTH_TOKEN=<발급한 토큰> 추가 후 저장
+   sudo nano /opt/workout-memo/.env    # add NODE_AUTH_TOKEN=<the issued token> at the bottom and save
    ```
-3. 만료일을 캘린더에 적어 두세요. 토큰은 서버 `.env`에만 둡니다.
+3. Write the expiry date in your calendar. Keep the token only in the server `.env`.
 
-4-1·4-2가 끝나면 알려 주세요. `versions.json`에 패키지 버전 1.0.0을 넣는 PR은 에이전트가 합니다.
+Tell me when 4-1 and 4-2 are done. The agent will make the PR that puts package version 1.0.0 into `versions.json`.
 
-## 5. 리포 설정 맞추기 (#22)
+## 5. Align repo settings (#22)
 
-9개 리포 모두 Dependabot 취약점 알림과 보안 업데이트가 꺼져 있고, workout-memo(공개)는 브랜치 보호와 secret scanning도 꺼져 있습니다(2026-10-22 확인). 기준, 이유, 명령은 [repo-settings.md](repo-settings.md)의 "맞추는 법"에 있습니다. workout-memo 브랜치 보호는 첫 동기화(#97) 병합 뒤에 설정합니다.
+In all 9 repos, Dependabot vulnerability alerts and security updates are off, and in workout-memo (public), branch protection and secret scanning are also off (checked 2026-10-22). The criteria, reasons, and commands are in "How to align" in [repo-settings.md](repo-settings.md). Set workout-memo's branch protection after the first sync (#97) is merged.
 
-## 6. GitHub App에 Issues 쓰기 권한 추가 (#40)
+## 6. Add Issues write permission to the GitHub App (#40)
 
-**왜 필요한가요:** 동기화가 9개 리포에 std-backlog 라벨(우선순위·특성 20개)을 만들거나 고치려면 App에 Issues 쓰기 권한이 있어야 합니다. 3번을 아직 하지 않았다면 3-1 표에 이미 들어 있으니 이 단계는 건너뜁니다.
+**Why it is needed:** For the sync to create or fix the std-backlog labels (20 priority and characteristic labels) in the 9 repos, the App needs Issues write permission. If you have not done 3 yet, it is already in the 3-1 table, so skip this step.
 
 1. GitHub → Settings → Developer settings → GitHub Apps → `project-standards-sync` → Permissions & events.
-2. Repository permissions의 **Issues**를 "Read and write"로 바꾸고 Save changes.
-3. Settings → Applications → Installed GitHub Apps → `project-standards-sync`에서 새 권한 요청을 **Accept**합니다. Accept해야 적용됩니다.
-4. 다음 `sync` 실행 로그에 리포마다 `라벨 생성 n, 갱신 n, 그대로 n` 줄이 나오면 성공입니다. `라벨 실패 — ... 403`이 나오면 3을 다시 확인하세요.
+2. Change **Issues** under Repository permissions to "Read and write" and Save changes.
+3. In Settings → Applications → Installed GitHub Apps → `project-standards-sync`, **Accept** the new permission request. It does not take effect until you Accept.
+4. It succeeded if the next `sync` run log shows a `라벨 생성 n, 갱신 n, 그대로 n` line for each repo (log line: labels created n, updated n, unchanged n). If `라벨 실패 — ... 403` (label failure) appears, check 3 again.
 
-동기화는 라벨을 만들거나 고치기만 하고 지우지 않습니다. 각 리포에만 있는 라벨과 GitHub 기본 라벨(`bug` 등)은 그대로 남습니다.
+The sync only creates or fixes labels and never deletes them. Labels that exist only in a single repo and GitHub's default labels (such as `bug`) are left alone.
 
-## 7. Codex 훅 신뢰와 차단 확인 (#180)
+## 7. Trust the Codex hooks and check blocking (#180)
 
-**왜 필요한가요:** Codex는 프로젝트의 훅(`.codex/hooks.json`)을 사용자가 `/hooks`에서 신뢰해야 실행합니다. 신뢰하지 않으면 규칙(`.codex/rules/`)만 남고, 규칙은 `npm --silent install`처럼 옵션을 앞에 둔 형태를 막지 못합니다([agent-guardrails.md](agent-guardrails.md)). 대화형 세션이 필요해서 직접 하셔야 합니다.
+**Why it is needed:** Codex runs a project's hooks (`.codex/hooks.json`) only after you trust them in `/hooks`. If you do not trust them, only the rules (`.codex/rules/`) remain, and the rules cannot block a form with the option placed first, such as `npm --silent install` ([agent-guardrails.md](agent-guardrails.md)). It needs an interactive session, so you have to do it yourself.
 
-1. project-standards 폴더에서 Codex를 엽니다. 프로젝트 `.codex/` 폴더를 신뢰할지 물으면 신뢰합니다.
-2. `/hooks`를 입력하고 "패키지 설치 명령인지 확인" 훅을 검토한 뒤 신뢰합니다.
-3. Codex에게 `npm --silent install --help`를 실행해 달라고 합니다. "패키지 설치·삭제·실행 명령이라 막았습니다"가 나오면 성공입니다.
-4. 같은 방식으로 `npm ls`는 실행되는지 확인합니다.
+1. Open Codex in the project-standards folder. If it asks whether to trust the project's `.codex/` folder, trust it.
+2. Type `/hooks`, review the "패키지 설치 명령인지 확인" hook (hook name: check whether it is a package install command), and trust it.
+3. Ask Codex to run `npm --silent install --help`. It succeeded if you see "패키지 설치·삭제·실행 명령이라 막았습니다" (hook message: blocked because it is a package install, delete, or run command).
+4. In the same way, check that `npm ls` does run.
 
-결과를 #180에 댓글로 남기거나 알려 주시면 이슈를 닫습니다. `.codex/hooks.json`의 훅이 바뀌면 다시 신뢰해야 합니다.
+Leave the result as a comment on #180 or tell me, and I will close the issue. If a hook in `.codex/hooks.json` changes, you must trust it again.
 
-## 8. 작업 PC 점검 (#183)
+## 8. Check the work PC (#183)
 
-1을 끝낸 직후에 합니다. 작업 PC가 여러 대면 PC마다 합니다.
+Do this right after finishing 1. If you have several work PCs, do it on each PC.
 
 ```powershell
-claude --version    # 2.1.295 이상이어야 함 (낮으면 업데이트)
+claude --version    # must be 2.1.295 or later (update if lower)
 Test-Path "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1"    # True
-powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1" -Root <project-standards 폴더> status
+powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1" -Root <project-standards folder> status
 ```
 
-그다음 새로 시작한 Claude Code 세션에서 `npm --silent install --help`가 막히고 `npm ls`는 실행되는지 확인합니다. Claude Code가 2.1.295보다 낮으면 차단 훅이 실패했을 때 명령이 그대로 실행됩니다. 결과(PC 이름, 버전)를 #183에 댓글로 남겨 주세요.
+Then, in a newly started Claude Code session, check that `npm --silent install --help` is blocked and `npm ls` runs. If Claude Code is older than 2.1.295, the command runs as-is when the blocking hook fails. Leave the result (PC name, version) as a comment on #183.
 
-## 16. 다른 작업 PC에 git CLI 브랜치 규칙 적용 (#361)
+## 16. Apply the git CLI branch rules on the other work PC (#361)
 
-전역 지침은 리포 밖 파일이라 PC마다 한 번 실행해야 합니다. 리포 안의 권한 규칙은 `git pull`로 함께 받습니다. 그 PC의 project-standards 폴더에서 실행합니다.
+The global instructions are a file outside the repo, so they must be run once per PC. The permission rules inside the repo come along with `git pull`. Run this in that PC's project-standards folder.
 
-전역 지침에 Fork 규칙이 남아 있으면 Claude Code 세션을 시작할 때 이 안내가 뜹니다(#368). 이 안내는 리포의 훅이 띄우므로, 그 PC의 리포가 훅을 받은 뒤부터 나옵니다. 적용을 마치면 더 나오지 않습니다.
+If the Fork rule is still in the global instructions, this notice appears when you start a Claude Code session (#368). The notice is raised by a hook in the repo, so it appears only after that PC's repo has received the hook. Once you finish applying, it no longer appears.
 
 ```powershell
 git switch main
@@ -228,61 +228,61 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools\install.ps1
 node tools\check-git-permissions.mjs
 ```
 
-마지막 줄에 `All decisions match.`가 나오면 성공입니다. 출력을 #361에 댓글로 남기거나, 그 PC의 Claude Code에게 "#361 다른 PC 적용해 줘"라고 하면 됩니다. Claude Code를 이 폴더에서 처음 쓰는 PC는 먼저 대화형으로 한 번 열어 폴더 신뢰를 수락합니다.
+It succeeded if the last line shows `All decisions match.`. Leave the output as a comment on #361, or tell Claude Code on that PC "apply #361 on the other PC". On a PC where you are using Claude Code in this folder for the first time, open it interactively once first and accept the folder trust.
 
-## 9. 리포 보안 설정 켜기와 App 권한 추가 (#261)
+## 9. Turn on repo security settings and add App permission (#261)
 
-**왜 필요한가요:** 리포 11개가 모두 공개라 secret scanning, push protection, CodeQL을 무료로 쓸 수 있습니다. 준수 현황은 이제 세 가지를 모든 리포에 필수로 봅니다(#260). 설정을 바꾸는 권한은 사용자에게만 있습니다.
+**Why it is needed:** All 11 repos are public, so secret scanning, push protection, and CodeQL are free to use. The compliance report now treats all three as required for every repo (#260). Only you have permission to change the settings.
 
-1. 동기화 App 권한 추가: GitHub → Settings → Developer settings → GitHub Apps → `project-standards-sync` → Permissions & events → Repository permissions의 **Code scanning alerts**를 "Read-only"로 바꾸고 저장합니다. Settings → Applications → Installed GitHub Apps에서 새 권한을 **Accept**합니다.
-2. 리포 11개(`project-standards`, `shared-aws-infrastructure`, 앱 8개, `file-control`)마다 secret scanning·push protection과 CodeQL 기본 설정을 켭니다. 명령은 [repo-settings.md](repo-settings.md)의 "맞추는 법"에 있습니다.
-3. 켠 뒤 처음 나온 code scanning·secret scanning 알림 **수**를 #261에 댓글로 남겨 주세요(내용은 쓰지 않음). 다음 준수 현황에서 세 항목이 모두 ✓이면 끝입니다.
+1. Add the sync App permission: GitHub → Settings → Developer settings → GitHub Apps → `project-standards-sync` → Permissions & events → change **Code scanning alerts** under Repository permissions to "Read-only" and save. In Settings → Applications → Installed GitHub Apps, **Accept** the new permission.
+2. In each of the 11 repos (`project-standards`, `shared-aws-infrastructure`, the 8 apps, and `file-control`), turn on secret scanning, push protection, and the CodeQL default setup. The commands are in "How to align" in [repo-settings.md](repo-settings.md).
+3. After turning them on, leave the **number** of code scanning and secret scanning alerts that first appear as a comment on #261 (do not write the contents). You are done when all three items show ✓ in the next compliance report.
 
-## 10. Claude API 키를 SSM 한 곳에 넣기 (#266)
+## 10. Put the Claude API key in one place in SSM (#266)
 
-**왜 필요한가요:** Claude API 키의 원본을 AWS SSM 한 곳에 두고, 서버와 PC가 거기서 받아 씁니다([ADR-0010](adr/0010-claude-api-key-ssm.md)). 키 발급·결제·AWS 키 만들기는 사용자 계정으로만 할 수 있습니다. **키 값은 채팅이나 문서에 붙여 넣지 마세요.**
+**Why it is needed:** The source of truth for the Claude API key is one place in AWS SSM, and the server and PCs fetch it from there ([ADR-0010](adr/0010-claude-api-key-ssm.md)). Issuing the key, billing, and creating AWS keys can only be done with your own accounts. **Never paste the key value into chat or documents.**
 
-1. shared-aws-infrastructure PR #9(백업 버킷·서버 IAM 사용자)는 병합·apply했습니다(2026-10-29). 사용자 이름을 모든 앱 공용(`sirloinbh-apps-*`)으로 바꾸는 후속 PR을 병합하고 다시 apply합니다. 그 PR의 "병합 전에 확인해 주세요"를 따릅니다.
-2. Claude 구독에 포함된 월 $200 API 크레딧을 씁니다([안내](https://platform.claude.com/docs/en/about-claude/api-credits-for-subscribers)). 대화형 Claude Code에는 쓰이지 않고, 남은 크레딧은 다음 달로 넘어가지 않습니다.
-   1. 크레딧은 Console 조직 `Quantified ESG`에 연결되어 있습니다(2026-10-29 연결). 다시 연결하지 않습니다. 다른 조직으로 옮기려면 지원팀에 문의해야 합니다.
-   2. Console 왼쪽 위에서 조직이 `Quantified ESG`인지 확인하고, Billing의 Promotional credits에 크레딧이 보이는지 확인합니다. 결제 수단과 자동 충전(auto-reload)은 켜지 않습니다. 크레딧을 다 쓰면 다음 지급일까지 호출이 멈추고, 구독 요금에 더해 청구되지 않습니다. 조직에 다른 결제 수단이나 자동 충전이 이미 있으면 크레딧을 다 쓴 뒤 그쪽으로 넘어갈 수 있으므로 먼저 확인합니다.
-   3. 앱 공용 workspace `byunghk-tool`을 하나 만들고 월 지출 한도를 겁니다. 그 workspace에서 API 키를 하나 만듭니다(예: `byunghk-tool-shared`). 모든 앱이 이 키 하나를 SSM에서 받아 씁니다(ADR-0010).
-   4. Console의 Workload Identity Federation 안내는 쓰지 않습니다. Lightsail에는 IAM 역할을 붙일 수 없기 때문입니다.
-3. 키를 복사한 상태에서 project-standards 폴더에서 실행합니다:
+1. shared-aws-infrastructure PR #9 (backup bucket and server IAM users) was merged and applied (2026-10-29). Merge the follow-up PR that renames the users to be shared by all apps (`sirloinbh-apps-*`) and apply again. Follow "Check before merging" in that PR.
+2. Use the $200 monthly API credit included with your Claude subscription ([guide](https://platform.claude.com/docs/en/about-claude/api-credits-for-subscribers)). It is not used for interactive Claude Code, and unused credit does not carry over to the next month.
+   1. The credit is linked to the Console organization `Quantified ESG` (linked 2026-10-29). Do not link it again. To move it to another organization, you must contact support.
+   2. In the upper left of the Console, check that the organization is `Quantified ESG`, and check that the credit appears under Promotional credits in Billing. Do not turn on a payment method or auto-reload. When the credit runs out, calls stop until the next grant date, and nothing is billed on top of the subscription fee. If the organization already has another payment method or auto-reload, usage may move to it after the credit runs out, so check that first.
+   3. Create one workspace shared by all apps, `byunghk-tool`, and set a monthly spending limit on it. Create one API key in that workspace (for example, `byunghk-tool-shared`). All apps fetch this single key from SSM (ADR-0010).
+   4. Do not use the Console's Workload Identity Federation guide. This is because an IAM role cannot be attached to Lightsail.
+3. With the key copied, run this in the project-standards folder:
    ```powershell
-   $env:SIRLOINBH_AWS_PROFILE = '<개인 AWS 프로필>'
+   $env:SIRLOINBH_AWS_PROFILE = '<personal AWS profile>'
    Get-Clipboard | node tools/app-secrets.mjs set
-   node tools/app-secrets.mjs pull      # project-standards/.env 한 곳에 넣음
-   node tools/app-secrets.mjs check     # 모두 "있음"이면 성공
+   node tools/app-secrets.mjs pull      # puts it in the one place project-standards/.env
+   node tools/app-secrets.mjs check     # success if everything shows "있음" (present)
    ```
-   앱은 로컬 개발 때 `project-standards/.env`를 읽습니다. 앱 `.env`에는 키를 넣지 않습니다.
-4. AWS 콘솔에서 서버용 IAM 사용자 2개의 액세스 키를 만들고(사용 사례 "AWS 외부에서 실행되는 애플리케이션"), 서버의 공용 파일 `/opt/project-standards/.env` 한 곳에 넣습니다. 앱마다 넣지 않습니다. 파일을 처음 만드는 명령은 [배포 runbook](runbooks/deploy.md)의 "공용 파일"에 있습니다.
+   Apps read `project-standards/.env` during local development. Do not put the key in an app's `.env`.
+4. In the AWS console, create access keys for the 2 server IAM users (use case "Application running outside AWS") and put them in one place, the server's shared file `/opt/project-standards/.env`. Do not put them in each app. The command that creates the file for the first time is in "Shared file" in the [deploy runbook](runbooks/deploy.md).
 
-   | IAM 사용자 | 공용 파일에 넣을 키 |
+   | IAM user | Keys to put in the shared file |
    |---|---|
    | `sirloinbh-apps-secrets-reader` | `SECRETS_AWS_ACCESS_KEY_ID`, `SECRETS_AWS_SECRET_ACCESS_KEY` |
-   | `sirloinbh-apps-backup-uploader` | `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY`, `BACKUP_S3_BUCKET`(= `terraform output backup_bucket`) |
+   | `sirloinbh-apps-backup-uploader` | `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY`, `BACKUP_S3_BUCKET` (= `terraform output backup_bucket`) |
 
-   다음 배포부터 Claude API를 쓰는 앱이 SSM에서 키를 읽고, 다음 덤프부터 모든 앱의 백업이 S3에 올라갑니다. 그 뒤 study-log 서버 `.env`의 `ANTHROPIC_API_KEY` 줄은 지워도 됩니다.
-5. 예전 키가 있으면 Console에서 폐기합니다. 끝나면 #266에 "끝"이라고 댓글을 남겨 주세요(값은 쓰지 않음).
+   From the next deploy, apps that use the Claude API read the key from SSM, and from the next dump, every app's backup is uploaded to S3. After that, you may delete the `ANTHROPIC_API_KEY` line from the study-log server `.env`.
+5. If there is an old key, revoke it in the Console. When you finish, leave a comment "done" on #266 (do not write the value).
 
-## 11. healthchecks.io 알림 켜기 (#286)
+## 11. Turn on healthchecks.io alerts (#286)
 
-**왜 필요한가요:** 앱이 멈추거나 백업·자동 배포가 실패해도 지금은 서버 로그에만 남습니다. 서버가 healthchecks.io로 신호를 보내고, 끊기거나 실패하면 메일이 옵니다(#284). 계정과 메일 설정은 사용자 계정으로만 할 수 있습니다. **신호 주소는 채팅·문서에 붙여 넣지 마세요**(비밀 UUID가 들어 있음).
+**Why it is needed:** Even if an app stops or a backup or automatic deployment fails, it is only recorded in the server log for now. The server sends pings to healthchecks.io, and you get an email when they stop or fail (#284). The account and email settings can only be done with your own account. **Do not paste the ping URLs into chat or documents** (they contain a secret UUID).
 
-1. https://healthchecks.io 가입(무료 20개 체크). 알림 받을 메일을 확인합니다.
-2. 앱마다 체크를 만듭니다. 이름은 `<앱>-health`처럼 짓고, 주기·유예는 앱 배포 runbook(`docs/runbooks/deploy.md`) "알림" 표대로 합니다. 앱 8개 × 5개는 무료 한도를 넘으므로, 먼저 운영 중인 앱(workout-memo)부터 만듭니다.
-3. 서버 `/opt/<앱>/.env`에 체크별 주소를 `HEALTHCHECK_URL_HEALTH=...`처럼 넣습니다.
-4. `sudo bash /opt/<앱>/deploy/install-backup.sh`로 health timer를 설치합니다(동기화 PR 반영 뒤).
-5. `docker compose stop web`으로 잠깐 멈췄다가 10~15분 안에 메일이 오는지 보고, `docker compose start web`으로 되돌립니다. 결과를 #286에 댓글로 남겨 주세요(주소는 쓰지 않음).
+1. Sign up at https://healthchecks.io (20 checks free). Confirm the email address that will receive alerts.
+2. Create a check for each app. Name it like `<app>-health`, and set the period and grace time according to the "Alerts" table in the app deploy runbook (`docs/runbooks/deploy.md`). 8 apps × 5 checks exceeds the free limit, so start with the app that is already running (workout-memo).
+3. In the server's `/opt/<app>/.env`, put the URL for each check, like `HEALTHCHECK_URL_HEALTH=...`.
+4. Install the health timer with `sudo bash /opt/<app>/deploy/install-backup.sh` (after the sync PR is applied).
+5. Stop it briefly with `docker compose stop web`, see whether an email arrives within 10–15 minutes, and restore it with `docker compose start web`. Leave the result as a comment on #286 (do not write the URLs).
 
-## 12. 동기화 PR 8개의 lockfile 맞추기 (#328)
+## 12. Fix the lockfiles of the 8 sync PRs (#328)
 
-> **완료 (2026-10-29).** 8개 PR 모두 lockfile 커밋을 더해 병합했습니다. 바뀐 곳은 8개 모두 `@sirloinbh/eslint-config` 항목의 같은 4줄이었습니다. 이 PC의 Node(24.22.1)가 앱의 고정 버전(24.21.0)과 달라 `engine-strict`에 걸렸으므로, lockfile만 쓰는 이번 실행에는 `--engine-strict=false`를 더했습니다. 아래 절차는 다음에 공유 패키지 버전을 올릴 때 다시 씁니다.
+> **Done (2026-10-29).** All 8 PRs were merged with an added lockfile commit. What changed in all 8 was the same 4 lines of the `@sirloinbh/eslint-config` entry. This PC's Node (24.22.1) differs from the app's pinned version (24.21.0) and hit `engine-strict`, so for this lockfile-only run I added `--engine-strict=false`. Use the procedure below again the next time you raise a shared package version.
 
-**왜 필요한가요:** 공유 ESLint 설정 1.1.0을 배포했고(태그 `eslint-config/v1.1.0`, 2026-10-28), 앱 8개의 동기화 PR이 루트 `package.json`의 `@sirloinbh/eslint-config`를 1.1.0으로 바꿨습니다. lockfile은 그대로라 CI가 `npm ci`에서 실패합니다(`lock file's @sirloinbh/eslint-config@1.0.0 does not satisfy ...@1.1.0`). 에이전트는 설치 명령을 실행할 수 없어(차단 hook, [agent-guardrails.md](agent-guardrails.md)) 설치 한 줄은 사용자가 실행합니다. 설치 승인은 2026-10-28에 받았습니다.
+**Why it is needed:** We published shared ESLint config 1.1.0 (tag `eslint-config/v1.1.0`, 2026-10-28), and the sync PRs of the 8 apps changed `@sirloinbh/eslint-config` in the root `package.json` to 1.1.0. The lockfile is unchanged, so CI fails at `npm ci` (`lock file's @sirloinbh/eslint-config@1.0.0 does not satisfy ...@1.1.0`). The agent cannot run install commands (blocking hook, [agent-guardrails.md](agent-guardrails.md)), so you run the one install line. Install approval was given on 2026-10-28.
 
-| 앱 | 동기화 PR | 브랜치 |
+| App | Sync PR | Branch |
 |---|---|---|
 | workout-memo | sirloinbh/workout-memo#177 | `chore/standards-sync-5435065` |
 | study-log | sirloinbh/study-log#116 | `chore/standards-sync-29607cf` |
@@ -293,44 +293,44 @@ node tools\check-git-permissions.mjs
 | english-study | sirloinbh/english-study#16 | `chore/standards-sync-29607cf` |
 | dev-career-portfolio | sirloinbh/dev-career-portfolio#16 | `chore/standards-sync-29607cf` |
 
-브랜치 이름은 다음 동기화 때 바뀔 수 있습니다. 실행 전에 PR에서 다시 확인합니다. 각 리포에 있는 `chore/standards-sync-5b4fe8a` 원격 브랜치는 열린 PR이 없는 예전 브랜치입니다.
+Branch names may change at the next sync. Check again in the PR before running. The `chore/standards-sync-5b4fe8a` remote branch in each repo is an old branch with no open PR.
 
-1. **토큰 권한 추가 (한 번만).** 로컬 설치는 GitHub Packages 읽기 권한이 필요합니다. 2026-10-28 실행은 이 권한이 없어 8개 모두 `401 Unauthorized`로 멈췄습니다(파일은 바뀌지 않음). VS Code의 PowerShell 터미널에서:
+1. **Add the token scope (once).** A local install needs permission to read GitHub Packages. The 2026-10-28 run lacked this permission, so all 8 stopped with `401 Unauthorized` (no files changed). In a PowerShell terminal in VS Code:
    ```powershell
    ghp auth refresh -h github.com -s read:packages
    ```
-2. **lockfile 다시 쓰기.** 앱마다 동기화 PR 브랜치에서 실행합니다. `node_modules`를 만들지 않고 설치 스크립트도 실행하지 않습니다.
+2. **Rewrite the lockfile.** Run this on the sync PR branch of each app. It does not create `node_modules` and does not run install scripts.
    ```powershell
    $env:NODE_AUTH_TOKEN = (ghp auth token)
    npm install --package-lock-only --ignore-scripts --engine-strict=false --no-audit --no-fund
    Remove-Item Env:NODE_AUTH_TOKEN
    ```
-   에이전트에게 "12 준비"라고 하면 8개 브랜치를 작업 폴더(worktree)로 받아 두고, 한 번에 돌리는 스크립트를 만들어 줍니다. 로컬 앱 체크아웃은 건드리지 않습니다.
-3. **에이전트에게 "12 실행함"이라고 알려 주세요.** 에이전트가 이어서 합니다.
-   - 앱마다 lockfile 변경이 `@sirloinbh/eslint-config` 항목(버전·주소·무결성 값)뿐인지 확인합니다. 다른 패키지가 바뀌었으면 그 앱은 멈추고 알립니다.
-   - 커밋·push하고, CI가 모두 통과하면 동기화 PR을 병합합니다(workout-memo부터). 이 8개 병합은 2026-10-28 사용자가 맡겼습니다.
-   - `frontend/`·`backend/` lockfile은 바뀌지 않습니다(이 패키지는 루트 `devDependencies`에만 있음). `npm run lockfiles:sync`(#303)로 한 번 더 확인합니다.
+   If you tell the agent "prepare 12", it fetches the 8 branches into working folders (worktrees) and writes a script that runs them all at once. It does not touch your local app checkouts.
+3. **Tell the agent "ran 12".** The agent continues from there.
+   - For each app, it checks that the lockfile change is only the `@sirloinbh/eslint-config` entry (version, URL, and integrity value). If another package changed, it stops for that app and tells you.
+   - It commits and pushes, and merges the sync PRs once all CI passes (starting with workout-memo). You delegated these 8 merges on 2026-10-28.
+   - The `frontend/` and `backend/` lockfiles do not change (this package is only in the root `devDependencies`). Double-check with `npm run lockfiles:sync` (#303).
 
-새로 켜지는 규칙은 `type`만 쓰기와 default export 금지 2개이고, 앱 8개의 위반은 0개입니다(#308).
+The only newly enabled rules are 2: `type`-only writes and a ban on default exports, and the 8 apps have 0 violations (#308).
 
-## 13. 앱 PR 3개 병합 (#313)
+## 13. Merge 3 app PRs (#313)
 
-앱 스킬의 낡은 줄을 고치는 PR입니다. 스킬 문서만 바뀝니다.
+These are PRs that fix stale lines in the app skills. Only the skill documents change.
 
-- [x] sirloinbh/study-log#119: `study-log-testing`·`study-log-foundation`의 도구·토큰 설명
-- [x] sirloinbh/plan-routine#35: 같은 두 줄
-- [x] sirloinbh/workout-memo#176: `workout-communication` 삭제. 12의 workout-memo 동기화 PR(#177)을 먼저 병합했습니다
+- [x] sirloinbh/study-log#119: tool and token descriptions in `study-log-testing` and `study-log-foundation`
+- [x] sirloinbh/plan-routine#35: the same two lines
+- [x] sirloinbh/workout-memo#176: delete `workout-communication`. I merged the workout-memo sync PR (#177) from 12 first
 
-2026-10-29 병합. 세 PR 모두 `docs/changes/standards-313-skill-cleanup.md`의 표 정렬이 `format:check`에 걸려, Prettier로 정렬하는 커밋을 더한 뒤 병합했습니다.
+Merged 2026-10-29. In all three PRs, the table alignment in `docs/changes/standards-313-skill-cleanup.md` failed `format:check`, so I added a commit that aligns it with Prettier and then merged.
 
-## 14. 설치 승인 (#245)
+## 14. Install approval (#245)
 
-ESLint·Prettier 플러그인 4개(#244), knip(#263), Lighthouse CI(#280), MSW(#281)의 설치 승인입니다. 패키지 목록과 검증 결과는 #245와 `docs/research/lint-rules.md`에 있습니다. 승인 전에 socket.dev 점수를 확인해 주세요. 승인하면 #246(앱 템플릿에 플러그인 넘기기)이 시작됩니다.
+This is the install approval for 4 ESLint and Prettier plugins (#244), knip (#263), Lighthouse CI (#280), and MSW (#281). The package list and verification results are in #245 and `docs/research/lint-rules.md`. Please check the socket.dev score before approving. Once you approve, #246 (passing the plugins to the app template) starts.
 
-## 15. 병합된 로컬 브랜치 정리
+## 15. Clean up merged local branches
 
-병합이 끝난 로컬 브랜치를 지웁니다. 먼저 `git switch main`, `git pull --ff-only`로 main을 최신으로 만든 뒤 브랜치마다 `git branch -d <브랜치>`를 실행합니다. 에이전트에게 맡겨도 됩니다.
+Delete the local branches that are already merged. First bring main up to date with `git switch main` and `git pull --ff-only`, then run `git branch -d <branch>` for each branch. You can also leave it to the agent.
 
-- project-standards: `docs/240-research-decisions`, `feat/303-workspace-lockfiles`, `feat/304-shared-dependency-versions`, `feat/308-eslint-config-1-1`, `feat/309-backend-http-standard`, `feat/310-frontend-api-standard`, `feat/311-confirm-dialog-notice`, `docs/307-zod4-research`, `docs/312-api-ui-code-rules`, `feat/313-std-communication`, `fix/326-zod-unbounded-arrays`, `chore/328-eslint-config-1-1-rollout`, `docs/328-pending-user-steps`, `chore/323-gitignore-tool-outputs`, `docs/248-domain-research`, `docs/328-user-steps-done`(이 문서의 PR이 병합된 뒤)
+- project-standards: `docs/240-research-decisions`, `feat/303-workspace-lockfiles`, `feat/304-shared-dependency-versions`, `feat/308-eslint-config-1-1`, `feat/309-backend-http-standard`, `feat/310-frontend-api-standard`, `feat/311-confirm-dialog-notice`, `docs/307-zod4-research`, `docs/312-api-ui-code-rules`, `feat/313-std-communication`, `fix/326-zod-unbounded-arrays`, `chore/328-eslint-config-1-1-rollout`, `docs/328-pending-user-steps`, `chore/323-gitignore-tool-outputs`, `docs/248-domain-research`, `docs/328-user-steps-done` (after the PR for this document is merged)
 - study-log: `fix/121-content-order-limit`
-- 앱 8개: 12·13에서는 브랜치 없는 작업 폴더만 써서 새로 생긴 로컬 브랜치는 없습니다. `git branch`에 `chore/standards-sync-*`나 `docs/313-skill-cleanup`이 보이면 병합된 것이니 지워도 됩니다
+- The 8 apps: steps 12 and 13 used only branchless working folders, so no new local branches were created. If `git branch` shows `chore/standards-sync-*` or `docs/313-skill-cleanup`, they are merged and safe to delete

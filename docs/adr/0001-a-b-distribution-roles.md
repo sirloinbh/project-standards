@@ -1,21 +1,21 @@
-# 0001. A안(npm 패키지)과 B안(템플릿 동기화)의 역할 분담
+# 0001. Division of roles between Plan A (npm packages) and Plan B (template sync)
 
-- 상태: 제안 (이슈 #1)
-- 날짜: 2026-10-22
+- Status: Proposed (issue #1)
+- Date: 2026-10-22
 
-## 맥락
+## Context
 
-8개 앱은 ESLint·Prettier·tsconfig 설정과 `.editorconfig` 등 설정 파일이 이미 같다(design.md 1.1). 하지만 모두 복사본이라서 한 곳을 고치면 8번 반복해야 한다. 공유 대상 중 일부는 `extends`나 `import`로 불러올 수 있고, 일부(`AGENTS.md`, 스킬, 워크플로, `.gitattributes`)는 파일이 리포에 직접 있어야 동작한다.
+The 8 apps already share the same config files, such as ESLint, Prettier, tsconfig, and `.editorconfig` (design.md 1.1). But they are all copies, so fixing one place means repeating the fix 8 times. Some of the shared items can be loaded with `extends` or `import`, while others (`AGENTS.md`, skills, workflows, `.gitattributes`) only work when the file is physically in the repo.
 
-## 결정
+## Decision
 
-- 불러올 수 있는 설정은 A안 패키지로 배포한다: `@sirloinbh/eslint-config`, `prettier-config`, `tsconfig`, `design-tokens`.
-- 파일로 있어야 하는 것은 B안 템플릿 동기화로 배포한다. 패키지를 불러오는 진입 파일(`eslint.config.mjs`, `prettier.config.mjs`(#246 전에는 `.prettierrc.json`), `tsconfig.json`)도 B안 관리 파일로 둔다.
-- 하위 리포의 `.standards/manifest.json` 하나가 두 경로의 기준이다. 중앙 SHA, 관리 파일 해시, 패키지 버전을 모두 여기에 기록한다.
-- 패키지 버전을 올릴 때도 B안 동기화 PR로 한다. Renovate·Dependabot의 버전 업 PR은 쓰지 않는다.
+- Configs that can be loaded are distributed as Plan A packages: `@sirloinbh/eslint-config`, `prettier-config`, `tsconfig`, `design-tokens`.
+- Items that must exist as files are distributed by Plan B template sync. The entry files that load the packages (`eslint.config.mjs`, `prettier.config.mjs` (`.prettierrc.json` before #246), `tsconfig.json`) are also Plan B managed files.
+- A single `.standards/manifest.json` in each sub-repo is the source of truth for both paths. The central SHA, managed-file hashes, and package versions are all recorded there.
+- Package version bumps also go through a Plan B sync PR. Version-bump PRs from Renovate or Dependabot are not used.
 
-## 결과
+## Consequences
 
-- 설정 규칙이 바뀌면 패키지 버전만 올리면 되고, 진입 파일은 거의 바뀌지 않는다.
-- 하위 리포는 private 레지스트리 인증이 필요해진다. CI, Docker 빌드, 운영 서버 각각에 인증 경로를 따로 설계해야 한다(design.md 4.3).
-- 버전 변경 경로가 sync 하나로 모이므로, 어떤 리포가 어떤 버전을 쓰는지 `docs/compliance.md`에서 한 번에 볼 수 있다.
+- When a config rule changes, only the package version needs to be bumped, and the entry files rarely change.
+- Sub-repos now need private registry authentication. An authentication path must be designed separately for CI, Docker builds, and the production server (design.md 4.3).
+- Because version changes flow through sync alone, `docs/compliance.md` shows at a glance which repo uses which version.

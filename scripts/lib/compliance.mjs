@@ -39,11 +39,11 @@ export function parseEnvExample(text) {
 export function envMismatches(entries, project) {
   const problems = [];
   const value = (k) => entries.find((e) => e.key === k)?.value;
-  if (value('PORT') !== undefined && value('PORT') !== String(project.ports.api)) problems.push(`PORT ${value('PORT')} ≠ 레지스트리 api ${project.ports.api}`);
+  if (value('PORT') !== undefined && value('PORT') !== String(project.ports.api)) problems.push(`PORT ${value('PORT')} ≠ registry api ${project.ports.api}`);
   const url = /@localhost:(\d+)\/([a-z0-9_]+)/.exec(value('DATABASE_URL') ?? '');
-  if (url && url[1] !== String(project.ports.db)) problems.push(`DATABASE_URL 포트 ${url[1]} ≠ 레지스트리 db ${project.ports.db}`);
-  if (url && url[2] !== project.db.name) problems.push(`DATABASE_URL DB 이름 ${url[2]} ≠ 레지스트리 ${project.db.name}`);
-  if (value('POSTGRES_DB') !== undefined && value('POSTGRES_DB') !== project.db.name) problems.push(`POSTGRES_DB ${value('POSTGRES_DB')} ≠ 레지스트리 ${project.db.name}`);
+  if (url && url[1] !== String(project.ports.db)) problems.push(`DATABASE_URL port ${url[1]} ≠ registry db ${project.ports.db}`);
+  if (url && url[2] !== project.db.name) problems.push(`DATABASE_URL DB name ${url[2]} ≠ registry ${project.db.name}`);
+  if (value('POSTGRES_DB') !== undefined && value('POSTGRES_DB') !== project.db.name) problems.push(`POSTGRES_DB ${value('POSTGRES_DB')} ≠ registry ${project.db.name}`);
   return problems;
 }
 
@@ -87,11 +87,11 @@ export function repoStatus({ target, project, read, pulls = [], now = new Date()
 /** A Markdown table cell: backslashes first, so a value ending in "\" cannot escape the next "|" (#290). */
 export const cell = (s) => String(s).replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
 
-const MARK = { fail: '✗', warn: '△ 권장', plan: '— 요금제', unknown: '? 확인 못 함' };
+const MARK = { fail: '✗', warn: '△ recommended', plan: '— plan', unknown: '? unknown' };
 
 /** One cell for the repository settings column (#22): failures, recommendations, unknowns. */
 function settingsCell(s) {
-  if (!s.settings) return s.settingsError ? '확인 못 함' : '—';
+  if (!s.settings) return s.settingsError ? 'unknown' : '—';
   const count = (status) => s.settings.filter((r) => r.status === status).length;
   const parts = [count('fail') && `✗ ${count('fail')}`, count('warn') && `△ ${count('warn')}`, count('unknown') && `? ${count('unknown')}`].filter(Boolean);
   return parts.length ? parts.join(' ') : '✓';
@@ -99,70 +99,70 @@ function settingsCell(s) {
 
 export function renderCompliance(statuses, { generatedAt, centralSha }) {
   const lines = [
-    '# 준수 현황',
+    '# Compliance status',
     '',
-    `<!-- 자동 생성 파일(scripts/compliance.mjs). 직접 고치지 않는다. 생성: ${generatedAt}, 중앙 ${centralSha.slice(0, 7)} -->`,
+    `<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: ${generatedAt}, central ${centralSha.slice(0, 7)} -->`,
     '',
-    '| 리포 | 동기화 | 동기화 기준 중앙 커밋 | 관리 파일 | 공유 패키지 | 열린 동기화 PR | .env.example | 리포 설정 |',
+    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings |',
     '|---|---|---|---|---|---|---|---|',
   ];
   for (const s of statuses) {
     if (s.unknown) {
-      lines.push(`| ${s.repo} | 확인 못 함 (${s.unknown}) | — | — | — | — | — | — |`);
+      lines.push(`| ${s.repo} | unknown (${s.unknown}) | — | — | — | — | — | — |`);
       continue;
     }
-    const files = !s.synced ? '—' : s.problems.length ? `✗ ${s.problems.length}개 다름` : '✓ 일치';
-    const pkgs = !s.packages.length ? '—' : s.packages.every((p) => p.ok) ? '✓' : `✗ ${s.packages.filter((p) => !p.ok).map((p) => `${p.name} ${p.actual ?? '없음'}≠${p.expected}`).join(', ')}`;
-    const pr = s.syncPr ? `[#${s.syncPr.number}](${s.syncPr.url}) ${s.syncPr.ageDays}일째` : '없음';
-    const env = s.profile !== 'app' ? '—' : s.envProblems.length ? `✗ ${s.envProblems.length}개 다름` : '✓';
-    lines.push(`| ${s.repo} | ${s.synced ? '✓' : '아직 안 됨'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} |`);
+    const files = !s.synced ? '—' : s.problems.length ? `✗ ${s.problems.length} differ` : '✓ match';
+    const pkgs = !s.packages.length ? '—' : s.packages.every((p) => p.ok) ? '✓' : `✗ ${s.packages.filter((p) => !p.ok).map((p) => `${p.name} ${p.actual ?? 'none'}≠${p.expected}`).join(', ')}`;
+    const pr = s.syncPr ? `[#${s.syncPr.number}](${s.syncPr.url}) ${s.syncPr.ageDays} days old` : 'none';
+    const env = s.profile !== 'app' ? '—' : s.envProblems.length ? `✗ ${s.envProblems.length} differ` : '✓';
+    lines.push(`| ${s.repo} | ${s.synced ? '✓' : 'not yet'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} |`);
   }
   const details = statuses.filter((s) => !s.unknown && (s.problems.length || s.envProblems.length));
   if (details.length) {
-    lines.push('', '## 다른 곳', '');
+    lines.push('', '## Differences', '');
     for (const s of details) {
       lines.push(`### ${s.repo}`, '');
-      for (const p of s.problems) lines.push(`- 관리 파일 \`${cell(p)}\``);
+      for (const p of s.problems) lines.push(`- Managed file \`${cell(p)}\``);
       for (const p of s.envProblems) lines.push(`- .env.example: ${cell(p)}`);
       lines.push('');
     }
   }
   const withSettings = statuses.filter((s) => s.settings?.some((r) => r.status !== 'ok'));
   if (withSettings.length) {
-    lines.push('', '## 리포 설정', '', '기준과 이유는 [repo-settings.md](repo-settings.md)에 있다. secret·variable은 이름만 비교한다.', '');
+    lines.push('', '## Repo settings', '', 'The standards and reasons are in [repo-settings.md](repo-settings.md). Secrets and variables are compared by name only.', '');
     for (const s of withSettings) {
-      lines.push(`### ${s.repo}`, '', '| 상태 | 항목 | 지금 | 기준 |', '|---|---|---|---|');
+      lines.push(`### ${s.repo}`, '', '| Status | Item | Current | Expected |', '|---|---|---|---|');
       for (const r of s.settings.filter((x) => x.status !== 'ok')) lines.push(`| ${MARK[r.status]} | ${cell(r.label)} | ${cell(r.actual)} | ${cell(r.expected)} |`);
       lines.push('');
     }
   }
-  lines.push('', '고치는 방법은 [README](../README.md)의 "하위 리포에서 standards-check가 실패했을 때"를 따른다.', '');
+  lines.push('', 'To fix, follow "When standards-check fails in a sub-repo" in the [README](../README.md).', '');
   return lines.join('\n');
 }
 
 export function renderEnvMatrix(statuses, { generatedAt }) {
   const lines = [
-    '# 환경변수 한눈에 보기',
+    '# Environment variables at a glance',
     '',
-    `<!-- 자동 생성 파일(scripts/compliance.mjs). 원본은 각 리포의 .env.example이다. 비밀값은 표시하지 않는다. 생성: ${generatedAt} -->`,
+    `<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: ${generatedAt} -->`,
     '',
-    '규칙: [env-conventions.md](env-conventions.md)',
+    'Rules: [env-conventions.md](env-conventions.md)',
     '',
   ];
   for (const s of statuses.filter((x) => x.profile === 'app')) {
     lines.push(`## ${s.repo}`, '');
     if (s.unknown) {
-      lines.push(`확인 못 함 (${s.unknown}).`, '');
+      lines.push(`Unknown (${s.unknown}).`, '');
       continue;
     }
     if (!s.env.length) {
-      lines.push('`.env.example`이 없다.', '');
+      lines.push('`.env.example` is missing.', '');
       continue;
     }
-    lines.push('| 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |', '|---|---|---|---|---|---|---|');
+    lines.push('| Key | Description | Required | Secret | Default | Used by | Section |', '|---|---|---|---|---|---|---|');
     for (const e of s.env) {
-      const shown = e.secret ? '(비밀)' : e.value ? `\`${cell(e.value)}\`` : '';
-      lines.push(`| \`${e.key}\` | ${cell(e.desc || '(설명 없음)')} | ${e.required ? '예' : ''} | ${e.secret ? '예' : ''} | ${shown} | ${e.used.join(', ')} | ${e.section === 'central' ? '공통' : '프로젝트'} |`);
+      const shown = e.secret ? '(secret)' : e.value ? `\`${cell(e.value)}\`` : '';
+      lines.push(`| \`${e.key}\` | ${cell(e.desc || '(no description)')} | ${e.required ? 'yes' : ''} | ${e.secret ? 'yes' : ''} | ${shown} | ${e.used.join(', ')} | ${e.section === 'central' ? 'central' : 'project'} |`);
     }
     if (s.envProblems.length) lines.push('', ...s.envProblems.map((p) => `- ✗ ${p}`));
     lines.push('');

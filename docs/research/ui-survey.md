@@ -1,60 +1,60 @@
-# 앱 8개 프런트엔드 반복 UI·공통 코드 (#242)
+# Repeated UI and shared code in the frontends of the 8 apps (#242)
 
-2026-10-28 조사. 앱 8개 리포 `origin/main`의 `frontend/src`를 `git show`로 읽었다. 코드는 바꾸지 않았다. 채택한 후보는 맨 아래 "결정"에 적고 구현 이슈로 등록한다.
+Surveyed on 2026-10-28. I read `frontend/src` on `origin/main` of the 8 app repos with `git show`. No code was changed. Adopted candidates are listed under "Decisions" at the bottom and will be registered as implementation issues.
 
-## 1. 앱 현황
+## 1. Current state of the apps
 
-- `components/ui/` 15개, `components/layout/`, `lib/theme.ts`, `lib/utils.ts`는 8개 앱 모두 같다(동기화 관리, [ui-components.md](../ui-components.md)).
-- 기능 화면이 있는 앱은 3개다. 나머지 5개는 `app.tsx`의 상태 확인 화면(`health.ts`)만 있다.
+- `components/ui/` (15 files), `components/layout/`, `lib/theme.ts`, and `lib/utils.ts` are identical in all 8 apps (sync-managed, [ui-components.md](../ui-components.md)).
+- 3 apps have feature screens. The other 5 only have the status check screen in `app.tsx` (`health.ts`).
 
-| 앱 | 화면 파일(`.tsx`, 공통 컴포넌트 제외) | 공통 컴포넌트 사용 | 서버 상태 |
+| App | Screen files (`.tsx`, excluding common components) | Use of common components | Server state |
 |---|---|---|---|
-| workout-memo | 7개 | 일부. `<button>` 57곳, `<Button>` 6곳, `<input>` 32곳. `.legacy` 스타일 위에 `Modal`(공통 `Dialog` 감쌈) | TanStack Query 8곳 + 파일 5개에 `fetch` 감싼 함수가 따로 |
-| study-log | 16개 | 거의 안 씀. `<button>` 68곳, `<Button>` 0곳, `<input>` 23곳 | `useState`·`useEffect` 직접 (`useEffect` 43곳) |
-| plan-routine | 2개 (`app.tsx`, `routines.tsx`) | 모두 씀. `<Button>` 8곳, `<Card>` 9곳, 원시 `<button>`·`<input>` 0곳 | `useState`·`useEffect` 직접 |
+| workout-memo | 7 | Partial. `<button>` 57 places, `<Button>` 6 places, `<input>` 32 places. `Modal` (wraps the common `Dialog`) on top of `.legacy` styles | TanStack Query in 8 places + separate `fetch` wrapper functions in 5 files |
+| study-log | 16 | Barely used. `<button>` 68 places, `<Button>` 0 places, `<input>` 23 places | Direct `useState` and `useEffect` (`useEffect` in 43 places) |
+| plan-routine | 2 (`app.tsx`, `routines.tsx`) | Fully used. `<Button>` 8 places, `<Card>` 9 places, 0 raw `<button>` or `<input>` | Direct `useState` and `useEffect` |
 
-## 2. 반복되는 화면 요소
+## 2. Repeated screen elements
 
-| 요소 | workout-memo | study-log | plan-routine | 공통 컴포넌트 |
+| Element | workout-memo | study-log | plan-routine | Common component |
 |---|---|---|---|---|
-| 삭제 확인 | 브라우저 `confirm()` 3곳 | 같은 줄에 "삭제 확인" 버튼을 한 번 더 보여 주는 2단계 버튼 (기록·키워드·회고 화면 등) | 없음 (보관) | **없음** |
-| 처리 결과 알림 | `role="status"`·`role="alert"` 문단 25곳 | `setNotice({ kind, text })` 상태 + `role` 문단 42곳 (화면마다 같은 코드) | `role` 문단 5곳 | `toast`(sonner) 있음, 화면 안 알림 문단은 **없음** |
-| 불러오는 중 | 글자 "불러오는 중" 16곳 | 18곳 | 1곳 | `Skeleton`·`Spinner`가 있지만 **기능 화면은 한 곳도 안 씀** |
-| 빈 목록 | 글자 문단 | 글자 문단 | `EmptyState` | `EmptyState` 있음 |
-| 날짜 입력 | `<input type="date">` 9곳 | 7곳 + 월 달력(`month-calendar.ts`) | 없음 | **없음** (네이티브 입력으로 충분) |
-| 날짜 범위 | `date-range.ts` | 기간 이동 | 주기(매일·매주·4주·12주) | 없음 |
-| 차트 | 직접 그린 SVG 2곳 | `recharts`(학습 시간), 히트맵(`Heatmap.tsx`) | 없음 | **없음** |
-| 표 | `<table>` 3곳 | 없음 | 없음 | 없음 |
-| 폼 필드(라벨+입력+오류) | `components/field.tsx` | 화면마다 직접 | `Input`+`Label` | `Input`·`Label`만. 묶음 없음 |
+| Delete confirmation | Browser `confirm()` in 3 places | A 2-step button that shows a "삭제 확인" (Confirm delete) button on the same line once more (records, keywords, retrospectives screens, etc.) | None (archive) | **None** |
+| Result notification | 25 paragraphs with `role="status"` and `role="alert"` | `setNotice({ kind, text })` state + 42 `role` paragraphs (same code on each screen) | 5 `role` paragraphs | `toast` (sonner) exists, in-screen notice paragraph is **missing** |
+| Loading | The text "불러오는 중" (Loading) in 16 places | 18 places | 1 place | `Skeleton` and `Spinner` exist, but **no feature screen uses them** |
+| Empty list | Text paragraph | Text paragraph | `EmptyState` | `EmptyState` exists |
+| Date input | `<input type="date">` in 9 places | 7 places + month calendar (`month-calendar.ts`) | None | **None** (the native input is enough) |
+| Date range | `date-range.ts` | Period navigation | Cycle (daily, weekly, 4 weeks, 12 weeks) | None |
+| Chart | Hand-drawn SVG in 2 places | `recharts` (study time), heatmap (`Heatmap.tsx`) | None | **None** |
+| Table | `<table>` in 3 places | None | None | None |
+| Form field (label + input + error) | `components/field.tsx` | Written directly per screen | `Input` + `Label` | Only `Input` and `Label`. No combined component |
 
-## 3. 반복되는 프런트 코드
+## 3. Repeated frontend code
 
-| 코드 | 어디에 | 차이 |
+| Code | Where | Difference |
 |---|---|---|
-| API 요청 함수 (`fetch` → JSON, 실패 시 서버의 한국어 `error` 던지기, 연결 실패 "서버에 연결할 수 없습니다") | study-log `api.ts`(`RequestError`에 상태 코드, `204` 처리), plan-routine `api.ts`(상태 코드 없음), workout-memo는 파일 5개에 따로 | 하는 일은 같고, 상태 코드·`204` 처리만 다르다 |
-| 서버 상태 확인 (`health.ts`의 `Health` 타입과 문구) | 8개 앱 | 같음. 동기화 관리 밖이라 앱마다 복사 |
-| 날짜 문자열 다루기 (`YYYY-MM-DD` 더하기·빼기, 주 시작) | workout-memo `date.ts`, study-log `month-calendar.ts` | 각자 구현. 둘 다 `Date` 시간대 함정을 피하려고 문자열로 계산 |
-| `localStorage` 읽기·쓰기 | 3개 앱 모두 `lib/theme.ts`(같음) + workout-memo 화면 상태 | 테마는 이미 공통 |
-| 숫자 표시 (`toFixed`) | workout-memo 4곳 | 한 앱만 |
+| API request function (`fetch` -> JSON, on failure throw the server's Korean `error`, on connection failure "서버에 연결할 수 없습니다" (Cannot connect to the server)) | study-log `api.ts` (status code in `RequestError`, `204` handling), plan-routine `api.ts` (no status code), workout-memo separately in 5 files | They do the same job; only status code and `204` handling differ |
+| Server status check (`Health` type and wording in `health.ts`) | 8 apps | Same. Outside sync management, so copied per app |
+| Handling date strings (add/subtract `YYYY-MM-DD`, week start) | workout-memo `date.ts`, study-log `month-calendar.ts` | Each implemented its own. Both compute on strings to avoid the `Date` time zone pitfall |
+| `localStorage` read and write | `lib/theme.ts` in all 3 apps (same) + workout-memo screen state | The theme is already shared |
+| Number display (`toFixed`) | workout-memo, 4 places | One app only |
 
-## 4. 공통화 후보
+## 4. Candidates for sharing
 
-| # | 후보 | 방식 | 판단 |
+| # | Candidate | Approach | Verdict |
 |---|---|---|---|
-| A | API 요청 함수 `lib/api.ts` (`requestJson`, `RequestError`(상태 코드), `204`) | `templates/ui/`에 넣어 동기화. study-log 판을 기준으로 한다. #241 후보 A(백엔드 오류 형식)와 짝 | **권장** |
-| B | 삭제 확인 대화상자 `ConfirmDialog` | `templates/ui/`. 공통 `Dialog` 위에 제목·설명·확인(파괴적 버튼)·취소. workout-memo의 `confirm()` 3곳을 바꾼다 | **권장** |
-| C | 화면 안 알림 `Notice`(`role="status"`/`"alert"`) + `useNotice()` 훅 | `templates/ui/`. study-log 42곳의 같은 코드를 줄인다 | **권장** |
-| D | 불러오는 중 화면을 `Skeleton`·`Spinner`로 | 컴포넌트는 이미 있음. 규칙 문서(`ui-components.md`)에 "목록은 `SkeletonList`, 버튼 안은 `Spinner`"를 적고, 앱마다 바꾸는 일은 앱 이슈로 | **권장** (문서 + 앱 이슈) |
-| E | `health.ts`를 동기화 관리 파일로 | `templates/ui/`. 8개 앱이 같으므로 바로 옮길 수 있다 | **권장** (작음) |
-| F | 날짜 문자열 도우미 `lib/date.ts` (`addDays`, `startOfWeek`, `serviceToday`) | `templates/ui/`. #241 후보 A의 백엔드 `serviceDate`와 같은 규칙 | 보류. 두 앱 구현이 다루는 범위가 달라 먼저 공통 부분을 좁혀야 함 |
-| G | 차트 컴포넌트 | — | 하지 않음. 쓰는 앱이 둘이고 종류가 다르다. 셋째 앱이 필요해지면 study-log의 `recharts`를 기준으로 다시 본다 |
-| H | study-log·workout-memo 원시 `<button>`·`<input>`을 공통 컴포넌트로 | 앱 리포 이슈 (화면 모양이 바뀌므로 화면 확인 필요) | 보류. B·C를 먼저 넣고, 그 PR에서 함께 바꿀 범위를 정한다 |
+| A | API request function `lib/api.ts` (`requestJson`, `RequestError` (status code), `204`) | Put in `templates/ui/` and sync. Use the study-log version as the base. Pairs with #241 candidate A (backend error format) | **Recommended** |
+| B | Delete confirmation dialog `ConfirmDialog` | `templates/ui/`. Title, description, confirm (destructive button), and cancel on top of the common `Dialog`. Replaces the 3 `confirm()` calls in workout-memo | **Recommended** |
+| C | In-screen notice `Notice` (`role="status"`/`"alert"`) + `useNotice()` hook | `templates/ui/`. Reduces the same code in 42 places in study-log | **Recommended** |
+| D | Use `Skeleton` and `Spinner` for loading screens | The components already exist. Write "`SkeletonList` for lists, `Spinner` inside buttons" in the rules document (`ui-components.md`), and make the per-app changes app issues | **Recommended** (docs + app issues) |
+| E | Make `health.ts` a sync-managed file | `templates/ui/`. All 8 apps are the same, so it can be moved right away | **Recommended** (small) |
+| F | Date string helpers `lib/date.ts` (`addDays`, `startOfWeek`, `serviceToday`) | `templates/ui/`. Same rule as the backend `serviceDate` in #241 candidate A | On hold. The two apps' implementations cover different scopes, so the common part must be narrowed first |
+| G | Chart component | — | Not doing. Two apps use charts and they are of different kinds. If a third app needs one, revisit with study-log's `recharts` as the base |
+| H | Replace raw `<button>` and `<input>` in study-log and workout-memo with common components | App repo issue (screen appearance changes, so screen checks are needed) | On hold. Land B and C first, and decide in that PR what scope to change together |
 
-## 결정
+## Decisions
 
-- 2026-10-28 사용자가 4장 권장안을 채택했다.
-- A·E: #310
-- B·C: #311
+- On 2026-10-28 the user adopted the recommendations in section 4.
+- A, E: #310
+- B, C: #311
 - D: #312
-- F·H: 보류
-- G: 하지 않음
+- F, H: on hold
+- G: not doing

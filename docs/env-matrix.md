@@ -1,86 +1,86 @@
-# 환경변수 한눈에 보기
+# Environment variables at a glance
 
-<!-- 자동 생성 파일(scripts/compliance.mjs). 원본은 각 리포의 .env.example이다. 비밀값은 표시하지 않는다. 생성: 2026-10-25 18:15 UTC -->
+<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: 2026-10-25 18:15 UTC -->
 
-규칙: [env-conventions.md](env-conventions.md)
+Rules: [env-conventions.md](env-conventions.md)
 
 ## sirloinbh/workout-memo
 
-| 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |
+| Key | Description | Required | Secret | Default | Used by | Section |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (설명 없음) |  |  | `workout` |  | 공통 |
-| `POSTGRES_USER` | (설명 없음) |  |  | `workout` |  | 공통 |
-| `POSTGRES_PASSWORD` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `PORT` | (설명 없음) |  |  | `3101` |  | 공통 |
+| `POSTGRES_DB` | (no description) |  |  | `workout` |  | central |
+| `POSTGRES_USER` | (no description) |  |  | `workout` |  | central |
+| `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
+| `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
+| `PORT` | (no description) |  |  | `3101` |  | central |
 
 ## sirloinbh/study-log
 
-| 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |
+| Key | Description | Required | Secret | Default | Used by | Section |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (설명 없음) |  |  | `study` |  | 공통 |
-| `POSTGRES_USER` | (설명 없음) |  |  | `study` |  | 공통 |
-| `POSTGRES_PASSWORD` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `PORT` | (설명 없음) |  |  | `3102` |  | 공통 |
-| `ANTHROPIC_API_KEY` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
+| `POSTGRES_DB` | (no description) |  |  | `study` |  | central |
+| `POSTGRES_USER` | (no description) |  |  | `study` |  | central |
+| `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
+| `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
+| `PORT` | (no description) |  |  | `3102` |  | central |
+| `ANTHROPIC_API_KEY` | (no description) |  | yes | (secret) |  | central |
 
 ## sirloinbh/health-log
 
-| 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |
+| Key | Description | Required | Secret | Default | Used by | Section |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (설명 없음) |  |  | `health` |  | 공통 |
-| `POSTGRES_USER` | (설명 없음) |  |  | `health` |  | 공통 |
-| `POSTGRES_PASSWORD` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `PORT` | (설명 없음) |  |  | `3103` |  | 공통 |
+| `POSTGRES_DB` | (no description) |  |  | `health` |  | central |
+| `POSTGRES_USER` | (no description) |  |  | `health` |  | central |
+| `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
+| `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
+| `PORT` | (no description) |  |  | `3103` |  | central |
 
 ## sirloinbh/life-journal
 
-| 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |
+| Key | Description | Required | Secret | Default | Used by | Section |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (설명 없음) |  |  | `journal` |  | 공통 |
-| `POSTGRES_USER` | (설명 없음) |  |  | `journal` |  | 공통 |
-| `POSTGRES_PASSWORD` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `PORT` | (설명 없음) |  |  | `3104` |  | 공통 |
+| `POSTGRES_DB` | (no description) |  |  | `journal` |  | central |
+| `POSTGRES_USER` | (no description) |  |  | `journal` |  | central |
+| `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
+| `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
+| `PORT` | (no description) |  |  | `3104` |  | central |
 
 ## sirloinbh/money-ledger
 
-| 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |
+| Key | Description | Required | Secret | Default | Used by | Section |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (설명 없음) |  |  | `money` |  | 공통 |
-| `POSTGRES_USER` | (설명 없음) |  |  | `money` |  | 공통 |
-| `POSTGRES_PASSWORD` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `PORT` | (설명 없음) |  |  | `3105` |  | 공통 |
+| `POSTGRES_DB` | (no description) |  |  | `money` |  | central |
+| `POSTGRES_USER` | (no description) |  |  | `money` |  | central |
+| `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
+| `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
+| `PORT` | (no description) |  |  | `3105` |  | central |
 
 ## sirloinbh/english-study
 
-| 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |
+| Key | Description | Required | Secret | Default | Used by | Section |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (설명 없음) |  |  | `english` |  | 공통 |
-| `POSTGRES_USER` | (설명 없음) |  |  | `english` |  | 공통 |
-| `POSTGRES_PASSWORD` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `PORT` | (설명 없음) |  |  | `3106` |  | 공통 |
+| `POSTGRES_DB` | (no description) |  |  | `english` |  | central |
+| `POSTGRES_USER` | (no description) |  |  | `english` |  | central |
+| `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
+| `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
+| `PORT` | (no description) |  |  | `3106` |  | central |
 
 ## sirloinbh/plan-routine
 
-| 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |
+| Key | Description | Required | Secret | Default | Used by | Section |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (설명 없음) |  |  | `plan` |  | 공통 |
-| `POSTGRES_USER` | (설명 없음) |  |  | `plan` |  | 공통 |
-| `POSTGRES_PASSWORD` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `PORT` | (설명 없음) |  |  | `3107` |  | 공통 |
+| `POSTGRES_DB` | (no description) |  |  | `plan` |  | central |
+| `POSTGRES_USER` | (no description) |  |  | `plan` |  | central |
+| `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
+| `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
+| `PORT` | (no description) |  |  | `3107` |  | central |
 
 ## sirloinbh/dev-career-portfolio
 
-| 키 | 설명 | 필수 | 비밀 | 기본값 | 쓰는 곳 | 구간 |
+| Key | Description | Required | Secret | Default | Used by | Section |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (설명 없음) |  |  | `career` |  | 공통 |
-| `POSTGRES_USER` | (설명 없음) |  |  | `career` |  | 공통 |
-| `POSTGRES_PASSWORD` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `DATABASE_URL` | (설명 없음) |  | 예 | (비밀) |  | 공통 |
-| `PORT` | (설명 없음) |  |  | `3108` |  | 공통 |
+| `POSTGRES_DB` | (no description) |  |  | `career` |  | central |
+| `POSTGRES_USER` | (no description) |  |  | `career` |  | central |
+| `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
+| `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
+| `PORT` | (no description) |  |  | `3108` |  | central |
