@@ -1,26 +1,26 @@
-# 0002. 동기화 인증에 GitHub App 사용
+# 0002. Use a GitHub App for sync authentication
 
-- 상태: 제안 (이슈 #1)
-- 날짜: 2026-10-22
+- Status: Proposed (issue #1)
+- Date: 2026-10-22
 
-## 맥락
+## Context
 
-중앙 워크플로가 9개 하위 리포에 브랜치를 만들고 PR을 열어야 한다. `GITHUB_TOKEN`은 자기 리포에만 쓸 수 있다. 개인 PAT는 사용자 계정 전체 권한을 오래 가지고 있게 되어, 유출되면 피해 범위가 크다.
+The central workflow must create branches and open PRs in 9 sub-repos. `GITHUB_TOKEN` can only be used on its own repo. A personal PAT holds full permissions for the user account for a long time, so the damage is large if it leaks.
 
-## 결정
+## Decision
 
-- GitHub App `project-standards-sync`를 만들고 대상 리포에만 설치한다.
-- 권한: Contents write, Pull requests write, Metadata read, **Workflows write**, Administration read, Secrets read, Variables read, **Issues write**, Code scanning alerts read.
-  - Workflows 권한은 요구사항(bootstrap-prompt)의 3종에 추가한 것이다. 동기화 대상에 `.github/workflows/ci.yml`이 있고, GitHub는 이 권한이 없는 토큰으로 워크플로 파일을 바꾸는 push를 거부한다.
-  - Administration·Secrets·Variables **읽기** 권한은 준수 현황(#22, #82)에서 리포 설정과 secret·variable **이름**이 기준대로인지 확인하는 데 쓴다. 이 권한으로는 secret 값을 읽을 수 없고 설정을 바꿀 수도 없다(2026-10-22 추가, #74).
-  - Code scanning alerts **읽기** 권한은 준수 현황에서 CodeQL 기본 설정 상태(`code-scanning/default-setup`)를 확인하는 데 쓴다. 공개 리포라 알림 내용도 이미 공개되어 있고, 설정을 바꿀 수는 없다(2026-10-27 추가, #260).
-  - Issues **쓰기** 권한은 이슈 라벨 동기화(#40)에 쓴다. 동기화가 `templates/common/labels.json`의 라벨을 대상 리포에 만들거나 고친다. 라벨을 지우지 않고, 이슈 본문·댓글도 바꾸지 않는다(2026-10-22 추가, #40).
-- 개인키는 중앙 리포 secret에만 둔다. 실행할 때마다 1시간짜리 설치 토큰을 발급한다. JWT 서명은 외부 Action 없이 `node:crypto`로 구현한다.
-- App 생성, 설치, 키 교체는 사용자가 직접 수행한다.
+- Create the GitHub App `project-standards-sync` and install it only on the target repos.
+- Permissions: Contents write, Pull requests write, Metadata read, **Workflows write**, Administration read, Secrets read, Variables read, **Issues write**, Code scanning alerts read.
+  - The Workflows permission is added to the 3 in the requirements (bootstrap-prompt). The sync targets include `.github/workflows/ci.yml`, and GitHub rejects pushes that change workflow files with a token that lacks this permission.
+  - The Administration, Secrets, and Variables **read** permissions are used by the compliance report (#22, #82) to check that repo settings and secret and variable **names** match the standard. With these permissions, secret values cannot be read and settings cannot be changed (added 2026-10-22, #74).
+  - The Code scanning alerts **read** permission is used by the compliance report to check the CodeQL default setup state (`code-scanning/default-setup`). The repos are public, so alert contents are already public, and settings cannot be changed (added 2026-10-27, #260).
+  - The Issues **write** permission is used for issue label sync (#40). The sync creates or fixes the labels from `templates/common/labels.json` in the target repos. It does not delete labels and does not change issue bodies or comments (added 2026-10-22, #40).
+- The private key is kept only in the central repo secret. An installation token valid for 1 hour is issued on every run. JWT signing is implemented with `node:crypto`, without an external Action.
+- Creating the App, installing it, and rotating the key are done by the user.
 
-## 결과
+## Consequences
 
-- 토큰 수명이 짧고, 권한은 설치된 리포로 제한된다.
-- PR 작성자가 App 봇으로 표시되므로 사람이 만든 PR과 구분된다.
-- Issues 쓰기 권한 때문에, App 키가 유출되면 대상 리포의 이슈를 만들거나 고칠 수 있다. 코드와 배포에는 영향이 없고, 키 관리는 아래와 같다.
-- Workflows 권한 때문에, App 키가 유출되면 대상 리포의 워크플로를 바꿀 수 있다. 키는 중앙 secret에만 두고 교체 절차를 문서화한다. 하위 리포 main에는 브랜치 보호를 걸어 사용자 병합 없이는 반영되지 않게 한다.
+- Token lifetime is short, and permissions are limited to the installed repos.
+- The PR author shows as the App bot, so these PRs are distinguishable from PRs made by people.
+- Because of the Issues write permission, a leaked App key could create or change issues in the target repos. It does not affect code or deployment, and key management is as described below.
+- Because of the Workflows permission, a leaked App key could change workflows in the target repos. The key is kept only in the central secret, and the rotation procedure is documented. Branch protection on each sub-repo's main means nothing lands without the user's merge.

@@ -1,13 +1,13 @@
-# 도메인 공통 규칙 (시간대, 날짜, 금액·단위)
+# Shared domain rules (time zone, dates, amounts and units)
 
-8개 앱이 함께 지키는 데이터 규칙이다. 앱마다 다른 규칙(예: workout-memo의 "중량은 머신 기본중량을 포함한 총중량")은 각 앱 `AGENTS.project.md`의 "서비스 규칙"에 적는다. 이 문서와 다르게 해야 하면 앱에서 바꾸지 말고 중앙 리포에 이슈를 연다.
+These are the data rules all 8 apps follow. Rules that differ per app (for example, workout-memo's "weight is the total weight including the machine's base weight") go in the "Service rules" section of each app's `AGENTS.project.md`. If you need to do something differently from this document, do not change it in the app; open an issue in the central repo.
 
-근거: 8개 앱 `AGENTS.md`의 "날짜는 `YYYY-MM-DD`, 서비스 시간대는 `Asia/Seoul`" 규칙, workout-memo `shared/contract.ts`의 `date` 스키마, study-log `backend/src/app.ts`의 `serviceDate()`.
+Basis: the rule "dates are `YYYY-MM-DD`, the service time zone is `Asia/Seoul`" in the `AGENTS.md` of all 8 apps, the `date` schema in workout-memo `shared/contract.ts`, and `serviceDate()` in study-log `backend/src/app.ts`.
 
-## 시간대
+## Time zone
 
-- 서비스 시간대는 `Asia/Seoul`(UTC+9, 일광절약시간 없음)이다. "오늘", "이번 주", "이번 달"은 모두 이 시간대로 계산한다.
-- 서버의 오늘 날짜는 `serviceDate()` 같은 함수 한 곳에서 계산한다. 테스트에서 시각을 넣을 수 있게 `now`를 인자로 받는다.
+- The service time zone is `Asia/Seoul` (UTC+9, no daylight saving time). "Today", "this week", and "this month" are all calculated in this time zone.
+- The server's today's date is calculated in one place, such as a `serviceDate()` function. It takes `now` as an argument so tests can supply the time.
 
   ```ts
   export const serviceTimeZone = 'Asia/Seoul';
@@ -16,75 +16,75 @@
   }
   ```
 
-- 현재 시각에 `new Date().toISOString().slice(0, 10)`을 쓰지 않는다. UTC 기준이라 한국 시간 00:00–08:59에는 전날 날짜가 나온다.
-- 서버·컨테이너의 `TZ` 설정에 기대지 않는다. 코드가 시간대를 직접 지정한다.
+- Do not use `new Date().toISOString().slice(0, 10)` for the current time. It is UTC-based, so between 00:00 and 08:59 Korean time it gives the previous day's date.
+- Do not rely on the server's or container's `TZ` setting. The code specifies the time zone directly.
 
-## 날짜와 시각
+## Dates and times
 
-| 종류 | 저장(PostgreSQL) | API·URL·폼 값 | 예 |
+| Kind | Storage (PostgreSQL) | API, URL, form value | Example |
 |---|---|---|---|
-| 날짜(달력의 하루) | `date` | `YYYY-MM-DD` 문자열 | `2026-10-22` |
-| 시각(하루 안의 시간) | `time` | `HH:mm` 24시간제 | `07:30` |
-| 시점(언제 일어났는지) | `timestamptz` | ISO 8601, 오프셋 포함 | `2026-10-22T09:15:00.000Z` |
-| 기간(길이) | `integer` | 분 단위 정수, 이름에 단위 표시. 초·달력 개월의 예외는 "수량과 단위" 참고 | `duration_minutes: 90` |
+| Date (one calendar day) | `date` | `YYYY-MM-DD` string | `2026-10-22` |
+| Time of day (time within a day) | `time` | `HH:mm` 24-hour | `07:30` |
+| Moment (when it happened) | `timestamptz` | ISO 8601, with offset | `2026-10-22T09:15:00.000Z` |
+| Duration (length) | `integer` | Integer in minutes, with the unit in the name. For the exceptions of seconds and calendar months, see "Quantities and units" | `duration_minutes: 90` |
 
-- 사용자가 고르는 날짜(운동한 날, 공부한 날, 마감일)는 `date`로 저장한다. 시점(`timestamptz`)으로 저장하고 잘라 쓰지 않는다.
-- `created_at`, `updated_at` 같은 기록 시점은 `timestamptz NOT NULL DEFAULT now()`로 둔다.
-- 날짜 입력은 서버와 화면이 같은 Zod 스키마로 검증한다. 형식(`YYYY-MM-DD`)과 실제 있는 날짜(2월 30일 거부)를 모두 확인한다. 원본 예: workout-memo `shared/contract.ts`의 `date`.
-- 날짜끼리 더하고 빼는 계산은 `date + 'T00:00:00Z'`로 UTC 자정을 만들어 `setUTCDate`로 한다. 지역 시간 메서드(`setDate`, `getDay`)를 섞지 않는다.
-- 기간 조회는 양 끝을 포함한다: `?from=2026-10-01&to=2026-10-22`는 1일과 22일을 모두 포함한다.
-- 한 주는 일요일에 시작해서 토요일에 끝난다(2026-10-22 사용자 결정, #39). `getUTCDay()`가 `0`인 날이 주의 첫날이다.
-- 시작 시각보다 끝 시각이 이르면 자정을 넘긴 것으로 본다(예: `23:30`–`00:30`은 60분). 근거: study-log `studyMinutes()`.
+- Dates the user picks (the day of a workout, the day of study, a deadline) are stored as `date`. Do not store them as a moment (`timestamptz`) and truncate.
+- Record moments such as `created_at` and `updated_at` are set as `timestamptz NOT NULL DEFAULT now()`.
+- Date input is validated by the server and the screen with the same Zod schema. Check both the format (`YYYY-MM-DD`) and that the date really exists (reject February 30). Source example: `date` in workout-memo `shared/contract.ts`.
+- Adding and subtracting dates is done by making UTC midnight with `date + 'T00:00:00Z'` and using `setUTCDate`. Do not mix in local-time methods (`setDate`, `getDay`).
+- Range queries include both ends: `?from=2026-10-01&to=2026-10-22` includes both the 1st and the 22nd.
+- A week starts on Sunday and ends on Saturday (user decision 2026-10-22, #39). The day where `getUTCDay()` is `0` is the first day of the week.
+- If the end time is earlier than the start time, it is treated as crossing midnight (for example, `23:30`–`00:30` is 60 minutes). Basis: study-log `studyMinutes()`.
 
-### 화면 표시
+### On-screen display
 
-- 저장값과 API 값은 위 형식 그대로 둔다. 화면에 다르게 보여 줄 때만 바꾼다.
-- 화면의 날짜는 한국어로 쓴다: `2026년 10월 22일`, `10월 22일 (목)`. 한 앱 안에서는 같은 위치에 같은 형식을 쓴다.
-- 날짜 입력 칸에서 기본값이 필요하면 서비스 시간대의 오늘을 넣는다.
+- Stored values and API values stay in the formats above. Convert them only when showing them differently on screen.
+- Dates on screen are written in English: `October 22, 2026`, `Thu, Oct 22`. Within one app, use the same format in the same place.
+- If a date input needs a default, put in today's date in the service time zone.
 
-## 금액
+## Amounts
 
-- 기본 통화는 원(KRW)이다. 원화 금액은 원 단위 정수로 다룬다. 소수(`float`, `numeric(…,2)`)로 계산하지 않는다. 외화와 주식 수량은 아래 "외화·수량·환율"을 따른다.
-- 저장은 `bigint`를 쓴다. 자산 합계처럼 `integer` 범위(약 21억)를 넘을 수 있기 때문이다.
-- pg는 `bigint`를 문자열로 돌려준다. API로 보낼 때 `Number.isSafeInteger`로 확인한 뒤 숫자로 바꾼다.
-- 수입·지출의 방향은 부호가 아니라 종류 필드(`kind: 'income' | 'expense'`)로 나타내고, 금액은 0 이상으로 저장한다.
-- 화면에서는 천 단위 쉼표와 `원`을 붙인다: `12,500원`. `Intl.NumberFormat('ko-KR')`을 쓴다.
+- The default currency is the won (KRW). Won amounts are handled as integers in won. Do not calculate with decimals (`float`, `numeric(…,2)`). For foreign currency and stock quantities, follow "Foreign currency, quantity, and exchange rate" below.
+- Storage uses `bigint`, because things like asset totals can exceed the `integer` range (about 2.1 billion).
+- pg returns `bigint` as a string. When sending it through the API, check it with `Number.isSafeInteger` and then convert it to a number.
+- The direction of income and expense is shown by a kind field (`kind: 'income' | 'expense'`), not by sign, and amounts are stored as 0 or more.
+- On screen, add thousands separators and `원`: `12,500원`. Use `Intl.NumberFormat('ko-KR')`.
 
-### 외화·수량·환율
+### Foreign currency, quantity, and exchange rate
 
-주식 수량, 외화 금액, 환율을 다루는 앱이 따른다. money-ledger가 정한 규칙(2026-11-03 사용자 결정, sirloinbh/money-ledger#35)을 옮겼다. 컬럼 이름과 `CHECK` 조건까지 적힌 원본은 money-ledger `AGENTS.project.md`의 "수량·외화·환율"이다.
+Apps that handle stock quantities, foreign currency amounts, and exchange rates follow this. It carries over the rules money-ledger decided (user decision 2026-11-03, sirloinbh/money-ledger#35). The source with column names and even `CHECK` conditions is "Quantity, foreign currency, exchange rate" in money-ledger `AGENTS.project.md`.
 
-| 값 | 저장(PostgreSQL) | API 값 | 예 |
+| Value | Storage (PostgreSQL) | API value | Example |
 |---|---|---|---|
-| 통화 코드 | `text`, `KRW`·`USD`만 (`CHECK (currency IN ('KRW', 'USD'))`) | `'KRW' \| 'USD'` | `USD` |
-| 수량 | `numeric(20,8)`, `0`보다 큼 | 소수 문자열 | `"0.12345678"` |
-| 원화 금액 | `bigint` (원) | 정수 숫자 | `175000` |
-| 외화 금액·단가 | `numeric(20,4)` + 같은 행의 `currency` | 소수 문자열 | `"123.4500"` |
-| 환율 | `numeric(12,4)`, 외화 1단위당 원 | 소수 문자열 | `"1385.2500"` |
+| Currency code | `text`, only `KRW` and `USD` (`CHECK (currency IN ('KRW', 'USD'))`) | `'KRW' \| 'USD'` | `USD` |
+| Quantity | `numeric(20,8)`, greater than `0` | Decimal string | `"0.12345678"` |
+| Won amount | `bigint` (won) | Integer number | `175000` |
+| Foreign amount and unit price | `numeric(20,4)` + `currency` in the same row | Decimal string | `"123.4500"` |
+| Exchange rate | `numeric(12,4)`, won per 1 unit of foreign currency | Decimal string | `"1385.2500"` |
 
-- 통화를 더할 때는 `currency` 허용 목록과 이 표를 함께 바꾼다. 중앙 리포에 이슈를 연다.
-- 원화 금액은 언제나 `bigint`다. 원화와 외화가 모두 올 수 있는 금액은 `amount_krw bigint`와 `amount_foreign numeric(20,4)` 두 컬럼으로 나눈다.
-- `numeric` 값은 API에서 문자열로 주고받는다. JavaScript `number`로 바꿔 계산하지 않는다. 곱셈·합계·반올림은 SQL `numeric` 연산으로 한다. 입력 검증은 Zod 정규식으로 정수부·소수부 자릿수를 확인한다.
-- 거래는 거래일 환율과 원화 환산액을 함께 저장한다. 나중에 환율이 바뀌어도 거래 기록의 원화 금액은 바뀌지 않는다. 원화 거래에는 환율을 넣지 않는다(`NULL`).
-- 평가(현재 가치)는 조회 시점의 최신 환율로 원화 환산한다. 시세·환율 출처와 갱신 주기는 앱이 정한다(money-ledger는 `docs/price-source.md`: 하루 한 번 받는 종가와 한국수출입은행 매매기준율).
-- 원화 환산은 마지막에 한 번만 반올림한다: `round(수량 × 단가 × 환율)`. 외화 총액 같은 중간 결과를 먼저 반올림하지 않는다.
-- 반올림은 PostgreSQL `round(numeric)`이고 0.5는 0에서 먼 쪽으로 보낸다(`round(2.5) = 3`, `round(-2.5) = -3`). 피연산자에 `double precision`이 섞이면 짝수 반올림으로 바뀌므로 모두 `numeric`으로 둔다. JS `Math.round`로 대신하지 않는다.
-- 합계는 원화 환산액끼리 더한다. 통화가 다른 외화 금액을 그대로 더하지 않는다.
-- 화면에 보일 외화 금액은 SQL에서 `round(…, 2)`(센트)로 만들어 보낸다. 화면에서 `Number(...).toFixed()`로 반올림하지 않는다.
+- When adding a currency, change the `currency` allow list and this table together. Open an issue in the central repo.
+- A won amount is always `bigint`. For an amount that can be in either won or foreign currency, split it into two columns, `amount_krw bigint` and `amount_foreign numeric(20,4)`.
+- `numeric` values are sent and received as strings in the API. Do not convert them to JavaScript `number` to calculate. Multiplication, totals, and rounding are done with SQL `numeric` operations. Input validation checks the integer and decimal digit counts with a Zod regex.
+- A transaction stores the exchange rate of the transaction date together with the won-converted amount. Even if the rate changes later, the won amount of the transaction record does not change. Do not put an exchange rate on a won transaction (`NULL`).
+- Valuation (current value) is converted to won with the latest exchange rate at query time. The app decides the sources and update frequency of prices and rates (money-ledger uses `docs/price-source.md`: the closing price fetched once a day and the Korea Eximbank base rate).
+- Won conversion rounds only once, at the end: `round(quantity × unit price × exchange rate)`. Do not round intermediate results such as the total foreign amount first.
+- Rounding is PostgreSQL `round(numeric)`, and 0.5 goes away from zero (`round(2.5) = 3`, `round(-2.5) = -3`). If `double precision` is mixed into the operands, it switches to round-half-even, so keep everything `numeric`. Do not substitute JS `Math.round`.
+- Totals add won-converted amounts to each other. Do not add foreign amounts of different currencies directly.
+- Foreign amounts to show on screen are produced in SQL as `round(…, 2)` (cents) and sent. Do not round on screen with `Number(...).toFixed()`.
 
-## 수량과 단위
+## Quantities and units
 
-- 미터법을 쓴다: 무게 `kg`, 길이 `cm`, 시간 `분`, 열량 `kcal`.
-- 단위는 한 필드에 하나로 고정한다. 입력 화면에서 다른 단위(lb 등)를 받지 않는다.
-- 단위는 필드 이름(`duration_minutes`)이나 계약 스키마의 라벨·주석(`kg('총중량')`)에 드러나게 한다. 둘 다 없으면 단위를 추측해야 하므로 추가한다.
-- 기간은 분 단위가 기본이다. 외부 자료나 공식 규정의 단위가 초 또는 달력 개월이면 그 단위를 쓸 수 있다. 이때도 `integer`이고, 이름에 단위를 드러내며(`duration_seconds`, `validity_months`), `CHECK (… > 0)`으로 범위를 제한한다. 근거: cert-manager의 곡 길이(LRCLIB·MusicBrainz가 초·밀리초)와 자격증 유효기간(공식 안내가 "2년", "3년").
-- 달력 개월은 일수로 바꾸지 않고 날짜에 더한다. 결과 달에 같은 날이 없으면 그 달의 말일로 맞춘다. PostgreSQL `date + interval`과 같다. 예: `2024-02-29` + 24개월 = `2026-02-28`.
-- 소수가 필요한 측정값(중량, 체중, 체지방률)은 `numeric(7,2)`처럼 자릿수를 정해서 저장한다. `real`·`double precision`을 쓰지 않는다. 근거: workout-memo `001_initial.sql`의 `weight numeric(7,2)`.
-- 횟수·개수는 `integer`이고 `CHECK (… > 0)` 또는 `CHECK (… >= 0)`으로 범위를 제한한다.
-- 모르는 값은 `NULL`, 실제로 0인 값은 `0`으로 구분한다(예: 확인하지 못한 머신 기본중량은 `NULL`).
+- Use the metric system: weight `kg`, length `cm`, time `분` (minutes), calories `kcal`.
+- A unit is fixed to one per field. Input screens do not accept other units (lb and so on).
+- Make the unit visible in the field name (`duration_minutes`) or in the label or comment of the contract schema (`kg('총중량')`). If neither has it, the unit has to be guessed, so add it.
+- Durations are in minutes by default. If the unit of external material or an official rule is seconds or calendar months, that unit may be used. It is still an `integer`, the name shows the unit (`duration_seconds`, `validity_months`), and the range is limited with `CHECK (… > 0)`. Basis: cert-manager's track length (LRCLIB and MusicBrainz use seconds and milliseconds) and certificate validity (official guidance says "2 years", "3 years").
+- Calendar months are added to the date without converting to days. If the resulting month lacks the same day, it is set to the last day of that month. This is the same as PostgreSQL `date + interval`. Example: `2024-02-29` + 24 months = `2026-02-28`.
+- Measurements that need decimals (weight, body weight, body fat percentage) are stored with fixed digits such as `numeric(7,2)`. Do not use `real` or `double precision`. Basis: `weight numeric(7,2)` in workout-memo `001_initial.sql`.
+- Counts are `integer`, with the range limited by `CHECK (… > 0)` or `CHECK (… >= 0)`.
+- An unknown value is `NULL` and an actual zero is `0`, kept distinct (for example, a machine base weight that could not be confirmed is `NULL`).
 
-## 검증과 메시지
+## Validation and messages
 
-- 위 규칙은 서버에서도 검증한다. 화면 검증만으로 끝내지 않는다.
-- 사용자에게 보이는 검증 오류는 한국어로 쓴다: `날짜는 YYYY-MM-DD 형식으로 입력하세요`.
-- 오류 응답 형식과 상태 코드는 #30에서 정한다.
+- The rules above are also validated on the server. Do not stop at screen validation.
+- Validation errors shown to users are written in English: `Enter the date in YYYY-MM-DD format`.
+- The error response format and status codes are decided in #30.

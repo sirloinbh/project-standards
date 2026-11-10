@@ -1,69 +1,69 @@
-# 환경변수 규칙 (.env.example)
+# Environment variable rules (.env.example)
 
-각 리포의 `.env.example`이 환경변수의 원본이다. 중앙은 이 파일들을 모아 `docs/env-matrix.md`를 만든다(#82). 실제 값이 들어 있는 `.env`는 커밋하지 않는다.
+The `.env.example` of each repo is the source of truth for environment variables. The central repo collects these files and builds `docs/env-matrix.md` (#82). The real `.env` that holds actual values is not committed.
 
-## 구조
+## Structure
 
-`.env.example`은 구간 관리 파일이다. `# --- project ---` 위는 중앙이 관리하는 공통 키이고, 아래는 프로젝트가 자유롭게 쓴다.
+`.env.example` is a section-managed file. Above `# --- project ---` are the common keys managed by the central repo, and below it the project writes freely.
 
 ```dotenv
-# @desc PostgreSQL DB 이름 (레지스트리 db.name) @required @used=compose
+# @desc PostgreSQL DB name (registry db.name) @required @used=compose
 POSTGRES_DB=study
-# @desc PostgreSQL 사용자 이름 @required @used=compose
+# @desc PostgreSQL user name @required @used=compose
 POSTGRES_USER=study
-# @desc PostgreSQL 비밀번호. 로컬에서 바꿔서 쓴다 @required @secret @used=compose,backend
+# @desc PostgreSQL password. Change it locally before use @required @secret @used=compose,backend
 POSTGRES_PASSWORD=
-# @desc API가 접속하는 DB 주소. 포트는 레지스트리 db 포트 @required @secret @used=backend
+# @desc DB address the API connects to. The port is the registry db port @required @secret @used=backend
 DATABASE_URL=postgres://study:<password>@localhost:15402/study
-# @desc API 포트 (레지스트리 api 포트) @required @used=backend,compose
+# @desc API port (registry api port) @required @used=backend,compose
 PORT=3102
-# @desc GitHub Packages 읽기 토큰(read:packages). 공유 패키지를 설치할 때만 필요 @secret @used=npm
+# @desc GitHub Packages read token (read:packages). Needed only to install shared packages @secret @used=npm
 NODE_AUTH_TOKEN=
 # --- project ---
 ```
 
-## 주석 규칙
+## Comment rules
 
-키 바로 위 한 줄에 다음 태그를 쓴다.
+Use the following tags on the single line right above a key.
 
-| 태그 | 뜻 |
+| Tag | Meaning |
 |---|---|
-| `@desc <설명>` | 무엇에 쓰는 값인지 한국어로. 필수 |
-| `@required` | 없으면 앱이 동작하지 않음 |
-| `@secret` | 비밀값. 예시 값을 비우거나 `<password>`처럼 자리 표시만 둔다 |
-| `@used=<위치>` | 쓰는 곳: `backend`, `frontend`, `compose`, `npm`, `ci` 중 쉼표로 |
+| `@desc <description>` | What the value is used for, in English. Required |
+| `@required` | The app does not work without it |
+| `@secret` | A secret value. Leave the example value empty or put only a placeholder such as `<password>` |
+| `@used=<place>` | Where it is used: `backend`, `frontend`, `compose`, `npm`, `ci`, comma-separated |
 
-## 지켜야 할 것
+## What to follow
 
-- `@secret` 키에 실제 값을 쓰지 않는다. `docs/env-matrix.md`에도 값은 나오지 않는다.
-- 포트와 DB 이름은 레지스트리 값과 같아야 한다. `standards-check`가 `PORT`, `DATABASE_URL`의 포트와 DB 이름, `POSTGRES_DB`를 비교한다.
-- 프런트엔드 빌드에 들어가는 값(`VITE_` 접두어)은 비밀이 아니어야 한다. 브라우저에 그대로 노출된다.
-- 새 키를 추가하면 `.env.example`, 사용하는 코드, 배포 runbook(서버 `.env` 키 목록)을 같은 PR에서 고친다.
+- Do not write real values for `@secret` keys. Values do not appear in `docs/env-matrix.md` either.
+- Ports and DB names must match the registry values. `standards-check` compares `PORT`, the port and DB name in `DATABASE_URL`, and `POSTGRES_DB`.
+- Values that go into the frontend build (the `VITE_` prefix) must not be secret. They are exposed to the browser as is.
+- When adding a new key, fix `.env.example`, the code that uses it, and the deploy runbook (the server `.env` key list) in the same PR.
 
-## 커밋된 비밀값 검사 (#259)
+## Committed secret check (#259)
 
-CI가 매번 `secret-scan`으로 커밋 대상 파일에 토큰·키가 있는지 검사한다. 리포가 모두 public이라 한 번 push된 값은 지워도 이미 공개된 것으로 본다.
+CI runs `secret-scan` every time to check the files being committed for tokens and keys. All repos are public, so a value that was pushed once is treated as already exposed even if it is deleted.
 
-- 실행: 중앙은 `npm run secrets:check`(`npm run check`에 포함), 하위 리포는 `node .standards/secret-scan.mjs`. CI에서는 의존성 설치 전에 실행한다.
-- 막는 것: 모양으로 알아볼 수 있는 토큰·키(GitHub, Anthropic, OpenAI, AWS, npm, Slack, Google, Stripe 운영 키), 개인키 블록, 커밋된 `.env` 파일(`.env.example`·`.sample`·`.template`은 허용).
-- 출력에는 파일과 줄 번호, 규칙 이름만 나오고 값은 나오지 않는다.
-- 일부러 넣은 가짜 값(테스트)은 그 줄에 `secret-scan:allow` 주석을 붙인다. 테스트에서는 값을 문자열 조각으로 나눠 실행 중에 만드는 편이 낫다(`scripts/test/secret-scan.test.mjs`).
-- 이력 검사: `node .standards/secret-scan.mjs --history`는 모든 브랜치의 커밋에서 추가된 줄을 검사한다. CI에서는 쓰지 않고, 처음 도입할 때와 유출이 의심될 때 실행한다.
-- 외부 도구(gitleaks 등)를 쓰지 않고 Node 내장 모듈로 만들었다. 새 공급망 위험을 들이지 않고, 오탐이 적은 모양만 검사해서 발견하면 바로 실패시키기 위해서다. 더 넓은 공급자 목록은 GitHub secret scanning이 맡는다([repo-settings.md](repo-settings.md)).
-- 발견하면: 진짜 값이면 먼저 그 키를 폐기·교체하고, 커밋에서 지운 뒤 사용자에게 알린다. 이력에서 지우는 일(강제 push)은 사용자가 정한다.
+- Run: in the central repo `npm run secrets:check` (included in `npm run check`), in sub-repos `node .standards/secret-scan.mjs`. In CI it runs before dependencies are installed.
+- What it blocks: tokens and keys recognizable by their shape (GitHub, Anthropic, OpenAI, AWS, npm, Slack, Google, Stripe live keys), private key blocks, and committed `.env` files (`.env.example`, `.sample`, and `.template` are allowed).
+- The output shows only the file, line number, and rule name, never the value.
+- For a deliberately placed fake value (in tests), add a `secret-scan:allow` comment on that line. In tests it is better to split the value into string pieces and build it at run time (`scripts/test/secret-scan.test.mjs`).
+- History check: `node .standards/secret-scan.mjs --history` checks the lines added by commits on all branches. It is not used in CI; run it when first introducing the check and when a leak is suspected.
+- It is built with Node built-in modules, without external tools (gitleaks and so on). This avoids bringing in a new supply-chain risk, and it checks only shapes with few false positives so that a finding can fail the build right away. A wider list of providers is handled by GitHub secret scanning ([repo-settings.md](repo-settings.md)).
+- If something is found: if it is a real value, first revoke and rotate that key, remove it from the commit, and tell the user. Removing it from history (force push) is the user's decision.
 
-## 공통 키: Claude API (#264)
+## Common keys: Claude API (#264)
 
-Claude API를 쓰는 앱은 아래 이름을 쓴다. 키 값의 원본은 AWS SSM Parameter Store `/sirloinbh/anthropic-api-key` 한 곳이다([ADR-0010](adr/0010-claude-api-key-ssm.md)).
+Apps that use the Claude API use the names below. The source of truth for the key value is one place, AWS SSM Parameter Store `/sirloinbh/anthropic-api-key` ([ADR-0010](adr/0010-claude-api-key-ssm.md)).
 
-| 키 | 태그 | 설명 |
+| Key | Tags | Description |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | `@secret @used=backend` | Claude API 키. 서버에서는 배포 스크립트가 SSM에서 읽어 넘기므로 서버 `.env`에 쓰지 않는다. 로컬에서는 중앙 명령이 넣는다 |
-| `CLAUDE_MODEL` | `@used=backend` | 모델 이름. 코드에 하드코딩하지 않는다. 기본값은 `claude-sonnet-5-5` |
+| `ANTHROPIC_API_KEY` | `@secret @used=backend` | Claude API key. On the server, the deploy script reads it from SSM and passes it on, so it is not written in the server `.env`. Locally, a central command puts it in |
+| `CLAUDE_MODEL` | `@used=backend` | Model name. Not hard-coded in code. The default is `claude-sonnet-5-5` |
 
-- 프런트엔드(`VITE_` 접두어)로 Claude API 키를 넘기지 않는다. 브라우저에 노출된다. 호출은 백엔드에서만 한다.
-- CI에는 실제 키를 두지 않는다. 테스트는 API 호출을 가짜로 바꾼다.
+- Do not pass the Claude API key to the frontend (the `VITE_` prefix). It would be exposed to the browser. Make calls only from the backend.
+- CI holds no real key. Tests replace the API call with a fake.
 
-## 앱별 외부 서비스 키 (#422, 제안)
+## Per-app external service keys (#422, proposal)
 
-Claude API 키 밖의 외부 서비스 키(공공데이터포털, Google OAuth, 시세 API 등)도 SSM에 두는 방안과 발급 절차는 [조사 문서](research/app-secrets-ssm.md)에 있다. 채택해 구현하기 전까지는 각 앱 `.env`에 둔다.
+The option of also keeping external service keys other than the Claude API key (the public data portal, Google OAuth, market price APIs, and so on) in SSM, and the issuing procedure, are in the [survey document](research/app-secrets-ssm.md). Until that is adopted and implemented, they are kept in each app's `.env`.

@@ -45,8 +45,8 @@ test('untagged files treat passwords, tokens, and DATABASE_URL as secret', () =>
 
 test('cross-checks ports and DB names against the registry', () => {
   assert.deepEqual(envMismatches(parseEnvExample(legacy), study), [
-    `PORT 3012 ≠ 레지스트리 api ${study.ports.api}`,
-    `DATABASE_URL 포트 55442 ≠ 레지스트리 db ${study.ports.db}`,
+    `PORT 3012 ≠ registry api ${study.ports.api}`,
+    `DATABASE_URL port 55442 ≠ registry db ${study.ports.db}`,
   ]);
   assert.deepEqual(envMismatches(parseEnvExample(annotated), study), []);
 });
@@ -93,15 +93,15 @@ test('packages are also found in workspace package.json files the manifest manag
 
 test('reports never contain secret values', () => {
   const status = repoStatus({ target: studyTarget, project: study, read: (p) => (p === '.env.example' ? annotated + '\nDATABASE_URL=postgres://u:topsecret@localhost:1/x\n' : null) });
-  const { 'docs/compliance.md': compliance, 'docs/env-matrix.md': matrix } = renderReports([status, { repo: 'sirloinbh/x', profile: 'app', unknown: '로컬 클론 없음' }], meta);
+  const { 'docs/compliance.md': compliance, 'docs/env-matrix.md': matrix } = renderReports([status, { repo: 'sirloinbh/x', profile: 'app', unknown: 'no local clone' }], meta);
   for (const text of [compliance, matrix]) {
     assert.ok(!text.includes('hunter2'));
     assert.ok(!text.includes('topsecret'));
   }
-  assert.match(matrix, /\| `POSTGRES_PASSWORD` \| PostgreSQL 비밀번호 \| 예 \| 예 \| \(비밀\) \|/);
-  assert.match(matrix, /\| `VITE_FEATURE` \| 기능 플래그 \|  \|  \| `on` \| frontend \| 프로젝트 \|/);
-  assert.match(compliance, /\| sirloinbh\/study-log \| 아직 안 됨 \|/);
-  assert.match(compliance, /\| sirloinbh\/x \| 확인 못 함 \(로컬 클론 없음\) \|/);
+  assert.match(matrix, /\| `POSTGRES_PASSWORD` \| PostgreSQL 비밀번호 \| yes \| yes \| \(secret\) \|/);
+  assert.match(matrix, /\| `VITE_FEATURE` \| 기능 플래그 \|  \|  \| `on` \| frontend \| project \|/);
+  assert.match(compliance, /\| sirloinbh\/study-log \| not yet \|/);
+  assert.match(compliance, /\| sirloinbh\/x \| unknown \(no local clone\) \|/);
 });
 
 test('remote statuses read every target through the API and mark unreachable ones', async () => {

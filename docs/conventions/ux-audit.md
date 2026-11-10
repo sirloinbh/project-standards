@@ -1,102 +1,102 @@
-# UX·접근성 점검표
+# UX and accessibility audit checklist
 
-앱 화면을 사용자의 과업 순서대로 직접 써 보고, 정해진 지표를 재서 개선점을 이슈로 남기는 절차다. 화면 규칙 자체는 [디자인 시스템](../design-system.md)에 있고, 이 문서는 그 규칙을 **어떻게 점검하고 어디에 기록하는지**를 정한다.
+This is the procedure for using an app's screens yourself in the order of the user's tasks, measuring set metrics, and leaving improvements as issues. The screen rules themselves are in the [design system](../design-system.md); this document defines **how to audit against those rules and where to record it**.
 
-근거: workout-memo `docs/ux-audit/2026-10-21.md`(workout-memo #112). 이 문서는 그 방법을 8개 앱 공통으로 옮긴 것이다.
+Basis: workout-memo `docs/ux-audit/2026-10-21.md` (workout-memo #112). This document carries that method over to all 8 apps.
 
-## 언제 하나요
+## When to do it
 
-- 새 앱의 주요 화면이 처음 갖춰졌을 때
-- 화면 구조를 크게 바꾸기 전(기준 측정)과 바꾼 뒤(비교 측정)
-- 디자인 시스템이나 공통 레이아웃을 앱에 처음 적용한 뒤
+- When a new app's main screens are first in place
+- Before a major screen structure change (baseline measurement) and after it (comparison measurement)
+- After first applying the design system or the shared layout to an app
 
-PR마다 하는 확인(390×844, 1440×900 화면 확인과 e2e의 axe 검사)은 이 점검과 별개로 계속한다.
+The checks done for every PR (checking screens at 390×844 and 1440×900, and the axe check in e2e) continue separately from this audit.
 
-## 점검 항목
+## Audit items
 
-### 페이지별 측정
+### Per-page measurements
 
-모든 페이지를 390×844에서 재고, 첫 화면은 1440×900에서도 잰다.
+Measure every page at 390×844, and measure the first screen at 1440×900 too.
 
-| 항목 | 기준 | 재는 방법 |
+| Item | Criterion | How to measure |
 |---|---|---|
-| 가로 넘침 | 없음 | `document.documentElement.scrollWidth > innerWidth` |
-| 터치 대상 크기 | 누를 수 있는 요소는 44×44px 이상 | 버튼·링크·입력의 `getBoundingClientRect()` |
-| 입력 글자 크기 | 16px 이상(iOS 자동 확대 방지) | `input`, `select`, `textarea`의 계산된 `font-size` |
-| 작은 글자 | 본문 13px 미만 없음 | 텍스트 요소의 계산된 `font-size` 개수 |
-| 세로 길이 | 페이지와 모달의 길이를 기록하고, 주요 행동이 첫 화면 안에 있는지 본다 | `scrollHeight`, 주요 버튼의 `y` 좌표 |
-| 접근성 자동 검사 | axe 위반 없음 | `@axe-core/playwright` 등 앱에 이미 있는 도구 |
-| 키보드 | 메뉴·모달·drawer를 키보드만으로 열고 닫는다. `Escape`로 닫힌다. 포커스 표시가 보인다 | 직접 조작 |
-| 라이트·다크 | 두 모드에서 글자와 배경이 구분된다 | 모드를 바꿔 스크린샷 |
+| Horizontal overflow | None | `document.documentElement.scrollWidth > innerWidth` |
+| Touch target size | Pressable elements are 44×44px or more | `getBoundingClientRect()` of buttons, links, and inputs |
+| Input font size | 16px or more (to prevent iOS auto-zoom) | Computed `font-size` of `input`, `select`, `textarea` |
+| Small text | No body text under 13px | Count of text elements by computed `font-size` |
+| Vertical length | Record the length of pages and modals, and check whether the main action is within the first screen | `scrollHeight`, the `y` coordinate of the main button |
+| Automated accessibility check | No axe violations | `@axe-core/playwright` or another tool the app already has |
+| Keyboard | Menus, modals, and drawers open and close with the keyboard alone. `Escape` closes them. The focus indicator is visible | Manual operation |
+| Light and dark | Text and background are distinguishable in both modes | Screenshots after switching modes |
 
-### 과업 시나리오
+### Task scenarios
 
-앱마다 가장 자주 쓰는 과업 4~6개를 정해서 390×844에서 처음부터 끝까지 수행한다. 시나리오 목록은 점검 문서에 적고 다음 점검에서 그대로 다시 쓴다.
+For each app, pick the 4 to 6 most frequently used tasks and perform them from start to finish at 390×844. Write the scenario list in the audit document and reuse it as is in the next audit.
 
-과업마다 다음을 기록한다.
+For each task, record the following.
 
-- 성공 여부
-- 입력·탭 횟수
-- 스크롤 분량(화면 몇 개 분량인지)
-- 막히거나 헷갈린 지점
-- 빈 상태, 저장 결과, 오류 메시지가 보이는지
+- Success or failure
+- Number of inputs and taps
+- Amount of scrolling (how many screens' worth)
+- Points where you got stuck or confused
+- Whether empty states, save results, and error messages are visible
 
-### 평가 기준
+### Evaluation criteria
 
-- 닐슨의 사용성 휴리스틱 10원칙
-- [디자인 시스템](../design-system.md)의 반응형·접근성·로딩 표시 규칙
-- 모바일 우선: 앱은 주로 휴대폰에서 쓴다
+- Nielsen's 10 usability heuristics
+- The responsive, accessibility, and loading indicator rules of the [design system](../design-system.md)
+- Mobile first: the apps are mainly used on phones
 
-## 방법
+## Method
 
-1. **데이터를 준비한다.** 개인 DB는 쓰지 않는다.
-   - 로컬 테스트 DB 컨테이너에 점검용 DB(`<db>_ux_audit`)를 만들고 `npm run db:migrate`를 실행한다.
-   - 실제 사용과 비슷한 양의 데이터를 API로 넣는다(예: 최근 4주 기록). 시드 구성은 점검 문서에 적는다.
-2. **앱을 띄운다.** e2e와 같은 방식으로 API와 화면을 띄운다. 포트는 [프로젝트 개요](../projects.md)의 e2e 포트를 쓰거나, 쓰지 않는 포트를 고르고 문서에 적는다.
-3. **측정한다.** Playwright(설치된 Chrome)로 위 페이지별 측정 항목을 재고 스크린샷을 찍는다.
-   - 화면 크기: 390×844(모바일), 1440×900(PC)
-4. **시나리오를 수행한다.** 390×844에서 과업 시나리오를 수행하고 기록한다.
-5. **실기기와 Lighthouse로 보완한다.** 실제 휴대폰에서 시나리오 1~2개를 수행하고 기종·브라우저를 적는다. Chrome DevTools Lighthouse(모바일)의 접근성·권장사항 점수를 적는다.
-6. **하지 못한 것을 적는다.** 실행하지 못한 항목은 이유와 다음에 할 방법을 적는다. 실행하지 않은 측정을 통과로 쓰지 않는다.
+1. **Prepare the data.** Do not use a personal DB.
+   - In the local test DB container, create an audit DB (`<db>_ux_audit`) and run `npm run db:migrate`.
+   - Put in an amount of data similar to real use through the API (for example, the last 4 weeks of records). Write the seed composition in the audit document.
+2. **Start the app.** Start the API and the screen the same way as e2e. Use the e2e port from the [project overview](../projects.md), or pick an unused port and write it in the document.
+3. **Measure.** With Playwright (installed Chrome), measure the per-page items above and take screenshots.
+   - Screen sizes: 390×844 (mobile), 1440×900 (PC)
+4. **Perform the scenarios.** Perform the task scenarios at 390×844 and record them.
+5. **Supplement with a real device and Lighthouse.** Perform 1 or 2 scenarios on a real phone and write down the model and browser. Write down the accessibility and best-practices scores from Chrome DevTools Lighthouse (mobile).
+6. **Write down what you could not do.** For items you could not run, write the reason and how you will do it next. Do not record a measurement you did not run as a pass.
 
-새 측정 도구나 npm 패키지가 필요하면 설치하지 말고 [의존성 정책](../dependency-policy.md)의 도입 절차를 따른다.
+If you need a new measurement tool or npm package, do not install it; follow the adoption procedure in the [dependency policy](../dependency-policy.md).
 
-## 개선점과 심각도
+## Improvements and severity
 
-개선점마다 번호(`U-01`…)를 붙이고 심각도를 매긴다.
+Give each improvement a number (`U-01`…) and a severity.
 
-| 심각도 | 뜻 |
+| Severity | Meaning |
 |---|---|
-| P1 | 주요 과업을 크게 방해한다 |
-| P2 | 불편하거나 잘못 누를 위험이 있다 |
-| P3 | 다듬기 |
+| P1 | Seriously hinders a main task |
+| P2 | Inconvenient or risks a wrong press |
+| P3 | Polish |
 
-- 개선점은 앱 리포의 이슈로 등록하고 점검 문서에 이슈 번호를 연결한다. 이슈 우선순위는 [std-backlog](../../templates/common/skills/std-backlog/SKILL.md)를 따른다.
-- 여러 앱에 공통인 개선점(디자인 시스템, 공통 레이아웃, 공통 컴포넌트)은 중앙 리포에 이슈를 연다.
-- 점검 문서 끝에 반영 순서를 적는다.
+- Register improvements as issues in the app repo and link the issue numbers in the audit document. Issue priority follows [std-backlog](../../templates/common/skills/std-backlog/SKILL.md).
+- For improvements shared by several apps (design system, shared layout, shared components), open an issue in the central repo.
+- At the end of the audit document, write the order of changes.
 
-## 기록 위치
+## Where to record
 
-각 앱 리포에 남긴다.
+Keep it in each app repo.
 
 ```
 docs/ux-audit/
-├─ YYYY-MM-DD.md          # 점검 문서 (Asia/Seoul 기준 점검일)
-└─ YYYY-MM-DD/            # 스크린샷
-   ├─ <페이지>-390.png
-   └─ <페이지>-1440.png
+├─ YYYY-MM-DD.md          # audit document (audit date in Asia/Seoul)
+└─ YYYY-MM-DD/            # screenshots
+   ├─ <page>-390.png
+   └─ <page>-1440.png
 ```
 
-점검 문서는 다음 절을 이 순서로 쓴다.
+The audit document has the following sections, in this order.
 
-1. 요약: 관련 이슈, 기준 화면 크기
-2. 방법: 대상 커밋, 데이터, 도구, 하지 못한 것
-3. 페이지별 측정(390px)
-4. 과업 시나리오(390px)
-5. 개선점: 번호, 심각도, 내용, 연결 이슈
-6. 스크린샷
-7. 반영 순서
-8. 다시 측정: 같은 조건으로 재측정하는 절차
+1. Summary: related issues, baseline screen sizes
+2. Method: target commit, data, tools, what could not be done
+3. Per-page measurements (390px)
+4. Task scenarios (390px)
+5. Improvements: number, severity, description, linked issue
+6. Screenshots
+7. Order of changes
+8. Re-measurement: the procedure for measuring again under the same conditions
 
-- 다시 점검하면 새 날짜 문서를 만들고 이전 문서와 비교한다. 이전 문서를 고쳐 쓰지 않는다.
-- 스크린샷에 개인 데이터, `.env` 값, 토큰이 보이지 않게 한다. 점검용 시드 데이터만 쓴다.
+- When auditing again, create a new dated document and compare with the previous one. Do not rewrite the previous document.
+- Make sure screenshots show no personal data, `.env` values, or tokens. Use only the audit seed data.

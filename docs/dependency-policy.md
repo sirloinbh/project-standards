@@ -1,61 +1,61 @@
-# 의존성 정책
+# Dependency policy
 
-npm 공급망 공격(Shai-Hulud 계열)이 진행 중이므로 의존성은 최소로, 고정 버전으로, 검증한 뒤에만 들인다.
+An npm supply-chain attack (the Shai-Hulud family) is ongoing, so dependencies are kept to a minimum, pinned to exact versions, and brought in only after verification.
 
-## 버전 원본
+## Version source
 
-- 도구(Node, npm, PostgreSQL, 이미지)와 앱 8개가 함께 쓰는 의존성 42개의 정확한 버전은 [`versions.json`](../versions.json)이 원본이다. 표는 [versions.md](versions.md)로 생성된다(`npm run docs`).
-- 앱 공통 의존성은 앱 `package.json` 3개의 관리 필드다. 앱 하나만 버전이 다르면 `standards-check`가 실패한다(#304). 버전을 올릴 때는 중앙의 `versions.json`을 고치고, 앱마다 열리는 동기화 PR에서 lockfile을 맞춘다.
-- 한 앱만 쓰는 의존성은 그 앱이 버전을 정한다. 메이저 버전은 아래 표를 따른다.
+- The exact versions of the tools (Node, npm, PostgreSQL, images) and the 42 dependencies shared by the 8 apps are sourced from [`versions.json`](../versions.json). The table is generated as [versions.md](versions.md) (`npm run docs`).
+- The shared app dependencies are managed fields in the 3 app `package.json` files. If even one app has a different version, `standards-check` fails (#304). To raise a version, edit the central `versions.json` and align the lockfile in the sync PR that opens for each app.
+- A dependency used by only one app has its version set by that app. Major versions follow the table below.
 
-| 패키지 | 메이저 | 쓰는 앱 | 비고 |
+| Package | Major | Apps that use it | Notes |
 |---|---|---|---|
 | @tanstack/react-query | 5 | workout-memo | |
 | react-hook-form, @hookform/resolvers | 7, 5 | workout-memo | |
-| @playwright/test, @axe-core/playwright | 1, 4 | workout-memo | 화면 비교 이미지와 같은 버전(`versions.json` `images.playwright`) |
+| @playwright/test, @axe-core/playwright | 1, 4 | workout-memo | Same version as the visual comparison image (`versions.json` `images.playwright`) |
 | recharts | 3 | study-log | |
 
-공통 의존성의 메이저 결정 근거: tailwindcss 4·lucide-react·radix-ui·sonner·vaul·tw-animate-css는 [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), typescript·eslint·prettier는 `@sirloinbh/*` 공유 패키지의 peer 범위를 따른다. zod는 4를 쓴다(#386, [조사](research/zod4.md)).
+Why each shared dependency's major version was chosen: tailwindcss 4, lucide-react, radix-ui, sonner, vaul, and tw-animate-css follow [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), and typescript, eslint, and prettier follow the peer range of the `@sirloinbh/*` shared packages. zod uses 4 (#386, [survey](research/zod4.md)).
 
-## 버전 쓰는 법
+## How to write versions
 
-- `package.json`의 모든 의존성은 정확한 버전으로 쓴다(`^`, `~` 금지). `.npmrc`의 `save-exact=true`가 새로 설치할 때 이렇게 만든다. 기존 범위 버전은 첫 동기화 때 설치된 버전으로 고정된다(#63).
-- 설치는 항상 `--ignore-scripts`로 한다. `.npmrc`의 `ignore-scripts=true`가 이를 강제한다.
-- 에이전트(Claude Code, Codex)는 잠금 파일대로 설치하는 `npm ci`만 실행할 수 있고, 다른 설치 명령은 설정으로 막혀 있다([에이전트의 패키지 설치 차단](agent-guardrails.md), #375). 새 패키지를 들이거나 버전을 바꾸는 승인된 설치는 사용자가 직접 실행한다.
+- Write every dependency in `package.json` as an exact version (no `^` or `~`). `save-exact=true` in `.npmrc` makes new installs do this. Existing range versions are pinned to the installed version at the first sync (#63).
+- Always install with `--ignore-scripts`. `ignore-scripts=true` in `.npmrc` enforces this.
+- Agents (Claude Code, Codex) can run only `npm ci`, which installs exactly what the lockfile says, and other install commands are blocked by settings ([Blocking package installs by agents](agent-guardrails.md), #375). Approved installs that add a new package or change a version are run by the user directly.
 
-## 새 외부 패키지·도구 도입 절차
+## Procedure for bringing in a new external package or tool
 
-1. 중앙 리포(또는 해당 앱 리포)에 이슈를 열고, 왜 필요한지와 대안을 적는다.
-2. 읽기 전용 명령으로 조사한다: `npm view <패키지>@<버전> version time license repository.url maintainers scripts dependencies`.
-3. 다음 조건을 모두 만족하는 버전을 고른다.
-   - 정확한 버전
-   - 릴리스 후 14일 경과
-   - 설치 스크립트(`preinstall`·`install`·`postinstall`·`prepare`)가 없거나, 있으면 이유를 확인함
-   - 게시자와 저장소가 공식 프로젝트와 일치
-4. 필요하면 socket.dev, Snyk Advisor, deps.dev로 사전 검증한다.
-5. 조사 결과를 이슈에 표로 남기고 **사용자 승인**을 받는다. 승인 없이 `npm install`, `npx`, `pnpm/yarn/bun install`을 실행하지 않는다.
-6. `npm install --ignore-scripts <패키지>@<버전>`으로 설치하고, lockfile 변경과 `ioc-scan` 결과를 PR에 적는다.
-7. 앱 리포에서는 `npm run lockfiles:sync`로 `frontend/`·`backend/` lockfile을 루트 lockfile에 맞춘다(아래 [하위 lockfile](#하위-lockfile-frontend-backend)).
+1. Open an issue in the central repo (or the app repo concerned) and write why it is needed and the alternatives.
+2. Investigate with read-only commands: `npm view <package>@<version> version time license repository.url maintainers scripts dependencies`.
+3. Choose a version that meets all of these conditions.
+   - Exact version
+   - 14 days elapsed since release
+   - No install scripts (`preinstall`, `install`, `postinstall`, `prepare`), or if there are, the reason is confirmed
+   - Publisher and repository match the official project
+4. If needed, pre-verify with socket.dev, Snyk Advisor, or deps.dev.
+5. Leave the investigation result in the issue as a table and get **user approval**. Do not run `npm install`, `npx`, or `pnpm/yarn/bun install` without approval.
+6. Install with `npm install --ignore-scripts <package>@<version>` and write the lockfile changes and the `ioc-scan` result in the PR.
+7. In an app repo, align the `frontend/` and `backend/` lockfiles to the root lockfile with `npm run lockfiles:sync` (see [Sub-lockfiles](#sub-lockfiles-frontend-backend) below).
 
-예외: 자체 패키지(`@sirloinbh/*`)는 14일 규칙 대신 출처 확인으로 검증한다([ADR-0004](adr/0004-own-packages-provenance-instead-of-14-days.md)). 자체 패키지의 외부 peerDependencies는 위 절차를 그대로 따른다.
+Exception: own packages (`@sirloinbh/*`) are verified by provenance checks instead of the 14-day rule ([ADR-0004](adr/0004-own-packages-provenance-instead-of-14-days.md)). External peerDependencies of own packages follow the procedure above as is.
 
-## 하위 lockfile (frontend/, backend/)
+## Sub-lockfiles (frontend/, backend/)
 
-앱 리포에는 lockfile이 셋 있다. CI는 루트 `package-lock.json`으로 설치하고, 운영 Docker 빌드는 `frontend/package-lock.json`·`backend/package-lock.json`으로 설치한다. 둘이 다르면 CI가 검사한 버전과 운영 이미지의 버전이 달라진다(#303).
+An app repo has three lockfiles. CI installs with the root `package-lock.json`, and the production Docker build installs with `frontend/package-lock.json` and `backend/package-lock.json`. If they differ, the versions CI checked and the versions in the production image differ (#303).
 
-- `standards-check`(`npm run standards:check`, CI)가 하위 lockfile이 루트 lockfile과 같은 버전을 쓰는지 본다. 패키지 위치(호이스팅) 차이는 무시하고 설치되는 버전만 비교한다. 다르면 실패한다.
-- `npm run lockfiles:sync`(`node .standards/lockfiles.mjs --write`)가 다른 하위 lockfile만 루트 lockfile의 버전으로 다시 쓴다. **아무것도 내려받거나 설치하지 않는다.** 루트 lockfile의 `resolved`·`integrity`를 그대로 옮기고, 위치와 `dev`·`optional` 표시만 다시 계산한다. 맞는 파일은 건드리지 않는다.
-- `--write` 없이 실행하면 다른 패키지만 보여 준다.
-- 중앙 리포에서는 `node scripts/lockfiles.mjs --root <앱 폴더>`로 같은 검사를 한다.
+- `standards-check` (`npm run standards:check`, CI) checks that the sub-lockfiles use the same versions as the root lockfile. Differences in package location (hoisting) are ignored, and only the versions that get installed are compared. It fails if they differ.
+- `npm run lockfiles:sync` (`node .standards/lockfiles.mjs --write`) rewrites only the differing sub-lockfiles to the root lockfile's versions. **It downloads and installs nothing.** It copies `resolved` and `integrity` from the root lockfile as they are, and recomputes only the location and the `dev` and `optional` marks. Files that already match are not touched.
+- Run without `--write`, it only shows the differing packages.
+- In the central repo, the same check is run with `node scripts/lockfiles.mjs --root <app folder>`.
 
-## 자동 업데이트
+## Automatic updates
 
-- Dependabot은 **보안 업데이트만** 쓴다. 버전 업 PR은 끈다(`open-pull-requests-limit: 0`, 템플릿 `.github/dependabot.yml`).
-- 보안 업데이트는 리포 설정에서 켠다(#22). Dependabot이 연 보안 PR도 위 조건을 확인한 뒤 사용자가 병합한다.
-- 버전 업은 중앙 리포의 동기화 PR로만 한다.
+- Dependabot is used for **security updates only**. Version-bump PRs are turned off (`open-pull-requests-limit: 0`, template `.github/dependabot.yml`).
+- Security updates are turned on in the repo settings (#22). Security PRs opened by Dependabot are also merged by the user after the conditions above are checked.
+- Version bumps are done only through the central repo's sync PR.
 
-## 정기 점검
+## Regular checks
 
-- CI가 매번 `ioc-scan`으로 lockfile·설치 스크립트·워크플로를 점검한다(#76).
-- CI가 매번 knip(`npm run knip`, 설정은 중앙 관리 파일 `knip.json`)으로 안 쓰는 파일·export·의존성을 찾는다(#263). 처음에는 경고만 낸다. 안 쓰는 의존성은 Dependabot PR과 취약점 대응 대상만 늘리므로 찾으면 지운다. 중앙 관리 파일(`.standards/`, 공통 UI 컴포넌트·도우미, `frontend/public/`)은 검사에서 뺀다.
-- 준수 현황(#82)에 리포별 `npm audit` 결과를 모은다.
+- CI runs `ioc-scan` every time to check lockfiles, install scripts, and workflows (#76).
+- CI runs knip every time (`npm run knip`, config in the centrally managed file `knip.json`) to find unused files, exports, and dependencies (#263). At first it only warns. Unused dependencies only add Dependabot PRs and vulnerabilities to handle, so delete them when found. Centrally managed files (`.standards/`, common UI components and helpers, `frontend/public/`) are excluded from the check.
+- The compliance report (#82) collects the `npm audit` result for each repo.

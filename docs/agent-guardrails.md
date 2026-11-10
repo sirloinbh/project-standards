@@ -1,102 +1,102 @@
-# 에이전트의 패키지 설치 차단
+# Blocking package installs by agents
 
-npm 공급망 공격(Shai-Hulud 계열) 때문에 에이전트는 잠금 파일대로 설치하는 `npm ci`(#375)를 빼고는 패키지를 설치·삭제·실행하지 않는다([의존성 정책](dependency-policy.md)). 이 규칙을 문장(AGENTS.md)만이 아니라 도구 설정으로도 막는다(#16, #162, #178, #180). 아래 파일은 9개 리포에 중앙 관리 파일로 동기화되고, 중앙 리포에도 같은 파일이 있다.
+Because of npm supply-chain attacks (the Shai-Hulud family), agents do not install, remove, or run packages, except for `npm ci` (#375), which installs exactly what the lockfile says ([dependency policy](dependency-policy.md)). This rule is enforced by tool settings, not only by a sentence in AGENTS.md (#16, #162, #178, #180). The files below are synced to the 9 repos as centrally managed files, and the central repo has the same files.
 
-| 도구 | 파일 | 동작 |
+| Tool | File | Behavior |
 |---|---|---|
-| Claude Code | `.claude/settings.json`의 `permissions.deny` | 일치하는 명령을 실행하지 않고 거부한다. Bash와 PowerShell 도구 모두 |
-| Claude Code | `.claude/settings.json`의 `hooks.PreToolUse` → `.claude/hooks/block-package-installs.mjs` | 명령을 해석해서 설치 계열이면 막는다(종료 코드 2). 거부 목록이 놓치는 형태를 보강한다 |
-| Codex | `.codex/rules/package-installs.rules` | `decision = "forbidden"`으로 묻지 않고 막는다. 글자 비교라서 npm이 받아들이는 줄임·camelCase 형태를 모두 나열한다 |
-| Codex | `.codex/hooks.json`의 `PreToolUse` → `.claude/hooks/block-package-installs.mjs` | Claude Code와 같은 훅 스크립트로 명령을 해석해서 막는다(종료 코드 2). 규칙이 놓치는 형태를 보강한다. 사용자가 `/hooks`에서 신뢰해야 실행되고, 훅이 실패하면 막지 않는다 |
+| Claude Code | `permissions.deny` in `.claude/settings.json` | Refuses matching commands without running them. Both the Bash and PowerShell tools |
+| Claude Code | `hooks.PreToolUse` in `.claude/settings.json` → `.claude/hooks/block-package-installs.mjs` | Parses the command and blocks it if it is an install-family command (exit code 2). Covers forms the deny list misses |
+| Codex | `.codex/rules/package-installs.rules` | Blocks without asking, using `decision = "forbidden"`. It is a text comparison, so it lists every abbreviation and camelCase form that npm accepts |
+| Codex | `PreToolUse` in `.codex/hooks.json` → `.claude/hooks/block-package-installs.mjs` | Parses and blocks the command with the same hook script as Claude Code (exit code 2). Covers forms the rules miss. It runs only after the user trusts it in `/hooks`, and it does not block if the hook fails |
 
-## 막는 명령
+## Blocked commands
 
-- `npm` 하위 명령과 npm 11의 별칭(`lib/utils/cmd-list.js`) 41개: `install`(`i`, `add`, 줄임·오타 `in`, `ins`, `inst`, `insta`, `instal`, `isnt`, `isnta`, `isntal`, `isntall`), `install-test`(`it`), `install-ci-test`(`cit`, `clean-install-test`, `sit`), `update`(`up`, `u`, `upgrade`, `udpate`), `uninstall`(`un`, `remove`, `rm`, `r`, `unlink`), `exec`(`x`), `init`(`create`, `innit`), `rebuild`(`rb`), `dedupe`(`ddp`), `link`(`ln`), 그리고 `audit fix`. 거부 목록과 Codex 규칙이 모두 막는다
-- 위 명령의 줄임(`npm upd`, `npm uni`)과 camelCase(`npm installTest`) 84개: npm은 다른 명령과 겹치지 않는 앞부분과 camelCase 이름도 받아들인다. Codex 규칙은 이 형태를 모두 나열해서 막고(#178), Claude Code는 훅이 해석해서 막는다
-- 명령 전체: `npx`, `pnpm`, `pnpx`, `yarn`, `bun`, `bunx`, `corepack`
+- 41 `npm` subcommands and npm 11 aliases (`lib/utils/cmd-list.js`): `install` (`i`, `add`, and the abbreviations and typos `in`, `ins`, `inst`, `insta`, `instal`, `isnt`, `isnta`, `isntal`, `isntall`), `install-test` (`it`), `install-ci-test` (`cit`, `clean-install-test`, `sit`), `update` (`up`, `u`, `upgrade`, `udpate`), `uninstall` (`un`, `remove`, `rm`, `r`, `unlink`), `exec` (`x`), `init` (`create`, `innit`), `rebuild` (`rb`), `dedupe` (`ddp`), `link` (`ln`), and `audit fix`. Both the deny list and the Codex rules block them
+- 84 abbreviations (`npm upd`, `npm uni`) and camelCase forms (`npm installTest`) of the commands above: npm also accepts leading parts that do not overlap with other commands, and camelCase names. The Codex rules block these by listing every form (#178), and Claude Code blocks them because the hook parses them
+- Whole commands: `npx`, `pnpm`, `pnpx`, `yarn`, `bun`, `bunx`, `corepack`
 
-`npm ci`와 그 별칭(`clean-install`, `ic`, `install-clean`, `isntall-clean`)은 막지 않는다(#375). 잠금 파일에 고정된 버전만 설치하고 `.npmrc`의 `ignore-scripts=true`로 설치 스크립트가 돌지 않기 때문이다. 다만 훅은 스크립트를 켜는 옵션(`--no-ignore-scripts`, `--ignore-scripts=false`, `--allow-scripts`, `--dangerously-allow-all-scripts`와 그 줄임)과 같은 뜻의 환경변수(`npm_config_ignore_scripts=false` 등)가 같은 명령에 있는 `npm ci`를 막는다. 여러 리포에 한꺼번에 실행하는 `tools/repos.mjs run`은 `npm ci`도 거부한다.
+`npm ci` and its aliases (`clean-install`, `ic`, `install-clean`, `isntall-clean`) are not blocked (#375). They install only the versions pinned in the lockfile, and `ignore-scripts=true` in `.npmrc` stops install scripts from running. However, the hook blocks an `npm ci` that has, in the same command, an option that turns scripts on (`--no-ignore-scripts`, `--ignore-scripts=false`, `--allow-scripts`, `--dangerously-allow-all-scripts`, and their abbreviations) or an environment variable with the same meaning (`npm_config_ignore_scripts=false` and so on). `tools/repos.mjs run`, which runs commands across several repos at once, also refuses `npm ci`.
 
-`npm run`, `npm ls`, `npm view`, `npm outdated`, `npm audit`(보고만), `npm test`도 막지 않는다. `scripts/test/agent-guardrails.test.mjs`는 Codex 목록의 모든 단어가 훅의 해석으로 설치 명령이 되는지, 목록에 있는 단어의 줄임·camelCase 형태가 빠지지 않았는지 확인한다.
+`npm run`, `npm ls`, `npm view`, `npm outdated`, `npm audit` (report only), and `npm test` are not blocked either. `scripts/test/agent-guardrails.test.mjs` checks that every word in the Codex list becomes an install command under the hook's parsing, and that no abbreviation or camelCase form of a listed word is missing from the list.
 
-## 명령을 해석하는 훅 (#162)
+## Hook that parses commands (#162)
 
-거부 목록은 명령 앞부분을 글자 그대로 비교하므로 아래 "한계"의 형태를 놓친다. 훅 `.claude/hooks/block-package-installs.mjs`(Node 내장 모듈만 사용)가 Bash·PowerShell 도구를 실행하기 전에 명령을 받아 다시 확인한다.
+The deny list compares the start of the command literally, so it misses the forms in "Limitations" below. The hook `.claude/hooks/block-package-installs.mjs` (built-in Node modules only) receives the command before the Bash and PowerShell tools run it and checks it again.
 
-- **해석하는 것:** 따옴표, `;` `&&` `||` `|` `&` 줄바꿈으로 이어진 명령, `$( )`·백틱·`{ }` 안의 명령, 앞에 붙은 환경변수. 전체 경로와 Windows 확장자(`C:\…\npm.cmd`, `/c/…/npm.exe`)는 프로그램 이름만 본다.
-- **npm 인자:** 하위 명령 앞의 옵션(`--silent`, `--prefix dir`, `-w app`)을 건너뛰고, npm 11의 명령·별칭 목록(`lib/utils/cmd-list.js`)과 같은 방식으로 하위 명령을 정한다. 그래서 거부 목록에 없는 줄임(`npm upd`)과 camelCase(`npm installTest`)도 막는다.
-- **다른 명령으로 감싼 경우:** `sh`·`bash -c`, `pwsh`·`powershell -Command`·`-EncodedCommand`, `cmd /c`, `eval`, `Invoke-Expression`(`iex`), `Start-Process`, `env`(`-S` 포함), `sudo`, `timeout`, `nohup`, `xargs`, `cross-env`, `volta run`, `node …/npm-cli.js` 안의 명령을 다시 해석한다.
-- **npx·pnpm·pnpx·yarn·bun·bunx·corepack:** 인자와 관계없이 막는다. 이 리포들은 npm만 쓴다(`packageManager`).
-- **막지 않는 것:** 커밋 메시지, here-document(`<<EOF`), PowerShell here-string(`@' '@`), 주석 안의 글자. `grep "npm install"`처럼 다른 명령의 인자로 들어간 글자.
-- **실패하면 막는다:** 설정에 `"onFailure": "block"`을 넣었다. 스크립트가 없거나, `node`를 못 찾거나, 10초 안에 끝나지 않거나, 입력 JSON을 읽지 못하면 명령을 실행하지 않는다. 이 필드가 없으면 훅이 실패해도 명령이 그대로 실행된다(공식 문서). Claude Code v2.1.295 이상이 필요하다.
-- **실행 방식:** exec 형식(`"command": "node"`, `"args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/…"]`)이라 셸을 거치지 않는다. Windows에서 Git Bash가 있든 없든 같은 방식으로 실행된다.
+- **What it parses:** quotes, commands joined by `;` `&&` `||` `|` `&` and newlines, commands inside `$( )`, backticks, and `{ }`, and leading environment variables. For full paths and Windows extensions (`C:\…\npm.cmd`, `/c/…/npm.exe`), it looks only at the program name.
+- **npm arguments:** It skips options before the subcommand (`--silent`, `--prefix dir`, `-w app`) and decides the subcommand the same way as npm 11's command and alias list (`lib/utils/cmd-list.js`). So it also blocks abbreviations (`npm upd`) and camelCase (`npm installTest`) that the deny list does not have.
+- **Wrapped in another command:** It re-parses the command inside `sh` and `bash -c`, `pwsh` and `powershell -Command` and `-EncodedCommand`, `cmd /c`, `eval`, `Invoke-Expression` (`iex`), `Start-Process`, `env` (including `-S`), `sudo`, `timeout`, `nohup`, `xargs`, `cross-env`, `volta run`, and `node …/npm-cli.js`.
+- **npx, pnpm, pnpx, yarn, bun, bunx, corepack:** Blocked regardless of arguments. These repos use only npm (`packageManager`).
+- **What it does not block:** commit messages, here-documents (`<<EOF`), PowerShell here-strings (`@' '@`), text inside comments, and text passed as an argument to another command such as `grep "npm install"`.
+- **It blocks on failure:** The settings include `"onFailure": "block"`. If the script is missing, `node` cannot be found, it does not finish within 10 seconds, or it cannot read the input JSON, the command is not run. Without this field, the command runs as is even when the hook fails (official docs). Claude Code v2.1.295 or later is required.
+- **How it runs:** It uses the exec form (`"command": "node"`, `"args": ["${CLAUDE_PROJECT_DIR}/.claude/hooks/…"]`), so it does not go through a shell. It runs the same way on Windows with or without Git Bash.
 
-## Codex에서 같은 훅 쓰기 (#180)
+## Using the same hook in Codex (#180)
 
-결정: **넣는다.** Codex 규칙은 글자 비교라 아래 "한계"의 형태(옵션을 앞에 둔 `npm --silent install`, 전체 경로, 나누지 않는 `sh -c`)를 막지 못한다. Codex도 같은 입력 형식의 `PreToolUse` 훅을 지원하므로 Claude Code 훅 스크립트를 그대로 쓴다. 다만 Codex 훅은 실패하면 막지 않고(fail-open), 사용자가 신뢰해야 실행되므로 **규칙을 대신하지 않고 보강**한다. 규칙(`forbidden`)은 그대로 유지한다.
+Decision: **include it.** The Codex rules are a text comparison, so they cannot block the forms in "Limitations" below (`npm --silent install` with the option first, full paths, an unsplit `sh -c`). Codex also supports a `PreToolUse` hook with the same input format, so the Claude Code hook script is used as is. But a Codex hook does not block when it fails (fail-open) and runs only after the user trusts it, so it **supplements the rules and does not replace them**. The rules (`forbidden`) are kept as they are.
 
-- **입력이 같다:** Codex는 셸 명령(`exec_command`)을 훅에 `tool_name: "Bash"`, `tool_input.command`(문자열)로 넘긴다. Windows에서 PowerShell 명령이어도 이름은 `Bash`다. 스크립트가 Bash·PowerShell 문법을 함께 해석하므로 입력 처리를 바꿀 필요가 없다. 종료 코드 2와 stderr의 이유로 막는 것도 같다.
-- **설정:** `.codex/hooks.json`에 `"matcher": "Bash"`, `timeout: 10`. Codex 설정 읽기는 모르는 필드가 있으면 파일 전체를 거부하므로 문서에 있는 필드(`type`, `command`, `timeout`, `statusMessage`)만 쓴다.
-- **명령 한 줄로 두 셸에서 실행:** Codex는 훅 명령을 macOS·Linux에서는 `$SHELL -lc`, Windows에서는 `%COMSPEC% /C`(cmd)로 실행하고, 작업 폴더는 세션 폴더다. 프로젝트 폴더를 넣어 주는 변수(`${CLAUDE_PROJECT_DIR}` 같은 것)가 없어서 문서는 `git rev-parse --show-toplevel`로 리포 루트를 찾으라고 권한다. 그런데 cmd의 `for /f`로 경로를 받으면 한글 폴더(`문서`)가 깨져서, 셸 문법 대신 `node -e`가 `git rev-parse`로 루트를 찾아 훅 스크립트의 `main()`을 부른다. 이 문자열에는 sh·cmd가 따옴표 안에서 바꾸는 글자(`"` `$` 백틱 `\` `%` `^`)가 없어서 `commandWindows` 없이 한 줄로 둘 다 동작한다(테스트가 확인한다).
-- **신뢰:** 프로젝트 `.codex/` 폴더를 신뢰해야 읽고, 훅 정의마다 사용자가 `/hooks`에서 검토·신뢰해야 실행된다. 신뢰는 훅 정의의 해시로 기록되므로 `.codex/hooks.json`의 훅이 바뀌면 다시 신뢰해야 한다. 훅 스크립트(`.claude/hooks/…`) 내용이 바뀌는 것은 해시에 들어가지 않는다.
-- **실패하면 막지 않는다:** Codex 소스(`codex-rs/hooks/src/events/pre_tool_use.rs`)는 종료 코드 2(이유 있음)와 deny JSON만 막고, 다른 종료 코드·시간 초과·실행 실패는 "실패"로 보고하고 도구를 그대로 실행한다. Claude Code의 `onFailure: "block"` 같은 설정이 없다. 그래서 `node`나 `git`이 없거나, git 리포가 아닌 곳에서 시작했거나, 사용자가 훅을 신뢰하지 않으면 이 훅은 아무것도 막지 않고 규칙만 남는다.
+- **The input is the same:** Codex passes the shell command (`exec_command`) to the hook as `tool_name: "Bash"` and `tool_input.command` (a string). Even for a PowerShell command on Windows, the name is `Bash`. The script parses Bash and PowerShell syntax together, so the input handling does not need to change. Blocking by exit code 2 and the reason on stderr is also the same.
+- **Settings:** `"matcher": "Bash"` and `timeout: 10` in `.codex/hooks.json`. Codex's config reader rejects the whole file if it has an unknown field, so only the fields in the docs (`type`, `command`, `timeout`, `statusMessage`) are used.
+- **One command line that runs in two shells:** Codex runs hook commands with `$SHELL -lc` on macOS and Linux and with `%COMSPEC% /C` (cmd) on Windows, and the working folder is the session folder. There is no variable that supplies the project folder (like `${CLAUDE_PROJECT_DIR}`), so the docs recommend finding the repo root with `git rev-parse --show-toplevel`. But when cmd's `for /f` receives the path, a Korean folder name (`문서`) gets garbled, so instead of shell syntax, `node -e` finds the root with `git rev-parse` and calls `main()` of the hook script. This string has none of the characters that sh and cmd change inside quotes (`"` `$` backtick `\` `%` `^`), so one line works in both without `commandWindows` (a test checks this).
+- **Trust:** Codex reads the project `.codex/` folder only if it is trusted, and each hook definition runs only after the user reviews and trusts it in `/hooks`. Trust is recorded as a hash of the hook definition, so if the hook in `.codex/hooks.json` changes, it must be trusted again. A change to the contents of the hook script (`.claude/hooks/…`) is not part of the hash.
+- **It does not block on failure:** The Codex source (`codex-rs/hooks/src/events/pre_tool_use.rs`) blocks only on exit code 2 (with a reason) and a deny JSON. Other exit codes, timeouts, and execution failures are reported as "failed" and the tool runs as is. There is no setting like Claude Code's `onFailure: "block"`. So if `node` or `git` is missing, the session started outside a git repo, or the user does not trust the hook, the hook blocks nothing and only the rules remain.
 
-## 확인한 결과 (2026-10-22)
+## Verification results (2026-10-22)
 
-- Claude Code(중앙 리포): `npm install --dry-run`이 Bash와 PowerShell 모두에서 거부됐다. `FOO=1 npx --version`(환경변수를 앞에 붙임)도 거부됐다. `npm run`, `npm ls`는 실행됐다.
-- Claude Code 2.1.308 훅(중앙 리포, Windows): `claude -p` 세션에서 Bash의 `npm --silent install --help`, `sh -c "npm i --help"`, `"/c/Program Files/Volta/npm.exe" install --help`와 PowerShell의 `npm --silent install --help`, `& "C:\Program Files\Volta\npm.cmd" ci --help`가 훅 메시지로 거부됐다. Bash·PowerShell의 `npm ls --depth=0`, `npm run`은 실행됐다. 설치가 실제로 일어나지 않도록 `--help`를 붙여 확인했다.
-- 훅 판정은 `scripts/test/package-install-hook.test.mjs`가 막을 명령 72개, 허용할 명령 34개로 확인한다.
-- #180 Codex 훅: 같은 테스트가 `.codex/hooks.json`의 명령을 Codex 실행 방식대로(Windows `cmd /C "<명령>"`, 그 밖 `$SHELL -lc`) 리포 루트와 하위 폴더에서 실행해 `npm --silent install`, `& "C:\…\npm.cmd" update`는 종료 코드 2, `npm ls`, `npm ci`는 0인 것을 확인한다(#375 전에는 `npm.cmd ci`로 확인했다). 중앙 PC(Windows, 한글 경로)에서 cmd와 Git Bash 모두 통과했다. Codex CLI가 없어 실제 Codex 세션에서의 차단과 신뢰 절차는 확인하지 못했다.
-- #178·#180 Codex CLI 0.144.4 `codex execpolicy check`(2026-10-23, 중앙 PC): 새 별칭 `npm u react`, `ic`, `sit`, `install-clean`, `unlink x`, `rb`, `ddp`, `innit`과 줄임·camelCase `npm upd`, `npm uni x`, `npm installTest`는 `forbidden`, `npm run check`, `npm ls`, `npm audit`, `npm test`는 규칙에 걸리지 않았다. 옵션을 앞에 둔 `npm --silent install`은 규칙에 걸리지 않아(한계 절) 훅이 막는다. `scripts/test/agent-guardrails.test.mjs`의 Codex CLI 판정 테스트가 건너뛰지 않고 통과했다.
-- Codex CLI 0.144.4 `codex execpolicy check`(#16): `npm install`, `npm i react`, `npm ci`, `npm audit fix`, `npx shadcn add button`, `yarn`, `corepack enable`은 `forbidden`, `npm run check`, `npm ls`, `npm audit`는 규칙에 걸리지 않았다. 이 검사는 Codex CLI가 있는 PC에서 `scripts/test/agent-guardrails.test.mjs`가 다시 실행한다.
+- Claude Code (central repo): `npm install --dry-run` was refused in both Bash and PowerShell. `FOO=1 npx --version` (environment variable prefixed) was also refused. `npm run` and `npm ls` ran.
+- Claude Code 2.1.308 hook (central repo, Windows): in a `claude -p` session, Bash `npm --silent install --help`, `sh -c "npm i --help"`, `"/c/Program Files/Volta/npm.exe" install --help` and PowerShell `npm --silent install --help`, `& "C:\Program Files\Volta\npm.cmd" ci --help` were refused with the hook message. `npm ls --depth=0` and `npm run` in Bash and PowerShell ran. `--help` was added so that no install actually happens during the check.
+- Hook decisions are checked by `scripts/test/package-install-hook.test.mjs` with 72 commands to block and 34 commands to allow.
+- #180 Codex hook: the same test runs the command in `.codex/hooks.json` the way Codex does (Windows `cmd /C "<command>"`, elsewhere `$SHELL -lc`) from the repo root and a subfolder, and confirms that `npm --silent install` and `& "C:\…\npm.cmd" update` give exit code 2, and `npm ls` and `npm ci` give 0 (before #375 this was checked with `npm.cmd ci`). It passed in both cmd and Git Bash on the central PC (Windows, Korean path). There is no Codex CLI there, so blocking in a real Codex session and the trust procedure were not verified.
+- #178 and #180 Codex CLI 0.144.4 `codex execpolicy check` (2026-10-23, central PC): the new aliases `npm u react`, `ic`, `sit`, `install-clean`, `unlink x`, `rb`, `ddp`, `innit` and the abbreviations and camelCase forms `npm upd`, `npm uni x`, `npm installTest` were `forbidden`, and `npm run check`, `npm ls`, `npm audit`, `npm test` did not match a rule. `npm --silent install` with the option first does not match a rule (see the Limitations section), so the hook blocks it. The Codex CLI decision test in `scripts/test/agent-guardrails.test.mjs` passed without being skipped.
+- Codex CLI 0.144.4 `codex execpolicy check` (#16): `npm install`, `npm i react`, `npm ci`, `npm audit fix`, `npx shadcn add button`, `yarn`, `corepack enable` were `forbidden`, and `npm run check`, `npm ls`, `npm audit` did not match a rule. This check is rerun by `scripts/test/agent-guardrails.test.mjs` on a PC that has the Codex CLI.
 
-- #375(2026-11-01): 위 기록에서 `npm ci`가 막힌 것은 그때의 결과다. 이후 `npm ci`는 허용하고, `npm install` 등 다른 설치 명령은 계속 막는다.
+- #375 (2026-11-01): In the records above, `npm ci` being blocked is the result at that time. Since then `npm ci` is allowed, and other install commands such as `npm install` stay blocked.
 
-## 한계
+## Limitations
 
-이 차단은 실수와 지시 위반을 막는 장치이고, 보안 경계는 아니다. 공식 문서에 적힌 한계와 훅의 한계는 다음과 같다.
+This blocking is a device against mistakes and violations of instructions, not a security boundary. The limits written in the official docs and the hook's own limits are as follows.
 
-- **Claude Code 거부 목록:** 명령 글자를 앞에서부터 비교한다. `npm --silent install`처럼 옵션을 하위 명령 앞에 두거나, `sh -c '…'`, 전체 경로(`C:\…\npm.cmd`)로 실행하면 걸리지 않는다(이 형태는 훅이 막는다). `&&`, `;`, `|`로 이어진 명령과 앞에 붙은 환경변수, `timeout`·`nohup` 같은 감싸는 명령은 걸린다. 프로젝트의 deny는 개인 설정의 allow보다 우선하고, `.claude/settings.local.json`으로 풀 수 없다.
-- **Claude Code 훅:** 셸을 완전히 해석하지는 않는다. 변수에 담은 명령(`$c = 'npm'; & $c install`), 큰따옴표 안의 `$( )`, 별칭·함수, `find -exec`, `node -e`로 child_process를 부르는 경우, 스크립트 파일(`bash x.sh`, `pwsh -File x.ps1`) 안의 명령은 보지 못한다. Bash·PowerShell 도구만 검사한다. 훅 설정은 세션을 시작할 때 읽으므로 바꾼 뒤에는 세션을 다시 시작한다.
-- **Codex:** 프로젝트의 `.codex/` 폴더를 사용자가 신뢰(trust)해야 규칙을 읽는다. 리포를 처음 Codex로 열 때 신뢰 여부를 묻는다. 기본 샌드박스(`workspace-write`)는 네트워크를 꺼 두므로 설치가 한 번 더 막힌다. 네트워크를 켜는 설정(`[sandbox_workspace_write] network_access = true`)은 쓰지 않는다.
-- **Codex 규칙이 못 막는 형태(#178 조사):** 규칙의 `pattern`은 글자 그대로의 단어나 단어 묶음만 받고 정규식·와일드카드가 없다(공식 문서). 그래서 별칭·줄임·camelCase는 모두 나열해서 막았지만, 아래 형태는 규칙으로 막을 수 없다.
-  - 하위 명령 앞의 옵션(`npm --silent install`, `npm -w app install`): 두 번째 단어가 옵션이라 `["npm", …]` 패턴에 걸리지 않는다. 옵션과 값의 조합은 끝이 없어 나열할 수 없다.
-  - 전체 경로(`/usr/bin/npm install`, `C:\…\npm.cmd install`): 공식 문서는 명령을 `execvp`가 받는 인자 목록으로 비교한다고만 하고, 경로를 프로그램 이름으로 줄인다는 말이 없다. 경로는 PC마다 달라 나열할 수 없다.
-  - `bash -lc`·`sh -c`·`zsh -c`: 스크립트가 단어와 `&&` `||` `;` `|`로만 이어져 있으면 Codex가 나눠서 규칙을 적용하므로 막힌다(공식 문서). 리다이렉션, `$( )`, 환경변수, 와일드카드, 제어문이 있으면 나누지 않고 `["bash", "-lc", "<스크립트 전체>"]` 하나로 비교하므로 걸리지 않는다. `pwsh -Command`, `cmd /c`는 문서에 나오지 않는다.
-- **Codex 훅(#180):** 위 형태는 `.codex/hooks.json`의 훅이 막는다("Codex에서 같은 훅 쓰기"). 공식 문서는 훅을 "완전한 강제 경계가 아니라 유용한 보호 장치"로 다룬다. 훅이 실패하거나 신뢰되지 않으면 막지 않으므로 이 형태는 그때 다시 막히지 않는다. 훅이 보는 범위는 Claude Code 훅의 한계와 같다(변수에 담은 명령, 스크립트 파일 안의 명령 등). `write_stdin`으로 이미 실행 중인 셸에 넣는 입력은 `PreToolUse`를 다시 거치지 않는다(공식 문서).
-- **`npm ci`의 옵션:** Claude Code 거부 목록과 Codex 규칙은 단어만 비교하므로 스크립트를 켜는 옵션을 볼 수 없다. 이 옵션과 환경변수는 훅만 막는다. Codex 훅은 신뢰해야 실행되고 실패하면 막지 않으므로, 그때는 막히지 않는다. 훅은 명령 한 번만 보므로, 앞선 명령에서 환경변수를 설정해 둔 경우나 `.npmrc`를 고친 경우도 막지 못한다.
-- AGENTS.md의 금지 문장은 두 도구 모두 안내로만 읽는다. 차단은 위 설정 파일이 한다.
+- **Claude Code deny list:** It compares the command text from the start. It does not match when the option is placed before the subcommand like `npm --silent install`, or when run as `sh -c '…'` or with a full path (`C:\…\npm.cmd`) (the hook blocks these forms). Commands joined by `&&`, `;`, `|`, leading environment variables, and wrapping commands such as `timeout` and `nohup` do match. A project's deny takes priority over a personal allow, and cannot be lifted with `.claude/settings.local.json`.
+- **Claude Code hook:** It does not fully parse the shell. It cannot see a command held in a variable (`$c = 'npm'; & $c install`), `$( )` inside double quotes, aliases and functions, `find -exec`, calling child_process through `node -e`, or commands inside a script file (`bash x.sh`, `pwsh -File x.ps1`). It checks only the Bash and PowerShell tools. The hook settings are read when the session starts, so restart the session after changing them.
+- **Codex:** The rules are read only if the user trusts the project's `.codex/` folder. When a repo is first opened with Codex, it asks whether to trust it. The default sandbox (`workspace-write`) turns the network off, so installs are blocked one more time. The setting that turns the network on (`[sandbox_workspace_write] network_access = true`) is not used.
+- **Forms the Codex rules cannot block (#178 survey):** A rule's `pattern` accepts only literal words or word groups, with no regex or wildcards (official docs). So aliases, abbreviations, and camelCase were all blocked by listing them, but the forms below cannot be blocked by rules.
+  - An option before the subcommand (`npm --silent install`, `npm -w app install`): the second word is an option, so it does not match a `["npm", …]` pattern. Combinations of options and values are endless and cannot be listed.
+  - Full paths (`/usr/bin/npm install`, `C:\…\npm.cmd install`): the official docs only say the command is compared as the argument list that `execvp` receives, and say nothing about reducing a path to the program name. Paths differ per PC and cannot be listed.
+  - `bash -lc`, `sh -c`, `zsh -c`: if the script is made only of words joined by `&&` `||` `;` `|`, Codex splits it and applies the rules, so it is blocked (official docs). If it has redirection, `$( )`, environment variables, wildcards, or control statements, Codex does not split it and compares it as one `["bash", "-lc", "<whole script>"]`, so it does not match. `pwsh -Command` and `cmd /c` are not mentioned in the docs.
+- **Codex hook (#180):** The hook in `.codex/hooks.json` blocks the forms above ("Using the same hook in Codex"). The official docs treat hooks as "a useful safeguard, not a complete enforcement boundary". If the hook fails or is not trusted, it does not block, so these forms are not blocked again at that point. What the hook can see is the same as the limits of the Claude Code hook (commands held in variables, commands inside script files, and so on). Input put into an already running shell with `write_stdin` does not go through `PreToolUse` again (official docs).
+- **Options of `npm ci`:** The Claude Code deny list and the Codex rules compare only words, so they cannot see options that turn scripts on. Only the hook blocks these options and environment variables. A Codex hook runs only after trust and does not block on failure, so in that case they are not blocked. The hook sees only one command at a time, so it also cannot block the case where an environment variable was set in an earlier command or `.npmrc` was edited.
+- The prohibition sentences in AGENTS.md are read by both tools only as guidance. Blocking is done by the settings files above.
 
-## 에이전트의 git 브랜치 명령 권한 (#361)
+## Agent permissions for git branch commands (#361)
 
-[std-git-writing](../templates/common/skills/std-git-writing/SKILL.md)의 "로컬 브랜치 관리 (git CLI)" 명령은 에이전트가 묻지 않고 실행한다. 규칙은 PC별 전역 설정이 아니라 중앙 관리 파일에 둔다. 그래서 동기화된 리포에서는 PC마다 따로 설정하지 않아도 같게 동작한다.
+The commands in "Local branch management (git CLI)" of [std-git-writing](../templates/common/skills/std-git-writing/SKILL.md) are run by the agent without asking. The rules live in centrally managed files, not in per-PC global settings. So in synced repos they behave the same without separate setup on each PC.
 
-| 결정 | 명령 |
+| Decision | Commands |
 |---|---|
-| 묻지 않고 실행 | `git switch`, `git pull --ff-only`, `git branch --delete`, `git fetch origin`, `git fetch --prune origin` |
-| 승인 필요 | `git switch`의 `-f`·`-C`·`--force`·`--force-create`·`--discard-changes`, `git branch`의 `-D`·`-f`·`--force`, `git reset --hard`, `git clean`, `git stash`, `git rebase` |
-| 막음 | 강제 push(`-f`, `--force`, `--force-with-lease`, `origin +브랜치`), main 직접 push |
+| Run without asking | `git switch`, `git pull --ff-only`, `git branch --delete`, `git fetch origin`, `git fetch --prune origin` |
+| Needs approval | `-f`, `-C`, `--force`, `--force-create`, `--discard-changes` of `git switch`; `-D`, `-f`, `--force` of `git branch`; `git reset --hard`, `git clean`, `git stash`, `git rebase` |
+| Blocked | Force push (`-f`, `--force`, `--force-with-lease`, `origin +branch`), direct push to main |
 
-- Claude Code는 `.claude/settings.json`의 `permissions.allow`·`ask`·`deny`에 Bash와 PowerShell 도구 규칙을 같이 둔다. 우선순위는 deny, ask, allow 순서다. `scripts/test/agent-guardrails.test.mjs`가 같은 순서로 샘플 명령을 판정한다.
-- Codex는 `.codex/rules/git-branch.rules`를 쓴다. 명령 앞부분만 비교하므로 뒤에 붙인 옵션(`git switch main -f`)은 구별하지 못한다.
-- PowerShell 도구의 규칙은 대소문자를 구별하지 않는다(2026-10-31 실제 실행으로 확인). `git branch -d`는 `-D`, `git switch -c`는 `-C` 승인 규칙에 걸리므로 스킬은 `--delete`, `--create`를 쓴다.
-- 프로젝트의 `permissions.allow`는 사용자가 신뢰한 폴더에서만 적용된다. 새 PC나 새 클론은 Claude Code를 대화형으로 한 번 열어 신뢰를 수락해야 한다.
-- 합친 짧은 옵션(`git switch -fc x`)은 어느 쪽 규칙도 구별하지 못한다. 규칙은 실수를 줄이는 장치이고 보안 경계가 아니다.
-- 작업 브랜치 push, `git add`, `git commit`은 이 규칙에 넣지 않았다. 각 PC의 설정을 따른다.
-- 전역 지침(`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`)에 Fork 규칙 절이 남아 있으면 Claude Code의 `SessionStart` 훅(`.claude/hooks/pc-setup-notice.mjs`)이 세션 시작 때 적용 방법을 알린다(#368). 읽기만 하고, 오류가 나도 세션을 막지 않는다. 리포의 훅을 받기 전의 클론과 Codex 세션에서는 나오지 않는다.
+- Claude Code puts the Bash and PowerShell tool rules together in `permissions.allow`, `ask`, and `deny` of `.claude/settings.json`. The priority is deny, then ask, then allow. `scripts/test/agent-guardrails.test.mjs` decides sample commands in the same order.
+- Codex uses `.codex/rules/git-branch.rules`. It compares only the start of the command, so it cannot tell apart an option attached at the end (`git switch main -f`).
+- PowerShell tool rules are case-insensitive (confirmed by an actual run on 2026-10-31). `git branch -d` matches the `-D` approval rule and `git switch -c` matches the `-C` approval rule, so the skill uses `--delete` and `--create`.
+- A project's `permissions.allow` applies only in folders the user has trusted. On a new PC or a new clone, open Claude Code interactively once and accept the trust prompt.
+- Combined short options (`git switch -fc x`) cannot be told apart by either side's rules. The rules reduce mistakes and are not a security boundary.
+- Pushing a work branch, `git add`, and `git commit` are not in these rules. They follow each PC's settings.
+- If the global instructions (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`) still have a Fork rule section, the Claude Code `SessionStart` hook (`.claude/hooks/pc-setup-notice.mjs`) tells the user how to fix it at session start (#368). It only reads, and an error does not block the session. It does not appear in clones from before they received the repo's hook, or in Codex sessions.
 
-## 바꾸는 법
+## How to change
 
-- 원본은 `templates/common/.claude/settings.json.tmpl`, `templates/common/.claude/hooks/block-package-installs.mjs`, `templates/common/.codex/rules/package-installs.rules`, `templates/common/.codex/rules/git-branch.rules`, `templates/common/.codex/hooks.json.tmpl`이다. Codex 훅 설정을 바꾸면 각 리포에서 사용자가 `/hooks`로 다시 신뢰해야 하므로 꼭 필요할 때만 바꾼다. 훅 스크립트는 Claude Code(`node <파일>`)와 Codex(`node -e`로 `main()` 호출)가 함께 쓰므로 `main` export를 유지한다. 거부 목록과 Codex 규칙은 같은 명령을 막아야 한다(테스트가 비교한다). 중앙 리포의 `.claude/settings.json`, `.claude/hooks/`, `.codex/rules/`도 같이 고친다.
-- npm이 명령이나 별칭을 바꾸면 훅의 `NPM_COMMANDS`·`NPM_ALIASES`, 거부 목록, Codex 규칙의 두 목록(별칭, 줄임·camelCase)을 함께 고친다. 빠진 줄임·camelCase 형태는 `scripts/test/agent-guardrails.test.mjs`가 알려 준다.
-- 훅이 막을 명령이나 허용할 명령을 바꾸면 `scripts/test/package-install-hook.test.mjs`의 목록에 예를 추가한다.
-- 리포에만 필요한 Claude Code 설정은 `.claude/settings.local.json`(커밋하지 않음)에 둔다. `.claude/settings.json`과 `.claude/hooks/`는 중앙 관리 파일이라 고치면 standards-check가 실패한다.
-- 새 패키지를 들이거나 버전을 바꾸는 설치는 사용자 승인이 필요하고, 사용자가 직접 터미널에서 `npm install --ignore-scripts <패키지>@<버전>`으로 실행한다.
+- The sources are `templates/common/.claude/settings.json.tmpl`, `templates/common/.claude/hooks/block-package-installs.mjs`, `templates/common/.codex/rules/package-installs.rules`, `templates/common/.codex/rules/git-branch.rules`, and `templates/common/.codex/hooks.json.tmpl`. If the Codex hook settings change, the user must trust them again with `/hooks` in each repo, so change them only when really needed. The hook script is used by both Claude Code (`node <file>`) and Codex (calling `main()` with `node -e`), so keep the `main` export. The deny list and the Codex rules must block the same commands (a test compares them). Also fix the central repo's `.claude/settings.json`, `.claude/hooks/`, and `.codex/rules/`.
+- If npm changes a command or alias, fix together the hook's `NPM_COMMANDS` and `NPM_ALIASES`, the deny list, and the two lists in the Codex rules (aliases, and abbreviations and camelCase). `scripts/test/agent-guardrails.test.mjs` reports missing abbreviation and camelCase forms.
+- If you change which commands the hook blocks or allows, add examples to the lists in `scripts/test/package-install-hook.test.mjs`.
+- Claude Code settings needed only by one repo go in `.claude/settings.local.json` (not committed). `.claude/settings.json` and `.claude/hooks/` are centrally managed files, so editing them makes standards-check fail.
+- Installs that add a new package or change a version need user approval, and the user runs `npm install --ignore-scripts <package>@<version>` directly in a terminal.
 
-## 출처
+## Sources
 
-- Claude Code 훅(PreToolUse 입력 `tool_input.command`, 종료 코드 2, `matcher`, exec 형식, `onFailure`, 기본 timeout 600초): https://code.claude.com/docs/en/hooks.md
-- Claude Code 권한 규칙: https://code.claude.com/docs/en/permissions.md, 설정: https://code.claude.com/docs/en/settings.md
-- npm 명령·별칭 목록: npm 11 `lib/utils/cmd-list.js`(Node 24.21.0에 포함된 npm)
-- Codex 규칙(`pattern`은 글자 그대로의 단어, `bash -lc` 나누기 조건): https://learn.chatgpt.com/docs/agent-configuration/rules, Codex 훅(PreToolUse, `hooks.json`, 신뢰, 종료 코드 2, 실패 시 계속 실행): https://learn.chatgpt.com/docs/hooks.md, 승인·샌드박스: https://learn.chatgpt.com/docs/agent-approvals-security.md, AGENTS.md: https://learn.chatgpt.com/docs/agent-configuration/agents-md
-- Codex 훅 구현(#180, openai/codex `main`, 2026-10-22 확인): 셸 명령의 훅 이름 `Bash`와 입력 `{"command": cmd}`는 `codex-rs/core/src/tools/hook_names.rs`, `codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs`, 훅 설정 필드(`commandWindows`, `timeout`, `statusMessage`, 모르는 필드 거부)는 `codex-rs/config/src/hook_config.rs`, 실행 셸(`$SHELL -lc`, `%COMSPEC% /C`)은 `codex-rs/hooks/src/engine/command_runner.rs`, 실패 시 막지 않음과 종료 코드 처리는 `codex-rs/hooks/src/events/pre_tool_use.rs`, 신뢰 해시와 기본 timeout 600초는 `codex-rs/hooks/src/engine/discovery.rs`
+- Claude Code hooks (PreToolUse input `tool_input.command`, exit code 2, `matcher`, exec form, `onFailure`, default timeout 600 seconds): https://code.claude.com/docs/en/hooks.md
+- Claude Code permission rules: https://code.claude.com/docs/en/permissions.md, settings: https://code.claude.com/docs/en/settings.md
+- npm command and alias list: npm 11 `lib/utils/cmd-list.js` (the npm included in Node 24.21.0)
+- Codex rules (`pattern` is literal words, conditions for splitting `bash -lc`): https://learn.chatgpt.com/docs/agent-configuration/rules, Codex hooks (PreToolUse, `hooks.json`, trust, exit code 2, continue running on failure): https://learn.chatgpt.com/docs/hooks.md, approvals and sandbox: https://learn.chatgpt.com/docs/agent-approvals-security.md, AGENTS.md: https://learn.chatgpt.com/docs/agent-configuration/agents-md
+- Codex hook implementation (#180, openai/codex `main`, checked 2026-10-22): the hook name `Bash` and input `{"command": cmd}` for shell commands are in `codex-rs/core/src/tools/hook_names.rs` and `codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs`; the hook config fields (`commandWindows`, `timeout`, `statusMessage`, rejection of unknown fields) are in `codex-rs/config/src/hook_config.rs`; the execution shell (`$SHELL -lc`, `%COMSPEC% /C`) is in `codex-rs/hooks/src/engine/command_runner.rs`; not blocking on failure and exit code handling are in `codex-rs/hooks/src/events/pre_tool_use.rs`; the trust hash and the default timeout of 600 seconds are in `codex-rs/hooks/src/engine/discovery.rs`

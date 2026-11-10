@@ -1,134 +1,134 @@
-# AWS 비용과 앱별 배분
+# AWS costs and per-app allocation
 
-앱 8개를 서울 리전(`ap-northeast-2`)의 서버 한 대에서 함께 운영할 때의 월 비용과, 그 비용을 앱별로 나누는 기준이다. 금액은 공식 요금표로 계산한 **예시**이고 실제 청구액이 아니다. 계정 ID·리소스 식별자·비밀값은 이 문서에 쓰지 않는다.
+This is the monthly cost of running 8 apps together on one server in the Seoul region (`ap-northeast-2`), and the basis for splitting that cost by app. The amounts are **examples** calculated from the official price lists and are not actual bills. Account IDs, resource identifiers, and secrets are not written in this document.
 
-- 요금 확인일: 2026-10-15 (Asia/Seoul). 원본은 workout-memo `docs/shared-hosting-costs.md`였고, 이 문서로 옮겼다(#41).
-- 실제 배포, 부하 테스트, 계정 청구액 조회는 하지 않았다.
-- 앱 목록과 적용 단계는 [프로젝트 개요](projects.md)(원본 `registry/projects.json`)를 따른다.
+- Price check date: 2026-10-15 (Asia/Seoul). The original was workout-memo `docs/shared-hosting-costs.md`, and we moved it to this document (#41).
+- I did not do an actual deployment, a load test, or a lookup of the account's billed amount.
+- The app list and the phase each app belongs to follow the [project overview](projects.md) (source: `registry/projects.json`).
 
-## 1. 구성 전제
+## 1. Assumed setup
 
-- 서버 한 대(Lightsail, Linux)에 앱 8개를 함께 둔다.
-- 구성은 [ADR-0009](adr/0009-multi-app-single-lightsail.md)를 따른다. 앱마다 자기 compose와 postgres 컨테이너(`workout`, `study` …)를 두고, 이미지는 서버에서 빌드한다. 이미지 레지스트리(ECR) 비용은 없다.
-- 서버 백업은 Lightsail 스냅샷으로 한다([백업·복구 템플릿](runbooks/backup-restore.md)).
-- 서버 한 대가 멈추면 앱 8개가 모두 멈춘다. 고가용성 구성이 아니다.
+- 8 apps run together on one server (Lightsail, Linux).
+- The setup follows [ADR-0009](adr/0009-multi-app-single-lightsail.md). Each app has its own compose and postgres container (`workout`, `study` ...), and images are built on the server. There is no image registry (ECR) cost.
+- Server backups use Lightsail snapshots ([backup and restore template](runbooks/backup-restore.md)).
+- If the one server stops, all 8 apps stop. It is not a high-availability setup.
 
-## 2. 월 비용 (서버 한 대 전체 합계)
+## 2. Monthly cost (total for the whole server)
 
-아래는 **앱당 요금이 아니라 서버 한 대 전체의 합계**다. 한 달 상시 운영, 포함 트래픽 이내 사용, 프리 티어·가입 크레딧·약정 할인 미적용을 가정한다.
+The figures below are **not a per-app price but the total for the whole server**. They assume running all month, usage within the included traffic, and no free tier, signup credits, or commitment discounts.
 
-| 항목과 계산식 | 2 GB 서버 | 4 GB 서버 |
+| Item and formula | 2 GB server | 4 GB server |
 |---|---:|---:|
-| Lightsail 기본 요금 (공인 IPv4·SSD 포함) | $12.00 | $24.00 |
-| Lightsail 스냅샷: 20 GB-month × $0.05 | $1.00 | $1.00 |
-| **월 합계, 세전** | **$13.00** | **$25.00** |
+| Lightsail base price (public IPv4 and SSD included) | $12.00 | $24.00 |
+| Lightsail snapshot: 20 GB-month × $0.05 | $1.00 | $1.00 |
+| **Monthly total, before tax** | **$13.00** | **$25.00** |
 
-Lightsail 사양별 기본 요금은 0.5 GB $5, 1 GB $7, 2 GB $12, 4 GB $24다. 0.5~1 GB는 앱 8개와 postgres 8개를 상시 실행하고 서버에서 이미지를 빌드하기에 여유가 거의 없어서, 2 GB부터 검토하고 실제 메모리 사용량을 보고 4 GB로 올린다. 사양별 운영 가능성은 아직 검증하지 않았다.
+The Lightsail base prices by spec are 0.5 GB $5, 1 GB $7, 2 GB $12, and 4 GB $24. With 0.5–1 GB there is almost no headroom to run 8 apps and 8 postgres instances all the time and to build images on the server, so start by considering 2 GB, and raise to 4 GB after looking at the actual memory usage. Whether each spec can actually run this has not been verified yet.
 
-### 원화 환산 (설명용)
+### Conversion to Korean won (for illustration)
 
-환율 $1 = 1,400원, VAT 10%를 가정한다. 세전 원화 = 월 USD × 1,400, 세후 원화 = 세전 원화 × 1.10.
+This assumes an exchange rate of $1 = 1,400 KRW and 10% VAT. Pre-tax won = monthly USD × 1,400, and after-tax won = pre-tax won × 1.10.
 
-| 구성 | 월 세전 원화 | 월 세후 원화 |
+| Setup | Monthly pre-tax won | Monthly after-tax won |
 |---|---:|---:|
-| 2 GB: $13.00 | 18,200원 | 20,020원 |
-| 4 GB: $25.00 | 35,000원 | 38,500원 |
+| 2 GB: $13.00 | 18,200 KRW | 20,020 KRW |
+| 4 GB: $25.00 | 35,000 KRW | 38,500 KRW |
 
-실시간 환율이나 실제 결제액이 아니다. 결제 환율·세금·카드 수수료에 따라 달라진다.
+This is not a live exchange rate or an actual payment amount. It varies with the payment exchange rate, taxes, and card fees.
 
-### 도메인 (구매 전)
+### Domain (before purchase)
 
-[ADR-0012](adr/0012-shared-domain-subdomains.md)대로 구매하면 아래 비용이 더해진다. 아직 구매하지 않아서 위 합계와 4장 앱별 표에는 넣지 않았다. 구매(#249)한 뒤 다시 계산한다.
+If you buy as in [ADR-0012](adr/0012-shared-domain-subdomains.md), the costs below are added. We have not bought it yet, so it is not included in the total above or in the per-app table in chapter 4. Recalculate after the purchase (#249).
 
-| 항목 | 1년 |
+| Item | 1 year |
 |---|---:|
-| `.com` 도메인 (Route 53 등록·갱신) | $16.00 |
-| Route 53 호스팅 영역: $0.50 × 12 | $6.00 |
-| 인증서 (Let's Encrypt) | $0.00 |
-| **합계, 세전** | **$22.00** |
+| `.com` domain (Route 53 registration and renewal) | $16.00 |
+| Route 53 hosted zone: $0.50 × 12 | $6.00 |
+| Certificate (Let's Encrypt) | $0.00 |
+| **Total, before tax** | **$22.00** |
 
-위 환산 기준으로 1년 세전 30,800원, 세후 33,880원이고, 월로 나누면 약 $1.83이다. DNS 질의 요금은 100만 건당 $0.40이라 개인 앱 사용량에서는 합계에 넣지 않았다.
+On the conversion basis above, that is 30,800 KRW per year before tax and 33,880 KRW after tax, and divided by month, about $1.83. DNS query charges are $0.40 per million queries, so at personal-app usage I did not include them in the total.
 
-### 저장량 가정
+### Storage assumption
 
-- 이미지는 서버 디스크(Lightsail 기본 SSD)에 앱마다 현재·이전 버전만 남기므로 별도 비용이 없다. 디스크 사용량은 스냅샷 크기에 들어간다.
-- 스냅샷 20 GB-month는 보관 중인 전체 과금 데이터에 대한 가정이다. 매일 20 GB씩 무제한 보관하는 비용이 아니다.
-- 이 값이 늘면 비용도 늘어난다. 실제 보관량을 확인하면 이 표를 다시 계산한다.
+- Images stay on the server disk (Lightsail base SSD), with only the current and previous version per app, so there is no separate cost. Disk usage is included in the snapshot size.
+- The 20 GB-month for snapshots is an assumption about the total billable data being kept. It is not the cost of keeping 20 GB every day without limit.
+- If this value grows, the cost grows too. Once the actual retained amount is confirmed, recalculate this table.
 
-## 3. 앱별 배분 기준
+## 3. Per-app allocation basis
 
-공유 비용은 쪼개서 청구되지 않으므로, 앱마다 "얼마를 쓰는지" 보기 위한 **관리용 배분**이다.
+Shared costs are not billed separately, so this is a **management allocation** to see how much each app uses.
 
-| 비용 항목 | 배분 기준 | 이유 |
+| Cost item | Allocation basis | Reason |
 |---|---|---|
-| Lightsail 서버 | 운영 중인 앱 수로 균등 배분 | 앱별 메모리·CPU 사용량을 아직 측정하지 않았다. 모두 동시 사용자가 적은 개인용 앱이라 차이가 작다고 본다 |
-| Lightsail 스냅샷 | 운영 중인 앱 수로 균등 배분 | 스냅샷은 서버 전체를 한 번에 찍어서 앱별로 나눌 수 없다 |
+| Lightsail server | Split equally by the number of running apps | Per-app memory and CPU usage have not been measured yet. All are personal apps with few concurrent users, so the difference is assumed to be small |
+| Lightsail snapshot | Split equally by the number of running apps | A snapshot captures the whole server at once, so it cannot be split by app |
 
-- **운영 중인 앱**은 서버에 배포되어 실제로 돌아가는 앱이다. 아직 배포하지 않은 앱은 0으로 둔다.
-- 앱별 메모리 사용량을 측정하면 서버 비용을 메모리 비례로 바꿀 수 있다. 바꾸면 이 절과 4장 표를 함께 고친다.
-- 계산은 서버 합계를 먼저 정하고 나눈다. 원 단위 반올림 때문에 앱별 금액의 합이 합계와 1~4원 다를 수 있다.
+- A **running app** is an app that is deployed on the server and actually running. An app not yet deployed counts as 0.
+- If you measure per-app memory usage, you can change the server cost to be proportional to memory. If you change it, fix this section and the chapter 4 table together.
+- The calculation fixes the server total first and then divides. Because of rounding to the won, the sum of the per-app amounts can differ from the total by 1–4 KRW.
 
-## 4. 앱별 배분 표
+## 4. Per-app allocation table
 
-### 8개 앱이 모두 운영될 때 (균등 배분, 앱당 1/8)
+### When all 8 apps are running (equal split, 1/8 per app)
 
-| 슬롯 | 앱 | 적용 단계 | 2 GB 세전 USD | 2 GB 세후 원화 | 4 GB 세전 USD | 4 GB 세후 원화 |
+| Slot | App | Phase | 2 GB pre-tax USD | 2 GB after-tax won | 4 GB pre-tax USD | 4 GB after-tax won |
 |---|---|---|---:|---:|---:|---:|
-| 01 | workout-memo | 1 | $1.63 | 2,503원 | $3.13 | 4,813원 |
-| 02 | study-log | 2 | $1.63 | 2,503원 | $3.13 | 4,813원 |
-| 03 | health-log | 2 | $1.63 | 2,503원 | $3.13 | 4,813원 |
-| 04 | life-journal | 2 | $1.63 | 2,503원 | $3.13 | 4,813원 |
-| 05 | money-ledger | 2 | $1.63 | 2,503원 | $3.13 | 4,813원 |
-| 06 | cert-manager | 2 | $1.63 | 2,503원 | $3.13 | 4,813원 |
-| 07 | plan-routine | 2 | $1.63 | 2,503원 | $3.13 | 4,813원 |
-| 08 | dev-career-portfolio | 2 | $1.63 | 2,503원 | $3.13 | 4,813원 |
-| | **합계** | | **$13.00** | **20,020원** | **$25.00** | **38,500원** |
+| 01 | workout-memo | 1 | $1.63 | 2,503 KRW | $3.13 | 4,813 KRW |
+| 02 | study-log | 2 | $1.63 | 2,503 KRW | $3.13 | 4,813 KRW |
+| 03 | health-log | 2 | $1.63 | 2,503 KRW | $3.13 | 4,813 KRW |
+| 04 | life-journal | 2 | $1.63 | 2,503 KRW | $3.13 | 4,813 KRW |
+| 05 | money-ledger | 2 | $1.63 | 2,503 KRW | $3.13 | 4,813 KRW |
+| 06 | cert-manager | 2 | $1.63 | 2,503 KRW | $3.13 | 4,813 KRW |
+| 07 | plan-routine | 2 | $1.63 | 2,503 KRW | $3.13 | 4,813 KRW |
+| 08 | dev-career-portfolio | 2 | $1.63 | 2,503 KRW | $3.13 | 4,813 KRW |
+| | **Total** | | **$13.00** | **20,020 KRW** | **$25.00** | **38,500 KRW** |
 
-앱당 금액의 계산 근거는 다음과 같다.
+The basis for the per-app amounts is as follows.
 
-| 항목 | 2 GB 앱당 | 4 GB 앱당 |
+| Item | 2 GB per app | 4 GB per app |
 |---|---:|---:|
-| Lightsail: 합계 ÷ 8 | $12.00 ÷ 8 = $1.50 | $24.00 ÷ 8 = $3.00 |
-| 스냅샷: $1.00 ÷ 8 | $0.125 | $0.125 |
-| **앱당 합계** | **$1.625** | **$3.125** |
+| Lightsail: total ÷ 8 | $12.00 ÷ 8 = $1.50 | $24.00 ÷ 8 = $3.00 |
+| Snapshot: $1.00 ÷ 8 | $0.125 | $0.125 |
+| **Total per app** | **$1.625** | **$3.125** |
 
-세후 원화는 $1.625 × 1,400 × 1.10 = 2,502.5원, $3.125 × 1,400 × 1.10 = 4,812.5원을 반올림했다.
+The after-tax won is $1.625 × 1,400 × 1.10 = 2,502.5 KRW and $3.125 × 1,400 × 1.10 = 4,812.5 KRW, rounded.
 
-### 운영 중인 앱 수에 따른 앱당 금액
+### Per-app amount by number of running apps
 
-적용 단계 2의 앱은 순서대로 배포된다. 그 사이에는 운영 중인 앱 수(N)로 나눈다. 서버 크기는 그대로라서 합계는 변하지 않고 앱당 금액만 달라진다.
+The phase 2 apps are deployed one after another. In between, divide by the number of running apps (N). The server size stays the same, so the total does not change and only the per-app amount changes.
 
-| 운영 중인 앱 수 N | 2 GB 앱당 세전 USD | 4 GB 앱당 세전 USD |
+| Running apps N | 2 GB per-app pre-tax USD | 4 GB per-app pre-tax USD |
 |---:|---:|---:|
-| 1 (workout-memo만) | $13.00 | $25.00 |
+| 1 (workout-memo only) | $13.00 | $25.00 |
 | 2 | $6.50 | $12.50 |
 | 4 | $3.25 | $6.25 |
 | 8 | $1.63 | $3.13 |
 
-## 5. 빠진 비용
+## 5. Missing costs
 
-예시 합계에 넣지 않은 항목이다. 하나라도 쓰기 시작하면 2장 표를 다시 계산한다.
+These items are not in the example total. If you start using any one of them, recalculate the chapter 2 table.
 
-- 도메인과 DNS(2장 "도메인" 표), 별도 관리형 DB(RDS), 로드밸런서, NAT Gateway, 추가 디스크
-- 유료 CloudWatch 로그, 유료 지원, 포함량을 넘은 트래픽
-- 유료 VPN (로그인이 없는 앱은 SSH 터널·사설 접속을 전제로 한다)
+- Domain and DNS (the "Domain" table in chapter 2), a separate managed DB (RDS), a load balancer, a NAT Gateway, extra disks
+- Paid CloudWatch logs, paid support, traffic over the included amount
+- A paid VPN (apps without login assume SSH tunnels or private access)
 
-인스턴스를 멈추기만 해서는 고정비가 모두 사라지지 않는다. 남아 있는 스냅샷과 이미지에도 비용이 나온다([배포 템플릿](runbooks/deploy.md)의 정리 절차 참고). 예산 알림은 지출을 막는 기능이 아니고 알림만 보낸다.
+Merely stopping the instance does not remove all fixed costs. The remaining snapshots and images also incur cost (see the cleanup procedure in the [deploy template](runbooks/deploy.md)). A budget alert is not a feature that blocks spending; it only sends a notification.
 
-## 6. 다른 구성을 고를 때
+## 6. When choosing a different setup
 
-| 구성 | 비용 근거 | 배분 |
+| Setup | Cost basis | Allocation |
 |---|---|---|
-| 앱 서버 + 관리형 DB(RDS PostgreSQL) 분리 | 사용자 초기 예산 월 3만~6만원 이상. 확정 견적이 아니다. DB 인스턴스 종류, Single-AZ/Multi-AZ, 스토리지, 백업, IPv4, 전송, 앱 서버 비용을 합해 다시 계산한다 | DB 비용도 운영 중인 앱 수로 균등 배분하고, 앱별 DB 크기를 측정하면 저장량 비례로 바꾼다 |
-| CI에서 이미지를 빌드해 레지스트리(ECR)에서 받기 | ECR 저장 $0.10/GB-month. 8개 앱 이미지 5 GB-month면 $0.50 | 앱별 저장량 비례, 측정 전에는 균등 배분 |
-| 정적 프런트엔드 호스팅(Amplify 등) | 빌드·저장·전송, SSR 요청·컴퓨팅 과금. API와 DB는 별도 실행 환경이 필요하다. 저트래픽이어도 전부 무료라고 보지 않는다 | 호스팅 비용은 앱별로 청구되므로 해당 앱에 그대로 붙인다 |
+| Separate app server and managed DB (RDS PostgreSQL) | The user's initial budget of 30,000–60,000 KRW or more per month. This is not a firm quote. Recalculate by adding the DB instance type, Single-AZ/Multi-AZ, storage, backup, IPv4, transfer, and the app server cost | Split the DB cost equally by the number of running apps too, and once you measure per-app DB size, change it to be proportional to storage |
+| Build images in CI and pull them from a registry (ECR) | ECR storage $0.10/GB-month. With 5 GB-month of images for 8 apps, $0.50 | Proportional to per-app storage, and equal split until measured |
+| Static frontend hosting (Amplify and others) | Charges for build, storage, transfer, and SSR requests and compute. The API and DB need a separate runtime. Even at low traffic, do not assume it is all free | Hosting cost is billed per app, so attach it directly to that app |
 
-## 7. 공식 출처
+## 7. Official sources
 
-2026-10-15에 확인했다. 요금은 바뀔 수 있으므로 구성을 바꿀 때 다시 확인한다.
+Checked on 2026-10-15. Prices can change, so check again when you change the setup.
 
-- [Lightsail 요금](https://aws.amazon.com/lightsail/pricing/): Linux 공인 IPv4 기본 요금 $5/$7/$12/$24, 스냅샷 $0.05/GB-month
-- [Route 53 요금](https://aws.amazon.com/route53/pricing/) (2026-11-01 확인): 호스팅 영역 월 $0.50, 표준 질의 100만 건당 $0.40. `.com` $16은 AWS 가격표를 인용한 [Classmethod](https://dev.classmethod.jp/en/articles/route53-tld-pricing-change-2026/)와 [CostGoat](https://costgoat.com/pricing/route-53-domains) 값이고, 구매 화면에서 다시 확인한다
-- [ECR 요금](https://aws.amazon.com/ecr/pricing/): 저장 $0.10/GB-month
-- [RDS PostgreSQL 요금](https://aws.amazon.com/rds/postgresql/pricing/): 구성별 과금 항목. 서울 리전 견적은 미확정
-- [Amplify 요금](https://aws.amazon.com/amplify/pricing/): 빌드·저장·전송, SSR 요청·컴퓨팅 과금 항목. 8개 앱 사용량 견적은 미확정
+- [Lightsail pricing](https://aws.amazon.com/lightsail/pricing/): Linux public IPv4 base price $5/$7/$12/$24, snapshot $0.05/GB-month
+- [Route 53 pricing](https://aws.amazon.com/route53/pricing/) (checked 2026-11-01): hosted zone $0.50 per month, standard queries $0.40 per million. The `.com` $16 is the value from [Classmethod](https://dev.classmethod.jp/en/articles/route53-tld-pricing-change-2026/) and [CostGoat](https://costgoat.com/pricing/route-53-domains), which cite the AWS price list; check again on the purchase screen
+- [ECR pricing](https://aws.amazon.com/ecr/pricing/): storage $0.10/GB-month
+- [RDS PostgreSQL pricing](https://aws.amazon.com/rds/postgresql/pricing/): billing items by setup. The Seoul region quote is not finalized
+- [Amplify pricing](https://aws.amazon.com/amplify/pricing/): billing items for build, storage, transfer, and SSR requests and compute. The quote for 8-app usage is not finalized

@@ -1,78 +1,78 @@
-# 공유 ESLint·Prettier 설정 보강 후보 (#244)
+# Candidates to strengthen the shared ESLint and Prettier config (#244)
 
-2026-10-28 조사. 이 문서는 비교와 권장안이다. 사용자가 확인한 결정은 맨 아래 "결정"에 적고, 패키지 설치 승인은 #245, 공유 설정 반영은 #246에서 한다. 조사 중에는 아무것도 설치하지 않았다. 패키지 정보는 읽기 전용 `npm view`, deps.dev API, npm 다운로드 API로 모았다.
+Surveyed on 2026-10-28. This document is a comparison and a recommendation. The decisions the user confirmed are written under "Decisions" at the bottom; package install approval happens in #245, and applying the shared config happens in #246. Nothing was installed during the survey. Package information was gathered with read-only `npm view`, the deps.dev API, and the npm downloads API.
 
-## 지금 상태
+## Current state
 
-- `@sirloinbh/eslint-config` 1.0.0: `@eslint/js` recommended, `typescript-eslint` recommended(타입 정보 없음), 미사용 변수, React Hooks 2개, `eslint-config-prettier`.
-- `@sirloinbh/prettier-config` 1.0.0: 따옴표·쉼표·줄 길이만 정한다. 플러그인 없음.
-- ESLint는 10.12.0이다. **ESLint 10을 peerDependencies에 적지 않은 플러그인은 `npm install`이 peer 충돌로 멈춘다.** 앱 `.npmrc`에는 `legacy-peer-deps`가 없고, 넣지 않는 것이 좋다.
+- `@sirloinbh/eslint-config` 1.0.0: `@eslint/js` recommended, `typescript-eslint` recommended (no type information), unused variables, 2 React Hooks rules, `eslint-config-prettier`.
+- `@sirloinbh/prettier-config` 1.0.0: sets only quotes, commas, and line length. No plugins.
+- ESLint is 10.12.0. **A plugin that does not list ESLint 10 in its peerDependencies makes `npm install` stop on a peer conflict.** The app `.npmrc` has no `legacy-peer-deps`, and it is best not to add it.
 
-## 1. 후보별 판단
+## 1. Verdict per candidate
 
-| 후보 | 새 패키지 | 무엇을 잡나 | 판단 |
+| Candidate | New packages | What it catches | Verdict |
 |---|---|---|---|
-| typescript-eslint 타입 정보 규칙 일부 | 없음 (이미 설치됨) | 처리하지 않은 Promise, Promise를 잘못 넘김, 불필요한 타입 단언 | **채택 권장** |
-| typescript-eslint `recommendedTypeChecked` 전체 | 없음 | 위 + `no-unsafe-*`(any 전파) | 보류. 아래 2장 참고 |
-| `eslint-plugin-react-refresh` | 1개 | Vite 빠른 새로고침이 깨지는 export(컴포넌트 파일에서 컴포넌트가 아닌 것을 export) | **채택 권장** |
-| 접근성: `eslint-plugin-jsx-a11y-x` | 1개 (+하위 7개) | 대체 텍스트 누락, 클릭만 되는 div, 잘못된 ARIA | **채택 권장** (원본 대신 포크, 아래 참고) |
-| 접근성: `eslint-plugin-jsx-a11y` (원본) | 1개 (+하위 15개) | 위와 같음 | 비권장. ESLint 10 미지원(peer `^9`까지), 2024-10 이후 릴리스 없음 |
-| import 정렬: `eslint-plugin-simple-import-sort` | 1개 (하위 0개) | import 순서. `--fix`로 자동 정렬 | **채택 권장** |
-| import 정렬: `eslint-plugin-perfectionist` | 1개 (+3개) | import 외에 객체·타입 키까지 정렬 | 비권장. 범위가 넓고, 최신 5.13.0은 릴리스 14일이 안 됨 |
-| `eslint-plugin-import-x` | 1개 (+9개) | 순환 import, 없는 모듈 | 비권장. 무겁고(1 MB), 타입 검사(`tsc`)와 겹침 |
-| `prettier-plugin-tailwindcss` | 1개 (하위 0개) | Tailwind 클래스 순서를 공식 순서로 정렬 | **채택 권장** |
+| Some typescript-eslint type-aware rules | None (already installed) | Unhandled Promises, Promises passed incorrectly, unnecessary type assertions | **Recommend adopting** |
+| The whole typescript-eslint `recommendedTypeChecked` | None | The above + `no-unsafe-*` (any propagation) | On hold. See section 2 below |
+| `eslint-plugin-react-refresh` | 1 | Exports that break Vite fast refresh (exporting non-components from a component file) | **Recommend adopting** |
+| Accessibility: `eslint-plugin-jsx-a11y-x` | 1 (+7 sub-dependencies) | Missing alt text, click-only divs, wrong ARIA | **Recommend adopting** (the fork instead of the original, see below) |
+| Accessibility: `eslint-plugin-jsx-a11y` (original) | 1 (+15 sub-dependencies) | Same as above | Not recommended. No ESLint 10 support (peer up to `^9`), no release since 2024-10 |
+| Import sorting: `eslint-plugin-simple-import-sort` | 1 (0 sub-dependencies) | Import order. Auto-sorts with `--fix` | **Recommend adopting** |
+| Import sorting: `eslint-plugin-perfectionist` | 1 (+3) | Sorts object and type keys as well as imports | Not recommended. Too broad, and the latest 5.13.0 is less than 14 days old |
+| `eslint-plugin-import-x` | 1 (+9) | Circular imports, missing modules | Not recommended. Heavy (1 MB) and overlaps with type checking (`tsc`) |
+| `prettier-plugin-tailwindcss` | 1 (0 sub-dependencies) | Sorts Tailwind classes into the official order | **Recommend adopting** |
 
-접근성 포크를 고른 이유: 원본 `eslint-plugin-jsx-a11y`는 주간 다운로드가 4천만 회가 넘지만 ESLint 10을 지원한다고 선언하지 않았다. 설치하려면 `--legacy-peer-deps`를 써야 하고, 그러면 다른 peer 충돌까지 함께 숨겨진다. `eslint-plugin-jsx-a11y-x`는 es-tooling(e18e 생태계 정리 프로젝트) 조직의 포크로, ESLint 9·10을 지원하고 npm 출처 증명(provenance)이 붙어 있다. 대신 사용자가 적다(주간 약 24만 회). 원본이 ESLint 10을 지원하면 원본으로 돌아가는 것도 방법이다.
+Why I chose the accessibility fork: the original `eslint-plugin-jsx-a11y` has more than 40 million weekly downloads but does not declare support for ESLint 10. Installing it requires `--legacy-peer-deps`, which also hides other peer conflicts. `eslint-plugin-jsx-a11y-x` is a fork by the es-tooling organization (the e18e ecosystem cleanup project), supports ESLint 9 and 10, and has npm provenance. On the downside, it has fewer users (about 240,000 weekly). If the original adds ESLint 10 support, going back to the original is an option.
 
-## 2. 앱 8개 위반 수 (설치된 패키지로 센 값)
+## 2. Violation counts in the 8 apps (counted with installed packages)
 
-typescript-eslint 8.71.2는 앱마다 이미 설치돼 있어, 설치 없이 `recommendedTypeCheckedOnly`를 켜고 `frontend/src`, `backend/src`를 셌다(이 PC의 로컬 체크아웃 기준, 2026-10-28).
+typescript-eslint 8.71.2 is already installed in each app, so I turned on `recommendedTypeCheckedOnly` without installing anything and counted `frontend/src` and `backend/src` (based on local checkouts on this PC, 2026-10-28).
 
-| 규칙 | workout-memo | study-log | 나머지 6개 (앱마다) |
+| Rule | workout-memo | study-log | The other 6 (per app) |
 |---|---:|---:|---:|
-| `no-floating-promises` (처리하지 않은 Promise) | 1 | 0 | 0 |
-| `no-misused-promises` (Promise를 boolean·콜백 자리에) | 1 | 0 | 0 |
+| `no-floating-promises` (unhandled Promise) | 1 | 0 | 0 |
+| `no-misused-promises` (Promise where a boolean or callback is expected) | 1 | 0 | 0 |
 | `await-thenable` | 0 | 0 | 0 |
 | `no-unnecessary-type-assertion` | 16 | 4 | 2 |
-| `require-await` (await 없는 async) | 4 | 1 | 1~2 |
-| `no-base-to-string`, `restrict-template-expressions` | 3 | 1 | 1~2 |
+| `require-await` (async without await) | 4 | 1 | 1 to 2 |
+| `no-base-to-string`, `restrict-template-expressions` | 3 | 1 | 1 to 2 |
 | `unbound-method` | 1 | 6 | 6 |
 | `no-redundant-type-constituents` | 2 | 7 | 7 |
-| `no-unsafe-*` 5개 합계 | 105 | 940 | 770~1,012 |
+| `no-unsafe-*` 5 rules total | 105 | 940 | 770 to 1,012 |
 
-- 위의 5개 규칙은 위반이 거의 없어 바로 켤 수 있다. 1~16개는 앱마다 한 PR로 고칠 수 있다.
-- `no-unsafe-*` 수천 건은 대부분 테스트 파일(`*.test.tsx`)에서 나왔다. 이 PC의 앱 체크아웃에 vitest·testing-library가 설치돼 있지 않아 타입이 `any`로 잡힌 결과다. 실제 값은 CI(전부 설치됨)에서 다시 세야 한다. 그래서 이 묶음은 지금 켜지 않는다.
-- 플러그인 3개(react-refresh, a11y, import 정렬)와 Tailwind 정렬은 설치 전이라 셀 수 없다. import 정렬과 Tailwind 정렬은 `--fix`·`prettier --write`로 자동으로 고쳐지므로, 처음 켤 때 앱마다 바뀌는 파일 수만 크다.
+- The first 5 rules have almost no violations and can be turned on right away. The 1 to 16 violations can be fixed in one PR per app.
+- Most of the thousands of `no-unsafe-*` hits came from test files (`*.test.tsx`). vitest and testing-library are not installed in the app checkouts on this PC, so their types resolved to `any`. The real numbers must be counted again in CI (where everything is installed). So this group is not turned on now.
+- The 3 plugins (react-refresh, a11y, import sorting) and Tailwind sorting could not be counted because they are not installed yet. Import sorting and Tailwind sorting are fixed automatically by `--fix` and `prettier --write`, so only the number of files changed per app when first turned on is large.
 
-## 3. 패키지 검증 (dependency-policy.md 기준)
+## 3. Package verification (per dependency-policy.md)
 
-| 패키지 | 버전 | 릴리스 | 게시자 | 저장소 | 설치 스크립트 | 하위 의존성 | 출처 증명 | deps.dev 권고 | 주간 다운로드 |
+| Package | Version | Release | Publisher | Repository | Install scripts | Sub-dependencies | Provenance | deps.dev advisories | Weekly downloads |
 |---|---|---|---|---|---|---:|---|---|---:|
-| `eslint-plugin-react-refresh` | 0.5.7 | 2026-09-14 | arnaud-barre | github.com/ArnaudBarre/eslint-plugin-react-refresh | 없음 | 0 | 있음 | 없음 | 2,279만 |
-| `eslint-plugin-jsx-a11y-x` | 0.2.0 | 2026-05-10 | 43081j | github.com/es-tooling/eslint-plugin-jsx-a11y-x | 없음 | 7 | 있음 | 없음 | 24만 |
-| `eslint-plugin-simple-import-sort` | 14.0.0 | 2026-07-16 | lydell | github.com/lydell/eslint-plugin-simple-import-sort | 없음 | 0 | 없음 | 없음 | 519만 |
-| `prettier-plugin-tailwindcss` | 0.8.1 | 2026-07-15 | tailwindlabs 4명 | github.com/tailwindlabs/prettier-plugin-tailwindcss | 없음 | 0 | 있음 | 없음 | 880만 |
+| `eslint-plugin-react-refresh` | 0.5.7 | 2026-09-14 | arnaud-barre | github.com/ArnaudBarre/eslint-plugin-react-refresh | None | 0 | Yes | None | 22.79 million |
+| `eslint-plugin-jsx-a11y-x` | 0.2.0 | 2026-05-10 | 43081j | github.com/es-tooling/eslint-plugin-jsx-a11y-x | None | 7 | Yes | None | 240,000 |
+| `eslint-plugin-simple-import-sort` | 14.0.0 | 2026-07-16 | lydell | github.com/lydell/eslint-plugin-simple-import-sort | None | 0 | No | None | 5.19 million |
+| `prettier-plugin-tailwindcss` | 0.8.1 | 2026-07-15 | 4 people from tailwindlabs | github.com/tailwindlabs/prettier-plugin-tailwindcss | None | 0 | Yes | None | 8.8 million |
 
-- 네 버전 모두 릴리스 후 14일이 지났고, 게시자와 저장소가 공식 프로젝트와 일치한다.
-- `eslint-plugin-jsx-a11y-x`의 하위 의존성 7개는 `^` 범위다(`aria-query`, `axe-core`, `axobject-query`, `damerau-levenshtein`, `jsx-ast-utils-x`, `language-tags`, `minimatch`). lockfile에 고정되는 버전을 설치 PR에서 `ioc-scan`과 함께 확인한다.
-- Socket(socket.dev) 점수는 로그인 없이 API로 볼 수 없어 확인하지 못했다. 승인 전에 사용자가 웹에서 확인한다.
-- `typescript-eslint` 최신은 8.72.1(2026-10-26)이지만 14일이 안 돼 지금 8.71.2를 유지한다.
+- All four versions are more than 14 days past release, and the publisher and repository match the official project.
+- The 7 sub-dependencies of `eslint-plugin-jsx-a11y-x` use `^` ranges (`aria-query`, `axe-core`, `axobject-query`, `damerau-levenshtein`, `jsx-ast-utils-x`, `language-tags`, `minimatch`). The versions pinned in the lockfile will be checked in the install PR together with `ioc-scan`.
+- The Socket (socket.dev) score cannot be viewed through the API without logging in, so I could not check it. The user checks it on the web before approval.
+- The latest `typescript-eslint` is 8.72.1 (2026-10-26), but it is less than 14 days old, so 8.71.2 stays for now.
 
-## 4. 권장안
+## 4. Recommendation
 
 **ESLint (`@sirloinbh/eslint-config` 1.1.0)**
 
-- 타입 정보 규칙 5개를 `error`로 켠다: `no-floating-promises`, `no-misused-promises`, `await-thenable`, `no-unnecessary-type-assertion`, `require-await`. `parserOptions.projectService: true`가 필요하다. 타입 검사를 함께 하므로 린트 시간이 늘어난다. 실제 시간은 #246에서 CI로 잰다.
-- `react-refresh/only-export-components`를 `warn`으로 켠다(Vite 권장 설정).
-- `jsx-a11y-x`의 `recommended`를 프런트 파일에 켠다.
-- `simple-import-sort/imports`, `simple-import-sort/exports`를 `error`로 켠다.
-- 팩토리 인자에 `reactRefresh`, `jsxA11y`, `importSort`를 더한다. 지금처럼 패키지는 아무것도 import하지 않고, 인자가 없으면 그 규칙을 건너뛰어 1.0.0 앱도 깨지지 않게 한다.
+- Turn on 5 type-aware rules as `error`: `no-floating-promises`, `no-misused-promises`, `await-thenable`, `no-unnecessary-type-assertion`, `require-await`. `parserOptions.projectService: true` is required. Because type checking runs together, lint time increases. The real time will be measured in CI in #246.
+- Turn on `react-refresh/only-export-components` as `warn` (Vite's recommended setting).
+- Turn on `recommended` of `jsx-a11y-x` for frontend files.
+- Turn on `simple-import-sort/imports` and `simple-import-sort/exports` as `error`.
+- Add `reactRefresh`, `jsxA11y`, and `importSort` to the factory arguments. As now, the package imports nothing, and when an argument is missing, that rule is skipped so 1.0.0 apps do not break.
 
 **Prettier (`@sirloinbh/prettier-config` 1.1.0)**
 
-- `plugins: ["prettier-plugin-tailwindcss"]`, `tailwindStylesheet: "./frontend/src/index.css"`(Tailwind 4는 CSS 진입 파일 경로가 필요하다. 앱마다 경로를 #246에서 확인).
+- `plugins: ["prettier-plugin-tailwindcss"]`, `tailwindStylesheet: "./frontend/src/index.css"` (Tailwind 4 needs the path of the CSS entry file. The path per app is checked in #246).
 
-**설치할 패키지 (#245에서 승인, 앱 8개 루트 devDependencies)**
+**Packages to install (approved in #245, root devDependencies of the 8 apps)**
 
 ```
 eslint-plugin-react-refresh@0.5.7
@@ -81,10 +81,10 @@ eslint-plugin-simple-import-sort@14.0.0
 prettier-plugin-tailwindcss@0.8.1
 ```
 
-## 결정
+## Decisions
 
-- 2026-10-28 사용자가 4장 권장안을 채택했다.
-- 설치 없이 쓰는 규칙(타입 정보 규칙 5개, #243의 default export 금지·`type`만)과 플러그인 인자는 #308에서 패키지에 넣는다.
-- 플러그인 4종 설치는 #245에서 사용자가 승인한다. 접근성은 원본 대신 포크 `eslint-plugin-jsx-a11y-x`를 쓴다. Socket 확인은 승인 때 사용자가 한다.
-- 앱 템플릿에서 플러그인을 넘기는 일과 Prettier 플러그인은 #246에서 한다(#245 뒤).
-- `no-unsafe-*` 5개는 보류. #246에서 CI 값으로 다시 센다.
+- On 2026-10-28 the user adopted the recommendations in section 4.
+- Rules that need no install (the 5 type-aware rules, and from #243 the ban on default export and `type` only) and the plugin arguments go into the package in #308.
+- Installing the 4 plugins is approved by the user in #245. For accessibility, the fork `eslint-plugin-jsx-a11y-x` is used instead of the original. The user checks Socket at approval time.
+- Passing plugins in the app templates and the Prettier plugin are done in #246 (after #245).
+- The 5 `no-unsafe-*` rules are on hold. They are counted again with CI values in #246.

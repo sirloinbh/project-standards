@@ -65,7 +65,7 @@ export async function collectSettings(api, repo) {
   };
 }
 
-const on = (v) => (v === null ? '?' : v ? '켬' : '끔');
+const on = (v) => (v === null ? '?' : v ? 'on' : 'off');
 
 /**
  * Judges the facts. Returns [{ id, label, status, actual, expected }] where status is
@@ -76,51 +76,51 @@ export function evaluateSettings(facts, { secrets = [], variables = [] } = {}) {
   const add = (id, label, status, actual, expected) => rows.push({ id, label, status, actual, expected });
   const yes = (value, want, level = 'fail') => (value === null ? 'unknown' : value === want ? 'ok' : level);
 
-  add('default-branch', '기본 브랜치', facts.defaultBranch === null ? 'unknown' : facts.defaultBranch === 'main' ? 'ok' : 'fail', facts.defaultBranch ?? '?', 'main');
-  add('merge-commit', '병합 커밋 허용', yes(facts.mergeCommit, true), on(facts.mergeCommit), '켬');
-  add('squash-merge', 'squash 병합', yes(facts.squashMerge, false, 'warn'), on(facts.squashMerge), '끔 (권장)');
-  add('rebase-merge', 'rebase 병합', yes(facts.rebaseMerge, false, 'warn'), on(facts.rebaseMerge), '끔 (권장)');
-  add('delete-branch', '병합 후 브랜치 자동 삭제', yes(facts.deleteBranchOnMerge, true, 'warn'), on(facts.deleteBranchOnMerge), '켬 (권장)');
-  add('workflow-permissions', 'Actions 기본 토큰 권한', facts.workflowPermissions === null ? 'unknown' : facts.workflowPermissions === 'read' ? 'ok' : 'fail', facts.workflowPermissions ?? '?', 'read');
-  add('actions-approve', 'Actions의 PR 승인', yes(facts.actionsCanApprove, false), on(facts.actionsCanApprove), '끔');
+  add('default-branch', 'Default branch', facts.defaultBranch === null ? 'unknown' : facts.defaultBranch === 'main' ? 'ok' : 'fail', facts.defaultBranch ?? '?', 'main');
+  add('merge-commit', 'Allow merge commits', yes(facts.mergeCommit, true), on(facts.mergeCommit), 'on');
+  add('squash-merge', 'Squash merge', yes(facts.squashMerge, false, 'warn'), on(facts.squashMerge), 'off (recommended)');
+  add('rebase-merge', 'Rebase merge', yes(facts.rebaseMerge, false, 'warn'), on(facts.rebaseMerge), 'off (recommended)');
+  add('delete-branch', 'Auto-delete branch after merge', yes(facts.deleteBranchOnMerge, true, 'warn'), on(facts.deleteBranchOnMerge), 'on (recommended)');
+  add('workflow-permissions', 'Actions default token permission', facts.workflowPermissions === null ? 'unknown' : facts.workflowPermissions === 'read' ? 'ok' : 'fail', facts.workflowPermissions ?? '?', 'read');
+  add('actions-approve', 'Actions can approve PRs', yes(facts.actionsCanApprove, false), on(facts.actionsCanApprove), 'off');
 
   const p = facts.protection;
-  if (p === 'plan') add('branch-protection', 'main 브랜치 보호', 'plan', '비공개 리포라 Free 요금제에서 쓸 수 없음', '켬');
-  else if (p === null) add('branch-protection', 'main 브랜치 보호', 'unknown', '?', '켬');
-  else if (p === 'none') add('branch-protection', 'main 브랜치 보호', 'fail', '없음', '켬');
+  if (p === 'plan') add('branch-protection', 'main branch protection', 'plan', 'not available for private repos on the Free plan', 'on');
+  else if (p === null) add('branch-protection', 'main branch protection', 'unknown', '?', 'on');
+  else if (p === 'none') add('branch-protection', 'main branch protection', 'fail', 'none', 'on');
   else {
     const problems = [];
-    if (!p.requiredChecks.length) problems.push('필수 검사 없음');
-    if (p.forcePushes) problems.push('강제 push 허용');
-    if (p.deletions) problems.push('삭제 허용');
-    add('branch-protection', 'main 브랜치 보호', problems.length ? 'fail' : 'ok', problems.length ? problems.join(', ') : `필수 검사 ${p.requiredChecks.join(', ')}`, '켬, 필수 검사 1개 이상, 강제 push·삭제 금지');
+    if (!p.requiredChecks.length) problems.push('no required checks');
+    if (p.forcePushes) problems.push('force push allowed');
+    if (p.deletions) problems.push('deletion allowed');
+    add('branch-protection', 'main branch protection', problems.length ? 'fail' : 'ok', problems.length ? problems.join(', ') : `required checks ${p.requiredChecks.join(', ')}`, 'on, at least 1 required check, no force push or deletion');
   }
   for (const [id, label, value] of [
     ['secret-scanning', 'secret scanning', facts.secretScanning],
-    ['push-protection', 'push protection (secret 차단)', facts.pushProtection],
+    ['push-protection', 'push protection (secret blocking)', facts.pushProtection],
   ]) {
-    if (value === 'plan') add(id, label, 'plan', '비공개 리포라 Free 요금제에서 쓸 수 없음', 'enabled');
+    if (value === 'plan') add(id, label, 'plan', 'not available for private repos on the Free plan', 'enabled');
     else add(id, label, value === null ? 'unknown' : value === 'enabled' ? 'ok' : 'fail', value ?? '?', 'enabled');
   }
   const cs = facts.codeScanning;
-  if (cs === 'plan') add('code-scanning', 'CodeQL 코드 스캔 (기본 설정)', 'plan', '비공개 리포라 Free 요금제에서 쓸 수 없음', 'configured');
-  else add('code-scanning', 'CodeQL 코드 스캔 (기본 설정)', cs === undefined || cs === null ? 'unknown' : cs === 'configured' ? 'ok' : 'fail', cs ?? '?', 'configured');
-  add('vulnerability-alerts', 'Dependabot 취약점 알림', yes(facts.vulnerabilityAlerts, true), on(facts.vulnerabilityAlerts), '켬');
-  add('security-fixes', 'Dependabot 보안 업데이트', yes(facts.securityFixes, true), on(facts.securityFixes), '켬');
+  if (cs === 'plan') add('code-scanning', 'CodeQL code scanning (default setup)', 'plan', 'not available for private repos on the Free plan', 'configured');
+  else add('code-scanning', 'CodeQL code scanning (default setup)', cs === undefined || cs === null ? 'unknown' : cs === 'configured' ? 'ok' : 'fail', cs ?? '?', 'configured');
+  add('vulnerability-alerts', 'Dependabot vulnerability alerts', yes(facts.vulnerabilityAlerts, true), on(facts.vulnerabilityAlerts), 'on');
+  add('security-fixes', 'Dependabot security updates', yes(facts.securityFixes, true), on(facts.securityFixes), 'on');
 
   for (const [id, label, actual, expected] of [
-    ['secrets', 'Actions secret 이름', facts.secrets, secrets],
-    ['variables', 'Actions variable 이름', facts.variables, variables],
+    ['secrets', 'Actions secret names', facts.secrets, secrets],
+    ['variables', 'Actions variable names', facts.variables, variables],
   ]) {
     if (actual === null) {
-      add(id, label, 'unknown', '?', expected.join(', ') || '없음');
+      add(id, label, 'unknown', '?', expected.join(', ') || 'none');
       continue;
     }
     const missing = expected.filter((n) => !actual.includes(n));
     const extra = actual.filter((n) => !expected.includes(n));
     const status = missing.length ? 'fail' : extra.length ? 'warn' : 'ok';
-    const shown = [missing.length ? `없음: ${missing.join(', ')}` : '', extra.length ? `목록에 없는 이름: ${extra.join(', ')}` : ''].filter(Boolean).join(' / ');
-    add(id, label, status, shown || actual.join(', ') || '없음', expected.join(', ') || '없음');
+    const shown = [missing.length ? `missing: ${missing.join(', ')}` : '', extra.length ? `not in the list: ${extra.join(', ')}` : ''].filter(Boolean).join(' / ');
+    add(id, label, status, shown || actual.join(', ') || 'none', expected.join(', ') || 'none');
   }
   return rows;
 }
