@@ -65,8 +65,8 @@ test('a first sync opens a PR with the rendered files, pinned versions, and the 
   assert.equal(repo.refs.get('heads/main'), [...repo.commits.keys()][0], 'main is never pushed to');
   const pr = repo.pulls[0];
   assert.equal(pr.title, 'chore: 중앙 표준 동기화 (project-standards@a1b2c3d)');
-  for (const heading of ['## 무엇을 바꿨나요', '## 왜 바꿨나요', '## 주요 변경', '## 확인한 내용', '## 병합 전에 확인해 주세요', '## 영향 범위']) assert.ok(pr.body.includes(heading), heading);
-  assert.match(pr.body, /main 병합은 곧 운영 배포/);
+  for (const heading of ['## What changed', '## Why', '## Main changes', '## Verification', '## Check before merging', '## Impact']) assert.ok(pr.body.includes(heading), heading);
+  assert.match(pr.body, /Merging to main in this repo deploys to production/);
   assert.match(pr.body, /NODE_AUTH_TOKEN/);
   assert.match(pr.body, /devDependencies\.concurrently \^9\.2\.0 → 9\.2\.1/);
 });
@@ -97,8 +97,8 @@ test('a central commit leaves a sync branch with a direct commit untouched and s
   for (const write of ['PATCH', 'POST /repos/sirloinbh/study-log/git']) assert.equal(calls.some((c) => c.startsWith(write)), false, write);
   assert.equal(repo.pulls[0].title, 'chore: 중앙 표준 동기화 (project-standards@a1b2c3d)');
   assert.equal(repo.pulls[0].comments.length, 1);
-  assert.match(repo.pulls[0].comments[0], /`b2c3d4e`.*직접 더한 커밋 1개/);
-  assert.match(repo.pulls[0].comments[0], /`sync` 워크플로/);
+  assert.match(repo.pulls[0].comments[0], /`b2c3d4e`.*the 1 commit\(s\) added directly/);
+  assert.match(repo.pulls[0].comments[0], /`sync` workflow/);
 });
 
 test('a sync branch whose commits cannot be listed is not overwritten (#367)', async () => {
@@ -186,7 +186,7 @@ test('files dropped from the standard are deleted only if untouched', async () =
   const after = repo.filesAt(result.branch);
   assert.equal(after['old/untouched.txt'], undefined);
   assert.equal(after['old/edited.txt'], 'changed by the project\n');
-  assert.match(repo.pulls.at(-1).body, /`old\/edited\.txt`는 중앙 관리에서 빠졌지만/);
+  assert.match(repo.pulls.at(-1).body, /`old\/edited\.txt` is no longer managed centrally/);
 });
 
 test('the infra PR states that it does not touch .tf files or run apply', async () => {
@@ -194,8 +194,8 @@ test('the infra PR states that it does not touch .tf files or run apply', async 
   const result = await syncTarget({ root, data, target: infraTarget, centralSha: SHA1, api: repo.api });
   assert.equal(result.status, 'opened');
   assert.equal(repo.filesAt(result.branch)['main.tf'], 'terraform {}\n');
-  assert.match(repo.pulls[0].body, /`\.tf` 파일을 바꾸지 않으며 terraform apply를 일으키지 않습니다/);
-  assert.doesNotMatch(repo.pulls[0].body, /운영 배포/);
+  assert.match(repo.pulls[0].body, /does not change `\.tf` files and does not trigger terraform apply/);
+  assert.doesNotMatch(repo.pulls[0].body, /deploys to production/);
 });
 
 test('shared package versions are trusted only with a successful publish.yml release', async () => {
@@ -203,7 +203,7 @@ test('shared package versions are trusted only with a successful publish.yml rel
   const central = (release, runInfo = run) => async (method, p) => (p.includes('/releases/tags/') ? release : runInfo);
   const release = { body: '- 배포 실행: https://github.com/sirloinbh/project-standards/actions/runs/7' };
   assert.deepEqual(await verifyPackages({ '@sirloinbh/tsconfig': '1.0.0', '@sirloinbh/design-tokens': null }, central(release)), [
-    '@sirloinbh/tsconfig@1.0.0: 태그 `tsconfig/v1.0.0`, 배포 실행 https://github.com/sirloinbh/project-standards/actions/runs/7 (성공)',
+    '@sirloinbh/tsconfig@1.0.0: tag `tsconfig/v1.0.0`, publish run https://github.com/sirloinbh/project-standards/actions/runs/7 (success)',
   ]);
   await assert.rejects(verifyPackages({ '@sirloinbh/tsconfig': '1.0.0' }, central(null)), /no release for tag tsconfig\/v1\.0\.0/);
   await assert.rejects(verifyPackages({ '@sirloinbh/tsconfig': '1.0.0' }, central({ body: 'no link' })), /no publish run link/);

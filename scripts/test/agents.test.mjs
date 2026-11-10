@@ -79,6 +79,6 @@ test('the infra repository gets the common skills but no app-only files', () => 
   const infra = rendered.find((r) => r.target.profile === 'infra').files;
   assert.match(infra['skills/std-implementation/SKILL.md'].content, /`sirloinbh\/shared-aws-infrastructure` 리포/);
   for (const appOnly of ['AGENTS.md', 'skills/std-testing/SKILL.md', '.npmrc']) assert.equal(infra[appOnly], undefined, appOnly);
-  assert.match(infra['skills/std-communication/SKILL.md'].content, /사용자에게 하는 설명은 항상 한국어로 쓴다/);
+  assert.match(infra['skills/std-communication/SKILL.md'].content, /Every explanation addressed to the user is written in English/);
   assert.equal(infra['.claude/skills/std-communication/SKILL.md'].content, infra['skills/std-communication/SKILL.md'].content);
 });

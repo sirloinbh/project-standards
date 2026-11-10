@@ -12,10 +12,10 @@ const CENTRAL = 'sirloinbh/project-standards';
 const COMMIT_PREFIX = 'chore: 중앙 표준 동기화 (project-standards@';
 
 const renderKeptComment = (centralSha, count) => [
-  `중앙 표준 리포 커밋 \`${centralSha.slice(0, 7)}\`을 이 PR에 반영하지 않았습니다. 이 PR에 직접 더한 커밋 ${count}개가 사라지지 않게 하기 위해서입니다.`,
+  `Central standards commit \`${centralSha.slice(0, 7)}\` was not applied to this PR, so that the ${count} commit(s) added directly to this PR are not lost.`,
   '',
-  '- 이 PR을 병합한 뒤 중앙 리포의 `sync` 워크플로를 실행하면 최신 표준이 새 PR로 열립니다.',
-  '- 직접 더한 커밋이 필요 없으면 이 PR을 닫은 뒤 같은 워크플로를 실행합니다.',
+  '- After merging this PR, run the central repo\'s `sync` workflow; the latest standards will open as a new PR.',
+  '- If the added commits are not needed, close this PR and run the same workflow.',
 ].join('\n');
 
 /** Git blob id of a text, so unchanged files are detected without downloading them. */
@@ -61,7 +61,7 @@ function pinPackageFiles(files, read) {
         else if (installed !== version) result.unresolved.push(`${lockPath}: ${name} is installed as ${installed ?? 'missing'}, not ${version} — regenerate this lockfile`);
       }
     }
-    notes.push(...result.changes.map((c) => `${pkgPath}: ${c}`), ...result.unresolved.map((u) => `확인 필요 — ${u}`));
+    notes.push(...result.changes.map((c) => `${pkgPath}: ${c}`), ...result.unresolved.map((u) => `Needs checking — ${u}`));
   }
   const lockFiles = [...lockEdits]
     .filter(([, lock]) => lock)
@@ -73,41 +73,41 @@ export function renderBody({ target, centralSha, changes, deletions, keptRemoved
   const short = centralSha.slice(0, 7);
   const app = target.profile === 'app';
   const changed = (p) => changes.some((c) => c.path === p);
-  const rows = changes.map((c) => `| \`${c.path}\` | ${c.isNew ? '추가' : '수정'} | ${c.source ? `\`${c.source}\`` : ''} |`);
-  rows.push(...deletions.map((p) => `| \`${p}\` | 삭제 | 중앙에서 더 이상 관리하지 않음 |`));
+  const rows = changes.map((c) => `| \`${c.path}\` | ${c.isNew ? 'added' : 'updated'} | ${c.source ? `\`${c.source}\`` : ''} |`);
+  rows.push(...deletions.map((p) => `| \`${p}\` | removed | no longer managed centrally |`));
   const confirm = [];
-  if (app) confirm.push('- [ ] 이 리포의 main 병합은 곧 운영 배포입니다. 배포해도 되는 시점인지 확인했다');
-  if (changes.some((c) => c.mode === 'lockfile' || c.path.endsWith('package.json'))) confirm.push('- [ ] `package.json`·lockfile 변경을 확인했다. 새 `@sirloinbh/*` 패키지가 추가됐다면 `npm install --ignore-scripts`로 lockfile을 다시 만들어 이 브랜치에 커밋한다(사용자 승인 필요)');
-  if (changes.some((c) => c.path.endsWith('.npmrc'))) confirm.push('- [ ] `.npmrc`의 `${NODE_AUTH_TOKEN}` 줄 때문에, 이 환경변수가 없으면 npm 명령이 실패한다. 로컬과 서버에 설정했다(값은 `read:packages` 권한 토큰, 패키지를 쓰지 않으면 빈 값)');
-  if (changes.some((c) => /^(frontend|backend|database)\//.test(c.path))) confirm.push('- [ ] `frontend/`·`backend/`·`database/` 아래 파일이 바뀌었다. 병합 후 subtree 배포 리포에 반영하려면 `scripts/push-repositories.ps1`을 실행한다');
-  if (changed('AGENTS.md')) confirm.push('- [ ] 이 프로젝트만의 규칙이 `AGENTS.md`에서 사라지지 않았는지 확인했다. 필요하면 `AGENTS.project.md`로 옮긴다');
-  if (keptRemoved.length) confirm.push(...keptRemoved.map((p) => `- [ ] \`${p}\`는 중앙 관리에서 빠졌지만 이 리포에서 수정된 상태라 지우지 않았다. 필요 없으면 직접 지운다`));
-  if (!confirm.length) confirm.push('- 없음');
-  const infra = target.profile === 'infra' ? ['', '이 PR은 `.tf` 파일을 바꾸지 않으며 terraform apply를 일으키지 않습니다.'] : [];
+  if (app) confirm.push('- [ ] Merging to main in this repo deploys to production. I checked that now is a good time to deploy');
+  if (changes.some((c) => c.mode === 'lockfile' || c.path.endsWith('package.json'))) confirm.push('- [ ] I checked the `package.json` and lockfile changes. If a new `@sirloinbh/*` package was added, regenerate the lockfile with `npm install --ignore-scripts` and commit it to this branch (needs user approval)');
+  if (changes.some((c) => c.path.endsWith('.npmrc'))) confirm.push('- [ ] Because of the `${NODE_AUTH_TOKEN}` line in `.npmrc`, npm commands fail without this environment variable. I set it locally and on the server (a token with `read:packages`, or empty if no packages are used)');
+  if (changes.some((c) => /^(frontend|backend|database)\//.test(c.path))) confirm.push('- [ ] Files under `frontend/`, `backend/`, or `database/` changed. After merging, run `scripts/push-repositories.ps1` to update the subtree deploy repos');
+  if (changed('AGENTS.md')) confirm.push('- [ ] I checked that this project\'s own rules did not disappear from `AGENTS.md`. Move them to `AGENTS.project.md` if needed');
+  if (keptRemoved.length) confirm.push(...keptRemoved.map((p) => `- [ ] \`${p}\` is no longer managed centrally but was modified in this repo, so it was not deleted. Delete it yourself if it is not needed`));
+  if (!confirm.length) confirm.push('- None');
+  const infra = target.profile === 'infra' ? ['', 'This PR does not change `.tf` files and does not trigger terraform apply.'] : [];
   return [
-    '## 무엇을 바꿨나요',
-    `중앙 표준 리포 \`${CENTRAL}\`의 커밋 \`${short}\`에 맞춰 중앙 관리 파일 ${changes.length + deletions.length}개를 동기화합니다.`,
+    '## What changed',
+    `Syncs ${changes.length + deletions.length} centrally managed files to commit \`${short}\` of the central standards repo \`${CENTRAL}\`.`,
     ...infra,
     '',
-    '## 왜 바꿨나요',
-    `- 중앙 리포 main이 바뀌었습니다: https://github.com/${CENTRAL}/commit/${centralSha}`,
-    '- 이 PR은 중앙의 동기화 워크플로가 자동으로 만들었습니다. 내용을 바꾸려면 이 리포가 아니라 중앙 리포를 고칩니다.',
+    '## Why',
+    `- The central repo's main branch changed: https://github.com/${CENTRAL}/commit/${centralSha}`,
+    '- The central sync workflow created this PR. To change its content, edit the central repo, not this one.',
     '',
-    '## 주요 변경',
-    '| 파일 | 변경 | 중앙 원본 |',
+    '## Main changes',
+    '| File | Change | Central source |',
     '|---|---|---|',
     ...rows,
-    ...(pinNotes.length ? ['', '범위 버전 고정(설치된 버전 그대로, lockfile 기준):', ...pinNotes.map((n) => `- ${n}`)] : []),
-    ...(packageNotes.length ? ['', '공유 패키지 출처 확인(ADR-0004):', ...packageNotes.map((n) => `- ${n}`)] : []),
+    ...(pinNotes.length ? ['', 'Pinned version ranges (to the installed versions, per the lockfile):', ...pinNotes.map((n) => `- ${n}`)] : []),
+    ...(packageNotes.length ? ['', 'Shared package provenance check (ADR-0004):', ...packageNotes.map((n) => `- ${n}`)] : []),
     '',
-    '## 확인한 내용',
-    '- 이 리포의 CI(`standards-check` 포함) 결과를 확인합니다.',
+    '## Verification',
+    '- Check this repo\'s CI results (including `standards-check`).',
     '',
-    '## 병합 전에 확인해 주세요',
+    '## Check before merging',
     ...confirm,
     '',
-    '## 영향 범위',
-    app ? '- 병합하면 운영 서버가 CI 통과 후 자동 배포할 수 있습니다.' : '- 인프라 리소스에는 영향이 없습니다.',
+    '## Impact',
+    app ? '- After merging, the production server may deploy automatically once CI passes.' : '- No effect on infrastructure resources.',
     '',
   ].join('\n');
 }
@@ -220,7 +220,7 @@ export async function verifyPackages(packages, centralApi) {
     if (!runId) throw new Error(`${pkg}@${version}: release ${tag} has no publish run link`);
     const run = await centralApi('GET', `/repos/${CENTRAL}/actions/runs/${runId}`);
     if (run?.path !== '.github/workflows/publish.yml' || run?.conclusion !== 'success') throw new Error(`${pkg}@${version}: run ${runId} is not a successful publish.yml run`);
-    notes.push(`${pkg}@${version}: 태그 \`${tag}\`, 배포 실행 ${run.html_url} (성공)`);
+    notes.push(`${pkg}@${version}: tag \`${tag}\`, publish run ${run.html_url} (success)`);
   }
   return notes;
 }

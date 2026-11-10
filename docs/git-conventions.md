@@ -6,11 +6,11 @@
 
 | 대상 | 규칙 | 예 |
 |---|---|---|
-| 이슈 제목 | 접두어 없이 "무엇을 하는지" 한 문장 | `레지스트리 원본 파일과 충돌 검사 만들기` |
-| 이슈 본문 | 템플릿 6개 절: 한 줄 요약, 왜 필요한가요, 할 일, 완료 기준, 먼저 끝나야 하는 것, 참고 | `.github/ISSUE_TEMPLATE/task.md` |
+| 이슈 제목 | 접두어 없이 "무엇을 하는지" 영어 명령형 한 문장 | `Add registry source files and conflict check` |
+| 이슈 본문 | 템플릿 6개 절: Summary, Why, Tasks, Done when, Blocked by, Notes (영어) | `.github/ISSUE_TEMPLATE/task.md` |
 | 라벨 | 우선순위 1개, `type` 1개, `area` 1개 이상 | [std-backlog](../templates/common/skills/std-backlog/SKILL.md) |
 | 브랜치 | `<type>/<이슈번호>-<영문-요약>` | `feat/44-registry-files` |
-| 커밋 | Conventional Commits, 한국어 설명, 이슈 번호 | `feat: 레지스트리 충돌 검사 추가 (#44)` |
+| 커밋 | Conventional Commits, 영어 설명(명령형), 이슈 번호 | `feat: add registry conflict check (#44)` |
 | PR 제목 | 커밋 제목과 같은 형식 | |
 | PR 본문 | 템플릿 6개 절 + `Closes #번호` | `.github/pull_request_template.md` |
 | 작업 기록 | `docs/changes/<이슈번호>-<slug>.md`를 구현·테스트와 같은 커밋에 | |
