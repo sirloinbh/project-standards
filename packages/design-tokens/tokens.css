@@ -1,6 +1,6 @@
-/* 자동 생성 파일. 수정은 sirloinbh/project-standards의 design/tokens.json에서 하고 `npm run tokens` 로 다시 생성한다. */
-/* Tailwind 없이도 쓸 수 있는 CSS 변수. 모든 앱이 같은 흑백 색을 쓴다(ADR-0008). */
-/* 다크 모드: <html class="dark">, 또는 클래스가 없을 때 시스템 설정(prefers-color-scheme). <html class="light">는 라이트로 고정. */
+/* Generated file. Edit design/tokens.json in sirloinbh/project-standards and regenerate with `npm run tokens`. */
+/* CSS variables usable without Tailwind. All apps use the same black-and-white colors (ADR-0008). */
+/* Dark mode: <html class="dark">, or the system setting (prefers-color-scheme) when there is no class. <html class="light"> forces light. */
 @import './fonts/pretendard.css';
 
 :root {

@@ -63,7 +63,7 @@ export function inlineReusable(reusable, given) {
       const v = value(name);
       return typeof v === 'boolean' ? String(v) : `'${String(v).replace(/'/g, "''")}'`;
     });
-  const intro = '# public 리포는 private 중앙 리포의 재사용 워크플로를 부를 수 없어서, 중앙 reusable-app-ci.yml을 이 리포의 값으로 펼쳐 넣었다(#209).';
+  const intro = '# A public repo cannot call a reusable workflow of the private central repo, so the central reusable-app-ci.yml is expanded here with the values of this repo (#209).';
   return `${intro}\n${body}`;
 }
 

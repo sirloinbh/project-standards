@@ -221,7 +221,7 @@ test('apply only checks the token while maxRollout is 0, then syncs targets in r
   off.sync.maxRollout = 0;
   assert.deepEqual(await apply({ data: off, targets: off.sync.targets, centralSha: SHA1, getToken, makeClient: () => null, log: (l) => logs.push(l) }), []);
   assert.deepEqual(tokens, ['sirloinbh/project-standards']);
-  assert.match(logs[0], /설치 토큰 발급 확인\. maxRollout 0/);
+  assert.match(logs[0], /Installation token issued\. maxRollout is 0/);
 
   const rolled = structuredClone(data);
   rolled.sync.maxRollout = 1;
