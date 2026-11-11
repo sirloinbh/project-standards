@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -29,8 +30,16 @@ test('every app gets AGENTS.md and CLAUDE.md that point to AGENTS.project.md', (
     // Merge rules belong to each project (workout-memo lets the agent merge after CI); default is user-only.
     assert.ok(agents.includes('PR 리뷰와 병합 규칙은 [AGENTS.project.md](AGENTS.project.md)를 따른다. 거기에 정해져 있지 않으면 **PR 병합은 사용자만 수행한다.**'), target.repo);
     assert.ok(agents.includes(`웹 ${project.ports.web}, API ${project.ports.api}, Vite ${project.ports.vite}, 호스트 DB ${project.ports.db}`), target.repo);
-    assert.ok(files['CLAUDE.md'].content.includes('[AGENTS.project.md](AGENTS.project.md)'), target.repo);
+    // Claude Code loads @ imports every session but never follows markdown links (#447).
+    assert.match(files['CLAUDE.md'].content, /^@AGENTS\.md\n@AGENTS\.project\.md$/m, target.repo);
   }
+});
+
+test('the central CLAUDE.md imports AGENTS.md and only links the requirements source', () => {
+  const claude = readFileSync(path.join(root, 'CLAUDE.md'), 'utf8');
+  assert.match(claude, /^@AGENTS\.md$/m);
+  assert.doesNotMatch(claude, /^@docs\//m);
+  assert.ok(claude.includes('[docs/bootstrap-prompt.md](docs/bootstrap-prompt.md)'));
 });
 
 test('app repositories get all six shared skills, mirrored into .claude/skills', () => {
