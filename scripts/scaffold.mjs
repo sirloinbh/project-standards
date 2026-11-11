@@ -95,5 +95,5 @@ if (isMain) {
   const out = path.resolve(process.argv[flag + 1]);
   writeScaffold(files, out);
   console.log(`${files.length} files written to ${out}`);
-  console.log('Next: README "새 프로젝트 추가" in sirloinbh/project-standards (git init, first commit, dependency install with user approval).');
+  console.log('Next: README "Add a new project" in sirloinbh/project-standards (git init, first commit, dependency install with user approval).');
 }

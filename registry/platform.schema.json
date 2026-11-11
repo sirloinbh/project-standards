@@ -1,13 +1,13 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "플랫폼 공통값",
-  "description": "모든 프로젝트가 함께 쓰는 값: 포트 공식, 예약 포트, 루트 도메인, AWS 공통값.",
+  "title": "Platform shared values",
+  "description": "Values shared by all projects: port formula, reserved ports, root domain, shared AWS values.",
   "type": "object",
   "required": ["rootDomain", "aws", "portScheme", "reservedPorts"],
   "additionalProperties": false,
   "properties": {
     "$schema": { "type": "string" },
-    "rootDomain": { "type": ["string", "null"], "pattern": "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$", "description": "서비스 루트 도메인. 미정이면 null" },
+    "rootDomain": { "type": ["string", "null"], "pattern": "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$", "description": "Service root domain. null if undecided" },
     "aws": {
       "type": "object",
       "required": ["region", "accountAlias", "sharedPrefix"],

@@ -56,7 +56,7 @@ test('every rule matches its fake value and reports the line without the value',
   }
   withRepo({ 'src/config.ts': `export const token = '${FAKES['github-token']}';\n` }, (dir) => {
     const [error] = scan(dir);
-    assert.match(error, /^src\/config\.ts:1: GitHub 토큰\(github-token\)/);
+    assert.match(error, /^src\/config\.ts:1: GitHub token\(github-token\)/);
     assert.ok(!error.includes(FAKES['github-token']), 'the value must not be printed');
   });
 });
@@ -84,7 +84,7 @@ test('committed .env files fail but examples and templates do not', () => {
   assert.ok(isEnvFile('backend/.env.production'));
   for (const ok of ['.env.example', 'frontend/.env.sample', '.env.example.tmpl', 'docs/env.md', '.envrc.md']) assert.ok(!isEnvFile(ok), ok);
   withRepo({ '.env': 'PORT=3000\n', '.env.example': 'PORT=\n' }, (dir) => {
-    assert.deepEqual(scan(dir), ['.env: .env 파일이 커밋 대상에 있습니다. 값은 서버·PC에만 두고 .env.example만 커밋하세요']);
+    assert.deepEqual(scan(dir), ['.env: .env file is staged for commit. Keep values on the server or PC only and commit only .env.example']);
   });
 });
 
@@ -115,7 +115,7 @@ test('history mode finds a value that was committed and later removed', () => {
       assert.deepEqual(scan(dir), []);
       const history = scanHistory(dir);
       assert.equal(history.length, 1);
-      assert.match(history[0], /^[0-9a-f]+ config\.js: AWS 액세스 키 ID\(aws-access-key\) 모양의 값이 추가된 적이 있습니다$/);
+      assert.match(history[0], /^[0-9a-f]+ config\.js: AWS access key ID\(aws-access-key\) a value that looks like this was added in the past$/);
     },
     { git: true },
   );
@@ -125,12 +125,12 @@ test('the command exits 1 with findings and 0 on a clean tree, and this reposito
   withRepo({ 'a.txt': FAKES['slack-token'] }, (dir) => {
     const result = spawnSync(process.execPath, [script, '--root', dir], { encoding: 'utf8' });
     assert.equal(result.status, 1);
-    assert.match(result.stderr, /a\.txt:1: Slack 토큰/);
+    assert.match(result.stderr, /a\.txt:1: Slack token/);
     assert.ok(!result.stderr.includes(FAKES['slack-token']));
   });
   const clean = spawnSync(process.execPath, [script, '--root', root], { encoding: 'utf8' });
   assert.equal(clean.status, 0, clean.stderr);
-  assert.match(clean.stdout, /의심 항목 없음/);
+  assert.match(clean.stdout, /no suspicious items/);
 });
 
 test('apps and infrastructure repositories receive the scanner and run it in CI', () => {

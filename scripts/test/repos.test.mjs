@@ -57,7 +57,7 @@ test('status reports branch, changes and how far behind origin/main each clone i
     const table = lines.join('\n');
     assert.match(table, /^\| app-a \| main \| 0 \| 1 \/ 0 \|$/m);
     assert.match(table, /^\| app-b \| main \| 1 \| 1 \/ 0 \|$/m);
-    assert.match(table, /^\| app-c \| \(클론 없음\) \| \| \|$/m);
+    assert.match(table, /^\| app-c \| \(not cloned\) \| \| \|$/m);
   } finally {
     s.cleanup();
   }
@@ -70,7 +70,7 @@ test('pull fast-forwards only clean clones on main and explains every skip', () 
     git(path.join(s.base, 'project-standards'), 'switch', '-q', '-c', 'feat/1-x');
     const lines = [];
     assert.equal(run(['pull'], { root: s.centralDir, log: (l) => lines.push(l) }), 0);
-    assert.deepEqual(lines, ['project-standards: 건너뜀 — main이 아니라 feat/1-x에 있음', 'app-a: 1개 커밋 받음', 'app-b: 건너뜀 — 커밋 안 한 변경 1개', 'app-c: 건너뜀 — 클론 없음']);
+    assert.deepEqual(lines, ['project-standards: skipped — on feat/1-x, not main', 'app-a: pulled 1 commits', 'app-b: skipped — 1 uncommitted changes', 'app-c: skipped — not cloned']);
     // trim(): core.autocrlf may check files out with CRLF on Windows.
     assert.equal(fs.readFileSync(path.join(s.base, 'app-a/a.txt'), 'utf8').trim(), '2');
     assert.equal(fs.readFileSync(path.join(s.base, 'app-b/a.txt'), 'utf8').trim(), '1');
@@ -85,8 +85,8 @@ test('run executes the same command in each clone and refuses package installs',
   try {
     const lines = [];
     assert.equal(run(['run', '--', 'git rev-parse --abbrev-ref HEAD'], { root: s.centralDir, log: (l) => lines.push(l) }), 0);
-    assert.deepEqual(lines, ['== project-standards', 'main', '== app-a', 'main', '== app-b', 'main', '== app-c: 클론 없음']);
-    for (const bad of ['npm install', 'npm --silent i react', 'npx prettier .', 'npm ci', 'npm ic --ignore-scripts']) assert.throws(() => run(['run', '--', ...bad.split(' ')], { root: s.centralDir, log: () => {} }), /한꺼번에 실행하지 않습니다/, bad);
+    assert.deepEqual(lines, ['== project-standards', 'main', '== app-a', 'main', '== app-b', 'main', '== app-c: not cloned']);
+    for (const bad of ['npm install', 'npm --silent i react', 'npx prettier .', 'npm ci', 'npm ic --ignore-scripts']) assert.throws(() => run(['run', '--', ...bad.split(' ')], { root: s.centralDir, log: () => {} }), /across several repos at once/, bad);
   } finally {
     s.cleanup();
   }
@@ -110,6 +110,6 @@ test('workspace writes a VS Code multi-root file under .local with paths relativ
 });
 
 test('pullBlocker covers each reason', () => {
-  assert.equal(pullBlocker({ missing: true }), '클론 없음');
+  assert.equal(pullBlocker({ missing: true }), 'not cloned');
   assert.equal(pullBlocker({ missing: false, branch: 'main', changes: 0 }), null);
 });

@@ -48,7 +48,7 @@ test('callerInputs reads quoted strings and booleans from the with: block', () =
 
 test('inlineReusable fills inputs, applies defaults, and runs on push and pull_request', () => {
   const out = inlineReusable(reusable, { 'node-version': '24.21.0', e2e: true });
-  assert.match(out, /^# public 리포는/);
+  assert.match(out, /^# A public repo cannot call/);
   assert.match(out, /\nname: ci\n\non: \[push, pull_request\]\n\npermissions:/);
   assert.match(out, /if: true && !false\n/);
   assert.match(out, /node-version: 24\.21\.0\n/);
