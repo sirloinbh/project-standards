@@ -64,7 +64,7 @@ test('pull writes the SSM value into the central .env and never logs it', () =>
     const [call] = calls(dir);
     assert.deepEqual(call.args, ['ssm', 'get-parameter', '--name', PARAMETER, '--with-decryption', '--query', 'Parameter.Value', '--output', 'text', '--region', 'ap-northeast-2', '--profile', 'me-personal']);
     assert.ok(!lines.join('\n').includes(VALUE));
-    assert.deepEqual(lines, ['project-standards/.env ANTHROPIC_API_KEY: 넣음']);
+    assert.deepEqual(lines, ['project-standards/.env ANTHROPIC_API_KEY: written']);
   }));
 
 test('pull creates the central .env when it does not exist yet, and leaves the app clones alone', () =>
@@ -73,7 +73,7 @@ test('pull creates the central .env when it does not exist yet, and leaves the a
     assert.equal(await run(['pull', '--profile', 'p'], { root: central, log }), 0);
     assert.equal(fs.readFileSync(path.join(central, '.env'), 'utf8'), `ANTHROPIC_API_KEY=${VALUE}\n`);
     assert.deepEqual(fs.readdirSync(path.join(dir, 'study-log')), []);
-    assert.deepEqual(lines, ['project-standards/.env ANTHROPIC_API_KEY: 넣음']);
+    assert.deepEqual(lines, ['project-standards/.env ANTHROPIC_API_KEY: written']);
   }));
 
 test('set passes the value through a temporary file that is removed afterwards', () =>
@@ -86,14 +86,14 @@ test('set passes the value through a temporary file that is removed afterwards',
     const file = call.args.find((a) => a.startsWith('file://')).slice(7);
     assert.ok(!fs.existsSync(file), 'the temporary file is removed');
     assert.ok(!lines.join('\n').includes(VALUE));
-    await assert.rejects(run(['set', '--profile', 'p'], { root, log, input: async () => '\n' }), /표준 입력으로 키 값을 넘기세요/);
+    await assert.rejects(run(['set', '--profile', 'p'], { root, log, input: async () => '\n' }), /Pass the key value on standard input/);
   }));
 
 test('check reports presence only and names the apps that read the key', () =>
   workspace(async ({ central, lines, log }) => {
     fs.writeFileSync(path.join(central, '.env'), `ANTHROPIC_API_KEY=${VALUE}\n`);
     assert.equal(await run(['check', '--profile', 'p'], { root: central, log }), 0);
-    assert.deepEqual(lines, [`SSM ${PARAMETER}: 있음 (마지막 변경 2026-10-27T05:00:00+09:00)`, 'project-standards/.env ANTHROPIC_API_KEY: 있음', '이 키를 읽는 앱: study-log']);
+    assert.deepEqual(lines, [`SSM ${PARAMETER}: present (last modified 2026-10-27T05:00:00+09:00)`, "project-standards/.env ANTHROPIC_API_KEY: present", "Apps that read this key: study-log"]);
     assert.ok(!lines.join('\n').includes(VALUE));
   }));
 
@@ -101,12 +101,12 @@ test('check fails without the parameter, and a profile is required', () =>
   workspace(
     async ({ central, lines, log }) => {
       assert.equal(await run(['check', '--profile', 'p'], { root: central, log }), 1);
-      assert.match(lines[0], /읽지 못함 — aws ssm get-parameter 실패 \(종료 코드 254\): ParameterNotFound/);
-      assert.equal(lines[1], 'project-standards/.env ANTHROPIC_API_KEY: 없음');
+      assert.match(lines[0], /could not read — aws ssm get-parameter failed \(exit code 254\): ParameterNotFound/);
+      assert.equal(lines[1], 'project-standards/.env ANTHROPIC_API_KEY: missing');
       const saved = process.env.SIRLOINBH_AWS_PROFILE;
       delete process.env.SIRLOINBH_AWS_PROFILE;
       try {
-        await assert.rejects(run(['check'], { root, log }), /개인 AWS 프로필을 지정하세요/);
+        await assert.rejects(run(['check'], { root, log }), /personal AWS profile/);
       } finally {
         if (saved !== undefined) process.env.SIRLOINBH_AWS_PROFILE = saved;
       }

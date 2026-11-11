@@ -36,9 +36,9 @@ export function repoState(dir, { fetch = false } = {}) {
 }
 
 export function statusTable(rows) {
-  const lines = ['| 리포 | 브랜치 | 커밋 안 한 변경 | origin/main보다 뒤 / 앞 |', '|---|---|---|---|'];
+  const lines = ['| Repo | Branch | Uncommitted changes | Behind / ahead of origin/main |', '|---|---|---|---|'];
   for (const { name, state: s } of rows) {
-    if (s.missing) lines.push(`| ${name} | (클론 없음) | | |`);
+    if (s.missing) lines.push(`| ${name} | (not cloned) | | |`);
     else lines.push(`| ${name} | ${s.branch} | ${s.changes} | ${s.behind ?? '?'} / ${s.ahead ?? '?'} |`);
   }
   return lines.join('\n');
@@ -46,9 +46,9 @@ export function statusTable(rows) {
 
 /** Why pull skips a clone, or null when it can fast-forward. */
 export function pullBlocker(state) {
-  if (state.missing) return '클론 없음';
-  if (state.branch !== 'main') return `main이 아니라 ${state.branch}에 있음`;
-  if (state.changes) return `커밋 안 한 변경 ${state.changes}개`;
+  if (state.missing) return 'not cloned';
+  if (state.branch !== 'main') return `on ${state.branch}, not main`;
+  if (state.changes) return `${state.changes} uncommitted changes`;
   return null;
 }
 
@@ -79,14 +79,14 @@ export function run(argv, { root = central, log = console.log } = {}) {
       const state = repoState(dir, { fetch: true });
       const blocker = pullBlocker(state);
       if (blocker) {
-        log(`${name}: 건너뜀 — ${blocker}`);
+        log(`${name}: skipped — ${blocker}`);
         continue;
       }
       const r = git(dir, ['pull', '--ff-only', '--quiet', 'origin', 'main']);
-      if (r.ok) log(`${name}: ${state.behind ? `${state.behind}개 커밋 받음` : '최신'}`);
+      if (r.ok) log(`${name}: ${state.behind ? `pulled ${state.behind} commits` : 'up to date'}`);
       else {
         failed++;
-        log(`${name}: 실패 — ${r.err}`);
+        log(`${name}: failed — ${r.err}`);
       }
     }
     return failed ? 1 : 0;
@@ -94,14 +94,14 @@ export function run(argv, { root = central, log = console.log } = {}) {
   if (command === 'run') {
     const at = rest.indexOf('--');
     const line = (at >= 0 ? rest.slice(at + 1) : rest).join(' ').trim();
-    if (!line) throw new Error('사용법: node tools/repos.mjs run -- <명령>');
+    if (!line) throw new Error('Usage: node tools/repos.mjs run -- <command>');
     const blocked = findAnyInstall(line);
-    if (blocked) throw new Error(`패키지 설치·삭제·실행 명령은 여러 리포에 한꺼번에 실행하지 않습니다(${blocked}). docs/dependency-policy.md`);
+    if (blocked) throw new Error(`Do not run package install, remove, or exec commands across several repos at once (${blocked}). See docs/dependency-policy.md`);
     let failed = 0;
     for (const name of names) {
       const dir = dirOf(name);
       if (!fs.existsSync(dir)) {
-        log(`== ${name}: 클론 없음`);
+        log(`== ${name}: not cloned`);
         continue;
       }
       log(`== ${name}`);
@@ -116,10 +116,10 @@ export function run(argv, { root = central, log = console.log } = {}) {
     const file = path.join(root, '.local', 'sirloinbh.code-workspace');
     fs.mkdirSync(path.dirname(file), { recursive: true });
     fs.writeFileSync(file, workspaceFile(names));
-    log(`${path.relative(root, file)}: 리포 ${names.length}개. VS Code에서 File → Open Workspace from File로 엽니다`);
+    log(`${path.relative(root, file)}: ${names.length} repos. Open it in VS Code with File → Open Workspace from File`);
     return 0;
   }
-  throw new Error('사용법: node tools/repos.mjs status [--fetch] | pull | run -- <명령> | workspace [--base <폴더>]');
+  throw new Error('Usage: node tools/repos.mjs status [--fetch] | pull | run -- <command> | workspace [--base <folder>]');
 }
 
 const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);

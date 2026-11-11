@@ -27,8 +27,8 @@ function gh(args) {
     : process.platform === 'win32'
       ? spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', path.join(toolDir, 'gh-project.ps1'), ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
       : spawnSync('gh', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
-  if (r.error) throw new Error(`gh를 실행하지 못했습니다: ${r.error.message}`);
-  if (r.status !== 0) throw new Error(`gh ${args.slice(0, 2).join(' ')} 실패 (종료 코드 ${r.status}): ${r.stderr.trim()}`);
+  if (r.error) throw new Error(`could not run gh: ${r.error.message}`);
+  if (r.status !== 0) throw new Error(`gh ${args.slice(0, 2).join(' ')} failed (exit code ${r.status}): ${r.stderr.trim()}`);
   return r.stdout;
 }
 
@@ -47,12 +47,12 @@ export function planIssue(labels, { defaultP3 = true } = {}) {
   const add = [];
   const priorities = [...new Set(names.map(priorityOf).filter(Boolean))].sort();
   if (!names.some((n) => /^priority\/P[0-4]$/.test(n))) {
-    if (priorities.length) add.push({ label: priorities[0], why: `기존 라벨 ${names.filter((n) => priorityOf(n) === priorities[0]).join(', ')}` });
-    else if (defaultP3) add.push({ label: 'priority/P3', why: '우선순위 라벨 없음 (std-backlog: 판단 근거 부족 → P3)' });
+    if (priorities.length) add.push({ label: priorities[0], why: `existing label ${names.filter((n) => priorityOf(n) === priorities[0]).join(', ')}` });
+    else if (defaultP3) add.push({ label: 'priority/P3', why: 'no priority label (std-backlog: not enough basis to judge → P3)' });
   }
   if (!names.some((n) => n.startsWith('type/'))) {
     const type = names.map((n) => TYPES[n]).find(Boolean);
-    if (type) add.push({ label: type, why: `기존 라벨 ${names.find((n) => TYPES[n])}` });
+    if (type) add.push({ label: type, why: `existing label ${names.find((n) => TYPES[n])}` });
   }
   return add;
 }
@@ -66,7 +66,7 @@ export function targetRepos(root = central) {
 }
 
 export function loadIssues(root = central, { state = 'open' } = {}) {
-  if (gh(['api', 'user', '--jq', '.login']).trim() !== OWNER) throw new Error(`GitHub 계정이 ${OWNER}가 아닙니다`);
+  if (gh(['api', 'user', '--jq', '.login']).trim() !== OWNER) throw new Error(`the GitHub account is not ${OWNER}`);
   // gh search has no "--state all": leaving the flag out returns open and closed issues.
   const stateArgs = state === 'all' ? [] : ['--state', state];
   const raw = gh(['search', 'issues', '--owner', OWNER, ...stateArgs, '--limit', '1000', '--json', 'repository,number,title,labels,state']);
@@ -93,7 +93,7 @@ export function buildPlan(issues, { keepUnlabeled = [], overrides = {} } = {}) {
       const override = overrides[`${i.repo}#${i.number}`] ?? overrides[`${i.repo.replace(`${OWNER}/`, '')}#${i.number}`];
       if (override && i.state === 'open' && !i.labels.some((n) => priorityOf(n))) {
         const at = add.findIndex((a) => a.label.startsWith('priority/'));
-        const item = { label: override, why: '지정값 (overrides)' };
+        const item = { label: override, why: 'set in overrides' };
         if (at >= 0) add[at] = item;
         else add.unshift(item);
       }
@@ -114,22 +114,22 @@ export function renderPlan(plan, issues, { removeOld = false } = {}) {
   const open = issues.filter((i) => i.state === 'open');
   const byRepo = new Map();
   for (const i of open) byRepo.set(i.repo, (byRepo.get(i.repo) ?? 0) + 1);
-  const lines = ['| 리포 | 열린 이슈 | 라벨을 더할 열린 이슈 | 더할 라벨 (이슈 수) | 근거 없음 → P3 |', '|---|---|---|---|---|'];
+  const lines = ['| Repo | Open issues | Open issues to label | Labels to add (issue count) | No basis → P3 |', '|---|---|---|---|---|'];
   for (const [repo, total] of [...byRepo].sort()) {
     const items = plan.filter((p) => p.repo === repo && p.state === 'open');
     const counts = new Map();
     for (const p of items) for (const a of p.add) counts.set(a.label, (counts.get(a.label) ?? 0) + 1);
-    const p3 = items.filter((p) => p.add.some((a) => a.why.startsWith('우선순위 라벨 없음'))).map((p) => `#${p.number}`);
-    lines.push(`| ${short(repo)} | ${total} | ${items.length} | ${[...counts].sort().map(([l, n]) => `\`${l}\` ${n}`).join(', ')} | ${p3.join(' ') || '없음'} |`);
+    const p3 = items.filter((p) => p.add.some((a) => a.why.startsWith('no priority label'))).map((p) => `#${p.number}`);
+    lines.push(`| ${short(repo)} | ${total} | ${items.length} | ${[...counts].sort().map(([l, n]) => `\`${l}\` ${n}`).join(', ')} | ${p3.join(' ') || 'none'} |`);
   }
   const closed = plan.filter((p) => p.state !== 'open').length;
-  if (closed) lines.push('', `닫힌 이슈 ${closed}개에도 기존 라벨에 대응하는 표준 라벨을 더합니다.`);
+  if (closed) lines.push('', `Also adds the matching standard labels to ${closed} closed issues based on their existing labels.`);
   const mapping = new Map();
   for (const i of issues) for (const n of i.labels.filter(isOldLabel)) mapping.set(n, priorityOf(n) ?? TYPES[n]);
-  lines.push('', '| 기존 라벨 | 표준 라벨 |', '|---|---|');
+  lines.push('', '| Existing label | Standard label |', '|---|---|');
   for (const [from, to] of [...mapping].sort()) lines.push(`| ${from} | \`${to}\` |`);
   if (removeOld) {
-    lines.push('', '지울 기존 라벨 (표준 라벨을 모두 더한 리포에서만):');
+    lines.push('', 'Existing labels to delete (only in repos where all standard labels were added):');
     for (const [repo, names] of [...oldLabelsByRepo(issues)].sort()) lines.push(`- ${short(repo)}: ${[...names].sort().join(', ')}`);
   }
   return lines.join('\n');
@@ -146,7 +146,7 @@ async function confirm(question) {
 
 export async function run(argv, { log = console.log, ask = confirm, root = central } = {}) {
   const [command, ...rest] = argv;
-  if (!['plan', 'apply'].includes(command)) throw new Error('사용법: node tools/labels.mjs plan | apply [--yes] [--keep-unlabeled <리포,리포>] [--overrides <파일>] [--remove-old]');
+  if (!['plan', 'apply'].includes(command)) throw new Error('Usage: node tools/labels.mjs plan | apply [--yes] [--keep-unlabeled <repo,repo>] [--overrides <file>] [--remove-old]');
   const opt = (name) => {
     const i = rest.indexOf(`--${name}`);
     return i >= 0 ? rest[i + 1] : undefined;
@@ -159,9 +159,9 @@ export async function run(argv, { log = console.log, ask = confirm, root = centr
   const plan = buildPlan(issues, { keepUnlabeled, overrides });
   log(renderPlan(plan, issues, { removeOld }));
   if (command === 'plan') return 0;
-  const question = `이슈 ${plan.length}개에 라벨을 더할까요?${removeOld ? ' 그 뒤 기존 라벨을 지웁니다' : ' 기존 라벨은 지우지 않습니다'} (y/N) `;
+  const question = `Add labels to ${plan.length} issues?${removeOld ? ' Existing labels will then be deleted.' : ' Existing labels will not be deleted.'} (y/N) `;
   if (!rest.includes('--yes') && !(await ask(question))) {
-    log('바꾸지 않았습니다.');
+    log('No changes made.');
     return 1;
   }
   // Standard labels must exist first; repositories outside the sync targets may not have them.
@@ -176,23 +176,23 @@ export async function run(argv, { log = console.log, ask = confirm, root = centr
       gh(['issue', 'edit', String(p.number), '--repo', p.repo, ...p.add.flatMap((a) => ['--add-label', a.label])]);
     } catch (error) {
       failedRepos.add(p.repo);
-      log(`실패: ${p.repo}#${p.number} — ${error.message}`);
+      log(`Failed: ${p.repo}#${p.number} — ${error.message}`);
     }
   }
-  log(`라벨을 더한 이슈 ${plan.length - plan.filter((p) => failedRepos.has(p.repo)).length}개 이상, 실패한 리포 ${failedRepos.size}개`);
+  log(`Issues labeled: at least ${plan.length - plan.filter((p) => failedRepos.has(p.repo)).length}, failed repos: ${failedRepos.size}`);
   if (removeOld) {
     for (const [repo, names] of oldLabelsByRepo(issues)) {
       if (failedRepos.has(repo)) {
-        log(`${repo}: 라벨 추가에 실패한 이슈가 있어 기존 라벨을 지우지 않음`);
+        log(`${repo}: some issues failed to get labels, so existing labels are not deleted`);
         continue;
       }
       for (const name of names) {
         try {
           gh(['label', 'delete', name, '--repo', repo, '--yes']);
-          log(`지움: ${repo} ${name}`);
+          log(`Deleted: ${repo} ${name}`);
         } catch (error) {
           failedRepos.add(repo);
-          log(`지우기 실패: ${repo} ${name} — ${error.message}`);
+          log(`Delete failed: ${repo} ${name} — ${error.message}`);
         }
       }
     }
