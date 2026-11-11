@@ -1,4 +1,4 @@
-// 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/common/.claude/hooks/에서
+// Managed file. Edit it in sirloinbh/project-standards templates/common/.claude/hooks/
 // Claude Code and Codex PreToolUse hook (#162, #180, docs/agent-guardrails.md): reads the Bash
 // or PowerShell command, splits it into simple commands, and exits 2 (block) when one of them
 // installs, removes, or runs packages. It complements the Claude Code permissions.deny prefix

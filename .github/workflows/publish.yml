@@ -68,6 +68,6 @@ jobs:
             echo
             echo "- Package: @sirloinbh/$PACKAGE@$VERSION"
             echo "- Commit: $GITHUB_SHA"
-            echo "- 배포 실행: $RUN_URL"
+            echo "- Deploy run: $RUN_URL"
           } > notes.md
           gh release create "$TAG" --title "@sirloinbh/$TAG" --notes-file notes.md --verify-tag
