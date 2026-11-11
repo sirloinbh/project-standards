@@ -1,6 +1,6 @@
 # Environment variables at a glance
 
-<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: 2026-10-25 18:15 UTC -->
+<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: 2026-11-11 07:18 UTC -->
 
 Rules: [env-conventions.md](env-conventions.md)
 
@@ -24,6 +24,9 @@ Rules: [env-conventions.md](env-conventions.md)
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
 | `PORT` | (no description) |  |  | `3102` |  | central |
 | `ANTHROPIC_API_KEY` | (no description) |  | yes | (secret) |  | central |
+| `HOLIDAY_API_KEY` | (no description) |  | yes | (secret) |  | central |
+| `WEB_BIND` | (no description) |  |  | `127.0.0.1` |  | central |
+| `WEB_PORT` | (no description) |  |  | `8102` |  | central |
 
 ## sirloinbh/health-log
 
@@ -54,13 +57,18 @@ Rules: [env-conventions.md](env-conventions.md)
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
 | `PORT` | (no description) |  |  | `3105` |  | central |
+| `KRX_API_KEY` | (no description) |  | yes | (secret) |  | central |
+| `TIINGO_API_KEY` | (no description) |  | yes | (secret) |  | central |
+| `KOREAEXIM_API_KEY` | (no description) |  | yes | (secret) |  | central |
+| `PRICE_SOURCE` | (no description) |  |  |  |  | central |
+| `PRICE_JOBS` | (no description) |  |  |  |  | central |
 
-## sirloinbh/english-study
+## sirloinbh/cert-manager
 
 | Key | Description | Required | Secret | Default | Used by | Section |
 |---|---|---|---|---|---|---|
-| `POSTGRES_DB` | (no description) |  |  | `english` |  | central |
-| `POSTGRES_USER` | (no description) |  |  | `english` |  | central |
+| `POSTGRES_DB` | (no description) |  |  | `cert` |  | central |
+| `POSTGRES_USER` | (no description) |  |  | `cert` |  | central |
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  | central |
 | `PORT` | (no description) |  |  | `3106` |  | central |
