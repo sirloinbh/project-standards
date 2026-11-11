@@ -30,7 +30,7 @@ test('only workout-memo turns the trial on, and the feature maps to the template
 
 test('the shared app CI runs Lighthouse only with lighthouserc.json and never fails on it', () => {
   const ci = read('.github/workflows/reusable-app-ci.yml');
-  const step = ci.slice(ci.indexOf('name: 접근성·성능 점수'), ci.indexOf('name: 배포 스크립트 문법 검사'));
+  const step = ci.slice(ci.indexOf('name: Accessibility and performance scores'), ci.indexOf('name: Deploy script syntax check'));
   assert.match(step, /if: hashFiles\('lighthouserc\.json'\) != ''/);
   assert.match(step, /node_modules\/\.bin\/lhci autorun \|\| echo "::warning title=Lighthouse CI::/);
   assert.match(step, /if: always\(\) && steps\.lighthouse\.outcome != 'skipped'/);

@@ -1,4 +1,4 @@
-# 중앙 리포 자체 검증: 테스트, 레지스트리 충돌, 생성 문서·토큰 CSS 최신 여부, 패키지 규칙, 워크플로 고정.
+# Checks of the central repo itself: tests, registry conflicts, generated docs and token CSS up to date, package rules, workflow pinning.
 name: ci
 
 on:
@@ -17,8 +17,8 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.21.0'
-          package-manager-cache: false # lockfile이 없어 setup-node v5+ 자동 캐시가 실패하므로 끈다
-      # 외부 npm 의존성이 없으므로 npm ci 없이 바로 검사한다.
+          package-manager-cache: false # turned off because there is no lockfile, so the setup-node v5+ auto cache would fail
+      # There are no external npm dependencies, so checks run without npm ci.
       - run: npm run check
       - run: node scripts/ioc-scan.mjs
       - run: node scripts/secret-scan.mjs
