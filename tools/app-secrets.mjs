@@ -30,9 +30,9 @@ function aws(args, profile) {
   const fake = process.env.APP_SECRETS_AWS;
   // No shell: arguments reach aws.exe as they are (AWS CLI v2 installs an executable).
   const r = fake ? spawnSync(process.execPath, [fake, ...full], { encoding: 'utf8' }) : spawnSync('aws', full, { encoding: 'utf8' });
-  if (r.error) throw new Error(`aws CLI를 실행하지 못했습니다: ${r.error.message}`);
+  if (r.error) throw new Error(`could not run the aws CLI: ${r.error.message}`);
   // stderr may name the parameter but never holds its value; stdout is not shown on failure.
-  if (r.status !== 0) throw new Error(`aws ${args.slice(0, 2).join(' ')} 실패 (종료 코드 ${r.status}): ${r.stderr.trim()}`);
+  if (r.status !== 0) throw new Error(`aws ${args.slice(0, 2).join(' ')} failed (exit code ${r.status}): ${r.stderr.trim()}`);
   return r.stdout;
 }
 
@@ -65,13 +65,13 @@ export async function run(argv, { root = central, log = console.log, input = rea
     return i >= 0 ? rest[i + 1] : undefined;
   };
   const profile = opt('profile') ?? process.env.SIRLOINBH_AWS_PROFILE;
-  if (!['check', 'pull', 'set'].includes(command)) throw new Error('사용법: node tools/app-secrets.mjs check|pull|set [--profile <aws 프로필>]');
-  if (!profile) throw new Error('--profile 또는 SIRLOINBH_AWS_PROFILE로 개인 AWS 프로필을 지정하세요');
+  if (!['check', 'pull', 'set'].includes(command)) throw new Error('Usage: node tools/app-secrets.mjs check|pull|set [--profile <aws profile>]');
+  if (!profile) throw new Error('Set a personal AWS profile with --profile or SIRLOINBH_AWS_PROFILE');
   const file = path.join(root, '.env');
 
   if (command === 'set') {
     const value = (await input()).trim();
-    if (!value) throw new Error('표준 입력으로 키 값을 넘기세요. 예: Get-Clipboard | node tools/app-secrets.mjs set --profile <프로필>');
+    if (!value) throw new Error('Pass the key value on standard input. Example: Get-Clipboard | node tools/app-secrets.mjs set --profile <profile>');
     // The value goes to the AWS CLI through a private temporary file, not as an argument.
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'app-secrets-'));
     const file = path.join(dir, 'value');
@@ -81,7 +81,7 @@ export async function run(argv, { root = central, log = console.log, input = rea
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
-    log(`SSM ${PARAMETER}: 저장함. 서버는 다음 배포부터, PC는 pull을 다시 실행하면 새 값을 씁니다`);
+    log(`SSM ${PARAMETER}: saved. The server uses the new value from the next deploy, and the PC uses it after you run pull again`);
     return 0;
   }
 
@@ -89,23 +89,23 @@ export async function run(argv, { root = central, log = console.log, input = rea
     let ok = true;
     try {
       const modified = aws(['ssm', 'get-parameter', '--name', PARAMETER, '--query', 'Parameter.LastModifiedDate', '--output', 'text'], profile).trim();
-      log(`SSM ${PARAMETER}: 있음 (마지막 변경 ${modified})`);
+      log(`SSM ${PARAMETER}: present (last modified ${modified})`);
     } catch (error) {
       ok = false;
-      log(`SSM ${PARAMETER}: 읽지 못함 — ${error.message}`);
+      log(`SSM ${PARAMETER}: could not read — ${error.message}`);
     }
     const has = fs.existsSync(file) && hasEnvValue(fs.readFileSync(file, 'utf8'), ENV_KEY);
     if (!has) ok = false;
-    log(`project-standards/.env ${ENV_KEY}: ${has ? '있음' : '없음'}`);
-    log(`이 키를 읽는 앱: ${claudeApps(root).join(', ') || '없음'}`);
+    log(`project-standards/.env ${ENV_KEY}: ${has ? 'present' : 'missing'}`);
+    log(`Apps that read this key: ${claudeApps(root).join(', ') || 'none'}`);
     return ok ? 0 : 1;
   }
 
   // pull
   const value = aws(['ssm', 'get-parameter', '--name', PARAMETER, '--with-decryption', '--query', 'Parameter.Value', '--output', 'text'], profile).trim();
-  if (!value) throw new Error(`SSM ${PARAMETER} 값이 비어 있습니다`);
+  if (!value) throw new Error(`SSM ${PARAMETER} value is empty`);
   fs.writeFileSync(file, setEnvLine(fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '', ENV_KEY, value), { mode: 0o600 });
-  log(`project-standards/.env ${ENV_KEY}: 넣음`);
+  log(`project-standards/.env ${ENV_KEY}: written`);
   return 0;
 }
 

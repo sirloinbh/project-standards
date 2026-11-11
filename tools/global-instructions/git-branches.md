@@ -1,11 +1,11 @@
-## 로컬 브랜치는 git CLI로 관리
+## Manage local branches with the git CLI
 
-모든 프로젝트의 로컬 Git 브랜치는 git CLI로 관리한다. 원본 규칙은 `sirloinbh/project-standards`의 std-git-writing 스킬 "로컬 브랜치 관리 (git CLI)"이다.
+Local Git branches in every project are managed with the git CLI. The source rule is the std-git-writing skill section "Local branch management (git CLI)" in `sirloinbh/project-standards`.
 
-- 작업 시작: `git status`로 현재 브랜치와 작업 트리를 확인한 뒤 `git fetch origin`, `git switch --create <브랜치> origin/main` 순서로 만든다. 로컬 main은 건드리지 않는다.
-- 병합 후 정리: PR 병합을 확인한 뒤 `git switch main`, `git pull --ff-only`, `git branch --delete <브랜치>`, `git fetch --prune origin` 순서로 실행한다.
-- 커밋하지 않은 변경이 있거나, 지울 브랜치가 병합되지 않았거나, 다른 세션이나 worktree가 쓰고 있거나, `git pull --ff-only`가 실패하면 멈추고 사용자에게 알린다.
-- `git branch --delete`가 거부되면 `--force`나 `-D`로 바꾸지 않고 이유를 보고한다.
-- 폴더 잠금으로 git이 다시 시도할지 물으면 `n`으로 끝내고, 같은 명령을 반복하지 않는다. `git branch --list <브랜치>`로 결과를 확인해 보고한다.
-- `git branch -D`, `git reset --hard`, `git clean`, `git stash`, `git rebase`는 사용자가 요청하고 승인한 경우에만 쓴다. 강제 push와 main 직접 push는 하지 않는다.
-- `pr merge`에 `--delete-branch`를 붙이지 않는다.
+- Start work: check the current branch and working tree with `git status`, then run `git fetch origin` and `git switch --create <branch> origin/main` in that order. Do not touch local main.
+- Clean up after merge: after confirming the PR is merged, run `git switch main`, `git pull --ff-only`, `git branch --delete <branch>`, and `git fetch --prune origin` in that order.
+- Stop and tell the user if there are uncommitted changes, the branch to delete is not merged, another session or worktree uses it, or `git pull --ff-only` fails.
+- If `git branch --delete` is refused, do not switch to `--force` or `-D`; report the reason.
+- If a folder lock makes git ask whether to retry, answer `n` and do not repeat the command. Check the result with `git branch --list <branch>` and report it.
+- Use `git branch -D`, `git reset --hard`, `git clean`, `git stash`, and `git rebase` only when the user asked for and approved them. Never force-push or push directly to main.
+- Do not add `--delete-branch` to `pr merge`.

@@ -574,7 +574,7 @@ async function prepare(job) {
     fs.mkdirSync(path.dirname(note), { recursive: true });
     fs.writeFileSync(
       note,
-      `# #${job.id} ${job.issue.title}\n\n- 이슈: ${job.issue.url}\n- 브랜치: ${job.branch}\n\n## 변경 및 검증\n\n작업 에이전트가 실제 변경·검증 결과를 기록한다.\n`,
+      `# #${job.id} ${job.issue.title}\n\n- Issue: ${job.issue.url}\n- Branch: ${job.branch}\n\n## Changes and verification\n\nThe worker agent records the actual changes and verification results.\n`,
     );
   }
   await npm(job, 'ci');
@@ -762,7 +762,7 @@ async function delivery(job) {
   const body = path.join(jobDir(job.id), 'pr-body.md');
   fs.writeFileSync(
     body,
-    `## 문제와 결과\n\n${job.issue.title}\n\n## 변경\n\n${job.results.implementation.summary}\n\n## 독립 검토\n\n${job.results.review.summary}\n\n## 검증\n\n- ${job.results.verification.summary}\n- DB 통합 테스트: ${job.results.verification.db ? '전용 TEST_DATABASE_URL 설정, 상세 결과는 작업 기록 참고' : '로컬 미실행; CI 결과 확인 필요'}\n- 화면 증거·검증 한계: ${changeRecord(job)} 참고\n- CI 통과 확인 전 draft 유지. ${repoConfig.autoMerge === true ? 'CI 통과 후 워커가 병합합니다.' : 'CI 통과 후 ready로 바꾸고, 병합은 사용자가 합니다.'}\n\nCloses #${job.id}\n`,
+    `## Problem and result\n\n${job.issue.title}\n\n## Changes\n\n${job.results.implementation.summary}\n\n## Independent review\n\n${job.results.review.summary}\n\n## Verification\n\n- ${job.results.verification.summary}\n- DB integration tests: ${job.results.verification.db ? 'dedicated TEST_DATABASE_URL set; see the change record for details' : 'not run locally; check the CI result'}\n- UI evidence and verification limits: see ${changeRecord(job)}\n- Stays draft until CI passes. ${repoConfig.autoMerge === true ? 'The worker merges after CI passes.' : 'After CI passes it is marked ready, and the user merges it.'}\n\nCloses #${job.id}\n`,
   );
   let url;
   if (prs.length) {
