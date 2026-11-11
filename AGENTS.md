@@ -39,26 +39,12 @@
 | `npm run docs`, `npm run tokens` | 레지스트리·토큰을 바꾼 뒤 생성 문서를 다시 만들 때 |
 | `npm run sync:preview` | 하위 리포가 받을 파일을 `.local/sync-preview/`에 미리 볼 때 |
 
-## 원본과 복제본
+## Path-specific rules
 
-| 바꿀 것 | 원본 | 복제본 (직접 고치지 않음) |
-|---|---|---|
-| 하위 리포에 복사되는 파일 | `templates/common/`, `templates/app/`, `templates/infra/`, 기능별 `templates/ui/`·`e2e/`·`vitest/` | 하위 리포의 중앙 관리 파일(동기화 PR로 반영) |
-| 공통 스킬 | `templates/common/skills/` | 이 리포의 `.claude/skills/` |
-| 이슈·PR 템플릿 | `templates/common/.github/` | 이 리포의 `.github/` 템플릿 |
-| 에이전트 차단 설정 | `templates/common/.claude/`, `templates/common/.codex/` | 이 리포의 `.claude/`, `.codex/` |
-| 도구 버전, 외부 Action, 앱 공통 의존성 버전 | `versions.json` | `docs/versions.md`(생성 문서), 앱 `package.json` 관리 필드 |
-| 포트·DB 이름 등 프로젝트 값 | `registry/projects.json` | `docs/projects.md`(생성 문서) |
-| 동기화 대상·적용 단계 | `sync.config.json` | — |
+These live in `.claude/rules/`. Claude Code loads each one when it works on matching files; other agents read the matching file before changing those paths.
 
-동기화 스크립트는 하위 리포만 갱신한다. 이 리포의 복제본은 원본을 고친 뒤 같은 PR에서 그대로 복사한다.
-
-## 동기화와 배포
-
-- **동기화:** 중앙 main에 병합되면 `sync.yml`이 `rollout ≤ maxRollout`인 리포마다 동기화 PR(`chore/standards-sync-*`)을 열거나 갱신한다. GitHub App 변수(`SYNC_APP_ID`)가 없으면 건너뛴다. `maxRollout`은 사용자 승인 후에만 올린다.
-- **공유 패키지:** 태그(`<패키지>/v<버전>`) push로만 배포한다(`publish.yml`). 태그 push는 사용자 단계다. 배포 후 `versions.json`의 패키지 버전을 올리는 PR은 에이전트가 한다.
-- **준수 현황:** `compliance.yml`이 매일 하위 리포 상태를 모아 `docs/compliance.md`, `docs/env-matrix.md` 갱신 PR을 연다. App 변수가 없으면 건너뛴다.
-- **앱 배포:** 서버에 배포된 앱(지금은 workout-memo)은 main 병합이 곧 운영 배포다(서버의 pull 방식 autodeploy). 나머지 앱 7개는 아직 서버에 없다. 처음 배포할 때 서버 `/opt/<앱>/.env`에 `NODE_AUTH_TOKEN`(read:packages)이 있어야 Docker 빌드가 공유 패키지를 받는다. 하위 리포의 동기화 PR은 사용자가 병합한다.
+- [sources-and-copies.md](.claude/rules/sources-and-copies.md): which file is the source and which are copies (`templates/`, `.claude/`, `.codex/`, `.github/`, `versions.json`, `registry/`, `sync.config.json`). Edit the source and copy it in the same PR.
+- [sync-and-deploy.md](.claude/rules/sync-and-deploy.md): how sync, package releases, the compliance report, and app deploys work (`sync.config.json`, `packages/`, workflows, sync and compliance scripts).
 
 ## 금지 사항
 

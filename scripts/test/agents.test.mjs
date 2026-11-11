@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -40,6 +40,35 @@ test('the central CLAUDE.md imports AGENTS.md and only links the requirements so
   assert.match(claude, /^@AGENTS\.md$/m);
   assert.doesNotMatch(claude, /^@docs\//m);
   assert.ok(claude.includes('[docs/bootstrap-prompt.md](docs/bootstrap-prompt.md)'));
+});
+
+// Claude Code loads CLAUDE.md, its imports, and rules without `paths:` every session; the total stays under
+// 200 lines (#448). Synced files may use 120, leaving 80 for AGENTS.project.md and the global ~/.claude/CLAUDE.md.
+const lineCount = (text) => text.replace(/\n$/, '').split('\n').length;
+const SYNCED_BUDGET = 120;
+const CENTRAL_BUDGET = 180;
+
+test('every synced rule file is path-scoped, so it loads only for matching files', () => {
+  for (const { target, files } of rendered) {
+    for (const [file, { content }] of Object.entries(files)) {
+      if (!file.startsWith('.claude/rules/')) continue;
+      assert.match(content, /^---\npaths:\n( {2}- "[^"]+"\n)+---\n/, `${target.repo} ${file}`);
+    }
+  }
+});
+
+test('the instructions loaded every session stay within the line budget', () => {
+  for (const { target, files } of apps) {
+    const total = lineCount(files['CLAUDE.md'].content) + lineCount(files['AGENTS.md'].content);
+    assert.ok(total <= SYNCED_BUDGET, `${target.repo}: ${total} lines`);
+  }
+  const central = ['CLAUDE.md', 'AGENTS.md'].map((f) => lineCount(readFileSync(path.join(root, f), 'utf8')));
+  const always = readdirSync(path.join(root, '.claude/rules'))
+    .map((f) => readFileSync(path.join(root, '.claude/rules', f), 'utf8'))
+    .filter((text) => !/^---\npaths:/.test(text.replace(/\r\n/g, '\n')))
+    .map(lineCount);
+  const total = [...central, ...always].reduce((a, b) => a + b, 0);
+  assert.ok(total <= CENTRAL_BUDGET, `project-standards: ${total} lines`);
 });
 
 test('app repositories get all six shared skills, mirrored into .claude/skills', () => {
