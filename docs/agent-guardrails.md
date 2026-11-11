@@ -85,6 +85,27 @@ The commands in "Local branch management (git CLI)" of [std-git-writing](../temp
 - Pushing a work branch, `git add`, and `git commit` are not in these rules. They follow each PC's settings.
 - If the global instructions (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`) still have a Fork rule section, the Claude Code `SessionStart` hook (`.claude/hooks/pc-setup-notice.mjs`) tells the user how to fix it at session start (#368). It only reads, and an error does not block the session. It does not appear in clones from before they received the repo's hook, or in Codex sessions.
 
+## Hook for AGENTS.md prohibitions (#450)
+
+A sentence in AGENTS.md holds only while the agent remembers it, and `ask` rules may not stop anything when a session skips permission prompts (#418). So every prohibition that a tool call can show is blocked by the `PreToolUse` hook `.claude/hooks/block-forbidden-commands.mjs`. It exits with code 2 and prints the reason and the right way (for example the `ghp` wrapper). It reuses the command splitter of `block-package-installs.mjs`, so it has the same limits (commands in variables or script files are not seen).
+
+| Prohibition (central and app AGENTS.md, global instructions) | Enforced by |
+|---|---|
+| Installing, removing, or running packages (`npm install`, `npx`, ...) | Hook `block-package-installs.mjs` + `permissions.deny` + Codex rules |
+| Force push; push to `main` or `master` (`git push origin main`, `HEAD:main`, `refs/heads/main`, `--all`, `--mirror`, a bare `git push` while on `main`) | Hook + `permissions.deny` (prefix forms only) + Codex `git-branch.rules` |
+| Pushing package tags (`<package>/v<version>`, `--tags`, `--follow-tags`) | Hook |
+| Committing secrets: `git add` of `.env` / `.env.*` (not `.env.example`), `*.tfstate`, `*.pem`, `*.p12`, `*.pfx`, `*.dump`, `*private-key*` | Hook. `git add -A` relies on `.gitignore`; `npm run check` runs `secrets:check` in this repo |
+| Remote changes through the default `gh` (company account) on Windows: `gh pr/issue/repo/release/workflow/run/label/... <verb>` other than list/view/status/diff/checks/watch/download/checkout/clone; `gh api` with a non-GET method, with fields, or with a GraphQL mutation | Hook. Allowed when `GH_CONFIG_DIR` points to `gh-personal`. Not checked on Linux (devcontainers) |
+| `pr merge --delete-branch` (`-d`) through `gh` or the wrapper | Hook |
+| Editing the `.claude/skills/` copies with Edit, Write, or NotebookEdit | Hook. Shell copies (`cp`, `npm run skills:sync`) stay allowed because that is how copies are made |
+| `git reset --hard`, `git clean`, `git stash`, `git rebase`, `git branch -D`, `git switch -f` | `permissions.ask` is enough: they are sometimes right, and the user decides |
+| Pushing directly to downstream or subtree repos (`scripts/push-repositories.ps1`), merging downstream PRs, raising `maxRollout`, doing user steps, writing secrets into docs, PRs, or logs, overwriting user changes | Sentence in AGENTS.md: legitimate uses look the same as the forbidden ones, so a hook cannot tell them apart |
+
+- The hook runs before the permission check. A fresh `claude -p` session that explicitly allowed `git add .env` and `git push origin main` with `--allowedTools` was still blocked by the hook, and nothing was staged (2026-11-11). Claude Code runs `PreToolUse` hooks in every permission mode, `bypassPermissions` included (hooks docs).
+- Read-only checks: a bare `git push` asks git for the current branch (`git symbolic-ref`). Nothing else touches the repository.
+- **Codex:** the hook keeps the `main()` export and reads `tool_name` `Bash` and `tool_input.command`, so `.codex/hooks.json` can call it the same way as the package hook. That is not done yet, because a changed Codex hook file must be trusted again with `/hooks` in every repo. Codex file edits (`apply_patch`) are not covered.
+- If you change what the hook blocks or allows, add examples to `scripts/test/forbidden-command-hook.test.mjs`.
+
 ## What CLAUDE.md loads every session (#447)
 
 Claude Code reads `CLAUDE.md` at session start, but it does not follow markdown links such as `[AGENTS.md](AGENTS.md)`. Only lines of the form `@<path>` (imports) pull another file into every session. So the rules in AGENTS.md apply only when CLAUDE.md imports it.
@@ -97,7 +118,7 @@ Claude Code reads `CLAUDE.md` at session start, but it does not follow markdown 
 
 ## How to change
 
-- The sources are `templates/common/.claude/settings.json.tmpl`, `templates/common/.claude/hooks/block-package-installs.mjs`, `templates/common/.codex/rules/package-installs.rules`, `templates/common/.codex/rules/git-branch.rules`, and `templates/common/.codex/hooks.json.tmpl`. If the Codex hook settings change, the user must trust them again with `/hooks` in each repo, so change them only when really needed. The hook script is used by both Claude Code (`node <file>`) and Codex (calling `main()` with `node -e`), so keep the `main` export. The deny list and the Codex rules must block the same commands (a test compares them). Also fix the central repo's `.claude/settings.json`, `.claude/hooks/`, and `.codex/rules/`.
+- The sources are `templates/common/.claude/settings.json.tmpl`, `templates/common/.claude/hooks/block-package-installs.mjs`, `templates/common/.claude/hooks/block-forbidden-commands.mjs` (#450), `templates/common/.codex/rules/package-installs.rules`, `templates/common/.codex/rules/git-branch.rules`, and `templates/common/.codex/hooks.json.tmpl`. If the Codex hook settings change, the user must trust them again with `/hooks` in each repo, so change them only when really needed. The hook script is used by both Claude Code (`node <file>`) and Codex (calling `main()` with `node -e`), so keep the `main` export. The deny list and the Codex rules must block the same commands (a test compares them). Also fix the central repo's `.claude/settings.json`, `.claude/hooks/`, and `.codex/rules/`.
 - If npm changes a command or alias, fix together the hook's `NPM_COMMANDS` and `NPM_ALIASES`, the deny list, and the two lists in the Codex rules (aliases, and abbreviations and camelCase). `scripts/test/agent-guardrails.test.mjs` reports missing abbreviation and camelCase forms.
 - If you change which commands the hook blocks or allows, add examples to the lists in `scripts/test/package-install-hook.test.mjs`.
 - Claude Code settings needed only by one repo go in `.claude/settings.local.json` (not committed). `.claude/settings.json` and `.claude/hooks/` are centrally managed files, so editing them makes standards-check fail.
