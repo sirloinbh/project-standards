@@ -1,4 +1,4 @@
-# 인프라 리포(shared-aws-infrastructure) 공통 CI. terraform apply는 하지 않는다(ADR-0005).
+# Shared CI for the infrastructure repo (shared-aws-infrastructure). It never runs terraform apply (ADR-0005).
 name: reusable-infra-ci
 
 on:
@@ -22,12 +22,12 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ inputs.node-version }}
-          package-manager-cache: false # npm ci를 하지 않으므로 setup-node v5+ 자동 캐시를 끈다
-      - name: 중앙 표준 검사
+          package-manager-cache: false # turned off because npm ci is not run, so the setup-node v5+ auto cache is not needed
+      - name: Central standards check
         run: node .standards/check.mjs
-      - name: 공급망 점검
+      - name: Supply chain check
         run: node .standards/ioc-scan.mjs
-      - name: 비밀값 유출 점검 (커밋된 토큰·키, .env)
+      - name: Secret leak check (committed tokens and keys, .env)
         run: node .standards/secret-scan.mjs
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
@@ -35,7 +35,7 @@ jobs:
       - run: terraform fmt -check -recursive
       - run: terraform init -backend=false -input=false
       - run: terraform validate
-      - name: 셸 스크립트 문법 검사
+      - name: Shell script syntax check
         run: |
           status=0
           while IFS= read -r -d '' script; do bash -n "$script" || status=1; done < <(find . -name '*.sh' -not -path './.terraform/*' -print0)
