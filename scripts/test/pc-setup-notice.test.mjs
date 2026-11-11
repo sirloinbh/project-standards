@@ -33,7 +33,7 @@ test('a Fork section in the global instructions produces a notice shown to the u
   assert.match(out.systemMessage, /tools\\install\.ps1/);
   assert.match(out.systemMessage, /check-git-permissions\.mjs/);
   assert.equal(out.hookSpecificOutput.hookEventName, 'SessionStart');
-  assert.match(out.hookSpecificOutput.additionalContext, /사용자에게 이 내용을 알리고/);
+  assert.match(out.hookSpecificOutput.additionalContext, /tell the user this/);
 });
 
 test('nothing is printed when the rule is applied, the files are missing, or Fork is only mentioned in text', () => {

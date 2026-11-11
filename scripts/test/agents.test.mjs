@@ -99,7 +99,7 @@ test('project-specific skill text uses the project title and repository', () => 
   const study = apps.find((r) => r.target.project === 'study-log').files;
   assert.match(study['skills/std-testing/SKILL.md'].content, /# Study Log 테스트 작성과 실행/);
   assert.match(study['skills/std-foundation/SKILL.md'].content, /# Study Log 개발 기반/);
-  assert.match(study['skills/std-implementation/SKILL.md'].content, /이 스킬은 `sirloinbh\/study-log` 리포의 변경 작업에 적용한다/);
+  assert.match(study['skills/std-implementation/SKILL.md'].content, /This skill applies to changes in the `sirloinbh\/study-log` repo/);
 });
 
 test('CI callers pin the central workflow to the synced commit and pass registry values', () => {
@@ -115,7 +115,7 @@ test('CI callers pin the central workflow to the synced commit and pass registry
 
 test('the infra repository gets the common skills but no app-only files', () => {
   const infra = rendered.find((r) => r.target.profile === 'infra').files;
-  assert.match(infra['skills/std-implementation/SKILL.md'].content, /`sirloinbh\/shared-aws-infrastructure` 리포/);
+  assert.match(infra['skills/std-implementation/SKILL.md'].content, /`sirloinbh\/shared-aws-infrastructure` repo/);
   for (const appOnly of ['AGENTS.md', 'skills/std-testing/SKILL.md', '.npmrc']) assert.equal(infra[appOnly], undefined, appOnly);
   assert.match(infra['skills/std-communication/SKILL.md'].content, /Every explanation addressed to the user is written in English/);
   assert.equal(infra['.claude/skills/std-communication/SKILL.md'].content, infra['skills/std-communication/SKILL.md'].content);
