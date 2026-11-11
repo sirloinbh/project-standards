@@ -1,5 +1,5 @@
-# 중앙 main이 바뀌면 maxRollout 이하인 하위 리포마다 동기화 PR을 열거나 갱신한다.
-# GitHub App(project-standards-sync)이 만들어지기 전(vars.SYNC_APP_ID 없음)에는 건너뛴다(docs/github-app.md).
+# When central main changes, opens or updates a sync PR for each downstream repo at or below maxRollout.
+# Skipped before the GitHub App (project-standards-sync) exists (no vars.SYNC_APP_ID) (docs/github-app.md).
 name: sync
 
 on:
@@ -9,9 +9,9 @@ on:
 
 permissions:
   contents: read
-  actions: read # 패키지 Release에 적힌 publish.yml 실행을 확인한다. App에는 Actions 권한이 없다(#205)
+  actions: read # reads the publish.yml run recorded in the package Release. The App has no Actions permission (#205)
 
-# 동기화는 한 번에 하나씩, 순서대로 실행한다(진행 중인 실행을 취소하지 않는다).
+# Syncs run one at a time, in order (a run in progress is not cancelled).
 concurrency:
   group: sync
   cancel-in-progress: false
@@ -23,16 +23,16 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0 # 공통 CI를 마지막으로 바꾼 커밋을 찾기 위해 전체 이력이 필요하다
+          fetch-depth: 0 # the full history is needed to find the last commit that changed the shared CI
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '24.21.0'
-          package-manager-cache: false # lockfile이 없어 setup-node v5+ 자동 캐시가 실패하므로 끈다
-      - name: 중앙 검사 (실패하면 동기화하지 않음)
+          package-manager-cache: false # turned off because there is no lockfile, so the setup-node v5+ auto cache would fail
+      - name: Central checks (no sync if they fail)
         run: npm run check
-      - name: 동기화 PR 열기·갱신
+      - name: Open or update sync PRs
         env:
           SYNC_APP_ID: ${{ vars.SYNC_APP_ID }}
           SYNC_APP_PRIVATE_KEY: ${{ secrets.SYNC_APP_PRIVATE_KEY }}
-          GITHUB_TOKEN: ${{ github.token }} # 중앙 리포 읽기 전용(Release, 배포 실행)
+          GITHUB_TOKEN: ${{ github.token }} # read-only access to the central repo (Release, publish run)
         run: node scripts/sync.mjs --apply
