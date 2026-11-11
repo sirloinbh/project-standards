@@ -113,8 +113,9 @@ Claude Code reads `CLAUDE.md` at session start, but it does not follow markdown 
 - **Import** a file when every session needs it: the work procedure, prohibited actions, and verification commands. The central `CLAUDE.md` imports `@AGENTS.md`. The app template `templates/app/CLAUDE.md.tmpl` imports `@AGENTS.md` and `@AGENTS.project.md`.
 - **Link** a file when only some tasks need it, such as the requirements source `docs/bootstrap-prompt.md`, design docs, and rule docs under `docs/`. An imported file costs context in every session; a linked file costs nothing until it is opened.
 - AGENTS.md stays the single source because Codex reads it directly. CLAUDE.md only imports it and adds Claude-specific lines; it does not copy rules.
-- Keep the total loaded every session (global `~/.claude/CLAUDE.md` + `CLAUDE.md` + imported files) under 200 lines. Path- and task-specific rules move to `.claude/rules/` and skills (#448, #449).
-- `scripts/test/agents.test.mjs` checks that both CLAUDE.md files import AGENTS.md and that the central one does not import anything under `docs/`.
+- Keep the total loaded every session (global `~/.claude/CLAUDE.md` + `CLAUDE.md` + imported files + rules without `paths:`) under 200 lines. Task-specific guides move to skills (#449).
+- **Path-specific rules (#448)** live in `.claude/rules/*.md` with a `paths:` list in the front matter. Claude Code loads such a file only after it reads or edits a matching file. Apps get `database.md`, `backend.md`, `frontend.md`, and `docs-and-skills.md` from `templates/app/.claude/rules/`. This repo has its own `sources-and-copies.md` and `sync-and-deploy.md`, which are not synced. AGENTS.md keeps a one-line pointer to each, because Codex does not read `.claude/rules/`.
+- `scripts/test/agents.test.mjs` checks that both CLAUDE.md files import AGENTS.md, that the central one does not import anything under `docs/`, that every synced rule file has `paths:`, and the budget: synced CLAUDE.md + AGENTS.md at most 120 lines per app (leaving 80 for `AGENTS.project.md` and the global file), and at most 180 lines in this repo. `AGENTS.project.md` belongs to each project, so it is measured in the change records, not tested here.
 
 ## How to change
 
