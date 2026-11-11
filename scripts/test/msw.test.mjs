@@ -20,7 +20,7 @@ test('the mock reads the contract, fails on requests outside it, and ships its o
   const helper = read('templates/msw/frontend/src/test/contract-api.ts');
   assert.match(helper, /from '\.\.\/\.\.\/\.\.\/docs\/openapi\.json\?raw'/);
   assert.match(helper, /onUnhandledFrame: async/);
-  assert.match(helper, /throw new Error\(`계약\(docs\/openapi\.json\)에 없는 요청/);
+  assert.match(helper, /throw new Error\(`Requests not in the contract \(docs\/openapi\.json\)/);
   // A use* name would trip react-hooks/rules-of-hooks at the top of a test file.
   assert.doesNotMatch(helper, /export function use[A-Z]/);
   assert.ok(fs.existsSync(path.join(root, 'templates/msw/frontend/src/test/contract-api.test.ts')));

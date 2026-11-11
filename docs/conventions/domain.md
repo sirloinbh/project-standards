@@ -48,7 +48,7 @@ Basis: the rule "dates are `YYYY-MM-DD`, the service time zone is `Asia/Seoul`" 
 - Storage uses `bigint`, because things like asset totals can exceed the `integer` range (about 2.1 billion).
 - pg returns `bigint` as a string. When sending it through the API, check it with `Number.isSafeInteger` and then convert it to a number.
 - The direction of income and expense is shown by a kind field (`kind: 'income' | 'expense'`), not by sign, and amounts are stored as 0 or more.
-- On screen, add thousands separators and `원`: `12,500원`. Use `Intl.NumberFormat('ko-KR')`.
+- On screen, show won with the `₩` sign and thousands separators: `₩12,500`. Use `new Intl.NumberFormat('en-US', { style: 'currency', currency: 'KRW' })`. The currency stays KRW; only the display is English (#457).
 
 ### Foreign currency, quantity, and exchange rate
 
@@ -74,9 +74,9 @@ Apps that handle stock quantities, foreign currency amounts, and exchange rates 
 
 ## Quantities and units
 
-- Use the metric system: weight `kg`, length `cm`, time `분` (minutes), calories `kcal`.
+- Use the metric system: weight `kg`, length `cm`, time `min`, calories `kcal`.
 - A unit is fixed to one per field. Input screens do not accept other units (lb and so on).
-- Make the unit visible in the field name (`duration_minutes`) or in the label or comment of the contract schema (`kg('총중량')`). If neither has it, the unit has to be guessed, so add it.
+- Make the unit visible in the field name (`duration_minutes`) or in the label or comment of the contract schema (`kg('Total weight')`). If neither has it, the unit has to be guessed, so add it.
 - Durations are in minutes by default. If the unit of external material or an official rule is seconds or calendar months, that unit may be used. It is still an `integer`, the name shows the unit (`duration_seconds`, `validity_months`), and the range is limited with `CHECK (… > 0)`. Basis: cert-manager's track length (LRCLIB and MusicBrainz use seconds and milliseconds) and certificate validity (official guidance says "2 years", "3 years").
 - Calendar months are added to the date without converting to days. If the resulting month lacks the same day, it is set to the last day of that month. This is the same as PostgreSQL `date + interval`. Example: `2024-02-29` + 24 months = `2026-02-28`.
 - Measurements that need decimals (weight, body weight, body fat percentage) are stored with fixed digits such as `numeric(7,2)`. Do not use `real` or `double precision`. Basis: `weight numeric(7,2)` in workout-memo `001_initial.sql`.

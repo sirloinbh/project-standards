@@ -15,10 +15,10 @@ These are the shadcn/ui base components all 8 apps use in the same form (#123, [
 | `badge.tsx` | `Badge`, `badgeVariants` | `variant`: default, secondary, success, warning, destructive, outline |
 | `sonner.tsx` | `Toaster`, `toast` | Place `<Toaster />` once at the app root. The theme follows the `light` or `dark` class on `<html>`, or the system setting if there is none |
 | `skeleton.tsx` | `Skeleton`, `SkeletonText`, `SkeletonCard`, `SkeletonList` | Hidden from screen readers. Put `aria-busy` and a name on the loading area |
-| `spinner.tsx` | `Spinner`, `spinnerVariants` | `size`: sm (16px), md (24px), lg (32px). `role="status"`, default name "불러오는 중" |
+| `spinner.tsx` | `Spinner`, `spinnerVariants` | `size`: sm (16px), md (24px), lg (32px). `role="status"`, default name "Loading" |
 | `empty-state.tsx` | `EmptyState` | Icon, title, description, next action (button). The title level is `headingLevel` |
 | `dialog.tsx` | `Dialog`, `DialogTrigger`, `DialogContent`, `DialogHeader`, `DialogFooter`, `DialogTitle`, `DialogDescription`, `DialogClose` | Modal. [Shared layout](layout.md) |
-| `confirm-dialog.tsx` | `ConfirmDialog` | Asks before an irreversible action such as delete (#311). Use it instead of the browser `confirm()`. Open it with `trigger` (the opening button) or `open` and `onOpenChange`. If opened without a `trigger`, there is nowhere for focus to return after closing, so specify it with `returnFocusRef` (#356). If `onConfirm` returns a Promise, the buttons are blocked until it finishes; on success it closes, and on failure it stays open. The default labels are "삭제" and "취소", and when `destructive` (default `true`), the confirm button has the destructive look |
+| `confirm-dialog.tsx` | `ConfirmDialog` | Asks before an irreversible action such as delete (#311). Use it instead of the browser `confirm()`. Open it with `trigger` (the opening button) or `open` and `onOpenChange`. If opened without a `trigger`, there is nowhere for focus to return after closing, so specify it with `returnFocusRef` (#356). If `onConfirm` returns a Promise, the buttons are blocked until it finishes; on success it closes, and on failure it stays open. The default labels are "Delete" and "Cancel", and when `destructive` (default `true`), the confirm button has the destructive look |
 | `notice.tsx` | `Notice` | In-screen notification (#311). `role="status"` when `notice.kind` is `status`, `role="alert"` when `error`. Renders nothing if there is no value. For passing notifications not tied to one place, use `toast` |
 | `sheet.tsx` | `Sheet`, `SheetTrigger`, `SheetContent` (`side`), `SheetHeader`, `SheetFooter`, `SheetTitle`, `SheetDescription`, `SheetClose` | Edge panel |
 | `drawer.tsx` | `Drawer`, `DrawerTrigger`, `DrawerContent`, `DrawerHeader`, `DrawerFooter`, `DrawerTitle`, `DrawerDescription`, `DrawerClose` | Bottom panel (vaul). Focus moves inside when opened |
@@ -29,7 +29,7 @@ A `*.test.tsx` (Vitest, Testing Library) for each component is synced along with
 
 ## Loading screens
 
-While loading, feature screens do not leave a blank screen or only text ("불러오는 중…"); they use the shared components (#312).
+While loading, feature screens do not leave a blank screen or only text ("Loading…"); they use the shared components (#312).
 
 | Situation | What to use |
 |---|---|
@@ -44,7 +44,7 @@ While loading, feature screens do not leave a blank screen or only text ("불러
 
 | File | Exports | Note |
 |---|---|---|
-| `frontend/src/lib/api.ts` | `requestJson`, `RequestError` | App API requests (#310). On success, the JSON body, or `undefined` for `204`. On failure, a `RequestError` carrying the server's `error` message and `status` (a connection failure is "서버에 연결할 수 없습니다", with no `status`). The server-side counterpart is `backend/src/standard/http.ts` (#309) |
+| `frontend/src/lib/api.ts` | `requestJson`, `RequestError` | App API requests (#310). On success, the JSON body, or `undefined` for `204`. On failure, a `RequestError` carrying the server's `error` message and `status` (a connection failure is "Cannot reach the server", with no `status`). The server-side counterpart is `backend/src/standard/http.ts` (#309) |
 | `frontend/src/lib/use-notice.ts` | `useNotice`, `errorText`, `NoticeValue` | `const { notice, status, error, clear } = useNotice()`. `error(e)` extracts the message from the thrown value (the server's text for a `RequestError`). On screen, use `<Notice notice={notice} />` |
 | `frontend/src/health.ts` | `Health`, `healthText` | Server status display text. 7 apps were using the same file. workout-memo does not use it, so it was left out with `allowedDifferences` |
 
