@@ -72,18 +72,18 @@ test('a repository that matches the standard passes without warnings', () => {
   const result = check();
   assert.deepEqual(result.problems, []);
   assert.deepEqual(result.warnings, []);
-  assert.match(formatReport(result), /^standards-check: 통과 \(중앙 sirloinbh\/project-standards@abcdef1\)$/);
+  assert.match(formatReport(result), /^standards-check: passed \(central sirloinbh\/project-standards@abcdef1\)$/);
 });
 
 test('editing a managed file fails and names the central source', () => {
   const result = check(({ write, read }) => write('.editorconfig', read('.editorconfig').replace('indent_size = 2', 'indent_size = 4')));
-  assert.deepEqual(result.problems, [{ group: '관리 파일', path: '.editorconfig', message: '내용이 중앙 원본과 다릅니다 (중앙 원본: templates/common/.editorconfig.tmpl)' }]);
+  assert.deepEqual(result.problems, [{ group: 'managed file', path: '.editorconfig', message: 'content differs from the central source (central source: templates/common/.editorconfig.tmpl)' }]);
 });
 
 test('the project section of .gitignore may change; the central section may not', () => {
   assert.deepEqual(check(({ write, read }) => write('.gitignore', `${read('.gitignore')}test-results/\n`)).problems, []);
   const result = check(({ write, read }) => write('.gitignore', read('.gitignore').replace('node_modules/\n', '')));
-  assert.deepEqual(paths(result), ['관리 파일|.gitignore']);
+  assert.deepEqual(paths(result), ['managed file|.gitignore']);
 });
 
 test('CRLF line endings from a Windows checkout still pass', () => {
@@ -97,8 +97,8 @@ test('a removed managed file and a changed package.json field fail', () => {
     write('backend/package.json', JSON.stringify({ ...backend, engines: { node: '22.0.0', npm: '11.19.0' } }));
   });
   assert.deepEqual(result.problems.map((p) => p.message), [
-    '파일이 없습니다 (중앙 원본: templates/app/.nvmrc.tmpl)',
-    '관리 필드가 다릅니다: engines.node (중앙 원본: templates/index.json)',
+    'file is missing (central source: templates/app/.nvmrc.tmpl)',
+    'managed fields differ: engines.node (central source: templates/index.json)',
   ]);
 });
 
@@ -110,7 +110,7 @@ test('an app whose shared dependency version differs from versions.json fails (#
     write('frontend/package.json', JSON.stringify(frontend));
   });
   assert.deepEqual(result.problems, [
-    { group: '관리 파일', path: 'frontend/package.json', message: '관리 필드가 다릅니다: dependencies.clsx, devDependencies.vite (중앙 원본: templates/index.json)' },
+    { group: 'managed file', path: 'frontend/package.json', message: 'managed fields differ: dependencies.clsx, devDependencies.vite (central source: templates/index.json)' },
   ]);
 });
 
@@ -118,9 +118,9 @@ test('shared packages must have the expected version, no install scripts, and no
   const result = check(({ write }) =>
     write('node_modules/@sirloinbh/tsconfig/package.json', JSON.stringify({ version: '1.0.1', scripts: { postinstall: 'x' }, dependencies: { a: '1' } })),
   );
-  assert.deepEqual(result.problems.map((p) => p.message), ['설치 버전 1.0.1, 기대 버전 1.0.0', '설치 스크립트가 있습니다: postinstall', 'dependencies가 비어 있지 않습니다']);
+  assert.deepEqual(result.problems.map((p) => p.message), ['installed version 1.0.1, expected version 1.0.0', 'has install scripts: postinstall', 'dependencies is not empty']);
   const missing = check(({ dir }) => fs.rmSync(path.join(dir, 'node_modules'), { recursive: true }));
-  assert.deepEqual(paths(missing), ['공유 패키지|@sirloinbh/tsconfig']);
+  assert.deepEqual(paths(missing), ['shared package|@sirloinbh/tsconfig']);
 });
 
 test('ports and DB names that differ from the registry fail per file', () => {
@@ -130,17 +130,17 @@ test('ports and DB names that differ from the registry fail per file', () => {
     write('.env.example', read('.env.example').replace(`POSTGRES_DB=${db.name}`, 'POSTGRES_DB=other'));
   });
   assert.deepEqual(result.problems.map((p) => `${p.path}: ${p.message}`), [
-    `compose.yaml: 웹 포트이(가) 8092입니다. 레지스트리 값은 ${ports.web}입니다`,
-    `frontend/vite.config.ts: Vite 포트이(가) 5172입니다. 레지스트리 값은 ${ports.vite}입니다`,
-    '.env.example: DB 이름이(가) other입니다. 레지스트리 값은 study입니다',
+    `compose.yaml: web port is 8092. The registry value is ${ports.web}`,
+    `frontend/vite.config.ts: Vite port is 5172. The registry value is ${ports.vite}`,
+    '.env.example: DB name is other. The registry value is study',
   ]);
 });
 
 test('compose must pass the npm_token build secret to every build when Dockerfiles are managed', () => {
   const result = check(({ write, read }) => write('compose.yaml', read('compose.yaml').replace('build: { context: ./backend, secrets: [npm_token] }', 'build: ./backend').replace(/secrets:\n {2}npm_token:\n {4}environment: NODE_AUTH_TOKEN\n/, '')));
   assert.deepEqual(result.problems.map((p) => `${p.group}|${p.message}`), [
-    '빌드 secret|최상위 secrets.npm_token.environment: NODE_AUTH_TOKEN이 없습니다',
-    '빌드 secret|build 2개 중 1개만 secrets: [npm_token]을 넘깁니다',
+    'build secret|top-level secrets.npm_token.environment: NODE_AUTH_TOKEN is missing',
+    'build secret|only 1 of 2 builds pass secrets: [npm_token]',
   ]);
 });
 
@@ -153,7 +153,7 @@ test('playwright config must use the registry e2e ports', () => {
   const ok = check(({ write }) => write('playwright.config.ts', `const apiPort = ${ports.e2eApi};\nconst webPort = ${ports.e2eWeb};\n`));
   assert.deepEqual(ok.problems, []);
   const bad = check(({ write }) => write('playwright.config.ts', 'const apiPort = 3101;\nconst webPort = 5174;\n'));
-  assert.deepEqual(paths(bad), ['레지스트리 값|playwright.config.ts', '레지스트리 값|playwright.config.ts']);
+  assert.deepEqual(paths(bad), ['registry value|playwright.config.ts', 'registry value|playwright.config.ts']);
 });
 
 test('warns when a pattern disappears or strictPort is missing', () => {
@@ -173,18 +173,18 @@ test('frontend/ and backend/ lockfiles must pin the versions of the root lockfil
   };
   assert.deepEqual(check(lockfiles('1.0.1')).problems, []);
   const stale = check(lockfiles('1.0.0'));
-  assert.deepEqual(paths(stale), ['하위 lockfile|frontend/package-lock.json']);
-  assert.match(stale.problems[0].message, /버전이 다른 패키지 1개: react 1\.0\.0 \(루트 1\.0\.1\)\. node \.standards\/lockfiles\.mjs --write로 맞춥니다/);
+  assert.deepEqual(paths(stale), ['workspace lockfile|frontend/package-lock.json']);
+  assert.match(stale.problems[0].message, /1 package\(s\) differ in version from the root package-lock\.json: react 1\.0\.0 \(root 1\.0\.1\)\. Fix with node \.standards\/lockfiles\.mjs --write/);
 });
 
 test('frontend file names must be lowercase words and hyphens (warning only, #312)', () => {
   const ok = ['frontend/src/app.tsx', 'frontend/src/vite-env.d.ts', 'frontend/src/lib/use-notice.ts', 'frontend/src/month-calendar.test.tsx', 'frontend/src/index.css', 'frontend/src/Logo.svg'];
   assert.deepEqual(checkFileNames(ok), []);
   const bad = ['frontend/src/StudyLogs.tsx', 'frontend/src/Calendar.tsx', 'frontend/src/study_logs.ts', 'frontend/src/a.tsx', 'frontend/src/B.tsx', 'frontend/src/C.tsx', 'frontend/src/D.tsx'];
-  assert.deepEqual(checkFileNames(bad), ['frontend/src: 파일 이름은 소문자와 하이픈으로 씁니다(docs/conventions/code.md). 6개: frontend/src/StudyLogs.tsx, frontend/src/Calendar.tsx, frontend/src/study_logs.ts, frontend/src/B.tsx, frontend/src/C.tsx 외']);
+  assert.deepEqual(checkFileNames(bad), ['frontend/src: file names use lowercase and hyphens (docs/conventions/code.md). 6 found: frontend/src/StudyLogs.tsx, frontend/src/Calendar.tsx, frontend/src/study_logs.ts, frontend/src/B.tsx, frontend/src/C.tsx and more']);
   const result = check(({ write }) => write('frontend/src/StudyLogs.tsx', 'export function StudyLogs() { return null; }\n'));
   assert.deepEqual(result.problems, []);
-  assert.deepEqual(result.warnings, ['frontend/src: 파일 이름은 소문자와 하이픈으로 씁니다(docs/conventions/code.md). 1개: frontend/src/StudyLogs.tsx']);
+  assert.deepEqual(result.warnings, ['frontend/src: file names use lowercase and hyphens (docs/conventions/code.md). 1 found: frontend/src/StudyLogs.tsx']);
 });
 
 test('zod arrays without a length limit are warned, across lines and through other chained calls (#326)', () => {
@@ -192,18 +192,18 @@ test('zod arrays without a length limit are warned, across lines and through oth
     "import { z } from 'zod';",
     'const order = z.object({',
     '  ids: z',
-    "    .array(z.string().regex(/^\\d+$/), { invalid_type_error: '목록을 보내세요' })",
-    "    .min(1, '하나 이상')",
-    "    .refine((ids) => new Set(ids).size === ids.length, '중복'),",
+    "    .array(z.string().regex(/^\\d+$/), { invalid_type_error: 'send a list' })",
+    "    .min(1, 'at least one')",
+    "    .refine((ids) => new Set(ids).size === ids.length, 'duplicate'),",
     '});',
     'const sets = z.array(z.object({ reps: z.number() })).max(100);',
-    "const days = z.array(z.number()).min(1).max(7, '최대 7일');",
+    "const days = z.array(z.number()).min(1).max(7, 'max 7 days');",
     'const tags = z.string().array().length(3);',
     'const loose = z.number().array();',
   ].join('\n');
   assert.deepEqual(checkZodArrays([{ file: 'backend/src/order.ts', text }]), [
-    'backend/src/order.ts:4: 배열 스키마에 길이 제한이 없습니다. .max(<개수>)를 붙입니다(zod 보안 권고 GHSA-mrhx-c7xc-m3w5).',
-    'backend/src/order.ts:11: 배열 스키마에 길이 제한이 없습니다. .max(<개수>)를 붙입니다(zod 보안 권고 GHSA-mrhx-c7xc-m3w5).',
+    'backend/src/order.ts:4: array schema has no length limit. Add .max(<count>) (zod security advisory GHSA-mrhx-c7xc-m3w5).',
+    'backend/src/order.ts:11: array schema has no length limit. Add .max(<count>) (zod security advisory GHSA-mrhx-c7xc-m3w5).',
   ]);
   // Files that do not import zod (plain Array methods) are not read.
   assert.deepEqual(checkZodArrays([{ file: 'backend/src/x.ts', text: 'const a = rows.array(1);' }]), []);
@@ -220,14 +220,14 @@ test('the vendored copy runs on its own and exits 0, 1, or 2', () => {
   try {
     const ok = run(good);
     assert.equal(ok.status, 0, ok.stderr);
-    assert.match(ok.stdout, /standards-check: 통과/);
+    assert.match(ok.stdout, /standards-check: passed/);
     const fail = run(bad);
     assert.equal(fail.status, 1);
-    assert.match(fail.stderr, /✗ \.nvmrc — 내용이 중앙 원본과 다릅니다 \(중앙 원본: templates\/app\/\.nvmrc\.tmpl\)/);
+    assert.match(fail.stderr, /✗ \.nvmrc — content differs from the central source \(central source: templates\/app\/\.nvmrc\.tmpl\)/);
     assert.match(fail.stderr, /ghp issue create -R sirloinbh\/project-standards/);
     const missing = run(none);
     assert.equal(missing.status, 2);
-    assert.match(missing.stderr, /manifest\.json가 없습니다/);
+    assert.match(missing.stderr, /manifest\.json is missing/);
   } finally {
     for (const dir of [good, bad, none]) fs.rmSync(dir, { recursive: true, force: true });
   }
@@ -256,14 +256,14 @@ test('API rules: the scaffold backend and a repository without app.ts give no wa
 
 test('API rules: health, error handler, 404, paths, error shape, and unvalidated input are warned', () => {
   assert.deepEqual(checkApi([{ file: 'backend/src/app.ts', text: badApp }]), [
-    'backend/src: GET /api/health가 없습니다. 모든 앱은 DB 연결을 확인하는 상태 확인 API를 둡니다.',
-    'backend/src/app.ts: 오류 처리 미들웨어(app.use(errorHandler))가 없어 오류가 { error } 형식으로 나가지 않습니다.',
-    "backend/src/app.ts: 없는 /api 경로에 404 { error }로 답하는 app.use('/api', notFound)가 없습니다.",
-    'backend/src/app.ts:4: API 경로 /health는 /api로 시작해야 합니다.',
-    'backend/src/app.ts:5: API 경로 /api/userList의 "userList"는 소문자 영어와 하이픈으로 씁니다.',
-    "backend/src/app.ts:5: 400 응답이 { message } 형식입니다. 오류 응답은 { error: '<한국어 메시지>' }로 씁니다.",
-    'backend/src/app.ts:5: req.body.name를 검증 없이 읽습니다. req.body는 Zod 스키마의 parse()로 먼저 검증합니다.',
-    'backend/src/app.ts:6: req.query.q를 검증 없이 읽습니다. req.query는 Zod 스키마의 parse()로 먼저 검증합니다.',
+    'backend/src: GET /api/health is missing. Every app has a health check API that verifies the DB connection.',
+    'backend/src/app.ts: the error middleware (app.use(errorHandler)) is missing, so errors are not returned as { error }.',
+    "backend/src/app.ts: app.use('/api', notFound), which answers unknown /api paths with 404 { error }, is missing.",
+    'backend/src/app.ts:4: API route /health must start with /api.',
+    'backend/src/app.ts:5: In API route /api/userList, "userList" must use lowercase English and hyphens.',
+    "backend/src/app.ts:5: 400 response uses { message }. Error responses use { error: '<Korean message>' }.",
+    'backend/src/app.ts:5: req.body.name is read without validation. Validate req.body with a Zod schema parse() first.',
+    'backend/src/app.ts:6: req.query.q is read without validation. Validate req.query with a Zod schema parse() first.',
   ]);
 });
 
@@ -273,7 +273,7 @@ test('API rules: the study-log style (inline error middleware, Routers mounted u
     "app.use('/api/study-logs', studyLogRoutes(pool));",
     "app.get('/api/export/workouts.csv', exportRoute);",
     "app.post('/api/backup/' + action, restore);",
-    "app.use('/api', (_req, res) => res.status(404).json({ error: '없음' }));",
+    "app.use('/api', (_req, res) => res.status(404).json({ error: 'none' }));",
     'app.use(',
     '  (err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {});',
   ].join('\n');
@@ -292,7 +292,7 @@ test('API rule warnings reach runCheck without failing it; tests are not scanned
 
 test('checkZodArrays warns when an array limit comes after a refinement', () => {
   const check = (chain) => checkZodArrays([{ file: 'backend/src/x.ts', text: `import { z } from 'zod/v4';\nconst a = z.array(z.string())${chain};` }]);
-  assert.match(check('.refine(ok).max(3)')[0], /backend\/src\/x\.ts:2: 배열의 \.max\(\)가 \.refine 뒤에/);
-  assert.match(check('.superRefine(ok).length(3)')[0], /배열의 \.length\(\)가 \.refine 뒤에/);
+  assert.match(check('.refine(ok).max(3)')[0], /backend\/src\/x\.ts:2: the array \.max\(\) comes after \.refine/);
+  assert.match(check('.superRefine(ok).length(3)')[0], /the array \.length\(\) comes after \.refine/);
   assert.deepEqual(check('.min(1).max(3).refine(ok)'), []);
 });
