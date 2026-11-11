@@ -98,3 +98,12 @@ If you suspect the key was exposed, change the order. **Delete the old key first
 1. Open an issue in the central repo and fix ADR-0002 and this document's permission table together.
 2. **[User]** Change the permissions in App settings → Permissions.
 3. **[User]** GitHub sends a permission approval request to the installed account. In Settings → Applications → Installed GitHub Apps → `project-standards-sync`, you must **Accept** the new permission for it to take effect.
+
+## Rate limits (#464)
+
+`sync.yml` and `compliance.yml` read each downstream repo through the App's REST API. Each file is one request, and a repo has 100 or more managed files.
+
+- The shared client (`createClient` in `scripts/lib/github-app.mjs`) retries a `429`, or a `403` that says "rate limit". It waits for `retry-after`, then until `x-ratelimit-reset`, then 1, 2, 4 minutes. It gives up after 3 retries or when the wait would be longer than 15 minutes. A `403` for missing permissions is not retried.
+- File downloads run at most 4 at a time (`mapLimit`). GitHub's docs name many concurrent requests as a cause of secondary rate limits.
+- If a repo's status is still lost to a rate limit, `compliance.mjs --apply` fails without opening or updating the report PR, so the previous report is not overwritten with `unknown` rows. The next scheduled run tries again. Do not re-run the workflow several times in a row: each run adds to the limit.
+- Source: https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api and https://docs.github.com/en/rest/using-the-rest-api/best-practices-for-using-the-rest-api

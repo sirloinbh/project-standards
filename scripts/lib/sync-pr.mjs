@@ -1,6 +1,7 @@
 // Opens or updates the standards sync PR in one target repository through the GitHub REST API.
 // It never clones the target, so no hook or script of the target repository runs.
 import crypto from 'node:crypto';
+import { mapLimit } from './github-app.mjs';
 import { checkEntry, MANIFEST_PATH } from './manifest.mjs';
 import { pinRanges } from './pin-ranges.mjs';
 import { planTarget } from './sync-plan.mjs';
@@ -138,7 +139,7 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
   // planTarget reads synchronously, so download what it may need first.
   const index = loadIndex(root);
   const needed = [...index.section, ...Object.keys(index.fields[target.profile] ?? {}), MANIFEST_PATH, ...PACKAGE_FILES.flatMap(([, locks]) => locks.map(([p]) => p))];
-  await Promise.all(needed.map(fetchText));
+  await mapLimit(needed, fetchText);
   const read = (p) => cache.get(p) ?? null;
 
   const plan = planTarget({ root, data, target, centralSha, workflowSha, readExisting: read });
