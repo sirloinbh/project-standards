@@ -29,8 +29,8 @@ type ConfirmDialogProps = {
 function ConfirmDialog({
   title,
   description,
-  confirmLabel = '삭제',
-  cancelLabel = '취소',
+  confirmLabel = 'Delete',
+  cancelLabel = 'Cancel',
   destructive = true,
   onConfirm,
   trigger,
@@ -85,7 +85,7 @@ function ConfirmDialog({
             </Button>
           </DialogClose>
           <Button variant={destructive ? 'destructive' : 'default'} disabled={pending} aria-busy={pending || undefined} onClick={confirm}>
-            {pending ? <Spinner size="sm" label="처리하는 중" /> : null}
+            {pending ? <Spinner size="sm" label="Working" /> : null}
             {confirmLabel}
           </Button>
         </DialogFooter>

@@ -21,17 +21,17 @@ test('sends a JSON body and returns the reply body; 204 gives undefined', async 
     calls.push(args);
     return new Response(JSON.stringify({ item: { id: 1 } }), { status: 201 });
   };
-  assert.deepEqual(await withFetch(fake, () => requestJson('/api/items', { method: 'POST', body: { name: '책' } })), { item: { id: 1 } });
-  assert.deepEqual(calls, [['/api/items', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"name":"책"}' }]]);
+  assert.deepEqual(await withFetch(fake, () => requestJson('/api/items', { method: 'POST', body: { name: 'Book' } })), { item: { id: 1 } });
+  assert.deepEqual(calls, [['/api/items', { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{"name":"Book"}' }]]);
   assert.equal(await withFetch(reply(204), () => requestJson('/api/items/1', { method: 'DELETE' })), undefined);
 });
 
-test("rejects with the server's Korean message and status, or a fixed message", async () => {
-  const notFound = await withFetch(reply(404, { error: '교재를 찾을 수 없습니다' }), () => requestJson('/api/items/9').catch((e) => e));
+test("rejects with the server's message and status, or a fixed message", async () => {
+  const notFound = await withFetch(reply(404, { error: 'Textbook not found' }), () => requestJson('/api/items/9').catch((e) => e));
   assert.ok(notFound instanceof RequestError);
-  assert.deepEqual([notFound.message, notFound.status, notFound.name], ['교재를 찾을 수 없습니다', 404, 'RequestError']);
+  assert.deepEqual([notFound.message, notFound.status, notFound.name], ['Textbook not found', 404, 'RequestError']);
   const html = await withFetch(async () => new Response('<html>Bad Gateway</html>', { status: 502 }), () => requestJson('/api/items').catch((e) => e));
-  assert.deepEqual([html.message, html.status], ['요청을 처리하지 못했습니다', 502]);
+  assert.deepEqual([html.message, html.status], ['Could not process the request', 502]);
   const down = await withFetch(async () => { throw new TypeError('Failed to fetch'); }, () => requestJson('/api/items').catch((e) => e));
-  assert.deepEqual([down.message, down.status], ['서버에 연결할 수 없습니다', undefined]);
+  assert.deepEqual([down.message, down.status], ['Cannot reach the server', undefined]);
 });

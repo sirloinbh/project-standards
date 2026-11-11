@@ -1,4 +1,4 @@
-// JSON requests to the app's own API (#310). The server answers errors as `{ error: '<한국어 메시지>' }`
+// JSON requests to the app's own API (#310). The server answers errors as `{ error: '<message>' }`
 // (backend/src/standard/http.ts), so a failed request rejects with that message.
 
 /** A failed request. `status` is the HTTP status, or undefined when the server could not be reached. */
@@ -28,14 +28,14 @@ export async function requestJson<T>(
       body: init.body === undefined ? undefined : JSON.stringify(init.body),
     });
   } catch {
-    throw new RequestError('서버에 연결할 수 없습니다');
+    throw new RequestError('Cannot reach the server');
   }
   if (response.status === 204) return undefined as T;
   const data: unknown = await response.json().catch(() => ({}));
   if (!response.ok) {
     const message = (data as { error?: unknown }).error;
     throw new RequestError(
-      typeof message === 'string' && message ? message : '요청을 처리하지 못했습니다',
+      typeof message === 'string' && message ? message : 'Could not process the request',
       response.status,
     );
   }
