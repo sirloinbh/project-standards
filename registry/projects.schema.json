@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "프로젝트 고정값 레지스트리",
-  "description": "프로젝트마다 다르고 서로 겹치면 안 되는 값. 동기화가 덮어쓰지 않는다. 포트는 registry/platform.json의 portScheme 공식(기준값 + slot)을 따른다.",
+  "title": "Project fixed-values registry",
+  "description": "Values that differ per project and must not overlap. Sync does not overwrite them. Ports follow the portScheme formula in registry/platform.json (base + slot).",
   "type": "object",
   "required": ["projects"],
   "additionalProperties": false,
@@ -14,7 +14,7 @@
     "port": { "type": "integer", "minimum": 1024, "maximum": 65535 },
     "dbName": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
     "nullableHost": {
-      "description": "미정이면 null. 정해지면 값만 채운다.",
+      "description": "null if undecided. Fill in only the value once decided.",
       "type": ["string", "null"],
       "pattern": "^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$"
     },
@@ -23,14 +23,14 @@
       "required": ["slot", "status", "name", "title", "displayName", "domain", "summary", "repos", "public", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
       "additionalProperties": false,
       "properties": {
-        "slot": { "type": "integer", "minimum": 1, "maximum": 99, "description": "은퇴해도 다시 배정하지 않는다" },
+        "slot": { "type": "integer", "minimum": 1, "maximum": 99, "description": "Never reassigned, even after retirement" },
         "status": { "enum": ["active", "retired"] },
         "name": { "$ref": "#/$defs/slug" },
-        "title": { "type": "string", "minLength": 1, "description": "문서·지침에 쓰는 한국어 이름 (예: 공부 기록)" },
-        "displayName": { "type": "string", "minLength": 1, "description": "화면 헤더·탭 제목·PWA 이름에 쓰는 앱 표시 이름. 앱은 이 이름으로만 구별되므로 겹치면 안 된다(ADR-0008)" },
-        "domain": { "type": "string", "minLength": 1, "description": "서비스 분야 설명 (예: 운동)" },
-        "summary": { "type": "string", "minLength": 10, "description": "AGENTS.md 첫 문단에 들어가는 서비스 설명" },
-        "public": { "type": "boolean", "description": "우산 리포가 public이다. public 리포는 private 중앙 리포의 재사용 워크플로를 부를 수 없어서 ci.yml에 공통 CI를 펼쳐 넣는다(#209)" },
+        "title": { "type": "string", "minLength": 1, "description": "Name used in docs and instructions (e.g. Study Log)" },
+        "displayName": { "type": "string", "minLength": 1, "description": "App display name used in the screen header, tab title, and PWA name. Apps are told apart only by this name, so it must not overlap (ADR-0008)" },
+        "domain": { "type": "string", "minLength": 1, "description": "Description of the service area (e.g. exercise)" },
+        "summary": { "type": "string", "minLength": 10, "description": "Service description used in the first paragraph of AGENTS.md" },
+        "public": { "type": "boolean", "description": "The umbrella repo is public. A public repo cannot call reusable workflows in the private central repo, so the shared CI is expanded inline in ci.yml (#209)" },
         "repos": {
           "type": "object",
           "required": ["umbrella", "frontend", "backend", "db"],
@@ -71,28 +71,28 @@
           "type": "object",
           "required": ["prefix"],
           "additionalProperties": false,
-          "properties": { "prefix": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$", "description": "AWS 리소스 이름 접두어. 미정이면 null" } }
+          "properties": { "prefix": { "type": ["string", "null"], "pattern": "^[a-z][a-z0-9-]*$", "description": "AWS resource name prefix. null if undecided" } }
         },
         "features": {
           "type": "object",
           "required": ["e2e", "e2eVisual", "openapi", "contract", "ui", "vitest", "claude", "devcontainer", "lighthouse", "msw", "knipStrict", "darkOnly"],
           "additionalProperties": false,
           "properties": {
-            "e2e": { "type": "boolean", "description": "Playwright 브라우저 테스트를 쓴다. CI e2e 작업과 playwright.config.ts 템플릿(templates/e2e)을 켠다(#33)" },
-            "e2eVisual": { "type": "boolean", "description": "e2e를 digest로 고정한 Playwright 컨테이너(versions.json images.playwright)에서 E2E_VISUAL=1로 실행해 스크린샷을 비교한다. e2e와 db:migrate 실행기가 있어야 켠다(#203)" },
+            "e2e": { "type": "boolean", "description": "Uses Playwright browser tests. Turns on the CI e2e job and the playwright.config.ts template (templates/e2e) (#33)" },
+            "e2eVisual": { "type": "boolean", "description": "Runs e2e in a Playwright container pinned by digest (versions.json images.playwright) with E2E_VISUAL=1 and compares screenshots. Turn on only when e2e and the db:migrate runner exist (#203)" },
             "openapi": { "type": "boolean" },
             "contract": { "type": "boolean" },
-            "ui": { "type": "boolean", "description": "공통 UI 컴포넌트(templates/ui)를 동기화한다. 앱에 radix-ui 등 의존성을 설치한 뒤 켠다(#123, #126)" },
-            "vitest": { "type": "boolean", "description": "화면 단위 테스트 설정 frontend/vitest.config.ts(templates/vitest)를 동기화한다. vitest·jsdom·Testing Library를 설치한 뒤 켠다(#33)" },
-            "devcontainer": { "type": "boolean", "description": "새 PC용 Dev Container 설정(.devcontainer/, templates/devcontainer)을 동기화한다. Node는 versions.json images.devcontainerNode, DB는 앱 compose.yaml의 db 서비스를 쓴다(#282)" },
-            "lighthouse": { "type": "boolean", "description": "CI에서 빌드한 프런트(frontend/dist)를 Lighthouse CI로 재고 기준 미달을 경고만 한다. lighthouserc.json(templates/lighthouse)을 동기화하고, 앱 루트에 @lhci/cli를 설치한 뒤 켠다(#280)" },
-            "msw": { "type": "boolean", "description": "화면 테스트가 백엔드 없이 OpenAPI 계약(docs/openapi.json)의 MSW 목으로 돈다. frontend/src/test/contract-api.ts(templates/msw)를 동기화한다. openapi·vitest가 켜져 있고 frontend에 msw를 설치한 뒤 켠다(#281)" },
-            "knipStrict": { "type": "boolean", "description": "CI의 knip 단계가 결과가 있으면 실패한다. 꺼져 있으면 경고만 낸다. npm run knip 결과가 0이 된 앱만 켠다(#342)" },
-            "darkOnly": { "type": "boolean", "description": "앱이 다크 모드만 쓴다. 첫 화면부터 다크로 그리고 화면 모드 메뉴를 숨기며, PWA 색도 다크 바탕을 쓴다. 꺼져 있으면 라이트·다크·시스템을 고른다(ADR-0011, #354)" },
-            "claude": { "type": "boolean", "description": "백엔드가 Claude API를 쓴다. 배포 스크립트가 AWS SSM에서 ANTHROPIC_API_KEY를 읽어 넘기고, 중앙 명령 tools/app-secrets.mjs가 로컬 .env에 넣는다(ADR-0010, #265)" }
+            "ui": { "type": "boolean", "description": "Syncs the shared UI components (templates/ui). Turn on after installing dependencies such as radix-ui in the app (#123, #126)" },
+            "vitest": { "type": "boolean", "description": "Syncs the component test setup frontend/vitest.config.ts (templates/vitest). Turn on after installing vitest, jsdom, and Testing Library (#33)" },
+            "devcontainer": { "type": "boolean", "description": "Syncs the Dev Container setup for a new PC (.devcontainer/, templates/devcontainer). Node uses versions.json images.devcontainerNode, and the DB uses the db service in the app's compose.yaml (#282)" },
+            "lighthouse": { "type": "boolean", "description": "Measures the frontend built in CI (frontend/dist) with Lighthouse CI and only warns on a missed threshold. Syncs lighthouserc.json (templates/lighthouse). Turn on after installing @lhci/cli at the app root (#280)" },
+            "msw": { "type": "boolean", "description": "Component tests run without a backend, using MSW mocks of the OpenAPI contract (docs/openapi.json). Syncs frontend/src/test/contract-api.ts (templates/msw). Turn on when openapi and vitest are on and msw is installed in frontend (#281)" },
+            "knipStrict": { "type": "boolean", "description": "The CI knip step fails if it reports anything. When off, it only warns. Turn on only for apps whose npm run knip result is 0 (#342)" },
+            "darkOnly": { "type": "boolean", "description": "The app uses dark mode only. It renders dark from the first paint, hides the theme menu, and uses a dark background for PWA colors. When off, users choose light, dark, or system (ADR-0011, #354)" },
+            "claude": { "type": "boolean", "description": "The backend uses the Claude API. The deploy script reads ANTHROPIC_API_KEY from AWS SSM and passes it on, and the central command tools/app-secrets.mjs puts it in the local .env (ADR-0010, #265)" }
           }
         },
-        "skills": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/slug" }, "description": "프로젝트 고유 스킬. 동기화에서 제외한다" },
+        "skills": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/slug" }, "description": "Project-specific skills. Excluded from sync" },
         "allowedDifferences": {
           "type": "array",
           "items": {
