@@ -23,13 +23,13 @@ test('every app gets AGENTS.md and CLAUDE.md that point to AGENTS.project.md', (
   for (const { target, files } of apps) {
     const project = data.projects.projects.find((p) => p.name === target.project);
     const agents = files['AGENTS.md'].content;
-    assert.match(agents, new RegExp(`^<!-- ${HEADER_TEXT} templates/app/ -->\n# ${project.title} 프로젝트 지침\n`), target.repo);
+    assert.match(agents, new RegExp(`^<!-- ${HEADER_TEXT} templates/app/ -->\n# ${project.title} Project Instructions\n`), target.repo);
     assert.ok(agents.includes(project.summary), target.repo);
-    assert.ok(agents.includes('[AGENTS.project.md](AGENTS.project.md)를 반드시 함께 읽고 따른다'), target.repo);
-    assert.ok(agents.includes(`\`sirloinbh/${project.repos.umbrella}\`에 이슈를 등록한다`), target.repo);
+    assert.ok(agents.includes('**Always read and follow [AGENTS.project.md](AGENTS.project.md) as well**'), target.repo);
+    assert.ok(agents.includes(`Register an issue in \`sirloinbh/${project.repos.umbrella}\`.`), target.repo);
     // Merge rules belong to each project (workout-memo lets the agent merge after CI); default is user-only.
-    assert.ok(agents.includes('PR 리뷰와 병합 규칙은 [AGENTS.project.md](AGENTS.project.md)를 따른다. 거기에 정해져 있지 않으면 **PR 병합은 사용자만 수행한다.**'), target.repo);
-    assert.ok(agents.includes(`웹 ${project.ports.web}, API ${project.ports.api}, Vite ${project.ports.vite}, 호스트 DB ${project.ports.db}`), target.repo);
+    assert.ok(agents.includes('Follow [AGENTS.project.md](AGENTS.project.md) for PR review and merge rules. If it does not set them, **only the user merges PRs.**'), target.repo);
+    assert.ok(agents.includes(`web ${project.ports.web}, API ${project.ports.api}, Vite ${project.ports.vite}, host DB ${project.ports.db}`), target.repo);
     // Claude Code loads @ imports every session but never follows markdown links (#447).
     assert.match(files['CLAUDE.md'].content, /^@AGENTS\.md\n@AGENTS\.project\.md$/m, target.repo);
   }
@@ -97,8 +97,8 @@ test('skill files have a matching name, a description, and the header after the 
 
 test('project-specific skill text uses the project title and repository', () => {
   const study = apps.find((r) => r.target.project === 'study-log').files;
-  assert.match(study['skills/std-testing/SKILL.md'].content, /# Study Log 테스트 작성과 실행/);
-  assert.match(study['skills/std-foundation/SKILL.md'].content, /# Study Log 개발 기반/);
+  assert.match(study['skills/std-testing/SKILL.md'].content, /# Study Log Writing and Running Tests/);
+  assert.match(study['skills/std-foundation/SKILL.md'].content, /# Study Log Development Foundation/);
   assert.match(study['skills/std-implementation/SKILL.md'].content, /This skill applies to changes in the `sirloinbh\/study-log` repo/);
 });
 

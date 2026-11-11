@@ -53,7 +53,7 @@ test('a first sync opens a PR with the rendered files, pinned versions, and the 
   assert.equal(result.status, 'opened');
   assert.equal(result.branch, 'chore/standards-sync-a1b2c3d');
   const files = repo.filesAt(result.branch);
-  assert.ok(files['AGENTS.md'].includes('# Study Log 프로젝트 지침'));
+  assert.ok(files['AGENTS.md'].includes('# Study Log Project Instructions'));
   assert.equal(JSON.parse(files[MANIFEST_PATH]).centralSha, SHA1);
   assert.match(files['.gitignore'], /# --- project ---\nmy-project-only\/\n$/, 'project-only lines move below the marker');
   assert.equal(JSON.parse(files['package.json']).devDependencies.concurrently, '9.2.1');
