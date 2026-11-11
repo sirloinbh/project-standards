@@ -78,7 +78,7 @@ test('a version that differs from the root lockfile is reported; an optional pee
 test('a missing required package is an error, not a silent pass', () => {
   const sub = frontendLock();
   delete sub.packages['node_modules/react'];
-  assert.throws(() => compareWorkspaceLockfile(rootLock(), 'frontend', sub), /react을\(를\) lockfile에서 찾을 수 없습니다/);
+  assert.throws(() => compareWorkspaceLockfile(rootLock(), 'frontend', sub), /Dependency react of .* was not found in the lockfile/);
 });
 
 test('the rebuilt workspace lockfile is what npm writes, with flags recomputed for the workspace', () => {
@@ -130,13 +130,13 @@ test('the command reports a stale workspace lockfile and --write fixes it withou
 
     const check = run();
     assert.equal(check.status, 1);
-    assert.match(check.stderr, /frontend\/package-lock\.json: 루트 lockfile과 다른 패키지 1개/);
-    assert.match(check.stderr, /react 0\.9\.0 \(루트 1\.0\.0\)/);
-    assert.match(check.stdout, /backend\/package-lock\.json: 루트 lockfile과 같습니다/);
+    assert.match(check.stderr, /frontend\/package-lock\.json: 1 package\(s\) differ from the root lockfile/);
+    assert.match(check.stderr, /react 0\.9\.0 \(root 1\.0\.0\)/);
+    assert.match(check.stdout, /backend\/package-lock\.json: matches the root lockfile/);
 
     const fix = run('--write');
     assert.equal(fix.status, 0, fix.stderr);
-    assert.match(fix.stdout, /frontend\/package-lock\.json: 다시 썼습니다 \(1개 맞춤/);
+    assert.match(fix.stdout, /frontend\/package-lock\.json: rewritten \(1 aligned/);
     assert.deepEqual(JSON.parse(fs.readFileSync(path.join(dir, 'frontend/package-lock.json'), 'utf8')), frontendLock());
     assert.equal(fs.readFileSync(path.join(dir, 'backend/package-lock.json'), 'utf8'), backendBefore);
     assert.equal(run().status, 0);

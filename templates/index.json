@@ -1,8 +1,8 @@
 {
-  "description": "templates/<폴더>의 파일은 같은 경로로 대상 리포에 렌더링된다. 이름 끝의 .tmpl은 떼고 쓴다(Git·npm·편집기가 중앙 리포에서 그 파일을 실제 설정으로 읽지 않게 하기 위함). 여기 없는 파일은 전체 관리(full)다.",
+  "description": "Files under templates/<folder> are rendered to the same path in the target repo. A trailing .tmpl is dropped (so Git, npm, and editors do not read the file as real config in the central repo). Files not listed here are fully managed (full).",
   "section": [".gitignore", ".prettierignore"],
   "vendor": {
-    "why": "하위 리포가 중앙 리포 없이 검사를 실행할 수 있도록 검사 스크립트와 그 라이브러리를 그대로 복사한다. 템플릿 변수 치환은 하지 않는다.",
+    "why": "Check scripts and their libraries are copied as they are so sub-repos can run the checks without the central repo. No template variables are substituted.",
     "files": {
       ".standards/check.mjs": "scripts/standards-check.mjs",
       ".standards/lib/manifest.mjs": "scripts/lib/manifest.mjs",
@@ -15,10 +15,10 @@
       ".standards/blocked-packages.json": "security/blocked-packages.json"
     }
   },
-  "data": { "why": "동기화 스크립트가 읽는 데이터라 대상 리포에 파일로 복사하지 않는다. labels.json은 대상 리포의 이슈 라벨로 반영한다(#40).", "files": ["common/labels.json"] },
-  "mirror": [{ "from": "skills/", "to": ".claude/skills/", "why": "Claude Code는 .claude/skills/만 읽는다. 원본 skills/와 같은 내용의 복제본을 함께 관리한다." }],
+  "data": { "why": "Data read by the sync script, so it is not copied to target repos as a file. labels.json is applied as the issue labels of the target repo (#40).", "files": ["common/labels.json"] },
+  "mirror": [{ "from": "skills/", "to": ".claude/skills/", "why": "Claude Code reads only .claude/skills/. A copy with the same content as the source skills/ is managed too." }],
   "dependencyFields": {
-    "why": "versions.json dependencies(앱 8개와 스캐폴드가 함께 쓰는 외부 의존성)를 앱 package.json 3개의 관리 필드로 쓴다. 버전은 중앙에서 올리고 동기화 PR로 퍼지며, 앱 하나만 다르면 standards-check가 잡는다(#304).",
+    "why": "The versions.json dependencies (external dependencies shared by the 8 apps and the scaffold) are written into managed fields of the 3 app package.json files. Versions are raised centrally and spread through sync PRs; standards-check catches an app that differs (#304).",
     "profiles": ["app"],
     "files": { "root": "package.json", "frontend": "frontend/package.json", "backend": "backend/package.json" }
   },

