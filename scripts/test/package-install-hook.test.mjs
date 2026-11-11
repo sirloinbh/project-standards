@@ -191,6 +191,8 @@ test('Claude Code runs the hook for Bash and PowerShell and blocks when it canno
   assert.equal(entry.matcher, 'Bash|PowerShell');
   assert.deepEqual(entry.hooks, [
     { type: 'command', command: 'node', args: ['${CLAUDE_PROJECT_DIR}/.claude/hooks/block-package-installs.mjs'], timeout: 10, onFailure: 'block' },
+    // #450: the forbidden-command hook runs next to it (scripts/test/forbidden-command-hook.test.mjs).
+    { type: 'command', command: 'node', args: ['${CLAUDE_PROJECT_DIR}/.claude/hooks/block-forbidden-commands.mjs'], timeout: 10, onFailure: 'block' },
   ]);
   assert.equal(read('.claude/hooks/block-package-installs.mjs'), read(HOOK), 'the central repository uses the same hook it syncs');
 });

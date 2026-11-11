@@ -1,5 +1,6 @@
 {
   "sirloinbh/workout-memo": [
+    "full .claude/hooks/block-forbidden-commands.mjs",
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
@@ -135,6 +136,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/study-log": [
+    "full .claude/hooks/block-forbidden-commands.mjs",
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
@@ -265,6 +267,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/health-log": [
+    "full .claude/hooks/block-forbidden-commands.mjs",
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
@@ -395,6 +398,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/life-journal": [
+    "full .claude/hooks/block-forbidden-commands.mjs",
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
@@ -525,6 +529,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/money-ledger": [
+    "full .claude/hooks/block-forbidden-commands.mjs",
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
@@ -655,6 +660,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/cert-manager": [
+    "full .claude/hooks/block-forbidden-commands.mjs",
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
@@ -785,6 +791,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/plan-routine": [
+    "full .claude/hooks/block-forbidden-commands.mjs",
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
@@ -915,6 +922,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/dev-career-portfolio": [
+    "full .claude/hooks/block-forbidden-commands.mjs",
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
@@ -1045,6 +1053,7 @@
     "full skills/std-testing/SKILL.md"
   ],
   "sirloinbh/shared-aws-infrastructure": [
+    "full .claude/hooks/block-forbidden-commands.mjs",
     "full .claude/hooks/block-package-installs.mjs",
     "full .claude/hooks/pc-setup-notice.mjs",
     "full .claude/settings.json",
