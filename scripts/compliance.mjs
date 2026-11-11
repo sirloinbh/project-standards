@@ -8,7 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderCompliance, renderEnvMatrix, repoStatus } from './lib/compliance.mjs';
-import { createClient, getInstallationToken } from './lib/github-app.mjs';
+import { createClient, getInstallationToken, mapLimit } from './lib/github-app.mjs';
 import { MANIFEST_PATH } from './lib/manifest.mjs';
 import { loadAll } from './lib/registry.mjs';
 import { openRemote } from './lib/remote-repo.mjs';
@@ -25,6 +25,13 @@ export const withoutStamp = (text) => text.replace(/<!-- Generated file[^>]*-->/
 export function renderReports(statuses, meta) {
   return { 'docs/compliance.md': renderCompliance(statuses, meta), 'docs/env-matrix.md': renderEnvMatrix(statuses, meta) };
 }
+
+// A status lost to a GitHub rate limit even after retries says nothing about the repo, so the report is not
+// published over the previous one (#464). The next scheduled run tries again.
+const RATE_LIMITED = /\b(403|429)\b.*rate limit/i;
+
+/** Repositories whose status was lost to a rate limit; the report is not published while any remain. */
+export const rateLimitedRepos = (statuses) => statuses.filter((s) => s.rateLimited).map((s) => s.repo);
 
 const projectOf = (data, target) => data.projects.projects.find((p) => p.name === target.project);
 
@@ -45,7 +52,7 @@ export async function remoteStatuses({ data, getClient, now = new Date() }) {
       const repo = await openRemote(api, target.repo);
       await repo.fetchText(MANIFEST_PATH);
       const manifest = repo.read(MANIFEST_PATH) ? JSON.parse(repo.read(MANIFEST_PATH)) : { files: {} };
-      await Promise.all([...Object.keys(manifest.files ?? {}), '.env.example', 'package.json'].map(repo.fetchText));
+      await mapLimit([...Object.keys(manifest.files ?? {}), '.env.example', 'package.json'], repo.fetchText);
       const pulls = await api('GET', `/repos/${target.repo}/pulls?state=open&per_page=100`);
       const status = repoStatus({ target, project: projectOf(data, target), read: repo.read, pulls, now });
       // Settings are judged separately so a missing permission only blanks this column (#22).
@@ -53,10 +60,11 @@ export async function remoteStatuses({ data, getClient, now = new Date() }) {
         status.settings = evaluateSettings(await collectSettings(api, target.repo), target);
       } catch (error) {
         status.settingsError = error.message;
+        status.rateLimited = RATE_LIMITED.test(error.message);
       }
       statuses.push(status);
     } catch (error) {
-      statuses.push({ repo: target.repo, profile: target.profile, unknown: error.message });
+      statuses.push({ repo: target.repo, profile: target.profile, unknown: error.message, rateLimited: RATE_LIMITED.test(error.message) });
     }
   }
   return statuses;
@@ -65,7 +73,7 @@ export async function remoteStatuses({ data, getClient, now = new Date() }) {
 /** Opens or updates the report PR in the central repository when the reports changed. */
 export async function publishReports({ api, reports, centralSha }) {
   const repo = await openRemote(api, CENTRAL);
-  await Promise.all(OUTPUTS.map(repo.fetchText));
+  await mapLimit(OUTPUTS, repo.fetchText);
   const changed = OUTPUTS.filter((p) => withoutStamp(repo.read(p) ?? '') !== withoutStamp(reports[p]));
   if (!changed.length) return { status: 'unchanged' };
   const tree = await api('POST', `/repos/${CENTRAL}/git/trees`, { base_tree: repo.treeSha, tree: changed.map((p) => ({ path: p, mode: '100644', type: 'blob', content: reports[p] })) });
@@ -126,6 +134,11 @@ if (isMain) {
       .then(async (statuses) => {
         const reports = renderReports(statuses, meta);
         write(reports);
+        const limited = rateLimitedRepos(statuses);
+        if (limited.length) {
+          console.error(`compliance: not published, GitHub rate limit after retries for ${limited.join(', ')}`);
+          process.exit(1);
+        }
         const result = await publishReports({ api: await getClient(CENTRAL), reports, centralSha });
         console.log(`compliance: ${result.status}${result.pr ? ` ${result.pr}` : ''}`);
       })
