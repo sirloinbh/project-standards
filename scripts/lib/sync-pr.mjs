@@ -10,7 +10,10 @@ import { loadIndex } from './templates.mjs';
 export const BRANCH_PREFIX = 'chore/standards-sync-';
 const CENTRAL = 'sirloinbh/project-standards';
 // Every commit the sync creates starts with this; any other commit on the branch was added by a person.
-const COMMIT_PREFIX = 'chore: 중앙 표준 동기화 (project-standards@';
+const COMMIT_PREFIX = 'chore: sync central standards (project-standards@';
+// Bot commits made before #455 used this prefix. They still count as bot commits, not direct ones.
+const OLD_COMMIT_PREFIX = 'chore: 중앙 표준 동기화 (project-standards@';
+const isBotCommit = (message) => message.startsWith(COMMIT_PREFIX) || message.startsWith(OLD_COMMIT_PREFIX);
 
 const renderKeptComment = (centralSha, count) => [
   `Central standards commit \`${centralSha.slice(0, 7)}\` was not applied to this PR, so that the ${count} commit(s) added directly to this PR are not lost.`,
@@ -174,7 +177,7 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
   // A listing that fails stops here too, so an unknown branch is never overwritten.
   if (existing) {
     const commits = await api('GET', `${repoPath}/pulls/${existing.number}/commits?per_page=100`);
-    const direct = commits.filter((c) => !c.commit.message.startsWith(COMMIT_PREFIX));
+    const direct = commits.filter((c) => !isBotCommit(c.commit.message));
     if (direct.length) {
       await api('POST', `${repoPath}/issues/${existing.number}/comments`, { body: renderKeptComment(centralSha, direct.length) });
       return { status: 'kept', pr: existing.html_url, branch: existing.head.ref, changes: [], deletions: [] };
@@ -190,7 +193,7 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
   });
   const short = centralSha.slice(0, 7);
   const commit = await api('POST', `${repoPath}/git/commits`, {
-    message: `${COMMIT_PREFIX}${short})\n\n- 왜: 중앙 표준 리포 main이 바뀌었다\n- 변경: 중앙 관리 파일 ${changes.length + deletions.length}개`,
+    message: `${COMMIT_PREFIX}${short})\n\n- Why: the central standards repo main changed\n- Changes: ${changes.length + deletions.length} managed files`,
     tree: newTree.sha,
     parents: [baseSha],
   });
