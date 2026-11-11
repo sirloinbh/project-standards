@@ -399,7 +399,7 @@ export async function main() {
   try {
     event = JSON.parse(input);
   } catch {
-    process.stderr.write('패키지 설치 차단 훅이 입력을 읽지 못해 명령을 막았습니다.\n');
+    process.stderr.write('The package install blocking hook could not read its input, so it blocked the command.\n');
     process.exit(2);
   }
   const command = event?.tool_input?.command;
@@ -407,8 +407,8 @@ export async function main() {
   const found = findInstall(command);
   if (!found) process.exit(0);
   process.stderr.write(
-    `패키지 설치·삭제·실행 명령이라 막았습니다(${found}). 에이전트는 잠금 파일대로 설치하는 npm ci만 실행합니다. ` +
-      '설치가 필요하면 사용자에게 요청하세요. 자세한 내용: docs/agent-guardrails.md (sirloinbh/project-standards)\n',
+    `Blocked because this is a package install, remove, or run command (${found}). Agents run only npm ci, which installs from the lock file. ` +
+      'If an install is needed, ask the user. Details: docs/agent-guardrails.md (sirloinbh/project-standards)\n',
   );
   process.exit(2);
 }

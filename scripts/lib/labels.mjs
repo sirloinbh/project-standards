@@ -51,8 +51,8 @@ export function planLabels(desired, existing) {
 /** One line for logs and dry-run output. Each field may be a list or a count. */
 export function describeLabelPlan(plan) {
   const n = (x) => (Array.isArray(x) ? x.length : x);
-  const parts = [`라벨 생성 ${n(plan.create)}`, `갱신 ${n(plan.update)}`, `그대로 ${n(plan.unchanged)}`];
-  if (plan.unmanaged.length) parts.push(`관리 밖 ${plan.unmanaged.length}(지우지 않음)`);
+  const parts = [`labels created ${n(plan.create)}`, `updated ${n(plan.update)}`, `unchanged ${n(plan.unchanged)}`];
+  if (plan.unmanaged.length) parts.push(`unmanaged ${plan.unmanaged.length} (not deleted)`);
   return parts.join(', ');
 }
 

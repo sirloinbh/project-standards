@@ -64,7 +64,7 @@ test('a first sync opens a PR with the rendered files, pinned versions, and the 
   assert.equal(files['src/app.ts'], 'export {};\n', 'project code is untouched');
   assert.equal(repo.refs.get('heads/main'), [...repo.commits.keys()][0], 'main is never pushed to');
   const pr = repo.pulls[0];
-  assert.equal(pr.title, 'chore: 중앙 표준 동기화 (project-standards@a1b2c3d)');
+  assert.equal(pr.title, 'chore: sync central standards (project-standards@a1b2c3d)');
   for (const heading of ['## What changed', '## Why', '## Main changes', '## Verification', '## Check before merging', '## Impact']) assert.ok(pr.body.includes(heading), heading);
   assert.match(pr.body, /Merging to main in this repo deploys to production/);
   assert.match(pr.body, /NODE_AUTH_TOKEN/);
@@ -78,9 +78,17 @@ test('a later central commit updates the same open PR instead of opening another
   assert.equal(result.status, 'updated');
   assert.equal(result.branch, 'chore/standards-sync-a1b2c3d', 'the branch keeps the first SHA');
   assert.equal(repo.pulls.length, 1);
-  assert.equal(repo.pulls[0].title, 'chore: 중앙 표준 동기화 (project-standards@b2c3d4e)');
+  assert.equal(repo.pulls[0].title, 'chore: sync central standards (project-standards@b2c3d4e)');
   assert.ok(repo.calls.includes('PATCH /repos/sirloinbh/study-log/git/refs/heads/chore/standards-sync-a1b2c3d'));
   assert.equal(JSON.parse(repo.filesAt(result.branch)[MANIFEST_PATH]).centralSha, SHA2);
+});
+
+test('a bot commit with the pre-#455 Korean prefix still counts as a bot commit', async () => {
+  const repo = studyRepo();
+  const { branch } = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, api: repo.api });
+  repo.addCommit(branch, 'chore: 중앙 표준 동기화 (project-standards@0000000)');
+  const result = await syncTarget({ root, data, target: studyTarget, centralSha: SHA2, api: repo.api });
+  assert.equal(result.status, 'updated');
 });
 
 test('a central commit leaves a sync branch with a direct commit untouched and says so on the PR (#367)', async () => {
@@ -95,7 +103,7 @@ test('a central commit leaves a sync branch with a direct commit untouched and s
   assert.equal(repo.refs.get(`heads/${branch}`), direct, 'the direct commit is still the head');
   const calls = repo.calls.slice(before);
   for (const write of ['PATCH', 'POST /repos/sirloinbh/study-log/git']) assert.equal(calls.some((c) => c.startsWith(write)), false, write);
-  assert.equal(repo.pulls[0].title, 'chore: 중앙 표준 동기화 (project-standards@a1b2c3d)');
+  assert.equal(repo.pulls[0].title, 'chore: sync central standards (project-standards@a1b2c3d)');
   assert.equal(repo.pulls[0].comments.length, 1);
   assert.match(repo.pulls[0].comments[0], /`b2c3d4e`.*the 1 commit\(s\) added directly/);
   assert.match(repo.pulls[0].comments[0], /`sync` workflow/);
@@ -221,7 +229,7 @@ test('apply only checks the token while maxRollout is 0, then syncs targets in r
   off.sync.maxRollout = 0;
   assert.deepEqual(await apply({ data: off, targets: off.sync.targets, centralSha: SHA1, getToken, makeClient: () => null, log: (l) => logs.push(l) }), []);
   assert.deepEqual(tokens, ['sirloinbh/project-standards']);
-  assert.match(logs[0], /설치 토큰 발급 확인\. maxRollout 0/);
+  assert.match(logs[0], /Installation token issued\. maxRollout is 0/);
 
   const rolled = structuredClone(data);
   rolled.sync.maxRollout = 1;

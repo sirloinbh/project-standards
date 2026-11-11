@@ -23,7 +23,7 @@ test('every app gets AGENTS.md and CLAUDE.md that point to AGENTS.project.md', (
   for (const { target, files } of apps) {
     const project = data.projects.projects.find((p) => p.name === target.project);
     const agents = files['AGENTS.md'].content;
-    assert.match(agents, new RegExp(`^<!-- ${HEADER_TEXT} templates/app/에서 -->\n# ${project.title} Project Instructions\n`), target.repo);
+    assert.match(agents, new RegExp(`^<!-- ${HEADER_TEXT} templates/app/ -->\n# ${project.title} Project Instructions\n`), target.repo);
     assert.ok(agents.includes(project.summary), target.repo);
     assert.ok(agents.includes('**Always read and follow [AGENTS.project.md](AGENTS.project.md) as well**'), target.repo);
     assert.ok(agents.includes(`Register an issue in \`sirloinbh/${project.repos.umbrella}\`.`), target.repo);
@@ -99,7 +99,7 @@ test('project-specific skill text uses the project title and repository', () => 
   const study = apps.find((r) => r.target.project === 'study-log').files;
   assert.match(study['skills/std-testing/SKILL.md'].content, /# Study Log Writing and Running Tests/);
   assert.match(study['skills/std-foundation/SKILL.md'].content, /# Study Log Development Foundation/);
-  assert.match(study['skills/std-implementation/SKILL.md'].content, /이 스킬은 `sirloinbh\/study-log` 리포의 변경 작업에 적용한다/);
+  assert.match(study['skills/std-implementation/SKILL.md'].content, /This skill applies to changes in the `sirloinbh\/study-log` repo/);
 });
 
 test('CI callers pin the central workflow to the synced commit and pass registry values', () => {
@@ -115,7 +115,7 @@ test('CI callers pin the central workflow to the synced commit and pass registry
 
 test('the infra repository gets the common skills but no app-only files', () => {
   const infra = rendered.find((r) => r.target.profile === 'infra').files;
-  assert.match(infra['skills/std-implementation/SKILL.md'].content, /`sirloinbh\/shared-aws-infrastructure` 리포/);
+  assert.match(infra['skills/std-implementation/SKILL.md'].content, /`sirloinbh\/shared-aws-infrastructure` repo/);
   for (const appOnly of ['AGENTS.md', 'skills/std-testing/SKILL.md', '.npmrc']) assert.equal(infra[appOnly], undefined, appOnly);
   assert.match(infra['skills/std-communication/SKILL.md'].content, /Every explanation addressed to the user is written in English/);
   assert.equal(infra['.claude/skills/std-communication/SKILL.md'].content, infra['skills/std-communication/SKILL.md'].content);

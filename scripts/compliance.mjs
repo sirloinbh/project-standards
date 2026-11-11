@@ -78,7 +78,7 @@ export async function publishReports({ api, reports, centralSha }) {
   if (!changed.length) return { status: 'unchanged' };
   const tree = await api('POST', `/repos/${CENTRAL}/git/trees`, { base_tree: repo.treeSha, tree: changed.map((p) => ({ path: p, mode: '100644', type: 'blob', content: reports[p] })) });
   const commit = await api('POST', `/repos/${CENTRAL}/git/commits`, {
-    message: `docs: 준수 현황 갱신 (project-standards@${centralSha.slice(0, 7)})\n\n- 왜: 하위 리포 상태가 바뀌었다\n- 변경: ${changed.join(', ')}`,
+    message: `docs: update compliance report (project-standards@${centralSha.slice(0, 7)})\n\n- Why: the state of the sub-repos changed\n- Changes: ${changed.join(', ')}`,
     tree: tree.sha,
     parents: [repo.baseSha],
   });
@@ -87,7 +87,7 @@ export async function publishReports({ api, reports, centralSha }) {
   else await api('POST', `/repos/${CENTRAL}/git/refs`, { ref: `refs/heads/${REPORT_BRANCH}`, sha: commit.sha });
   const pulls = await api('GET', `/repos/${CENTRAL}/pulls?state=open&per_page=100`);
   const open = pulls.find((p) => p.head.ref === REPORT_BRANCH);
-  const title = 'docs: 준수 현황 갱신';
+  const title = 'docs: update compliance report';
   const body = [
     '## What changed',
     `Regenerated ${changed.map((p) => `\`${p}\``).join(', ')} from the current state of the sub-repos.`,

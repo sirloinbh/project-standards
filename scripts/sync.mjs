@@ -99,7 +99,7 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
   const inRollout = targets.filter((t) => t.rollout <= data.sync.maxRollout);
   if (!inRollout.length) {
     await getToken('sirloinbh/project-standards');
-    log(`설치 토큰 발급 확인. maxRollout ${data.sync.maxRollout}이라 동기화할 대상이 없습니다.`);
+    log(`Installation token issued. maxRollout is ${data.sync.maxRollout}, so there is nothing to sync.`);
     return [];
   }
   const centralApi = makeClient(centralToken ?? (await getToken('sirloinbh/project-standards')));
@@ -109,11 +109,11 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
     try {
       api = makeClient(await getToken(target.repo));
       const result = await syncTarget({ root, data, target, centralSha, workflowSha, api, centralApi });
-      log(`${target.repo}: ${result.status}${result.pr ? ` ${result.pr}` : ''} (변경 ${result.changes.length}, 삭제 ${result.deletions.length})`);
-      if (result.status === 'kept') log(`::warning::${target.repo}: 동기화 PR에 직접 더한 커밋이 있어 갱신하지 않았습니다. ${result.pr}`);
+      log(`${target.repo}: ${result.status}${result.pr ? ` ${result.pr}` : ''} (changed ${result.changes.length}, deleted ${result.deletions.length})`);
+      if (result.status === 'kept') log(`::warning::${target.repo}: The sync PR has a commit added by hand, so it was not updated. ${result.pr}`);
       results.push({ target: target.repo, ...result });
     } catch (error) {
-      log(`${target.repo}: 실패 — ${error.message}`);
+      log(`${target.repo}: failed: ${error.message}`);
       results.push({ target: target.repo, status: 'failed', error: error.message });
     }
     if (!api) continue;
@@ -123,7 +123,7 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
       result.labels = await syncLabels({ api, repo: target.repo, labels });
       log(`${target.repo}: ${describeLabelPlan(result.labels)}`);
     } catch (error) {
-      log(`${target.repo}: 라벨 실패 — ${error.message}`);
+      log(`${target.repo}: label failure: ${error.message}`);
       result.labelsError = error.message;
     }
   }
@@ -167,10 +167,10 @@ if (isMain && process.argv.includes('--apply')) {
       if (!targets.some((t) => t.repo.split('/')[1] === name)) throw new Error(`--labels-from: unknown target ${name}`);
     }
     for (const t of dryRun({ data, targets, local: args.local, labelsFrom: args.labelsFrom, out: path.resolve(args.out), centralSha, workflowSha: args.sha ? args.sha : lastWorkflowCommit(centralSha) })) {
-      const note = [t.inRollout ? '적용 대상' : `대기(rollout ${t.rollout})`, t.skipped.length && `건너뜀 ${t.skipped.length}`, t.fieldsPending.length && `필드 미병합 ${t.fieldsPending.length}`, t.labels && describeLabelPlan(t.labels)].filter(Boolean).join(', ');
-      console.log(`${t.repo}: 파일 ${t.files.length}개 — ${note}`);
+      const note = [t.inRollout ? 'in rollout' : `waiting (rollout ${t.rollout})`, t.skipped.length && `skipped ${t.skipped.length}`, t.fieldsPending.length && `fields not merged ${t.fieldsPending.length}`, t.labels && describeLabelPlan(t.labels)].filter(Boolean).join(', ');
+      console.log(`${t.repo}: ${t.files.length} file(s) — ${note}`);
     }
-    console.log(`결과: ${path.resolve(args.out)}`);
+    console.log(`Result: ${path.resolve(args.out)}`);
   } catch (error) {
     console.error(`sync: ${error.message}`);
     process.exit(1);

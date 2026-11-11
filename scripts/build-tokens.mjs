@@ -5,7 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const HEADER = '/* 자동 생성 파일. 수정은 sirloinbh/project-standards의 design/tokens.json에서 하고 `npm run tokens` 로 다시 생성한다. */';
+const HEADER = '/* Generated file. Edit design/tokens.json in sirloinbh/project-standards and regenerate with `npm run tokens`. */';
 
 const byName = (list) => Object.fromEntries(list.map((x) => [x.name, x]));
 
@@ -14,8 +14,8 @@ export function renderTokensCss(t) {
   const darkColors = (indent) => [`${indent}color-scheme: dark;`, ...t.color.dark.map((c) => `${indent}--${c.name}: ${c.value};`)];
   const lines = [
     HEADER,
-    '/* Tailwind 없이도 쓸 수 있는 CSS 변수. 모든 앱이 같은 흑백 색을 쓴다(ADR-0008). */',
-    '/* 다크 모드: <html class="dark">, 또는 클래스가 없을 때 시스템 설정(prefers-color-scheme). <html class="light">는 라이트로 고정. */',
+    '/* CSS variables usable without Tailwind. All apps use the same black-and-white colors (ADR-0008). */',
+    '/* Dark mode: <html class="dark">, or the system setting (prefers-color-scheme) when there is no class. <html class="light"> forces light. */',
     "@import './fonts/pretendard.css';",
     '',
     ':root {',
@@ -66,10 +66,10 @@ export function renderTailwindCss(t) {
   ];
   const lines = [
     HEADER,
-    '/* Tailwind CSS 4 앱용. 앱의 메인 CSS에서 tailwindcss 다음에 import한다. */',
+    '/* For Tailwind CSS 4 apps. Import it in the app main CSS after tailwindcss. */',
     "@import './tokens.css';",
     '',
-    '/* dark: 유틸리티도 tokens.css와 같은 조건: .dark 클래스, 또는 .light가 없을 때 시스템 다크 모드 */',
+    '/* The dark: utility uses the same condition as tokens.css: the .dark class, or system dark mode when .light is absent */',
     '@custom-variant dark {',
     '  &:where(.dark, .dark *) {',
     '    @slot;',
