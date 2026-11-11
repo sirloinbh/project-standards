@@ -63,7 +63,7 @@ test('inlineReusable rejects unknown inputs and missing required ones', () => {
 test('a public app gets the reusable workflow inlined; a private app keeps calling it (#209)', () => {
   const pub = ciOf(plan('workout-memo'));
   assert.equal(pub.source, REUSABLE_APP_CI);
-  assert.match(pub.content, /^# 중앙 관리 파일\. 수정은 sirloinbh\/project-standards의 \.github\/workflows\/에서\n/);
+  assert.match(pub.content, /^# Managed file\. Edit it in sirloinbh\/project-standards \.github\/workflows\/\n/);
   assert.doesNotMatch(pub.content, /uses: sirloinbh\/project-standards|inputs\./);
   assert.match(pub.content, /e2e-visual:\n    if: true && true\n/);
   assert.match(pub.content, /image: mcr\.microsoft\.com\/playwright:v1\.63\.0-noble@sha256:/);
