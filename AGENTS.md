@@ -1,43 +1,43 @@
-# Project Standards 에이전트 지침
+# Project Standards Agent Instructions
 
-이 리포지토리는 `sirloinbh` 개인 앱 포트폴리오(앱 8개 + `shared-aws-infrastructure`)의 공통 표준(설정·컨벤션·스킬·프로젝트 고정값)을 관리하는 중앙 리포다.
+This repository is the central repo for `sirloinbh`'s personal app portfolio (8 apps + `shared-aws-infrastructure`). It manages the shared standards: settings, conventions, skills, and fixed project values.
 
-## 현재 단계: 운영
+## Current phase: operation
 
-- 설계는 [docs/design.md](docs/design.md)와 [docs/adr/](docs/adr/)가 원본이다. 요구사항 원본은 [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md)다.
-- design.md "12. 단계별 적용 계획"은 끝났다(#116). `sync.config.json`의 `maxRollout`이 `3`이라 앱 8개와 인프라 리포 모두가 동기화 대상이다.
-- 지금부터 표준을 바꾸는 순서: 이 리포의 원본을 고친다 → `npm run check` → 이 리포 PR 병합(에이전트) → `sync.yml`이 하위 리포 동기화 PR을 열거나 갱신 → 에이전트가 동기화 PR을 검토해 이슈에 기록 → 사용자가 병합.
-- 동기화 PR에 직접 커밋을 더해야 할 때(공유 패키지가 늘어 lockfile 갱신이 필요한 경우 등)는 커밋 메시지를 `chore: 중앙 표준 동기화 (project-standards@`로 시작하지 않는다. 동기화 봇은 그런 커밋이 있는 브랜치를 덮어쓰지 않고, PR 댓글과 워크플로 경고로 알린다(#114, #367). 그 PR이 열려 있는 동안 중앙 변경은 반영되지 않으므로, 병합한 뒤 `sync` 워크플로를 실행한다.
-- 매일 오는 준수 현황 PR(`chore/compliance-report`)은 에이전트가 병합한다. 새로 생긴 `✗` 항목은 해당 리포 또는 이 리포에 이슈로 등록한다.
+- The design source is [docs/design.md](docs/design.md) and [docs/adr/](docs/adr/). The requirements source is [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md).
+- The "12. Phased rollout plan" in design.md is done (#116). `maxRollout` in `sync.config.json` is `3`, so all 8 apps and the infrastructure repo are sync targets.
+- Order for changing a standard from now on: fix the source in this repo → `npm run check` → merge the PR in this repo (agent) → `sync.yml` opens or updates the sync PRs in the downstream repos → the agent reviews each sync PR and records it on the issue → the user merges.
+- When you must add a commit directly to a sync PR (for example when a shared package grows and the lockfile needs an update), do not start the commit message with `chore: 중앙 표준 동기화 (project-standards@`. The sync bot does not overwrite a branch that has such a commit; it reports it with a PR comment and a workflow warning (#114, #367). While that PR is open, central changes are not applied, so run the `sync` workflow after merging it.
+- The agent merges the daily compliance report PR (`chore/compliance-report`). Register each new `✗` item as an issue in the affected repo or in this repo.
 
-## 작업 절차
+## Work procedure
 
-- 요구사항을 이슈로 등록하거나 다음 작업을 고를 때는 [std-backlog](templates/common/skills/std-backlog/SKILL.md) 스킬을 따른다.
-- 이슈·브랜치·커밋·PR을 쓸 때는 [std-git-writing](templates/common/skills/std-git-writing/SKILL.md) 스킬과 `.github/`의 이슈·PR 템플릿을 따른다.
-- 사용자에게 하는 설명은 [std-communication](templates/common/skills/std-communication/SKILL.md) 스킬대로 영어로 쓴다(#454). 이슈·브랜치·커밋·PR도 영어로 쓴다.
+- To register requirements as issues or to choose the next task, follow the [std-backlog](templates/common/skills/std-backlog/SKILL.md) skill.
+- To write issues, branches, commits, and PRs, follow the [std-git-writing](templates/common/skills/std-git-writing/SKILL.md) skill and the issue and PR templates in `.github/`.
+- Write explanations to the user in English, as the [std-communication](templates/common/skills/std-communication/SKILL.md) skill says (#454). Write issues, branches, commits, and PRs in English too.
 
-1. `sirloinbh/project-standards`에 이슈를 등록한다. 사용자가 지정한 기존 이슈가 있으면 재사용한다.
-2. 이슈 번호를 포함한 브랜치를 만든다: `<type>/<issue-number>-<slug>`.
-3. 구현·테스트·`docs/changes/<issue-number>-<slug>.md` 기록을 함께 커밋한다.
-4. 커밋 전과 PR 생성·갱신 전에 관련 테스트를 실행하고 결과를 docs와 PR에 기록한다.
-5. **이 리포의 PR은 에이전트가 병합한다.** `npm run check`가 통과하고 PR 본문을 템플릿대로 쓴 뒤 merge commit으로 병합하고(`pr merge --merge`. 로컬 브랜치는 std-git-writing의 git CLI 절차로 정리하므로 `--delete-branch`를 쓰지 않는다), std-backlog 순서에 따라 다음 이슈를 진행한다. 사용자가 2026-10-22에 정한 규칙이다(#128).
-   - 다음은 계속 사용자에게 먼저 확인한다: 하위 리포 PR(앱 리포 main 병합은 곧 운영 배포), `[직접]`·`needs-user` 이슈, 사전 승인 범위 밖의 패키지 설치, 이슈에 "사용자 확인"으로 적힌 결정.
-   - 병합 전에 확인해 달라고 PR 본문에 적은 항목이 있으면 병합하지 않고 사용자에게 묻는다.
-   - 예외: 에이전트 워커(`tools/agents`)가 하위 리포에서 여는 PR은 그 리포 `.agents.json`의 `autoMerge`를 따른다(기본 `true`, 리포별 값은 [docs/tools.md](docs/tools.md#auto-merge-per-repo) 표). 표에서 `false`인 리포는 워커를 도입하는 PR에 `.agents.json`을 함께 넣는다(#184).
+1. Register an issue in `sirloinbh/project-standards`. If the user named an existing issue, reuse it.
+2. Create a branch that contains the issue number: `<type>/<issue-number>-<slug>`.
+3. Commit the implementation, the tests, and the `docs/changes/<issue-number>-<slug>.md` record together.
+4. Run the relevant tests before committing and before creating or updating a PR. Record the results in the docs and the PR.
+5. **The agent merges PRs in this repo.** After `npm run check` passes and the PR body follows the template, merge with a merge commit (`pr merge --merge`; do not use `--delete-branch`, because local branches are cleaned up with the git CLI steps in std-git-writing), then continue with the next issue in std-backlog order. The user set this rule on 2026-10-22 (#128).
+   - Still ask the user first for: downstream repo PRs (merging an app repo to main is a production deploy), `[직접]` and `needs-user` issues, package installs outside the pre-approved scope, and decisions the issue marks as "user confirmation".
+   - If the PR body lists an item to confirm before merging, do not merge; ask the user.
+   - Exception: PRs that an agent worker (`tools/agents`) opens in a downstream repo follow `autoMerge` in that repo's `.agents.json` (default `true`; per-repo values are in the table in [docs/tools.md](docs/tools.md#auto-merge-per-repo)). For a repo marked `false` in the table, include `.agents.json` in the PR that introduces the worker (#184).
 
-질문 답변·추천·읽기 전용 조사는 이슈나 브랜치를 만들지 않는다.
+Answering questions, giving recommendations, and read-only investigation do not create an issue or a branch.
 
-## 검증 명령
+## Verification commands
 
-외부 npm 패키지 없이 Node 내장 모듈만으로 동작한다. `npm install`은 하지 않는다.
+This works with Node built-in modules only, with no external npm packages. Do not run `npm install`.
 
-| 명령 | 언제 |
+| Command | When |
 |---|---|
-| `npm run check` | 모든 커밋과 PR 전. 테스트, 레지스트리 충돌, 생성 문서·디자인 토큰 최신 여부, 패키지 규칙, 워크플로 검사 |
-| `npm run test:agents` | `tools/agents/`를 바꿨을 때 (Windows 경로 검사 포함) |
-| `UPDATE_SNAPSHOT=1 npm test` | 하위 리포가 받을 파일 목록이 바뀌었을 때. 스냅샷 변화를 PR에서 함께 리뷰한다 |
-| `npm run docs`, `npm run tokens` | 레지스트리·토큰을 바꾼 뒤 생성 문서를 다시 만들 때 |
-| `npm run sync:preview` | 하위 리포가 받을 파일을 `.local/sync-preview/`에 미리 볼 때 |
+| `npm run check` | Before every commit and PR. Tests, registry conflicts, whether generated docs and design tokens are current, package rules, workflow checks |
+| `npm run test:agents` | When you changed `tools/agents/` (includes the Windows path check) |
+| `UPDATE_SNAPSHOT=1 npm test` | When the list of files downstream repos receive changed. Review the snapshot change in the PR |
+| `npm run docs`, `npm run tokens` | To regenerate the generated docs after changing the registry or tokens |
+| `npm run sync:preview` | To preview the files downstream repos will receive in `.local/sync-preview/` |
 
 ## Path-specific rules
 
@@ -46,20 +46,20 @@ These live in `.claude/rules/`. Claude Code loads each one when it works on matc
 - [sources-and-copies.md](.claude/rules/sources-and-copies.md): which file is the source and which are copies (`templates/`, `.claude/`, `.codex/`, `.github/`, `versions.json`, `registry/`, `sync.config.json`). Edit the source and copy it in the same PR.
 - [sync-and-deploy.md](.claude/rules/sync-and-deploy.md): how sync, package releases, the compliance report, and app deploys work (`sync.config.json`, `packages/`, workflows, sync and compliance scripts).
 
-## 금지 사항
+## Prohibited actions
 
-- 기본 `gh`(회사 계정)로 원격 변경을 하지 않는다. 아래 "계정과 보안"의 래퍼를 쓴다.
-- 하위 리포에 직접 push하지 않는다. 하위 리포 변경은 각 리포의 이슈·PR 절차를 따른다.
-- npm 패키지 설치·삭제·`npx` 실행을 하지 않는다. 사용자가 명시적으로 재확인한 경우만 예외이고, 조건은 [docs/dependency-policy.md](docs/dependency-policy.md)와 [docs/agent-guardrails.md](docs/agent-guardrails.md)를 따른다.
-- `.env` 값, 토큰, GitHub App 개인키, Terraform state, 백업을 커밋하거나 docs·PR·로그에 기록하지 않는다.
-- `maxRollout`을 올리거나, 패키지 태그를 push하거나, 사용자 단계를 대신하지 않는다.
-- 사용자 변경을 덮어쓰지 않는다. 필요한 파일만 명시해서 stage한다.
+- Do not make remote changes with the default `gh` (the work account). Use the wrapper in "Accounts and security" below.
+- Do not push directly to downstream repos. Follow each repo's issue and PR procedure for downstream changes.
+- Do not install or remove npm packages or run `npx`. The only exception is when the user explicitly reconfirms; the conditions are in [docs/dependency-policy.md](docs/dependency-policy.md) and [docs/agent-guardrails.md](docs/agent-guardrails.md).
+- Do not commit `.env` values, tokens, GitHub App private keys, Terraform state, or backups, and do not record them in docs, PRs, or logs.
+- Do not raise `maxRollout`, push package tags, or do user steps on the user's behalf.
+- Do not overwrite user changes. Stage only the files you need, by name.
 
-## 계정과 보안
+## Accounts and security
 
-- GitHub 작업은 개인 계정 `sirloinbh`로 한다. `ghp` 함수 또는 `gh-project.ps1` 래퍼를 쓴다. 위치는 `%LOCALAPPDATA%\sirloinbh-tools\`다([docs/tools.md](docs/tools.md)). 예전 위치 `%LOCALAPPDATA%\gh-workout-memo\`는 쓰지 않는다(삭제는 사용자 단계).
-- Git 인증은 리포 로컬 credential helper(`gh-project.ps1 auth git-credential`)가 담당한다. 커밋 작성자는 `~/.gitconfig-personal`이 원격 URL 기준으로 자동 적용한다.
+- Do GitHub work with the personal account `sirloinbh`. Use the `ghp` function or the `gh-project.ps1` wrapper. They live in `%LOCALAPPDATA%\sirloinbh-tools\` ([docs/tools.md](docs/tools.md)). Do not use the old location `%LOCALAPPDATA%\gh-workout-memo\` (deleting it is a user step).
+- Git authentication is handled by the repo-local credential helper (`gh-project.ps1 auth git-credential`). The commit author is applied automatically from `~/.gitconfig-personal` based on the remote URL.
 
-## 응답
+## Responses
 
-- 사용자에게 하는 설명, 이슈·PR, 새로 쓰는 문서는 영어로 쓴다. 기존 한국어 문서는 #453 하위 이슈에서 번역한다.
+- Write explanations to the user, issues, PRs, and new documents in English. Existing Korean documents are translated in sub-issues of #453.
