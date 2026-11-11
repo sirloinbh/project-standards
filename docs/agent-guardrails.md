@@ -85,6 +85,16 @@ The commands in "Local branch management (git CLI)" of [std-git-writing](../temp
 - Pushing a work branch, `git add`, and `git commit` are not in these rules. They follow each PC's settings.
 - If the global instructions (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`) still have a Fork rule section, the Claude Code `SessionStart` hook (`.claude/hooks/pc-setup-notice.mjs`) tells the user how to fix it at session start (#368). It only reads, and an error does not block the session. It does not appear in clones from before they received the repo's hook, or in Codex sessions.
 
+## What CLAUDE.md loads every session (#447)
+
+Claude Code reads `CLAUDE.md` at session start, but it does not follow markdown links such as `[AGENTS.md](AGENTS.md)`. Only lines of the form `@<path>` (imports) pull another file into every session. So the rules in AGENTS.md apply only when CLAUDE.md imports it.
+
+- **Import** a file when every session needs it: the work procedure, prohibited actions, and verification commands. The central `CLAUDE.md` imports `@AGENTS.md`. The app template `templates/app/CLAUDE.md.tmpl` imports `@AGENTS.md` and `@AGENTS.project.md`.
+- **Link** a file when only some tasks need it, such as the requirements source `docs/bootstrap-prompt.md`, design docs, and rule docs under `docs/`. An imported file costs context in every session; a linked file costs nothing until it is opened.
+- AGENTS.md stays the single source because Codex reads it directly. CLAUDE.md only imports it and adds Claude-specific lines; it does not copy rules.
+- Keep the total loaded every session (global `~/.claude/CLAUDE.md` + `CLAUDE.md` + imported files) under 200 lines. Path- and task-specific rules move to `.claude/rules/` and skills (#448, #449).
+- `scripts/test/agents.test.mjs` checks that both CLAUDE.md files import AGENTS.md and that the central one does not import anything under `docs/`.
+
 ## How to change
 
 - The sources are `templates/common/.claude/settings.json.tmpl`, `templates/common/.claude/hooks/block-package-installs.mjs`, `templates/common/.codex/rules/package-installs.rules`, `templates/common/.codex/rules/git-branch.rules`, and `templates/common/.codex/hooks.json.tmpl`. If the Codex hook settings change, the user must trust them again with `/hooks` in each repo, so change them only when really needed. The hook script is used by both Claude Code (`node <file>`) and Codex (calling `main()` with `node -e`), so keep the `main` export. The deny list and the Codex rules must block the same commands (a test compares them). Also fix the central repo's `.claude/settings.json`, `.claude/hooks/`, and `.codex/rules/`.
@@ -97,6 +107,7 @@ The commands in "Local branch management (git CLI)" of [std-git-writing](../temp
 
 - Claude Code hooks (PreToolUse input `tool_input.command`, exit code 2, `matcher`, exec form, `onFailure`, default timeout 600 seconds): https://code.claude.com/docs/en/hooks.md
 - Claude Code permission rules: https://code.claude.com/docs/en/permissions.md, settings: https://code.claude.com/docs/en/settings.md
+- Claude Code memory (`CLAUDE.md` loading, `@path` imports): https://code.claude.com/docs/en/memory.md
 - npm command and alias list: npm 11 `lib/utils/cmd-list.js` (the npm included in Node 24.21.0)
 - Codex rules (`pattern` is literal words, conditions for splitting `bash -lc`): https://learn.chatgpt.com/docs/agent-configuration/rules, Codex hooks (PreToolUse, `hooks.json`, trust, exit code 2, continue running on failure): https://learn.chatgpt.com/docs/hooks.md, approvals and sandbox: https://learn.chatgpt.com/docs/agent-approvals-security.md, AGENTS.md: https://learn.chatgpt.com/docs/agent-configuration/agents-md
 - Codex hook implementation (#180, openai/codex `main`, checked 2026-10-22): the hook name `Bash` and input `{"command": cmd}` for shell commands are in `codex-rs/core/src/tools/hook_names.rs` and `codex-rs/core/src/tools/handlers/unified_exec/exec_command.rs`; the hook config fields (`commandWindows`, `timeout`, `statusMessage`, rejection of unknown fields) are in `codex-rs/config/src/hook_config.rs`; the execution shell (`$SHELL -lc`, `%COMSPEC% /C`) is in `codex-rs/hooks/src/engine/command_runner.rs`; not blocking on failure and exit code handling are in `codex-rs/hooks/src/events/pre_tool_use.rs`; the trust hash and the default timeout of 600 seconds are in `codex-rs/hooks/src/engine/discovery.rs`
