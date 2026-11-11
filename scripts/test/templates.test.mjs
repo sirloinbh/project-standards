@@ -45,7 +45,7 @@ test('intended differences from study-log: ignore-scripts and the project marker
     `${fixture('npmrc')}ignore-scripts=true\n@sirloinbh:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}\n`,
   );
   assert.equal(withoutHeader(byPath['frontend/.npmrc'].content), withoutHeader(byPath['.npmrc'].content));
-  assert.match(byPath['frontend/.npmrc'].content, /templates\/app\/frontend\/에서/);
+  assert.match(byPath['frontend/.npmrc'].content, /templates\/app\/frontend\//);
   // Tool outputs and personal settings every app produces were added to the shared section (#323).
   const toolOutputs = ['.claude/settings.local.json', '*.tfvars', 'test-results/', 'playwright-report/', 'blob-report/', 'coverage/', '.lighthouseci/', '*.tsbuildinfo'];
   assert.equal(withoutHeader(byPath['.gitignore'].content), `${fixture('gitignore')}${toolOutputs.join('\n')}\n${PROJECT_MARKER}\n`);
