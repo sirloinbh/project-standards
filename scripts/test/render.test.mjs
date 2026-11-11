@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { addHeader, commentStyle, mergeSection, PROJECT_MARKER, renderFile, renderText } from '../lib/render.mjs';
+import { addHeader, commentStyle, hasHeader, mergeSection, PROJECT_MARKER, renderFile, renderText } from '../lib/render.mjs';
 
 const vars = { project: { name: 'study-log' }, ports: { web: 8102 }, versions: { node: '24.21.0' }, features: { e2e: false } };
 
@@ -39,15 +39,20 @@ test('picks a comment style per file type', () => {
 test('adds the header on the first line pointing to the template folder', () => {
   assert.equal(
     addHeader('root = true\n', '.editorconfig', 'templates/common/.editorconfig'),
-    '# 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/common/에서\nroot = true\n',
+    '# Managed file. Edit it in sirloinbh/project-standards templates/common/\nroot = true\n',
   );
 });
 
+test('a file synced before #455 with the Korean header still counts as having the header', () => {
+  assert.equal(hasHeader('# 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/common/에서\nroot = true\n'), true);
+  assert.equal(hasHeader('root = true\n'), false);
+});
+
 test('keeps shebangs, Dockerfile directives, and Markdown frontmatter first', () => {
-  assert.match(addHeader('#!/usr/bin/env bash\necho\n', 'deploy/run.sh', 'templates/app/deploy/run.sh'), /^#!\/usr\/bin\/env bash\n# 중앙 관리 파일/);
-  assert.match(addHeader('# syntax=docker/dockerfile:1\nFROM node\n', 'Dockerfile', 'templates/app/Dockerfile'), /^# syntax=docker\/dockerfile:1\n# 중앙 관리 파일/);
-  const skill = addHeader('---\nname: std-x\n---\n\n# 제목\n', 'skills/std-x/SKILL.md', 'templates/common/skills/std-x/SKILL.md');
-  assert.match(skill, /^---\nname: std-x\n---\n\n<!-- 중앙 관리 파일\. 수정은 sirloinbh\/project-standards의 templates\/common\/skills\/std-x\/에서 -->\n\n# 제목/);
+  assert.match(addHeader('#!/usr/bin/env bash\necho\n', 'deploy/run.sh', 'templates/app/deploy/run.sh'), /^#!\/usr\/bin\/env bash\n# Managed file/);
+  assert.match(addHeader('# syntax=docker/dockerfile:1\nFROM node\n', 'Dockerfile', 'templates/app/Dockerfile'), /^# syntax=docker\/dockerfile:1\n# Managed file/);
+  const skill = addHeader('---\nname: std-x\n---\n\n# Title\n', 'skills/std-x/SKILL.md', 'templates/common/skills/std-x/SKILL.md');
+  assert.match(skill, /^---\nname: std-x\n---\n\n<!-- Managed file\. Edit it in sirloinbh\/project-standards templates\/common\/skills\/std-x\/ -->\n\n# Title/);
 });
 
 test('does not add a second header or a header to JSON', () => {

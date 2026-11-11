@@ -23,7 +23,7 @@ test('every app gets AGENTS.md and CLAUDE.md that point to AGENTS.project.md', (
   for (const { target, files } of apps) {
     const project = data.projects.projects.find((p) => p.name === target.project);
     const agents = files['AGENTS.md'].content;
-    assert.match(agents, new RegExp(`^<!-- ${HEADER_TEXT} templates/app/에서 -->\n# ${project.title} 프로젝트 지침\n`), target.repo);
+    assert.match(agents, new RegExp(`^<!-- ${HEADER_TEXT} templates/app/ -->\n# ${project.title} 프로젝트 지침\n`), target.repo);
     assert.ok(agents.includes(project.summary), target.repo);
     assert.ok(agents.includes('[AGENTS.project.md](AGENTS.project.md)를 반드시 함께 읽고 따른다'), target.repo);
     assert.ok(agents.includes(`\`sirloinbh/${project.repos.umbrella}\`에 이슈를 등록한다`), target.repo);
