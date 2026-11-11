@@ -1,4 +1,4 @@
-// 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/common/.claude/hooks/에서
+// Managed file. Edit it in sirloinbh/project-standards templates/common/.claude/hooks/
 // Claude Code SessionStart hook (#368, docs/agent-guardrails.md): this PC's global instructions
 // live outside every repository, so `git pull` cannot update them. While they still hold the old
 // Fork branch rule, tell the user how to apply the current rule. It prints nothing once applied.

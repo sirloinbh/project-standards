@@ -1,4 +1,4 @@
-# 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/common/.codex/rules/에서
+# Managed file. Edit it in sirloinbh/project-standards templates/common/.codex/rules/
 # Blocks package installs and ad-hoc package execution for Codex (npm supply-chain attacks, docs/agent-guardrails.md).
 # Codex reads project rules only after the user trusts this project's .codex/ folder.
 prefix_rule(

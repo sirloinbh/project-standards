@@ -93,7 +93,7 @@ Local branches are managed with the git CLI. The agent runs these commands itsel
 - The title is about 50 characters. `type` uses the same list as branches. Use the imperative in lower case: `feat: add registry conflict check (#44)`
 - One commit holds one logical change. Commit the implementation, its tests, and its change record (`docs/changes/`) together.
 - The body explains what the diff cannot show. Do not list files.
-- Automated commits whose prefix tools rely on (the sync bot's `chore: 중앙 표준 동기화 (project-standards@` and the compliance report commit) keep their existing format until the tools are migrated.
+- Automated commits whose prefix tools rely on (the sync bot's `chore: sync central standards (project-standards@` and the compliance report commit) keep their format. Sync commits made before #455 used `chore: 중앙 표준 동기화 (project-standards@`, and the bot still treats them as its own.
 
 | Bad | Good |
 |---|---|

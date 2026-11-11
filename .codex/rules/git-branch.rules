@@ -1,4 +1,4 @@
-# 중앙 관리 파일. 수정은 sirloinbh/project-standards의 templates/common/.codex/rules/에서
+# Managed file. Edit it in sirloinbh/project-standards templates/common/.codex/rules/
 # Lets Codex run the git branch commands in the std-git-writing skill without asking (#361, docs/agent-guardrails.md).
 # Codex rules compare words from the start of a command, and the strictest matching rule wins.
 prefix_rule(
