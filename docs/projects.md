@@ -6,14 +6,14 @@
 
 | Slot | Project | Name | Display name | Domain | Status | DB / test DB | Service address | AWS prefix | Rollout stage |
 |---|---|---|---|---|---|---|---|---|---|
-| 01 | workout-memo | 운동 기록 | FORM · 나의 운동 기록 | 운동 | active | workout / workout_test | TBD | TBD | 1 |
-| 02 | study-log | 공부 기록 | 공부 기록 | 공부 | active | study / study_test | TBD | TBD | 2 |
-| 03 | health-log | 식단·수면·건강 기록 | 식단·수면·건강 기록 | 건강 | active | health / health_test | TBD | TBD | 2 |
-| 04 | life-journal | 감상문·일기장 | 감상문·일기장 | 일기 | active | journal / journal_test | TBD | TBD | 2 |
-| 05 | money-ledger | 가계부·자산·모의투자 | 가계부·자산·모의투자 | 재무 | active | money / money_test | TBD | TBD | 2 |
-| 06 | cert-manager | 자격증 관리 | 자격증 관리 | 자격증 | active | cert / cert_test | TBD | TBD | 2 |
-| 07 | plan-routine | 계획·실천·루틴·피드백 | 계획·실천·루틴·피드백 | 루틴 | active | plan / plan_test | TBD | TBD | 2 |
-| 08 | dev-career-portfolio | 개발 커리어 포트폴리오 | 개발 커리어 포트폴리오 | 커리어 | active | career / career_test | TBD | TBD | 2 |
+| 01 | workout-memo | Workout Log | FORM · My Workout Log | 운동 | active | workout / workout_test | TBD | TBD | 1 |
+| 02 | study-log | Study Log | Study Log | 공부 | active | study / study_test | TBD | TBD | 2 |
+| 03 | health-log | Health Log | Diet, Sleep and Health Log | 건강 | active | health / health_test | TBD | TBD | 2 |
+| 04 | life-journal | Reviews & Diary | Reviews & Diary | 일기 | active | journal / journal_test | TBD | TBD | 2 |
+| 05 | money-ledger | Money Ledger | Ledger, Assets, Mock Trading | 재무 | active | money / money_test | TBD | TBD | 2 |
+| 06 | cert-manager | Cert Manager | Cert Manager | 자격증 | active | cert / cert_test | TBD | TBD | 2 |
+| 07 | plan-routine | Plan Routine | Plan · Practice · Routine · Feedback | 루틴 | active | plan / plan_test | TBD | TBD | 2 |
+| 08 | dev-career-portfolio | Dev Career | Dev Career Portfolio | 커리어 | active | career / career_test | TBD | TBD | 2 |
 
 ## Ports
 

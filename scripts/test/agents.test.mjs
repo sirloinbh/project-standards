@@ -97,8 +97,8 @@ test('skill files have a matching name, a description, and the header after the 
 
 test('project-specific skill text uses the project title and repository', () => {
   const study = apps.find((r) => r.target.project === 'study-log').files;
-  assert.match(study['skills/std-testing/SKILL.md'].content, /# 공부 기록 테스트 작성과 실행/);
-  assert.match(study['skills/std-foundation/SKILL.md'].content, /# 공부 기록 개발 기반/);
+  assert.match(study['skills/std-testing/SKILL.md'].content, /# Study Log 테스트 작성과 실행/);
+  assert.match(study['skills/std-foundation/SKILL.md'].content, /# Study Log 개발 기반/);
   assert.match(study['skills/std-implementation/SKILL.md'].content, /이 스킬은 `sirloinbh\/study-log` 리포의 변경 작업에 적용한다/);
 });
 

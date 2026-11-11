@@ -79,7 +79,7 @@ test('display names must be unique because they are the only difference between 
   const { errors } = fixture((d) => {
     byName(d, 'health-log').displayName = byName(d, 'study-log').displayName;
   });
-  assert.ok(errors.includes('display name "공부 기록" is used by study-log, health-log'), errors.join('\n'));
+  assert.ok(errors.includes('display name "Study Log" is used by study-log, health-log'), errors.join('\n'));
 });
 
 test('db.testName must differ from db.name', () => {
