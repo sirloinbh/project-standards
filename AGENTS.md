@@ -15,6 +15,7 @@ This repository is the central repo for `sirloinbh`'s personal app portfolio (8 
 - To register requirements as issues or to choose the next task, follow the [std-backlog](templates/common/skills/std-backlog/SKILL.md) skill.
 - To write issues, branches, commits, and PRs, follow the [std-git-writing](templates/common/skills/std-git-writing/SKILL.md) skill and the issue and PR templates in `.github/`.
 - Write explanations to the user in English, as the [std-communication](templates/common/skills/std-communication/SKILL.md) skill says (#454). Write issues, branches, commits, and PRs in English too.
+- Keep progress, decisions, and next steps in md files, not in the chat or memory, as the [std-session-notes](templates/common/skills/std-session-notes/SKILL.md) skill says (#452). A new session reads the latest `docs/daily/` file first.
 - Choose the Claude model and effort for a session by task type, as [docs/model-selection.md](docs/model-selection.md) says (#440). Decide it when you start the session and do not change it mid-session.
 
 1. Register an issue in `sirloinbh/project-standards`. If the user named an existing issue, reuse it.
