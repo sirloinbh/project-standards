@@ -1,32 +1,32 @@
-# #119 이슈·PR 작성 규칙 스킬과 이슈 묶기
+# #119 Skill for writing issues and PRs, and merging issues
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/common/skills/std-git-writing/SKILL.md` | 새 공통 스킬. 이슈 제목·본문, 브랜치 이름, 커밋 메시지, PR 제목·본문을 사람이 읽기 쉽게 쓰는 규칙과 좋은 예·나쁜 예 |
-| `templates/common/.github/ISSUE_TEMPLATE/task.md` | 이슈 템플릿: 한 줄 요약, 왜 필요한가요, 할 일, 완료 기준, 먼저 끝나야 하는 것, 참고 |
-| `templates/common/.github/pull_request_template.md` | PR 템플릿: 무엇을 바꿨나요, 왜 바꿨나요, 주요 변경, 확인한 내용, 병합 전에 확인해 주세요, 영향 범위 |
-| `templates/common/skills/std-backlog/SKILL.md` | 세분화 기준 변경: "PR 하나로 리뷰할 수 있는 한 가지 목적" 단위로 묶고, 여러 리포의 반복 작업은 추적 이슈 하나로, 사용자 단계는 같은 시점끼리 묶음. 이슈 본문은 std-git-writing을 따름 |
-| `.claude/skills/std-*/`, `.github/ISSUE_TEMPLATE/task.md`, `.github/pull_request_template.md` | 중앙 리포에서 바로 쓰는 복제본 |
-| `AGENTS.md` | 두 스킬과 템플릿 참조 |
+| `templates/common/skills/std-git-writing/SKILL.md` | New common skill. Rules, with good and bad examples, for writing issue titles and bodies, branch names, commit messages, and PR titles and bodies so a person can read them easily |
+| `templates/common/.github/ISSUE_TEMPLATE/task.md` | Issue template: one-line summary, why it is needed, tasks, done criteria, what must finish first, references |
+| `templates/common/.github/pull_request_template.md` | PR template: what changed, why, main changes, what was verified, check before merging, impact |
+| `templates/common/skills/std-backlog/SKILL.md` | Changed the splitting rule: group by "one purpose a single PR can review", track repeated work across repos in one tracking issue, and group user steps that happen at the same time. Issue bodies follow std-git-writing |
+| `.claude/skills/std-*/`, `.github/ISSUE_TEMPLATE/task.md`, `.github/pull_request_template.md` | Copies used directly in the central repo |
+| `AGENTS.md` | References to the two skills and the templates |
 
-스킬 안의 템플릿 위치는 링크 대신 "리포 루트의 `.github/...`"로 적었다. 같은 스킬 파일이 `skills/`와 `.claude/skills/` 두 곳에 놓이는데 폴더 깊이가 달라서, 상대 링크 하나로는 둘 다 맞출 수 없기 때문이다.
+Inside the skill, the template location is written as "`.github/...` at the repo root" instead of a link. The same skill file sits in two places, `skills/` and `.claude/skills/`, at different folder depths, so one relative link cannot be correct for both.
 
-## GitHub 이슈 정리 (리포 밖 변경)
+## GitHub issue cleanup (changes outside the repo)
 
-- 열린 작업 이슈 113개(#5–#117)를 44개로 묶었다. 남긴 이슈는 새 템플릿으로 제목과 본문을 다시 썼고, "참고"에 합쳐진 번호를 적었다.
-- 합친 이슈 69개에는 어느 이슈로 합쳤는지 댓글을 남기고 `not planned`로 닫았다.
-- 묶은 기준:
-  - 같은 목적의 파일·검사·문서 → 한 이슈 (예: 레지스트리 파일 6종 → #44)
-  - 구현 전에 확인만 하면 되는 조사 → 구현 이슈의 첫 할 일
-  - 7개 앱에 반복하는 작업 → 추적 이슈 하나(#99)
-  - 사용자 단계 → 같은 시점끼리 (#86, #88)
-- 진행 중인 #1, #3, #118, #119는 각자 PR에 연결되어 있어서 그대로 두었다.
+- Merged the 113 open task issues (#5–#117) into 44. The issues we kept were rewritten with the new template, and the merged numbers are listed under "References".
+- The 69 merged issues got a comment saying which issue they were merged into, and were closed as `not planned`.
+- Grouping criteria:
+  - Files, checks, and docs with the same purpose → one issue (for example, the 6 registry files → #44)
+  - Research that only needs confirming before implementation → the first task of the implementation issue
+  - Work repeated across the 7 apps → one tracking issue (#99)
+  - User steps → grouped by the same point in time (#86, #88)
+- #1, #3, #118, and #119, which were in progress, are linked to their own PRs, so we left them as they were.
 
-## 검증
+## Verification
 
-- 두 스킬과 템플릿의 원본·복제본을 `diff`로 비교했다(차이 없음).
-- 스킬 안의 상대 링크가 원본과 복제본 위치 모두에서 실제 파일을 가리키는지 확인했다.
-- 이슈 정리 스크립트는 실행 전에 dry-run으로 다음을 확인했다: 모든 열린 이슈가 남기거나 합치는 대상에 들어 있음, 선행 이슈 번호가 모두 남는 이슈를 가리킴, 자기 자신을 선행으로 두는 이슈 없음.
-- 실행 후 열린 이슈 수와 라벨 규칙(우선순위·type 하나씩)을 다시 조회했다(결과는 PR 본문).
+- Compared the sources and copies of the two skills and the templates with `diff` (no differences).
+- Confirmed that the relative links inside the skills point to real files from both the source and the copy locations.
+- Before running, the issue cleanup script was checked with a dry run for these: every open issue is either kept or merged, every prerequisite issue number points to a kept issue, and no issue lists itself as a prerequisite.
+- After running, queried the number of open issues and the label rule (one priority and one type label each) again (results are in the PR body).

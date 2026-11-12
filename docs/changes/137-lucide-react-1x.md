@@ -1,29 +1,29 @@
-# #137 lucide-react 1.x 업그레이드 검토하기
+# #137 Review the lucide-react 1.x upgrade
 
-## 변경
+## Change
 
-- `docs/adr/0007-shadcn-ui-icons-emoji.md`: 의존성 표의 `lucide-react` 고정 버전을 0.468.0에서 1.52.0(2026-10-04 게시)으로 바꿨다.
-- `docs/dependency-policy.md`: 메이저 버전 통일표의 `lucide-react`를 1 / 1.52.0으로 바꿨다. 앱 설치본은 아직 0.468.0이라고 적었다.
-- `scaffold/app/frontend/package.json.tmpl`: 새 앱 골격의 `lucide-react`를 1.52.0으로 바꿨다.
+- `docs/adr/0007-shadcn-ui-icons-emoji.md`: changed the pinned `lucide-react` version in the dependency table from 0.468.0 to 1.52.0 (published 2026-10-04).
+- `docs/dependency-policy.md`: changed `lucide-react` in the major-version table to 1 / 1.52.0. Noted that the apps' installed version is still 0.468.0.
+- `scaffold/app/frontend/package.json.tmpl`: changed `lucide-react` in the new app scaffold to 1.52.0.
 
-## 결정 과정
+## How we decided
 
-- **0.x → 1.x 변경 내역(공식 릴리스 노트 1.0.1, lucide.dev/guide/version-1, React 마이그레이션 가이드):**
-  - 브랜드 아이콘 14개 삭제(Github, Gitlab, Figma, Slack, Facebook, Instagram, LinkedIn 등).
-  - UMD 빌드 삭제. ESM·CJS만 남았다.
-  - 아이콘에 `aria-hidden`이 기본으로 붙는다. 의미 있는 아이콘은 `aria-label`이나 `title`을 주면 된다.
-  - `LucideProvider`(기본 색·크기·선 굵기 지정)가 추가됐다. 추가 기능이라 기존 코드에 영향이 없다.
-  - React peer 범위는 `^16.5.1 || ^17 || ^18 || ^19`이고, `@types/react`가 peer로 추가됐다.
-- **8개 앱에서 쓰는 아이콘(각 앱 `-frontend` 리포 기본 브랜치, 2026-10-22):**
+- **Changes from 0.x to 1.x (official release notes 1.0.1, lucide.dev/guide/version-1, the React migration guide):**
+  - 14 brand icons were removed (Github, Gitlab, Figma, Slack, Facebook, Instagram, LinkedIn, and others).
+  - The UMD build was removed. Only ESM and CJS remain.
+  - Icons get `aria-hidden` by default. For a meaningful icon, give it an `aria-label` or `title`.
+  - `LucideProvider` (sets the default color, size, and stroke width) was added. It is an added feature, so existing code is not affected.
+  - The React peer range is `^16.5.1 || ^17 || ^18 || ^19`, and `@types/react` was added as a peer.
+- **Icons used in the 8 apps (default branch of each app's `-frontend` repo, 2026-10-22):**
   - workout-memo: `Activity`, `ArrowRight`, `ArrowUpRight`, `Check`, `ChevronLeft`, `ChevronRight`, `Dumbbell`, `LayoutDashboard`, `NotebookPen`, `Plus`, `Settings2`, `Target`, `Trash2`, `X`
-  - 나머지 7개 앱: `LayoutDashboard`, `Settings2`
-  - 중앙 템플릿(`templates/ui`, `scaffold`): `CheckIcon`, `ChevronDownIcon`, `ChevronUpIcon`, `CircleIcon`, `HomeIcon`, `InboxIcon`, `Loader2Icon`, `MenuIcon`, `MonitorIcon`, `MoonIcon`, `NotebookPenIcon`, `SunIcon`, `XIcon`, 타입 `LucideIcon`
-- **1.52.0에서의 영향:** 삭제된 아이콘은 없다. 브랜드 아이콘은 쓰지 않는다.
-  - `Trash2`: `trash-2`가 `trash`로 합쳐져 사용 중단 별칭이 됐다. `Trash2` 이름은 그대로 export되고 모양도 같다(세로줄 두 개 있는 휴지통).
-  - `HomeIcon`, `Loader2Icon`: 0.468.0 때부터 `house`, `loader-circle`의 별칭이었고 1.52.0에서도 별칭으로 남아 있다.
-- **버전 선택:** 2026-10-08 이전 게시본 중 가장 새 1.52.0을 골랐다. 1.53.0은 2026-10-08 06:15(UTC)에 게시돼 기준일 당일이라 제외했다. `npm view`로 의존성 0개, 설치 스크립트(`preinstall`·`install`·`postinstall`·`prepare`) 없음, 라이선스 ISC를 확인했다.
+  - The other 7 apps: `LayoutDashboard`, `Settings2`
+  - Central templates (`templates/ui`, `scaffold`): `CheckIcon`, `ChevronDownIcon`, `ChevronUpIcon`, `CircleIcon`, `HomeIcon`, `InboxIcon`, `Loader2Icon`, `MenuIcon`, `MonitorIcon`, `MoonIcon`, `NotebookPenIcon`, `SunIcon`, `XIcon`, and the type `LucideIcon`
+- **Impact in 1.52.0:** None of the icons we use was removed. We do not use brand icons.
+  - `Trash2`: `trash-2` was merged into `trash` and became a deprecated alias. The `Trash2` name is still exported and the shape is the same (a trash can with two vertical lines).
+  - `HomeIcon`, `Loader2Icon`: these were aliases of `house` and `loader-circle` already in 0.468.0, and they remain aliases in 1.52.0.
+- **Version choice:** We chose 1.52.0, the newest published before 2026-10-08. 1.53.0 was published on 2026-10-08 at 06:15 (UTC), which is the cutoff day itself, so we excluded it. With `npm view` we confirmed 0 dependencies, no install scripts (`preinstall`, `install`, `postinstall`, `prepare`), and the ISC license.
 
-## 검증
+## Verification
 
-- 문서와 골격 템플릿 버전 문자열만 바꿨다. 패키지는 설치하지 않았다.
-- `npm run check` 통과(종료 코드 0).
+- Only the documents and the version string in the scaffold template changed. No package was installed.
+- `npm run check` passed (exit code 0).

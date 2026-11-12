@@ -1,17 +1,17 @@
 # @sirloinbh/tsconfig
 
-sirloinbh 앱 공통 TypeScript 설정이다.
+The shared TypeScript config for sirloinbh apps.
 
-| 파일 | 쓰는 곳 |
+| File | Used by |
 |---|---|
-| `base.json` | 공통: ES2022, strict, skipLibCheck |
-| `react-app.json` | `frontend/tsconfig.json` (Vite + React, 빌드 산출물 없음) |
-| `node-api.json` | `backend/tsconfig.json` (Node ESM, `dist/`로 빌드) |
+| `base.json` | Common: ES2022, strict, skipLibCheck |
+| `react-app.json` | `frontend/tsconfig.json` (Vite + React, no build output) |
+| `node-api.json` | `backend/tsconfig.json` (Node ESM, built to `dist/`) |
 
 ```json
-// frontend/tsconfig.json (중앙 관리 파일)
+// frontend/tsconfig.json (centrally managed file)
 { "extends": "@sirloinbh/tsconfig/react-app.json", "include": ["src", "vite.config.ts"] }
 ```
 
-- `include`는 상속되지 않으므로 앱의 진입 파일에 둔다.
-- `node-api.json`의 `outDir`은 `${configDir}/dist`다. 상속받는 tsconfig가 있는 폴더 기준이라, `backend/dist`로 빌드된다(TypeScript 5.5 이상).
+- `include` is not inherited, so put it in the app's entry file.
+- `outDir` in `node-api.json` is `${configDir}/dist`. It is relative to the folder of the tsconfig that inherits it, so it builds to `backend/dist` (TypeScript 5.5 or later).

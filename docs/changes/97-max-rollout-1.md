@@ -1,21 +1,21 @@
-# #97 maxRollout을 1로 올리기
+# #97 Raise maxRollout to 1
 
-사용자가 2026-10-25에 승인했다. 선행 이슈(#21, #55, #71, #86, #88, #94, #95)가 모두 닫혔고, 공유 패키지 devDependencies 필드는 PR #202로 먼저 넣었다.
+The user approved this on 2026-10-25. All prerequisite issues (#21, #55, #71, #86, #88, #94, #95) are closed, and the shared package devDependencies field was added first in PR #202.
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `sync.config.json` | `maxRollout` 0 → 1. 이 PR이 main에 병합되면 `sync.yml`이 workout-memo(rollout 1)에 동기화 PR을 연다 |
-| `scripts/test/sync-pr.test.mjs` | "토큰만 확인" 경우를 `maxRollout` 0인 복사본으로 검사(설정 파일 값에 기대지 않음) |
-| `scripts/test/sync.test.mjs` | study-log가 계획에서 빠지는 이유 문구를 rollout 2로 고침 |
-| `AGENTS.md`, `README.md` | 현재 단계 설명을 `maxRollout` 1 기준으로 고침 |
+| `sync.config.json` | `maxRollout` 0 to 1. When this PR is merged to main, `sync.yml` opens a sync PR in workout-memo (rollout 1) |
+| `scripts/test/sync-pr.test.mjs` | The "token check only" case is now tested with a copy that has `maxRollout` 0 (it does not rely on the config file value) |
+| `scripts/test/sync.test.mjs` | Fixed the wording of why study-log is left out of the plan to rollout 2 |
+| `AGENTS.md`, `README.md` | Fixed the current phase description to be based on `maxRollout` 1 |
 
-## 정한 것
+## What was decided
 
-- workout-memo 동기화 PR은 사용자가 병합한다(앱 main 병합이 곧 운영 배포). 에이전트는 PR을 검토해 #97에 결과를 적는다.
-- 동기화 PR은 `package-lock.json`을 바꾸지 않는다. devDependencies가 추가되므로 lockfile 갱신(#98, 사용자 승인) 전에는 `npm ci`를 쓰는 CI가 실패할 수 있다.
+- The user merges the workout-memo sync PR (merging an app to main is a production deploy). The agent reviews the PR and records the result on #97.
+- The sync PR does not change `package-lock.json`. Since devDependencies are added, CI that uses `npm ci` can fail until the lockfile is updated (#98, user approval).
 
-## 검증
+## Checks
 
-- `npm run check`: 테스트 403개 중 401개 통과, 2개 건너뜀.
+- `npm run check`: 401 of 403 tests passed, 2 skipped.

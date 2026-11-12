@@ -1,14 +1,14 @@
-# #198 패키지 태그를 하나씩 push하도록 절차 수정
+# #198 Change the procedure to push package tags one by one
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/user-steps.md` 4-1 | 태그 4개를 한 번에 push하던 명령을 태그별 한 줄로 나눴다. 이유와 이미 한꺼번에 push했을 때 되돌리는 방법을 적었다 |
+| `docs/user-steps.md` 4-1 | Split the command that pushed 4 tags at once into one line per tag. Added the reason and how to recover if they were already pushed together |
 
-## 정한 것
+## Decisions
 
-- GitHub는 한 번의 push에 태그가 3개보다 많으면 push 이벤트를 만들지 않는다. 2026-10-24 #88에서 4개를 한 번에 push해 publish가 실행되지 않았고, 원격 태그를 지운 뒤 하나씩 다시 push해서 4개 모두 배포했다.
+- GitHub does not create push events when a single push has more than 3 tags. On 2026-10-24 in #88, we pushed 4 at once and publish did not run; we deleted the remote tags and pushed them again one by one, and all 4 were published.
 
-## 검증
-- `npm run check` 통과(테스트 400개 중 398 통과·2 건너뜀, registry-check, docs check, tokens check, package-guard, check-workflows)
+## Verification
+- `npm run check` passed (398 of 400 tests passed, 2 skipped; registry-check, docs check, tokens check, package-guard, check-workflows)

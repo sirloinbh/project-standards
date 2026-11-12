@@ -1,29 +1,29 @@
-# #265 공용 Claude API 키를 서버·로컬에 전달하는 도구
+# #265 Tool to deliver the shared Claude API key to the server and local PC
 
-## 결정 (ADR-0010)
+## Decision (ADR-0010)
 
-- 원본은 AWS SSM `/sirloinbh/anthropic-api-key` 하나다.
-- 서버는 배포할 때마다 SSM에서 읽어 compose에 환경변수로 넘긴다. 서버 `.env`에는 값을 두지 않는다.
-- PC는 중앙 명령이 개인 AWS 프로필로 읽어 앱 `.env`에 넣는다.
-- CI에는 키를 두지 않는다.
+- The source of truth is the single AWS SSM parameter `/sirloinbh/anthropic-api-key`.
+- The server reads it from SSM at every deploy and passes it to compose as an environment variable. No value is kept in the server `.env`.
+- On the PC, a central command reads it with a personal AWS profile and puts it into the app `.env`.
+- No key is kept in CI.
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `registry/projects.schema.json`, `registry/projects.json` | `features.claude` 추가 (study-log만 `true`) |
-| `templates/app/deploy/ssm-get.sh.tmpl` | `curl --aws-sigv4`로 SSM `GetParameter` 호출, 값만 표준 출력. 키 쌍은 표준 입력으로, 이름 형식 검사 |
-| `templates/app/deploy/remote-deploy.sh.tmpl` | `features.claude` 앱이고 서버 `.env`에 `SECRETS_AWS_ACCESS_KEY_ID`가 있으면 SSM에서 `ANTHROPIC_API_KEY`를 읽어 export. 실패하면 경고만 남기고 `.env` 값 사용 |
-| `tools/app-secrets.mjs` | `set`(표준 입력 → 임시 파일 → `put-parameter`), `check`(있음/없음만), `pull`(앱 `.env`에 넣기) |
-| `scripts/test/app-secrets.test.mjs`, `scripts/test/deploy-templates.test.mjs` | 가짜 AWS CLI·curl로 동작과 값 비노출 확인 |
-| `docs/tools.md`, `docs/runbooks/deploy.md`, `docs/user-steps.md` | 사용법, 서버 `.env` 키, 사용자 단계 10 |
+| `registry/projects.schema.json`, `registry/projects.json` | Added `features.claude` (`true` only for study-log) |
+| `templates/app/deploy/ssm-get.sh.tmpl` | Calls SSM `GetParameter` with `curl --aws-sigv4` and prints only the value to standard output. The key pair comes through standard input, and the name format is checked |
+| `templates/app/deploy/remote-deploy.sh.tmpl` | For an app with `features.claude`, if the server `.env` has `SECRETS_AWS_ACCESS_KEY_ID`, reads `ANTHROPIC_API_KEY` from SSM and exports it. On failure it only logs a warning and uses the `.env` value |
+| `tools/app-secrets.mjs` | `set` (standard input, temporary file, `put-parameter`), `check` (only present or absent), `pull` (put into the app `.env`) |
+| `scripts/test/app-secrets.test.mjs`, `scripts/test/deploy-templates.test.mjs` | Check behavior and that values are not exposed, using fake AWS CLI and curl |
+| `docs/tools.md`, `docs/runbooks/deploy.md`, `docs/user-steps.md` | Usage, server `.env` keys, and user step 10 |
 
-SSM 파라미터와 읽기 전용 IAM 사용자는 sirloinbh/shared-aws-infrastructure#8에서 만든다.
+The SSM parameter and the read-only IAM user are created in sirloinbh/shared-aws-infrastructure#8.
 
-study-log `backend/src/translation.ts`가 모델 이름을 코드에 두고 있다(`claude-sonnet-5-5`). 공통 규칙(`CLAUDE_MODEL`)으로 바꾸는 일은 study-log 리포 작업이라 이 PR에 넣지 않았다.
+study-log `backend/src/translation.ts` keeps the model name in code (`claude-sonnet-5-5`). Changing it to the shared rule (`CLAUDE_MODEL`) is work in the study-log repo, so it is not in this PR.
 
-## 검증
+## Verification
 
-- `node --test scripts/test/app-secrets.test.mjs`: 7개 통과
-- `node --test scripts/test/deploy-templates.test.mjs`: 16개 중 15개 통과, 1개 건너뜀(python3 없음, 기존 테스트)
-- `npm run check`: 테스트 439개 중 438개 통과, 1개 건너뜀, 실패 0
+- `node --test scripts/test/app-secrets.test.mjs`: 7 passed
+- `node --test scripts/test/deploy-templates.test.mjs`: 15 of 16 passed, 1 skipped (no python3, an existing test)
+- `npm run check`: 438 of 439 tests passed, 1 skipped, 0 failed

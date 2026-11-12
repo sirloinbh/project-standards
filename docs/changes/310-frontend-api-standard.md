@@ -1,39 +1,39 @@
-# #310 프런트 API 요청 함수와 health.ts를 중앙 관리 파일로
+# #310 Make the frontend API request function and health.ts centrally managed files
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/ui/frontend/src/lib/api.ts`, `api.test.ts` | `requestJson`, `RequestError`(상태 코드), `204` 처리. Vitest 테스트 4개가 앱에서 함께 돈다 |
-| `templates/ui/frontend/src/health.ts` | `Health`, `healthText` (7개 앱의 파일과 같은 내용) |
+| `templates/ui/frontend/src/lib/api.ts`, `api.test.ts` | `requestJson`, `RequestError` (status code), `204` handling. 4 Vitest tests run together in the app |
+| `templates/ui/frontend/src/health.ts` | `Health`, `healthText` (the same content as the files in 7 apps) |
 | `registry/projects.json` | workout-memo `allowedDifferences`: `frontend/src/health.ts` |
-| `templates/app/.prettierignore.tmpl` | 새 관리 파일 3개 |
-| `scripts/test/frontend-api.test.mjs`, 스냅샷 | 중앙에서 `api.ts`를 Node 타입 제거로 검사 |
-| `docs/ui-components.md` | "공통 도우미" 절 |
+| `templates/app/.prettierignore.tmpl` | The 3 new managed files |
+| `scripts/test/frontend-api.test.mjs`, snapshot | Checks `api.ts` centrally with Node type stripping |
+| `docs/ui-components.md` | "Shared helpers" section |
 
-## 정한 것
+## Decisions
 
-- 기준은 study-log의 `api.ts`다. 상태 코드와 `204`를 다루는 유일한 판이다. 바꾼 점:
-  - `RequestError`의 생성자 매개변수 속성(`readonly status?` 매개변수)을 필드로 풀었다. Node의 타입 제거가 이 문법을 지원하지 않아 중앙 테스트를 위해서다. 동작은 같다.
-  - `name`을 `RequestError`로 정했다.
-  - 서버 본문의 `error`가 문자열이 아니거나 비어 있으면 고정 문구 "요청을 처리하지 못했습니다"를 쓴다.
-- 위치는 새 경로 `frontend/src/lib/api.ts`다. study-log·plan-routine의 기존 `frontend/src/api.ts`를 덮어쓰지 않으려는 것이다. 두 앱은 앱 리포에서 import를 바꾸고 기존 파일을 지운다.
-- `health.ts`는 7개 앱이 이미 같은 경로(`frontend/src/health.ts`)에 같은 내용을 두고 있어 그 자리에서 관리 파일로 바꿨다. 앱에서 바뀌는 것은 첫 줄의 관리 파일 표시뿐이다. workout-memo는 이 파일이 없고 쓰지 않아 `allowedDifferences`로 뺐다(#240 조사의 "8개 앱 같음"은 7개였다).
-- 테스트의 가짜 `fetch`는 `async` 대신 `Promise.resolve`·`Promise.reject`로 썼다. 공유 ESLint 1.1.0의 `require-await`(#308)를 켜도 걸리지 않는다.
+- The basis is study-log's `api.ts`. It is the only version that handles status codes and `204`. What changed:
+  - Unrolled the constructor parameter property of `RequestError` (the `readonly status?` parameter) into a field. Node's type stripping does not support this syntax, and this is for the central test. Behavior is the same.
+  - Set `name` to `RequestError`.
+  - If the server body's `error` is not a string or is empty, it uses the fixed message "요청을 처리하지 못했습니다" (the request could not be processed).
+- The location is the new path `frontend/src/lib/api.ts`. This is so the existing `frontend/src/api.ts` in study-log and plan-routine is not overwritten. For those two apps, change the imports in the app repo and delete the old file.
+- 7 apps already have the same content at the same path (`frontend/src/health.ts`) for `health.ts`, so it was turned into a managed file in place. The only thing that changes in the apps is the managed file marker on the first line. workout-memo does not have this file and does not use it, so it was excluded with `allowedDifferences` (the "8 apps are the same" in the #240 research was actually 7).
+- The fake `fetch` in the tests uses `Promise.resolve` and `Promise.reject` instead of `async`. So it is not caught even when `require-await` of shared ESLint 1.1.0 (#308) is turned on.
 
-## 앱에 들어간 뒤 (앱마다 바꿀 것)
+## After it reaches the apps (what to change in each app)
 
-| 앱 | 바꿀 것 |
+| App | What to change |
 |---|---|
-| study-log | `import { requestJson, RequestError } from './api'`를 `'./lib/api'`로 바꾸고 `frontend/src/api.ts`를 지운다 (같은 API) |
-| plan-routine | 위와 같음. 기존 판은 `RequestError`가 없어 `Error`를 던졌으므로, `instanceof Error`로 받던 곳은 그대로 동작한다 |
-| workout-memo | 화면 파일 5개(`analysis`, `app`, `backup`, `body`, `routines`)의 `fetch`를 `requestJson`으로 바꾼다. 화면 동작 확인이 필요해 따로 진행한다 |
-| 골격 5개 | 기능 화면이 생길 때 `requestJson`을 쓴다 |
+| study-log | Change `import { requestJson, RequestError } from './api'` to `'./lib/api'` and delete `frontend/src/api.ts` (same API) |
+| plan-routine | Same as above. The old version had no `RequestError` and threw `Error`, so places that caught it with `instanceof Error` keep working |
+| workout-memo | Replace `fetch` in 5 screen files (`analysis`, `app`, `backup`, `body`, `routines`) with `requestJson`. It needs screen behavior checks, so it proceeds separately |
+| 5 skeletons | Use `requestJson` when feature screens are created |
 
-## 검증
+## Checks
 
-- `node --test scripts/test/frontend-api.test.mjs`: 2개 통과
-- `api.test.ts`를 workout-memo에 설치된 Vitest 5.0.3으로 돌림(임시 폴더, 설치 없음): 4개 통과
-- workout-memo에 설치된 ESLint로 공유 설정 1.1.0을 적용해 세 파일 검사: 위반 없음. 공유 Prettier 설정으로 포맷함
-- `npm run sync:preview`: 앱 8개가 `lib/api.ts`·`api.test.ts`, workout-memo를 뺀 7개가 `health.ts`를 받음
-- `npm run check` 결과는 PR에 적는다
+- `node --test scripts/test/frontend-api.test.mjs`: 2 passed
+- Ran `api.test.ts` with Vitest 5.0.3 installed in workout-memo (temporary folder, no install): 4 passed
+- Checked the three files with the shared config 1.1.0 applied through ESLint installed in workout-memo: no violations. Formatted with the shared Prettier config
+- `npm run sync:preview`: the 8 apps receive `lib/api.ts` and `api.test.ts`, and the 7 apps other than workout-memo receive `health.ts`
+- The result of `npm run check` is written in the PR

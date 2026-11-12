@@ -1,35 +1,35 @@
-# #65 공유 설정 패키지 4종과 패키지 검사
+# #65 Four shared config packages and the package check
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `packages/eslint-config/` | `createConfig(plugins, options)` 팩토리. 패키지는 아무것도 import하지 않고, 앱이 설치한 플러그인을 인자로 받는다. peer 6개를 정확한 버전으로 고정 |
-| `packages/prettier-config/` | 8개 앱의 현재 `.prettierrc.json`과 같은 설정 |
-| `packages/tsconfig/` | `base`, `react-app`(frontend), `node-api`(backend). 현재 compilerOptions와 같음. peer `typescript` 5.9.3 |
-| `packages/design-tokens/` | `tokens.css`(CSS 변수, Tailwind 불필요), `tailwind.css`(Tailwind 4 테마 + h1–h4 기본 스타일 + `text-body`·`text-body-sm`·`text-caption`·`text-meta` 유틸리티), Pretendard Variable 1.3.9 |
-| `scripts/build-tokens.mjs` | `design/tokens.json`에서 두 CSS 파일을 생성(`--check` 지원). 앱 테마 색 6개는 중립색 기본값을 두고 앱 CSS에서 덮어쓴다 |
-| `scripts/package-guard.mjs` | 의존성 0개, 설치 스크립트 금지, 정확한 버전(peer 포함), 공개 패키지, GitHub Packages 레지스트리, `files` 존재, CHANGELOG 항목, 태그와 버전 일치(`--tag`) |
-| `templates/app/eslint.config.mjs.tmpl`, `.prettierrc.json.tmpl`, `frontend/tsconfig.json.tmpl`, `backend/tsconfig.json.tmpl` | 하위 리포 진입 파일. 패키지를 불러오기만 한다 (#52에서 옮겨 옴) |
-| `templates/app/.npmrc.tmpl` ×3 | `@sirloinbh` 레지스트리와 `${NODE_AUTH_TOKEN}` 줄 추가 (#52에서 옮겨 옴) |
-| `package.json` | `tokens`, `tokens:check`, `packages:check`. `npm run check`에 포함 |
-| `scripts/test/packages.test.mjs`, `fixtures/study-log/*`, `fixtures/sync-snapshot.json` | 테스트 7개, study-log 현재 설정 파일 4개, 하위 리포 파일 목록(앱마다 4개 추가) |
+| `packages/eslint-config/` | The `createConfig(plugins, options)` factory. The package imports nothing and takes the plugins the app installed as arguments. 6 peers pinned to exact versions |
+| `packages/prettier-config/` | The same settings as the current `.prettierrc.json` of the 8 apps |
+| `packages/tsconfig/` | `base`, `react-app` (frontend), `node-api` (backend). Same as the current compilerOptions. Peer `typescript` 5.9.3 |
+| `packages/design-tokens/` | `tokens.css` (CSS variables, no Tailwind needed), `tailwind.css` (Tailwind 4 theme + h1–h4 base styles + `text-body`, `text-body-sm`, `text-caption`, `text-meta` utilities), Pretendard Variable 1.3.9 |
+| `scripts/build-tokens.mjs` | Generates the two CSS files from `design/tokens.json` (supports `--check`). The 6 app theme colors have neutral defaults and are overridden in the app CSS |
+| `scripts/package-guard.mjs` | 0 dependencies, no install scripts, exact versions (including peers), public packages, the GitHub Packages registry, `files` exist, a CHANGELOG entry, and the tag matches the version (`--tag`) |
+| `templates/app/eslint.config.mjs.tmpl`, `.prettierrc.json.tmpl`, `frontend/tsconfig.json.tmpl`, `backend/tsconfig.json.tmpl` | Entry files for downstream repos. They only load the packages (moved from #52) |
+| `templates/app/.npmrc.tmpl` x3 | Added the `@sirloinbh` registry and the `${NODE_AUTH_TOKEN}` line (moved from #52) |
+| `package.json` | `tokens`, `tokens:check`, `packages:check`. Included in `npm run check` |
+| `scripts/test/packages.test.mjs`, `fixtures/study-log/*`, `fixtures/sync-snapshot.json` | 7 tests, 4 study-log current config files, and the downstream repo file list (4 added per app) |
 
 ## Pretendard
 
-- **출처:** 공식 릴리스 `Pretendard-1.3.9.zip`(SHA-256 `04be351a…428a`). 새 빈 폴더에 내려받은 뒤, 파일 두 개만 꺼냈다: `web/variable/woff2/PretendardVariable.woff2`(2.0MB), `LICENSE.txt`.
-- **라이선스:** LICENSE 원문에서 SIL Open Font License 1.1임을 확인했다. 패키지 `LICENSE.md`에 고지했다.
-- **동적 서브셋을 쓰지 않은 이유:** 원래 #121에서는 동적 서브셋을 쓰려고 했다. 하지만 공식 zip에는 동적 서브셋이 없고 npm 패키지와 CDN으로만 배포된다. 그래서 가변 폰트 전체 파일 하나를 쓰기로 바꿨다. `design/tokens.json`의 설명과 파일 해시도 갱신했다.
+- **Source:** the official release `Pretendard-1.3.9.zip` (SHA-256 `04be351a…428a`). After downloading into a new empty folder, I extracted only two files: `web/variable/woff2/PretendardVariable.woff2` (2.0MB) and `LICENSE.txt`.
+- **License:** I confirmed from the LICENSE text that it is the SIL Open Font License 1.1. It is noted in the package `LICENSE.md`.
+- **Why dynamic subsets are not used:** #121 originally planned to use dynamic subsets. But the official zip has no dynamic subsets; they are distributed only as an npm package and on a CDN. So I switched to using the one full variable font file. I also updated the description and file hash in `design/tokens.json`.
 
-## 다음 단계로 넘긴 것
+## Passed on to the next step
 
-- 앱 `package.json`에 `@sirloinbh/*` devDependencies를 넣는 필드 관리는 패키지가 실제로 배포된 뒤 workout-memo 첫 동기화(#97)에서 한다. 지금은 `versions.json`의 패키지 버전이 `null`(미배포)이다.
-- `.npmrc`의 `${NODE_AUTH_TOKEN}` 줄이 적용되면, 이 환경변수가 없는 PC에서 npm 명령이 실패한다. 첫 동기화 PR 본문에 설정 방법을 적어야 한다(#97).
+- The field management that puts `@sirloinbh/*` devDependencies into the app `package.json` is done at the first workout-memo sync (#97), after the packages are actually released. For now the package versions in `versions.json` are `null` (not released).
+- Once the `${NODE_AUTH_TOKEN}` line in `.npmrc` is applied, npm commands fail on a PC without this environment variable. The first sync PR body must describe how to set it up (#97).
 
-## 검증
+## Checks
 
-- `npm run check`: 테스트 92개 통과, `registry-check: ok`, 생성 문서 2개·토큰 CSS 2개 최신, `package-guard: ok`
-- **study-log 현재 파일과 비교:**
-  - ESLint 규칙, Prettier 설정, frontend tsconfig는 study-log 현재 파일과 같다.
-  - backend tsconfig는 `outDir`만 `${configDir}/dist`다. 상속받는 쪽 기준 경로라서 실제 결과는 기존과 같은 `backend/dist`다.
-- **Tailwind 컴파일:** workout-memo에 이미 설치된 Tailwind 4.3.3(`@tailwindcss/node`)으로 `tailwind.css`를 실제로 컴파일했다. 다음 8개 항목이 모두 기대대로 나왔다: `bg-primary`, `rounded-lg`/`rounded-sm`, `text-caption`, `@font-face`, h1 기본 스타일, `md` 기준점(48rem), `bg-success`. 새로 설치한 패키지는 없다.
+- `npm run check`: 92 tests passed, `registry-check: ok`, 2 generated documents and 2 token CSS files up to date, `package-guard: ok`
+- **Comparison with the study-log current files:**
+  - The ESLint rules, Prettier settings, and frontend tsconfig are the same as the study-log current files.
+  - In the backend tsconfig, only `outDir` is `${configDir}/dist`. It is a path relative to the inheriting side, so the actual result is the same `backend/dist` as before.
+- **Tailwind compilation:** I actually compiled `tailwind.css` with Tailwind 4.3.3 (`@tailwindcss/node`) already installed in workout-memo. All 8 of these items came out as expected: `bg-primary`, `rounded-lg`/`rounded-sm`, `text-caption`, `@font-face`, h1 base style, the `md` breakpoint (48rem), and `bg-success`. No new packages were installed.

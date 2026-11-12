@@ -1,17 +1,17 @@
-# #240~#244 조사 결정 기록
+# #240 to #244 Research decision record
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/research/lint-rules.md` | #244 결정: 권장안 채택, 설치 없는 부분은 #308, 설치는 #245, 앱 적용은 #246 |
-| `docs/research/stack-survey.md` | #240 결정: A #304, B·C #303, D #305, E #306·#307 |
-| `docs/research/api-survey.md` | #241 결정: A·E #309, B·C·D #312 |
-| `docs/research/ui-survey.md` | #242 결정: A·E #310, B·C #311, D #312 |
-| `docs/research/convention-survey.md` | #243 결정: A #312·#308, B #312, C·D #313, G #314 |
+| `docs/research/lint-rules.md` | #244 decision: adopt the recommendation; the part that needs no install is #308, the install is #245, and applying it to apps is #246 |
+| `docs/research/stack-survey.md` | #240 decision: A #304, B and C #303, D #305, E #306 and #307 |
+| `docs/research/api-survey.md` | #241 decision: A and E #309, B, C, and D #312 |
+| `docs/research/ui-survey.md` | #242 decision: A and E #310, B and C #311, D #312 |
+| `docs/research/convention-survey.md` | #243 decision: A #312 and #308, B #312, C and D #313, G #314 |
 
-## 정한 것
+## Decisions
 
-- 사용자가 다섯 조사의 권장안을 그대로 채택했다(2026-10-28).
-- #244의 규칙 가운데 새 설치가 필요 없는 것은 #308로 떼어, 설치 승인(#245)을 기다리지 않고 진행한다.
-- 같은 종류의 규칙 문서(#241 B·C·D, #242 D, #243 A·B)는 #312 하나로 묶었다.
+- The user adopted the recommendations of all five surveys as they were (2026-10-28).
+- Rules from #244 that need no new install are split into #308, so work continues without waiting for the install approval (#245).
+- Rule documents of the same kind (#241 B, C, D; #242 D; #243 A, B) are grouped into the single issue #312.

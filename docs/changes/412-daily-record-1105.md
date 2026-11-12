@@ -1,15 +1,15 @@
-# #412 2026-11-05 작업 기록 남기기
+# #412 Keep the 2026-11-05 work record
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/daily/2026-11-05.md` | 동기화 PR 병합, 기존 이슈를 분야별 상위 이슈로 묶은 결과, 이어서 할 일 |
-| `docs/daily/README.md` | 목록에 추가 |
+| `docs/daily/2026-11-05.md` | Sync PR merges, the result of grouping existing issues under per-area parent issues, and what to do next |
+| `docs/daily/README.md` | Added to the list |
 
-이 이슈는 새로 만든 상위 이슈 #411(작업 기록과 이어서 할 일 정리)의 하위 이슈다.
+This issue is a sub-issue of the newly created parent issue #411 (work records and next steps).
 
-## 확인
+## Checks
 
-- `npm run check`를 실행했다.
-- PR·이슈 번호와 상위 이슈 연결은 GitHub에서 조회해 옮겼다.
+- Ran `npm run check`.
+- The PR and issue numbers and the parent issue links were looked up from GitHub and copied over.

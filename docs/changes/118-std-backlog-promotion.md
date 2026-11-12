@@ -1,27 +1,27 @@
-# #118 std-backlog 추가 요구사항 승격 규칙 변경
+# #118 Change the promotion rule for added requirements in std-backlog
 
-## 변경
+## Change
 
-- `templates/common/skills/std-backlog/SKILL.md`와 `.claude/skills/std-backlog/SKILL.md`
-  - P0 기준에서 "작업 중 추가된 요구사항"을 뺐다. P0는 긴급·보안 또는 사용자가 긴급이라고 명시한 경우에만 쓴다.
-  - 추가 요구사항은 판단한 등급에서 한 단계만 올린다. 상한은 P1이다.
-  - 승격은 등록할 때 한 번만 하고 본문에 원래 등급을 기록한다. 다음 작업을 고를 때 다시 올리지 않는다.
-  - 다음 작업 선택에서 같은 등급이면 `origin/added`를 먼저 고른다.
+- `templates/common/skills/std-backlog/SKILL.md` and `.claude/skills/std-backlog/SKILL.md`
+  - Removed "requirements added during work" from the P0 criteria. P0 is used only for urgent or security items, or when the user says it is urgent.
+  - An added requirement goes up only one level from its assessed priority. The cap is P1.
+  - Promotion happens once, when registering, and the original priority is recorded in the body. It is not raised again when choosing the next task.
+  - When choosing the next task, among the same priority, pick `origin/added` first.
 
-## 이유
+## Why
 
-이전 규칙대로면 추가 요구사항 75개(#3, #44–#117)가 모두 P0가 된다. 그러면 그 안의 등급 구분이 사라지고, 낮은 등급 문서 이슈가 기존 P1 이슈보다 먼저 진행된다. 또 선택할 때마다 승격하는 방식은 같은 이슈가 반복해서 올라갈 수 있다.
+Under the previous rule, all 75 added requirements (#3, #44–#117) would become P0. That removes the priority distinction among them, and low-priority documentation issues would be worked on before existing P1 issues. Also, promoting at every selection could raise the same issue repeatedly.
 
-## GitHub 설정 (리포 밖 변경)
+## GitHub settings (changes outside the repo)
 
-- `priority/P0` 라벨 설명을 새 기준으로 바꿨다.
-- 열린 `origin/added` 이슈를 새 규칙으로 다시 조정했다. 각 이슈에 사유 댓글을 남기고, 본문에 원래 등급을 기록했다.
-  - #3: P0 → P1 (원래 등급 P1)
-  - P2로 등록된 10개 → P1
-  - P3로 등록된 2개 → P2
-  - P1로 등록된 62개와 #118은 상한이 P1이라 그대로 둔다.
+- Changed the description of the `priority/P0` label to the new criteria.
+- Re-adjusted the open `origin/added` issues under the new rule. Each issue got a comment with the reason, and the original priority was recorded in its body.
+  - #3: P0 → P1 (original priority P1)
+  - 10 issues registered as P2 → P1
+  - 2 issues registered as P3 → P2
+  - The 62 issues registered as P1 and #118 stay as they are because the cap is P1.
 
-## 검증
+## Verification
 
-- 원본과 복제본을 `diff`로 비교했다(차이 없음).
-- 재조정 후 열린 이슈를 조회해 `origin/added` 중 P0가 없고, 모든 이슈에 우선순위·type 라벨이 하나씩 있는지 확인했다.
+- Compared the sources and copies with `diff` (no differences).
+- After the re-adjustment, queried the open issues and confirmed that none of the `origin/added` issues is P0 and that every issue has exactly one priority label and one type label.

@@ -1,34 +1,34 @@
-# #76 보안 점검 스크립트 (금지 패키지, IOC)
+# #76 Security check script (blocked packages, IOC)
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `security/blocked-packages.json` | 점검 기준. 침해 보고 패키지 3개와 스코프 1개, 외부 유출 의심 주소 7개, 의심 워크플로 이름, 설치 스크립트가 실행하는 의심 파일 이름. 출처는 사용자 글로벌 규칙(2026-10-22)이며 계속 갱신한다 |
-| `scripts/ioc-scan.mjs` | 리포 전체의 `package-lock.json`(중첩 설치 포함), `package.json`의 설치 스크립트, 설치된 `node_modules`의 설치 스크립트, `.github/workflows`를 읽어서 점검한다. 패키지 코드는 실행하지 않는다 |
-| `templates/index.json` | `.standards/ioc-scan.mjs`와 `.standards/blocked-packages.json`을 하위 리포에 복사 |
-| `scripts/test/ioc-scan.test.mjs`, `fixtures/sync-snapshot.json` | 테스트 6개, 하위 리포가 받는 파일 목록에 2개 추가 |
+| `security/blocked-packages.json` | The check baseline. 3 packages and 1 scope reported as compromised, 7 addresses suspected of data exfiltration, suspicious workflow names, and suspicious file names that install scripts run. The source is the user's global rule (2026-10-22), and it keeps being updated |
+| `scripts/ioc-scan.mjs` | Reads and checks `package-lock.json` across the whole repo (including nested installs), install scripts in `package.json`, install scripts in the installed `node_modules`, and `.github/workflows`. It does not run package code |
+| `templates/index.json` | Copies `.standards/ioc-scan.mjs` and `.standards/blocked-packages.json` to downstream repos |
+| `scripts/test/ioc-scan.test.mjs`, `fixtures/sync-snapshot.json` | 6 tests, and 2 files added to the file list downstream repos receive |
 
-## 판정
+## Verdicts
 
-- **실패(종료 코드 1):**
-  - 침해 보고 패키지나 스코프가 lockfile에 있다. 버전 정보가 없는 항목은 어떤 버전이든 사람이 확인한다.
-  - `preinstall`·`install`·`postinstall`·`prepare` 스크립트가 외부 유출 의심 주소를 호출하거나 `bundle.js`·`processor.js`를 실행한다.
-  - 워크플로 이름에 `shai-hulud`가 들어 있거나, 워크플로 내용에 외부 유출 의심 주소가 있다.
-- **경고:** 설치 스크립트가 있는 의존성 목록. `.npmrc`의 `ignore-scripts=true`로 실행되지 않는 대상이다.
-- 사용자 PC의 `~/.bashrc` 같은 셸 설정 점검은 리포 밖이라 범위에서 뺐다.
+- **Failure (exit code 1):**
+  - A package or scope reported as compromised is in the lockfile. For entries without version information, a person checks whatever the version is.
+  - A `preinstall`, `install`, `postinstall`, or `prepare` script calls an address suspected of exfiltration or runs `bundle.js` or `processor.js`.
+  - A workflow name contains `shai-hulud`, or the workflow content has an address suspected of exfiltration.
+- **Warning:** the list of dependencies that have install scripts. These are targets that do not run because of `ignore-scripts=true` in `.npmrc`.
+- Checking shell settings such as `~/.bashrc` on the user's PC is outside the repo, so it is out of scope.
 
-## 실제 점검 결과 (2026-10-22, 로컬 클론)
+## Real check results (2026-10-22, local clones)
 
-| 리포 | 결과 | 설치 스크립트가 있는 의존성(경고) |
+| Repo | Result | Dependencies with install scripts (warning) |
 |---|---|---|
-| project-standards | 의심 항목 없음 | 없음 |
-| workout-memo | 의심 항목 없음 | esbuild, fsevents, tesseract.js |
-| 나머지 앱 7개 | 의심 항목 없음 | esbuild, fsevents |
+| project-standards | No suspicious items | None |
+| workout-memo | No suspicious items | esbuild, fsevents, tesseract.js |
+| The other 7 apps | No suspicious items | esbuild, fsevents |
 
-`esbuild`와 `tesseract.js`는 설치 스크립트가 꺼져 있어도(`ignore-scripts=true`) 빌드와 실행이 되는지, workout-memo 첫 동기화(#97)에서 Docker 빌드로 확인해야 한다. #97에 메모를 남겼다.
+Whether `esbuild` and `tesseract.js` still build and run with install scripts off (`ignore-scripts=true`) must be verified with the Docker build at the first workout-memo sync (#97). I left a note on #97.
 
-## 검증
+## Checks
 
-- `npm run check`: 테스트 79개 통과, `registry-check: ok`, `docs/projects.md: up to date`
-- 복사본 단독 실행: 임시 리포의 `.standards/ioc-scan.mjs`가 옆의 `blocked-packages.json`을 찾아 종료 코드 1로 실패하는 것을 확인했다.
+- `npm run check`: 79 tests passed, `registry-check: ok`, `docs/projects.md: up to date`
+- Running the copy alone: I confirmed that `.standards/ioc-scan.mjs` in a temporary repo finds the neighboring `blocked-packages.json` and fails with exit code 1.

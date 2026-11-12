@@ -1,49 +1,49 @@
-# #246 채택한 ESLint·Prettier 규칙을 앱에 켜기
+# #246 Turn on the adopted ESLint and Prettier rules in the apps
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `versions.json`, `docs/versions.md` | 루트 `devDependencies`에 `eslint-plugin-jsx-a11y-x` 0.2.0, `eslint-plugin-react-refresh` 0.5.7, `eslint-plugin-simple-import-sort` 14.0.0, `prettier-plugin-tailwindcss` 0.8.1 (앱 공통 의존성 42개) |
-| `templates/app/eslint.config.mjs.tmpl` | 세 플러그인과 `tsconfigRootDir`를 `createConfig`에 넘긴다. import 순서는 새 정렬 규칙대로 |
-| `templates/app/prettier.config.mjs.tmpl` | `.prettierrc.json.tmpl`을 대신한다. 공유 옵션 JSON을 불러와 `prettier-plugin-tailwindcss`와 `tailwindStylesheet`만 더한다 |
-| `templates/app/.prettierignore.tmpl` | 관리 파일 목록의 `.prettierrc.json` → `prettier.config.mjs` |
-| `packages/prettier-config/README.md`, `docs/design.md`, `docs/adr/0001-*.md`, `docs/tools.md`, `docs/dependency-policy.md` | 새 설정 파일 이름, 공통 의존성 수 |
-| `scripts/test/fixtures/sync-snapshot.json` | 동기화 스냅샷 |
+| `versions.json`, `docs/versions.md` | Added `eslint-plugin-jsx-a11y-x` 0.2.0, `eslint-plugin-react-refresh` 0.5.7, `eslint-plugin-simple-import-sort` 14.0.0, and `prettier-plugin-tailwindcss` 0.8.1 to the root `devDependencies` (42 shared app dependencies) |
+| `templates/app/eslint.config.mjs.tmpl` | Passes the three plugins and `tsconfigRootDir` to `createConfig`. Import order follows the new sort rule |
+| `templates/app/prettier.config.mjs.tmpl` | Replaces `.prettierrc.json.tmpl`. Loads the shared options JSON and adds only `prettier-plugin-tailwindcss` and `tailwindStylesheet` |
+| `templates/app/.prettierignore.tmpl` | In the managed file list, `.prettierrc.json` becomes `prettier.config.mjs` |
+| `packages/prettier-config/README.md`, `docs/design.md`, `docs/adr/0001-*.md`, `docs/tools.md`, `docs/dependency-policy.md` | New config file name and shared dependency count |
+| `scripts/test/fixtures/sync-snapshot.json` | Sync snapshot |
 
-## 정한 것
+## Decisions
 
-- 규칙은 `@sirloinbh/eslint-config` 1.1.0에 이미 있다(#308). 패키지를 새로 배포하지 않고 앱 템플릿에서 플러그인만 넘긴다. 그래서 태그 push가 필요 없다.
-- Prettier 공유 패키지는 JSON이라 플러그인을 더할 수 없다. 새 버전을 배포하는 대신 앱 설정 파일을 `prettier.config.mjs`로 바꿨다. 동기화가 손대지 않은 `.prettierrc.json`을 지운다.
-- 설치 승인: #245 (2026-10-29). 네 패키지 모두 설치 스크립트가 없다.
-- 공통 UI 컴포넌트 등 중앙 관리 파일도 ESLint 검사 대상이다. 위반이 있으면 앱에서 고치지 않고 중앙 `templates/`에서 고친다.
+- The rules are already in `@sirloinbh/eslint-config` 1.1.0 (#308). We do not publish a new package; the app template only passes the plugins. So no tag push is needed.
+- The shared Prettier package is JSON, so it cannot add plugins. Instead of publishing a new version, we changed the app config file to `prettier.config.mjs`. Sync deletes the untouched `.prettierrc.json`.
+- Install approval: #245 (2026-10-29). None of the four packages has an install script.
+- Centrally managed files such as the shared UI components are also ESLint targets. If there are violations, fix them in the central `templates/`, not in the app.
 
-## 동기화 PR에서 할 일
+## What to do in the sync PR
 
-동기화 PR은 앱 루트 `package.json`에 네 패키지를 더하고 lockfile은 그대로 둔다. 사용자가 그 브랜치를 받은 작업 폴더에서 `--ignore-scripts`로 설치하면(#263 knip과 한 번에), 에이전트가 이어서 한다.
+The sync PR adds the four packages to the app root `package.json` and leaves the lockfile as is. After the user installs with `--ignore-scripts` in a work folder with that branch (together with #263 knip), the agent continues.
 
-1. `npm run lint`로 위반을 센다. 자동 수정(`npm run lint -- --fix`, `npm run format`)으로 import 순서와 Tailwind 클래스 순서를 고친다.
-2. 남은 위반(접근성, Promise 처리, 불필요한 타입 단언)은 직접 고친다. 중앙 관리 파일의 위반은 중앙 `templates/`에서 고친다.
-3. lockfile과 앱 수정을 동기화 PR 브랜치에 커밋하고, CI가 통과하면 병합한다.
+1. Count violations with `npm run lint`. Fix import order and Tailwind class order with the automatic fixes (`npm run lint -- --fix`, `npm run format`).
+2. Fix the remaining violations (accessibility, Promise handling, unnecessary type assertions) by hand. Fix violations in centrally managed files in the central `templates/`.
+3. Commit the lockfile and the app fixes to the sync PR branch and merge when CI passes.
 
-## 후속 수정 (앱 설치 뒤 첫 린트)
+## Follow-up fix (first lint after the app install)
 
-앱 8개에 설치한 뒤 `npm run lint`를 돌려 보니 설정이 아예 실행되지 않았다. 템플릿이 `eslint-plugin-react-refresh`를 default export로 불러왔는데, `configs.vite()` 함수는 이름 있는 export `reactRefresh`에만 있다(공유 패키지 README대로 `import { reactRefresh }`).
+After installing in the 8 apps and running `npm run lint`, the config did not run at all. The template imported `eslint-plugin-react-refresh` as a default export, but the `configs.vite()` function exists only on the named export `reactRefresh` (use `import { reactRefresh }`, as the shared package README says).
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
 | `templates/app/eslint.config.mjs.tmpl` | `import { reactRefresh } from 'eslint-plugin-react-refresh'` |
-| `templates/ui/frontend/src/**` | import 순서 자동 수정. 컴포넌트 옆 `*Variants`·`toast` export와 Drawer의 `autoFocus`에는 이유를 적은 규칙 예외 주석 |
-| `scaffold/app/**` | import 순서, `pages`를 export하지 않음(react-refresh), 테스트의 `async` 없는 모의 함수를 `Promise.resolve`로(require-await) |
+| `templates/ui/frontend/src/**` | Automatic import order fix. Rule exception comments with reasons on the `*Variants` and `toast` exports next to components and on the `autoFocus` of Drawer |
+| `scaffold/app/**` | Import order, `pages` is not exported (react-refresh), and mock functions without `async` in tests use `Promise.resolve` (require-await) |
 
-중앙 관리 파일의 위반은 이 수정으로 0이 된다. 남은 위반은 앱 코드라 각 동기화 PR에서 고친다.
+This fix brings violations in centrally managed files to 0. The remaining violations are in app code and are fixed in each sync PR.
 
-## 검증
+## Verification
 
-- `npm run check`: 아래 PR 본문에 기록
+- `npm run check`: recorded in the PR body below
 
-## 후속 수정 (2026-10-29)
+## Follow-up fix (2026-10-29)
 
-- 앱 템플릿 `eslint.config.mjs`가 `eslint-plugin-react-refresh`를 default로 가져와 앱 8개의 lint가 멈췄다. 0.5의 default export는 `configs.vite`가 함수가 아니라 객체라서 `reactRefresh.configs.vite()`가 실패한다. 이름 있는 export(`import { reactRefresh }`)로 바꿨다(패키지 README와 같은 방식).
-- `jsx-a11y-x/label-has-associated-control`이 공통 `Input` 컴포넌트를 감싼 `<label>`을 연결되지 않은 라벨로 봤다. 템플릿 설정에 `settings['jsx-a11y-x'].components = { Input: 'input' }`을 더해 `Input`을 네이티브 `<input>`으로 알려 준다. 다음 공유 패키지 버전에서 `createConfig` 안으로 옮길 수 있다.
-- 앱 Prettier 설정에 `tailwindPreserveWhitespace: true`를 더했다. 없으면 prettier-plugin-tailwindcss가 `` `row${on ? ' top' : ''}` ``의 앞 공백을 지워 클래스가 `rowtop`이 된다(study-log 2곳에서 발견).
+- The app template `eslint.config.mjs` imported `eslint-plugin-react-refresh` as a default, which stopped lint in the 8 apps. In 0.5, the default export's `configs.vite` is an object, not a function, so `reactRefresh.configs.vite()` fails. We changed it to the named export (`import { reactRefresh }`), the same way as the package README.
+- `jsx-a11y-x/label-has-associated-control` treated a `<label>` wrapping the shared `Input` component as a label with no associated control. We added `settings['jsx-a11y-x'].components = { Input: 'input' }` to the template config to tell it that `Input` is a native `<input>`. This can move into `createConfig` in the next shared package version.
+- Added `tailwindPreserveWhitespace: true` to the app Prettier config. Without it, prettier-plugin-tailwindcss removes the leading space in `` `row${on ? ' top' : ''}` `` and the class becomes `rowtop` (found in 2 places in study-log).
