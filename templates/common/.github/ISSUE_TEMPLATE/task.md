@@ -5,7 +5,7 @@ title: ''
 labels: ''
 ---
 
-<!-- Centrally managed file. Edit it in sirloinbh/project-standards templates/common/.github/ISSUE_TEMPLATE/ -->
+<!-- Managed file. Edit it in sirloinbh/project-standards templates/common/.github/ISSUE_TEMPLATE/ -->
 <!-- How to write: std-git-writing skill. The title has no prefix and says what the issue does in one sentence. e.g. Add registry source files and conflict check -->
 
 ## Summary

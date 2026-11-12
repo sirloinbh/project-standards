@@ -3,7 +3,7 @@ name: std-git-writing
 description: Write GitHub issues, branch names, commit messages, and pull requests in plain English so a person can understand them at a glance, using the shared issue and PR templates. Use whenever creating or editing an issue, branch, commit, or PR in any sirloinbh project repository, together with std-backlog for labels and priorities.
 ---
 
-<!-- Centrally managed file. Edit it in sirloinbh/project-standards templates/common/skills/std-git-writing/ -->
+<!-- Managed file. Edit it in sirloinbh/project-standards templates/common/skills/std-git-writing/ -->
 
 # Writing issues, branches, commits, and PRs
 
