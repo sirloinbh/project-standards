@@ -1,24 +1,24 @@
-# #126 8개 앱 모두 공통 UI 동기화 켜기
+# #126 Turn on common UI sync for all 8 apps
 
-workout-memo(#160) 다음으로 나머지 7개 앱이 공통 디자인 시스템으로 화면을 바꿨다(study-log#111, health-log#13, life-journal#11, money-ledger#11, english-study#11, plan-routine#28, dev-career-portfolio#11). 8개 앱이 모두 `@sirloinbh/design-tokens`를 설치했다.
+After workout-memo (#160), the other 7 apps switched their screens to the common design system (study-log#111, health-log#13, life-journal#11, money-ledger#11, english-study#11, plan-routine#28, dev-career-portfolio#11). All 8 apps now have `@sirloinbh/design-tokens` installed.
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `registry/projects.json` | 7개 앱의 `features.ui`·`features.vitest` → `true` |
-| `sync.config.json` | app 프로필 `packages`에 `@sirloinbh/design-tokens`를 다시 넣음(#211에서 뺐던 것) |
-| `templates/index.json` | `frontend/package.json` 필드에 `dependencies.@sirloinbh/design-tokens` |
-| `scripts/test/fixtures/sync-snapshot.json` | 7개 앱이 받는 파일에 공통 UI·`vitest.config.ts` 37개씩(259개) 추가 |
-| `scripts/test/*.test.mjs` | study-log를 "기능이 꺼진 앱" 예로 쓰던 테스트는 기능을 끈 사본을 쓰고, 공유 패키지 4개·프론트엔드 필드 기대값을 갱신 |
-| `docs/ui-components.md`, `docs/design-system.md` | 8개 앱 모두 켜짐, 가짜 React 테스트 전환 방법 |
+| `registry/projects.json` | `features.ui` and `features.vitest` → `true` for the 7 apps |
+| `sync.config.json` | Put `@sirloinbh/design-tokens` back into the app profile `packages` (it was removed in #211) |
+| `templates/index.json` | `dependencies.@sirloinbh/design-tokens` in the `frontend/package.json` fields |
+| `scripts/test/fixtures/sync-snapshot.json` | Added 37 common UI and `vitest.config.ts` files to each of the 7 apps (259 files) |
+| `scripts/test/*.test.mjs` | Tests that used study-log as the "app with the feature off" example now use a copy with the feature turned off, and the expected values for the 4 shared packages and the frontend fields are updated |
+| `docs/ui-components.md`, `docs/design-system.md` | All 8 apps are on, and how to switch from fake React tests |
 
-## 정한 것
+## Decisions
 
-- 7개 앱 PR에 동기화 미리보기와 같은 공통 파일을 먼저 넣고 병합한 뒤 이 PR을 병합한다. 병합 뒤 8개 앱의 동기화 PR에는 manifest 갱신만 남는다(#234로 manifest만 바뀐 경우도 PR이 열림).
-- `@sirloinbh/design-tokens`는 앱이 런타임 CSS로 쓰므로 `devDependencies`가 아니라 `dependencies` 필드로 관리한다(스캐폴드와 같음).
+- First put the same common files as the sync preview into the 7 app PRs and merge them, then merge this PR. After that, the sync PRs of the 8 apps only contain the manifest update (since #234, a PR is also opened when only the manifest changes).
+- `@sirloinbh/design-tokens` is used by the apps as runtime CSS, so it is managed as a `dependencies` field, not `devDependencies` (same as the scaffold).
 
-## 검증
+## Verification
 
-- `npm run check`: 통과(테스트 415개 중 414개 통과, 1개 건너뜀, 실패 0)
-- 7개 앱의 병합된 브랜치를 `--local`로 넣은 동기화 미리보기: 공통 파일과 필드가 모두 같고, 바뀌는 것은 `.standards/manifest.json`뿐
+- `npm run check`: passed (414 of 415 tests passed, 1 skipped, 0 failed)
+- Sync preview with the merged branches of the 7 apps passed in with `--local`: the common files and fields are all the same, and the only change is `.standards/manifest.json`

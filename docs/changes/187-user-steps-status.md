@@ -1,20 +1,20 @@
-# #187 사용자 단계 문서에 진행 상태와 권장 순서 반영하기
+# #187 Reflect progress status and the recommended order in the user steps doc
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/user-steps.md` | 단계 표에 2026-10-23 상태 열, 권장 순서(1 → 2 → 3 → 4)와 이유, 단계별로 끝나면 에이전트가 이어서 할 일 표. 7(#180 Codex 훅 신뢰), 8(#183 PC 점검) 절 추가. 2-3 백업 폴더 이름을 실행 날짜로. 2-1 fast-forward 재확인 날짜 |
+| `docs/user-steps.md` | In the step table: a status column as of 2026-10-23, the recommended order (1 → 2 → 3 → 4) with reasons, and a table of what the agent does next when each step is done. Added sections for 7 (#180 trust the Codex hook) and 8 (#183 PC check). In 2-3, the backup folder name uses the run date. The date of the 2-1 fast-forward recheck |
 
-## 상태를 확인한 방법 (읽기 전용)
+## How we checked the status (read-only)
 
-- #21: `%LOCALAPPDATA%\sirloinbh-tools` 없음
-- #92: `shared-aws-infrastructure` main `b4cafc1`이 workout-memo `git subtree split` 결과 `684542a`의 조상(`git merge-base --is-ancestor`), 3커밋 차이. `workout-memo\infrastructure\terraform.tfstate` 있음, `$HOME\Backups` 없음
-- #86: `variable list`, `secret list` 결과 없음
-- #88: `git ls-remote --tags origin`, `release list` 결과 없음
-- #22: workout-memo `vulnerability-alerts` API가 "disabled"(404)
+- #21: `%LOCALAPPDATA%\sirloinbh-tools` does not exist
+- #92: `shared-aws-infrastructure` main `b4cafc1` is an ancestor of `684542a`, the result of workout-memo `git subtree split` (`git merge-base --is-ancestor`), a 3-commit difference. `workout-memo\infrastructure\terraform.tfstate` exists, `$HOME\Backups` does not
+- #86: `variable list` and `secret list` returned nothing
+- #88: `git ls-remote --tags origin` and `release list` returned nothing
+- #22: the workout-memo `vulnerability-alerts` API says "disabled" (404)
 - #183: `claude --version` 2.1.309
 
-## 검증
+## Verification
 
-- `npm run check` 통과(테스트 392개 모두 통과)
+- `npm run check` passed (all 392 tests passed)
