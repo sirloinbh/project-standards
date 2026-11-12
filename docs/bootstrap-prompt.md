@@ -1,135 +1,135 @@
-# 목표
-개인 앱 포트폴리오 전체를 통합 관리하는 중앙 리포지토리 `sirloinbh/project-standards`를 설계하고 생성한다.
-- 중앙 main에 병합되면 모든 하위 프로젝트에 **자동으로 동기화 PR**이 열린다. 하위 리포에 직접 push하지 않는다.
-- 하위 프로젝트에서 중앙 관리 파일을 수정하면 하위 리포 CI가 실패하고, 중앙 리포에 PR을 여는 방법을 안내한다. 하위에서 중앙으로 변경을 자동으로 보내지는 않는다.
-- 1단계 산출물은 **설계 문서와 리포 골격**이다. 하위 리포에 실제 동기화 PR을 여는 일은 사용자 승인 후 진행한다.
+# Goal
+Design and create `sirloinbh/project-standards`, the central repository that manages the whole personal app portfolio.
+- When a change is merged into central main, a **sync PR is opened automatically** in every downstream project. Never push directly to a downstream repo.
+- If a downstream project edits a centrally managed file, the downstream CI fails and explains how to open a PR in the central repo. Changes are not sent automatically from downstream to central.
+- The phase 1 deliverables are the **design documents and the repo skeleton**. Opening real sync PRs in downstream repos happens only after user approval.
 
-# 현재 상황 (사실)
-- GitHub 계정: 개인 `sirloinbh`, private 리포. GitHub 작업은 `ghp` 또는 `scripts/gh-project.ps1` 래퍼만 사용하고, 회사 계정 `gh`는 쓰지 않는다.
-- 하위 프로젝트: 앱 8개와 공유 인프라 1개.
-  - 앱: workout-memo(기준 프로젝트), study-log, health-log, life-journal, money-ledger, english-study, plan-routine, dev-career-portfolio
-  - 각 앱은 우산 모노레포 + `<name>-frontend/-backend/-db` subtree 배포 리포 구조다.
-  - 공유 인프라: `shared-aws-infrastructure`(Terraform). 앱과 구조가 다르므로 예외 규칙을 적용한다(아래 참조).
-- 공통 스택(workout-memo 기준): React + Vite + TypeScript, React Router, TanStack Query, React Hook Form, Tailwind CSS 4, Express + pg + Zod, PostgreSQL 17, npm workspaces, Docker Compose, GitHub Actions, node:test / Vitest / Playwright.
-- 기존 규칙 원본: workout-memo의 `AGENTS.md`, `skills/`(`.claude/skills/`는 `npm run skills:sync`로 만드는 복제본), `shared/contract.ts` → `contract:sync` 패턴, `docs/design-system.md`, `docs/ai-agent-project-setup.md`.
-- 작업 흐름: 이슈 → `<type>/<번호>-<slug>` 브랜치 → 구현 + 테스트 + `docs/changes/` 기록 → PR. **PR 병합은 사용자만 한다.** 앱 리포의 main 병합은 곧 운영 배포다.
+# Current situation (facts)
+- GitHub accounts: personal `sirloinbh`, private repos. Do GitHub work only through `ghp` or the `scripts/gh-project.ps1` wrapper; do not use the work account `gh`.
+- Downstream projects: 8 apps and 1 shared infrastructure repo.
+  - Apps: workout-memo (the reference project), study-log, health-log, life-journal, money-ledger, english-study, plan-routine, dev-career-portfolio
+  - Each app is an umbrella monorepo plus `<name>-frontend/-backend/-db` subtree deploy repos.
+  - Shared infrastructure: `shared-aws-infrastructure` (Terraform). Its structure differs from the apps, so exception rules apply (see below).
+- Common stack (based on workout-memo): React + Vite + TypeScript, React Router, TanStack Query, React Hook Form, Tailwind CSS 4, Express + pg + Zod, PostgreSQL 17, npm workspaces, Docker Compose, GitHub Actions, node:test / Vitest / Playwright.
+- Existing rule sources: workout-memo's `AGENTS.md`, `skills/` (`.claude/skills/` is a copy made by `npm run skills:sync`), the `shared/contract.ts` → `contract:sync` pattern, `docs/design-system.md`, `docs/ai-agent-project-setup.md`.
+- Workflow: issue → `<type>/<number>-<slug>` branch → implementation + tests + `docs/changes/` record → PR. **Only the user merges PRs.** Merging an app repo into main is a production deploy.
 
-# 보안 제약 (최우선)
-- npm 공급망 공격(Shai-Hulud 계열) 때문에 `npm install/ci/update`, `npx <pkg>`, `pnpm/yarn/bun install`은 사용자가 명시적으로 재확인하기 전까지 실행하지 않는다. 자체 패키지도 예외가 아니다. (#375 이후 `npm ci`는 허용한다. [에이전트의 패키지 설치 차단](agent-guardrails.md) 참고)
-- 새 외부 도구를 도입하려면 고정 버전, 릴리스 후 14일 경과, `--ignore-scripts` 조건을 지키고, 도입 전에 게시자·저장소·검증 결과를 보고한다.
-- `.env` 값, 토큰, GitHub App 개인키, Terraform state, 백업은 리포·문서·로그에 넣지 않는다. 키 이름과 설명만 다룬다.
-- 외부 GitHub Action은 커밋 SHA로 고정한다.
+# Security constraints (top priority)
+- Because of npm supply chain attacks (the Shai-Hulud family), do not run `npm install/ci/update`, `npx <pkg>`, or `pnpm/yarn/bun install` until the user explicitly reconfirms. Our own packages are not an exception. (Since #375, `npm ci` is allowed. See [Blocking package installs by agents](agent-guardrails.md).)
+- To introduce a new external tool, follow the conditions of a pinned version, 14 days since release, and `--ignore-scripts`, and report the publisher, the repository, and the verification result before introducing it.
+- Do not put `.env` values, tokens, GitHub App private keys, Terraform state, or backups into repos, docs, or logs. Handle only key names and descriptions.
+- Pin external GitHub Actions to a commit SHA.
 
-# 배포 메커니즘: A안 + B안 병행
+# Delivery mechanism: Plan A and Plan B together
 
-## A안: 공유 설정 npm 패키지
-- 대상: 패키지 형태로 `extends`/`import`할 수 있는 설정만 담는다.
-  - `@sirloinbh/eslint-config`, `@sirloinbh/prettier-config`, `@sirloinbh/tsconfig`, `[[선택]] @sirloinbh/design-tokens`
-- 레지스트리: GitHub Packages(`npm.pkg.github.com`), `@sirloinbh` 스코프, private.
-- 패키지 작성 규칙 (공급망 위험 최소화):
-  - `dependencies`는 0개로 두고, 필요한 플러그인은 `peerDependencies`로 선언해 하위 프로젝트가 직접 고정한다.
-  - `preinstall`, `install`, `postinstall`, `prepare` 스크립트를 금지한다. CI로 검사한다.
-  - 정확한 버전으로 고정한다(`^`, `~` 금지). CHANGELOG를 쓰고 변경을 semver로 구분한다.
-  - 중앙 리포의 CI에서만 publish한다(태그 트리거). 로컬에서 publish하지 않는다.
-- 하위 리포에서 쓰는 방법:
-  - `.npmrc`에는 `@sirloinbh:registry=https://npm.pkg.github.com`와 `${NODE_AUTH_TOKEN}` 참조만 둔다. 토큰 값은 커밋하지 않는다.
-  - CI와 Docker 빌드에서 인증하는 방법을 설계한다(Docker는 BuildKit secret mount를 쓰고, 이미지 레이어에 토큰을 남기지 않는다).
-  - 설치는 사용자 승인 후 `--ignore-scripts`로 한다.
-  - 자체 패키지(`@sirloinbh/*`)는 14일 경과 규칙에서 제외한다. 대신 다음 조건을 모두 만족해야 한다:
-    - 중앙 리포 CI의 태그 트리거로만 publish된 버전일 것(로컬 publish 금지)
-    - 패키지 버전이 중앙 리포의 git 태그와 일치하고, publish한 워크플로 실행 기록을 확인할 수 있을 것
-    - 동기화 PR 본문에 해당 버전의 CHANGELOG와 중앙 커밋 SHA를 적을 것
-    - 패키지에 설치 스크립트가 없고 `dependencies`가 0개인지 `standards-check`로 다시 검사할 것
-  - 자체 패키지가 요구하는 외부 `peerDependencies`(ESLint 플러그인 등)는 기존 규칙(고정 버전, 14일 경과, `--ignore-scripts`, 사전 검증)을 그대로 따른다.
-- 패키지 버전 업 배포: 중앙 리포의 동기화 PR이 하위 `package.json`의 버전을 함께 올린다(Renovate/Dependabot 버전 업 PR은 쓰지 않는다). lockfile 재생성과 subtree lockfile 갱신은 PR 체크리스트로 남기고 사용자가 승인한 뒤 수행한다.
+## Plan A: shared-config npm packages
+- Scope: only configuration that can be used with `extends`/`import` in package form.
+  - `@sirloinbh/eslint-config`, `@sirloinbh/prettier-config`, `@sirloinbh/tsconfig`, `[[optional]] @sirloinbh/design-tokens`
+- Registry: GitHub Packages (`npm.pkg.github.com`), `@sirloinbh` scope, private.
+- Package authoring rules (to minimize supply chain risk):
+  - Keep `dependencies` at zero. Declare the plugins you need as `peerDependencies` so each downstream project pins them itself.
+  - Forbid the `preinstall`, `install`, `postinstall`, and `prepare` scripts. CI checks this.
+  - Pin exact versions (no `^` or `~`). Write a CHANGELOG and separate changes by semver.
+  - Publish only from the central repo's CI (tag trigger). Never publish locally.
+- How downstream repos use them:
+  - `.npmrc` holds only `@sirloinbh:registry=https://npm.pkg.github.com` and a `${NODE_AUTH_TOKEN}` reference. Do not commit the token value.
+  - Design how CI and Docker builds authenticate (Docker uses a BuildKit secret mount and leaves no token in an image layer).
+  - Install after user approval, with `--ignore-scripts`.
+  - Our own packages (`@sirloinbh/*`) are excluded from the 14-day rule. Instead they must meet all of these conditions:
+    - The version was published only by a tag trigger in the central repo's CI (no local publish)
+    - The package version matches a git tag in the central repo, and the workflow run that published it can be checked
+    - The sync PR body lists that version's CHANGELOG and the central commit SHA
+    - `standards-check` rechecks that the package has no install scripts and zero `dependencies`
+  - External `peerDependencies` that our packages require (ESLint plugins and so on) follow the existing rules unchanged (pinned version, 14 days, `--ignore-scripts`, prior verification).
+- Releasing a package version bump: the central repo's sync PR also raises the version in the downstream `package.json` (Renovate/Dependabot version bump PRs are not used). Regenerating the lockfile and updating the subtree lockfiles are left as a PR checklist and done after the user approves.
 
-## B안: 템플릿 파일 동기화
-- 대상: 패키지로 담을 수 없는 파일. 예: `AGENTS.md` 공통부, `skills/`, `.claude/skills/`, `.github/`(워크플로 호출부, 이슈·PR 템플릿), `.editorconfig`, `.gitattributes`, `.nvmrc`, `.gitignore` 공통부, 문서 템플릿.
-- 트리거: 중앙 main에 병합되면 GitHub Actions가 대상 리포마다 `chore/standards-sync-<중앙 SHA 앞 7자리>` 브랜치를 만들고 PR을 연다. 같은 리포에 이미 열린 동기화 PR이 있으면 새 PR을 열지 않고 그 PR을 갱신한다.
-- 구현: 외부 액션 대신 **중앙 리포에 직접 작성한 스크립트**(Node 내장 모듈만 사용)를 우선 쓴다.
-- 인증: **GitHub App** `project-standards-sync`를 만든다.
-  - 권한은 Contents: write, Pull requests: write, Metadata: read로 제한한다. 대상 리포에만 설치한다.
-  - 개인키는 중앙 리포 secret에만 둔다. 워크플로가 실행될 때마다 1시간짜리 설치 토큰을 발급해 쓴다.
-  - 생성 절차와 키 교체 절차를 문서화한다. App 생성과 설치는 사용자가 직접 수행한다.
-- 관리 대상 파일 맨 위에 "중앙 관리 파일. 수정은 sirloinbh/project-standards로" 헤더를 붙인다(형식상 가능한 파일만).
-- 공통 파일과 프로젝트 고유 파일을 분리한다. 예: `AGENTS.md`(중앙) + `AGENTS.project.md`(프로젝트 고유), `CLAUDE.md`는 둘을 참조.
-- 동기화 대상은 우산 리포다. subtree 배포 리포(`-frontend/-backend/-db`)는 기존 subtree push 절차로 반영되는지 확인하고 직접 동기화하지 않는다.
+## Plan B: template file sync
+- Scope: files that cannot be shipped as a package. Examples: the common part of `AGENTS.md`, `skills/`, `.claude/skills/`, `.github/` (workflow callers, issue and PR templates), `.editorconfig`, `.gitattributes`, `.nvmrc`, the common part of `.gitignore`, and document templates.
+- Trigger: when a change is merged into central main, GitHub Actions creates a `chore/standards-sync-<first 7 characters of the central SHA>` branch for each target repo and opens a PR. If the same repo already has an open sync PR, it updates that PR instead of opening a new one.
+- Implementation: prefer **scripts written directly in the central repo** (Node built-in modules only) over external actions.
+- Authentication: create a **GitHub App** named `project-standards-sync`.
+  - Limit its permissions to Contents: write, Pull requests: write, and Metadata: read. Install it only on the target repos.
+  - Keep the private key only in the central repo's secrets. Each workflow run issues a 1-hour installation token and uses it.
+  - Document the creation steps and the key rotation steps. The user creates and installs the App.
+- Put a "Centrally managed file. Edit it in sirloinbh/project-standards" header at the top of managed files (only files whose format allows it). The header is kept in Korean in the code: `중앙 관리 파일. 수정은 sirloinbh/project-standards로`.
+- Separate common files from project-specific files. Example: `AGENTS.md` (central) + `AGENTS.project.md` (project-specific), with `CLAUDE.md` referring to both.
+- The sync target is the umbrella repo. For the subtree deploy repos (`-frontend/-backend/-db`), confirm that changes arrive through the existing subtree push procedure, and do not sync them directly.
 
-## 하위 리포에서 수정했을 때: 감지와 안내만 한다
-- 하위 리포 CI의 `standards-check` 작업이 다음을 검사한다.
-  - 관리 파일의 해시가 중앙에서 배포한 버전과 같은지
-  - A안 패키지의 버전이 중앙에서 지정한 버전과 같은지
-  - 프로젝트 고정값(아래 레지스트리)과 실제 설정이 일치하는지
-- 위반이 있으면 실패시키고 다음을 출력한다: 어떤 파일이 다른지, 중앙 리포의 어느 경로를 고쳐야 하는지, 중앙 리포에 이슈와 PR을 여는 명령 예시.
-- 하위에서 중앙으로 PR을 자동 생성하거나 파일을 되돌리는 기능은 만들지 않는다.
+## When a downstream repo edits a file: only detect and explain
+- The downstream CI's `standards-check` job checks the following.
+  - Whether the hash of each managed file equals the version the central repo shipped
+  - Whether the Plan A package versions equal the versions the central repo specified
+  - Whether the project fixed values (the registry below) match the actual settings
+- If there is a violation, fail and print: which file differs, which path in the central repo to fix, and an example command to open an issue and a PR in the central repo.
+- Do not build any feature that creates a PR from downstream to central automatically or reverts files.
 
-# 프로젝트 고정값 레지스트리 (프로젝트마다 다르고 서로 겹치면 안 되는 값)
-- 원본: 중앙 리포의 `registry/projects.json`(스키마는 `registry/projects.schema.json`). 이 값은 템플릿 동기화로 덮어쓰지 않는다.
-- 항목: 프로젝트명, 도메인 설명, 리포 이름(우산 + subtree 3종), 포트(web / db / api / vite / e2e api / e2e web), DB 이름과 테스트 DB 이름, 서비스 도메인·서브도메인, AWS 리소스 이름 접두어, 프로젝트 고유 스킬 이름, 의도적으로 허용한 차이(사유 포함).
-- 초기값(현재):
+# Project fixed value registry (values that differ per project and must not overlap)
+- Source: `registry/projects.json` in the central repo (schema: `registry/projects.schema.json`). Template sync does not overwrite these values.
+- Fields: project name, domain description, repo names (umbrella + 3 subtrees), ports (web / db / api / vite / e2e api / e2e web), DB name and test DB name, service domain and subdomain, AWS resource name prefix, project-specific skill names, and intentionally allowed differences (with reasons).
+- Initial values (current):
 
-  | 프로젝트 | 도메인 | web / db / api / vite |
+  | Project | Domain (original Korean value) | web / db / api / vite |
   |---|---|---|
-  | workout-memo | 운동 | 8088 / 55432 / 3001 / 5173 |
-  | study-log | 공부 | 8092 / 55442 / 3012 / 5172 |
-  | health-log | 건강 | 8093 / 55443 / 3013 / 5183 |
-  | life-journal | 일기 | 8094 / 55444 / 3014 / 5174 |
-  | money-ledger | 가계부 | 8095 / 55445 / 3015 / 5175 |
-  | english-study | 영어 | 8096 / 55446 / 3016 / 5176 |
-  | plan-routine | 루틴 | 8097 / 55447 / 3017 / 5177 |
-  | dev-career-portfolio | 커리어 | 8098 / 55448 / 3018 / 5178 |
+  | workout-memo | 운동 (workout) | 8088 / 55432 / 3001 / 5173 |
+  | study-log | 공부 (study) | 8092 / 55442 / 3012 / 5172 |
+  | health-log | 건강 (health) | 8093 / 55443 / 3013 / 5183 |
+  | life-journal | 일기 (journal) | 8094 / 55444 / 3014 / 5174 |
+  | money-ledger | 가계부 (household ledger) | 8095 / 55445 / 3015 / 5175 |
+  | english-study | 영어 (English) | 8096 / 55446 / 3016 / 5176 |
+  | plan-routine | 루틴 (routine) | 8097 / 55447 / 3017 / 5177 |
+  | dev-career-portfolio | 커리어 (career) | 8098 / 55448 / 3018 / 5178 |
 
-  나머지 항목은 각 리포의 실제 파일을 읽어서 채우고, 확인하지 못한 값은 비워 둔 채 보고한다.
-- 중앙 CI가 하는 일:
-  - 모든 프로젝트 사이에서 포트, DB 이름, 도메인, 리포 이름이 겹치는지 검사한다.
-  - `docs/projects.md`(전체 프로젝트를 한 표로 보는 개요)를 자동 생성하고, 파일이 오래되면 실패시킨다.
-- 템플릿 동기화는 이 값을 변수로 주입한다. 예: `.env.example`의 포트, README 제목.
-- 새 프로젝트를 추가하는 절차: 레지스트리에 한 항목 추가 → 충돌 검사 통과 → 스캐폴드 생성 → 첫 동기화 PR.
+  Fill in the remaining fields by reading each repo's real files, and report any value you could not confirm, leaving it blank.
+- What the central CI does:
+  - Checks across all projects for overlapping ports, DB names, domains, and repo names.
+  - Generates `docs/projects.md` (an overview of all projects in one table) automatically, and fails if the file is stale.
+- Template sync injects these values as variables. Examples: the ports in `.env.example`, the README title.
+- Procedure to add a new project: add one entry to the registry → pass the conflict check → generate the scaffold → first sync PR.
 
-# 통일 대상
-1. **언어·프레임워크**: 위 공통 스택을 "허용 목록 + 신규 프로젝트 기준"으로 문서화한다. 메이저 업그레이드 절차를 포함한다.
-2. **도구 버전** (B안): `.nvmrc`, `package.json`의 `packageManager`·`engines`, `.npmrc`의 `engine-strict=true`. Docker 베이스 이미지 태그, PostgreSQL 버전, CI의 Node 버전도 중앙의 `versions.json` 한 곳에서 정의하고 템플릿에 주입한다.
-3. **코드 컨벤션** (A안 + B안): ESLint, Prettier, tsconfig는 A안 패키지로, `.editorconfig`는 B안으로 배포한다. 현재 각 프로젝트에 이미 설치된 도구를 기준으로 삼고, 새로 도입하는 도구는 별도 항목으로 표시한다.
-4. **Git 컨벤션** (B안): Conventional Commits, 브랜치명 `<type>/<issue>-<slug>`, 이슈·PR 템플릿, `docs/changes/` 기록 규칙, 병합 정책(사용자만 병합), 브랜치 보호 설정 체크리스트.
-5. **에이전트 지침·스킬** (B안): `AGENTS.md` 공통부, `skills/` 공통 스킬, `.claude/skills/` 동기화. 프로젝트 고유 스킬(예: `workout-*`)은 레지스트리에 등록하고 동기화 대상에서 제외한다.
-6. **디렉토리 구조·라우터**: 표준 디렉토리 트리, React Router 페이지 URL 규칙, Express `routes/` 기능 모듈 구조, `shared/contract.ts` 패턴, OpenAPI 생성 규칙. 기존 리포에는 문서와 `standards-check` 경고(처음에는 실패가 아닌 경고)로 유도한다. 신규 프로젝트용 스캐폴드 템플릿은 `scaffold/`에 따로 둔다.
-7. **환경변수 한눈에 보기**: 각 리포의 `.env.example`을 원본으로 하고, 중앙에서 모든 프로젝트의 키·설명·필수 여부·비밀 여부·기본값(비밀이 아닌 것만)·사용 위치를 `docs/env-matrix.md`로 자동 생성한다. 프로젝트 고정값 레지스트리와 서로 맞는지 검사한다.
+# What to unify
+1. **Languages and frameworks**: Document the common stack above as an "allow list + baseline for new projects". Include the major upgrade procedure.
+2. **Tool versions** (Plan B): `.nvmrc`, `packageManager` and `engines` in `package.json`, and `engine-strict=true` in `.npmrc`. Also define the Docker base image tag, the PostgreSQL version, and the CI Node version in one place, the central `versions.json`, and inject them into templates.
+3. **Code conventions** (Plan A + Plan B): ESLint, Prettier, and tsconfig ship as Plan A packages, and `.editorconfig` ships through Plan B. Use the tools already installed in each project as the baseline, and mark newly introduced tools as a separate item.
+4. **Git conventions** (Plan B): Conventional Commits, the branch name `<type>/<issue>-<slug>`, issue and PR templates, the `docs/changes/` record rule, the merge policy (only the user merges), and a branch protection checklist.
+5. **Agent instructions and skills** (Plan B): the common part of `AGENTS.md`, common skills in `skills/`, and `.claude/skills/` sync. Project-specific skills (for example `workout-*`) are registered in the registry and excluded from sync.
+6. **Directory structure and routers**: the standard directory tree, React Router page URL rules, the Express `routes/` feature module structure, the `shared/contract.ts` pattern, and OpenAPI generation rules. Guide existing repos with docs and `standards-check` warnings (warnings, not failures, at first). The scaffold template for new projects lives separately in `scaffold/`.
+7. **Environment variables at a glance**: Use each repo's `.env.example` as the source, and generate `docs/env-matrix.md` centrally with every project's keys, descriptions, whether required, whether secret, default values (non-secret only), and where used. Check that it agrees with the project fixed value registry.
 
-# 추가 통일 대상
-- **CI 공통화**: GitHub Actions reusable workflow(`workflow_call`)로 lint/test/build/e2e/`standards-check`를 만든다. 하위 리포는 중앙 워크플로를 태그나 SHA로 고정해서 호출한다.
-- **의존성 정책**: 메이저 버전 통일표를 둔다. Dependabot은 보안 업데이트만 켜고, 자동 버전 업 PR은 끈다. `npm audit`을 정기 실행한다.
-- **디자인 토큰**: `theme.css` 토큰과 `components/ui` 기본 규칙을 공유한다. 앱별 브랜드 색은 변수로 덮어쓰기를 허용한다.
-- **ADR**: `docs/adr/NNNN-*.md`. 모든 규칙에 근거를 남긴다. 처음 작성할 ADR:
-  - A안과 B안의 역할 분담
-  - GitHub App을 선택한 이유
-  - 하위에서 수정했을 때 감지·안내만 하는 이유
-  - 자체 패키지를 14일 규칙에서 제외하고 출처 확인 조건으로 대체한 이유(외부 peerDependencies는 기존 규칙을 유지)
-  - shared-aws-infrastructure 예외 범위
-- **준수 현황**: 각 리포의 준수 상태(관리 파일 일치, 패키지 버전, 아직 병합되지 않은 동기화 PR과 그 경과 일수)를 `docs/compliance.md`로 생성한다.
-- **`.gitattributes`·줄바꿈**: LF를 기본으로 하고, `*.ps1`에 CRLF를 허용할지 결정한다. Windows/PowerShell 환경에서 한글이 깨지지 않도록 UTF-8 규칙을 포함한다.
-- **보안 기준선**: secret scanning, `.gitignore` 공통부, 금지 패키지 목록과 IOC 점검 스크립트.
-- **공통 운영 문서**: 일일 기록·다음 작업(`docs/daily`, `docs/next-steps`) 형식, 백업/복구 절차, 배포 runbook 템플릿.
+# Additional things to unify
+- **Shared CI**: Build lint/test/build/e2e/`standards-check` as GitHub Actions reusable workflows (`workflow_call`). Downstream repos call the central workflows pinned to a tag or SHA.
+- **Dependency policy**: Keep a major version unification table. Turn on Dependabot for security updates only and turn off automatic version bump PRs. Run `npm audit` regularly.
+- **Design tokens**: Share the `theme.css` tokens and the `components/ui` base rules. Per-app brand colors may be overridden with variables.
+- **ADRs**: `docs/adr/NNNN-*.md`. Leave the reasoning for every rule. ADRs to write first:
+  - The division of roles between Plan A and Plan B
+  - Why we chose a GitHub App
+  - Why a downstream edit is only detected and explained
+  - Why our own packages are excluded from the 14-day rule and replaced by a provenance check (external peerDependencies keep the existing rule)
+  - The scope of the shared-aws-infrastructure exception
+- **Compliance status**: Generate `docs/compliance.md` with each repo's compliance state (managed files match, package versions, sync PRs not yet merged and how many days old they are).
+- **`.gitattributes` and line endings**: Use LF by default, and decide whether to allow CRLF for `*.ps1`. Include UTF-8 rules so Korean text does not get garbled on Windows/PowerShell.
+- **Security baseline**: secret scanning, the common part of `.gitignore`, a blocked package list, and an IOC check script.
+- **Common operations docs**: the format of the daily log and next steps (`docs/daily`, `docs/next-steps`), backup/restore procedures, and a deploy runbook template.
 
-# 예외: shared-aws-infrastructure
-- 동기화 대상에 포함하되, `sync.config`에서 프로필 `infra`로 구분한다.
-- 적용하는 것: Git 컨벤션, 이슈·PR 템플릿, `.editorconfig`, `.gitattributes`, `.gitignore` 공통부, `AGENTS.md` 공통부, 공통 스킬 중 인프라와 관련된 것, 보안 기준선, `standards-check`.
-- 제외하는 것: A안 npm 패키지, Node/npm 버전 파일, 디렉토리·라우터 규칙, 앱용 CI(lint/test/e2e).
-- 인프라 전용 검사: `terraform fmt -check`, `terraform validate`, 셸 스크립트 `bash -n`.
-- 동기화 PR은 코드 파일과 `.tf` 파일을 건드리지 않는다. 인프라 리포 PR은 apply를 일으키지 않는다는 점을 PR 본문에 명시한다.
-- 앱 레지스트리의 AWS 리소스 이름과 인프라 리포의 실제 정의가 맞는지 교차 검사한다(가능한 범위에서).
+# Exception: shared-aws-infrastructure
+- Include it in the sync targets, but mark it with the profile `infra` in `sync.config`.
+- What applies: Git conventions, issue and PR templates, `.editorconfig`, `.gitattributes`, the common part of `.gitignore`, the common part of `AGENTS.md`, the common skills that relate to infrastructure, the security baseline, and `standards-check`.
+- What is excluded: Plan A npm packages, Node/npm version files, directory and router rules, and app CI (lint/test/e2e).
+- Infrastructure-only checks: `terraform fmt -check`, `terraform validate`, and `bash -n` for shell scripts.
+- Sync PRs do not touch code files or `.tf` files. State in the PR body that an infrastructure repo PR does not trigger apply.
+- Cross-check, as far as possible, that the AWS resource names in the app registry match the real definitions in the infrastructure repo.
 
-# 산출물 (1단계)
-1. `docs/design.md`: 배포 흐름도(A안·B안), 하위 리포의 감지·안내 흐름, 파일 분류표(A안 패키지 / B안 중앙 관리 / 프로젝트 고정값 / 프로젝트 고유 / 스캐폴드 전용), 충돌 처리 규칙.
-2. 중앙 리포 디렉토리 구조안. 최소 `packages/`, `templates/`, `registry/`, `scaffold/`, `scripts/`, `.github/workflows/`, `docs/adr/`.
-3. `sync.config` 스키마와 9개 대상 리포의 초기값(앱 8개는 `app` 프로필, 인프라는 `infra` 프로필).
-4. `registry/projects.json`과 스키마, 충돌 검사 스크립트, `docs/projects.md` 생성 스크립트.
-5. 동기화 스크립트, `standards-check` 스크립트, A안 패키지 publish 워크플로, 그리고 각각의 테스트(외부 패키지 없이 `node:test`로 작성).
-6. GitHub App 생성·설치·키 교체 절차서(사용자가 직접 수행할 단계를 표시).
-7. ADR 묶음과 README(새 프로젝트 추가 절차, 규칙 변경 절차, 하위에서 위반이 감지됐을 때의 대응).
-8. 단계별 적용 계획: workout-memo에 먼저 적용 → 나머지 앱 7개 → shared-aws-infrastructure 순서로 진행하고, 리포마다 이슈와 PR을 만든다.
+# Deliverables (phase 1)
+1. `docs/design.md`: the delivery flow diagram (Plan A and Plan B), the downstream detect-and-explain flow, a file classification table (Plan A package / Plan B centrally managed / project fixed value / project-specific / scaffold only), and conflict handling rules.
+2. A proposal for the central repo's directory structure. At least `packages/`, `templates/`, `registry/`, `scaffold/`, `scripts/`, `.github/workflows/`, `docs/adr/`.
+3. The `sync.config` schema and the initial values for the 9 target repos (the 8 apps use the `app` profile, the infrastructure repo uses the `infra` profile).
+4. `registry/projects.json` with its schema, the conflict check script, and the script that generates `docs/projects.md`.
+5. The sync script, the `standards-check` script, the Plan A package publish workflow, and a test for each (written with `node:test`, without external packages).
+6. A procedure guide for creating and installing the GitHub App and rotating its key (mark the steps the user performs).
+7. A set of ADRs and a README (the procedure to add a new project, the procedure to change a rule, and what to do when a violation is detected downstream).
+8. A phased rollout plan: apply to workout-memo first → the other 7 apps → shared-aws-infrastructure, and create an issue and a PR for each repo.
 
-# 작업 방식
-- 바로 만들지 말고, 먼저 설계안과 남은 질문 목록을 제시하고 승인을 받는다.
-- 규칙을 정할 때는 workout-memo의 현재 파일을 근거로 든다. 프로젝트 사이에 차이가 있으면 표로 보고하고, "통일 대상"인지 "레지스트리 고정값"인지 분류를 제안한다.
-- 설치되지 않은 도구의 명령을 실행 가능한 것처럼 적지 않는다.
-- 응답과 문서는 한국어로 쓴다.
+# How to work
+- Do not build right away. First present a design proposal and a list of open questions, and get approval.
+- When you decide a rule, cite the current files in workout-memo as the evidence. If projects differ, report the differences in a table and propose whether each is a "unification target" or a "registry fixed value".
+- Do not write commands for tools that are not installed as if they could be run.
+- Write responses and documents in Korean. (This was the original instruction. Since #453, explanations to the user and new documents are written in English.)
