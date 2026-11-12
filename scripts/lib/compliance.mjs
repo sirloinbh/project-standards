@@ -49,9 +49,10 @@ export function envMismatches(entries, project) {
 
 /**
  * Collects one repository's status. `read(path)` returns text or null; `pulls` are its open PRs.
- * Returns { repo, profile, synced, centralSha, problems, packages, syncPr, env, envProblems }.
+ * `korean` is the optional result of koreanStats (#493).
+ * Returns { repo, profile, synced, centralSha, problems, packages, syncPr, env, envProblems, korean }.
  */
-export function repoStatus({ target, project, read, pulls = [], now = new Date() }) {
+export function repoStatus({ target, project, read, pulls = [], now = new Date(), korean = null }) {
   const manifestText = read(MANIFEST_PATH);
   const manifest = manifestText ? JSON.parse(manifestText) : null;
   const problems = manifest ? checkManifest(manifest, read).map((p) => `${p.path}: ${p.reason}`) : [];
@@ -81,6 +82,7 @@ export function repoStatus({ target, project, read, pulls = [], now = new Date()
     syncPr,
     env,
     envProblems: project && envText ? envMismatches(env, project) : [],
+    korean,
   };
 }
 
@@ -97,25 +99,32 @@ function settingsCell(s) {
   return parts.length ? parts.join(' ') : '✓';
 }
 
+/** One cell for the Korean-text column (#493): a warning (not a failure) while translation is in progress. */
+export function koreanCell(k) {
+  if (!k) return '—';
+  if (!k.markdownFiles && !k.commentLines) return k.partial ? '✓ (partial scan)' : '✓';
+  return `△ ${k.markdownFiles} md, ${k.commentLines} comments${k.partial ? ' (partial scan)' : ''}`;
+}
+
 export function renderCompliance(statuses, { generatedAt, centralSha }) {
   const lines = [
     '# Compliance status',
     '',
     `<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: ${generatedAt}, central ${centralSha.slice(0, 7)} -->`,
     '',
-    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings |',
-    '|---|---|---|---|---|---|---|---|',
+    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text |',
+    '|---|---|---|---|---|---|---|---|---|',
   ];
   for (const s of statuses) {
     if (s.unknown) {
-      lines.push(`| ${s.repo} | unknown (${s.unknown}) | — | — | — | — | — | — |`);
+      lines.push(`| ${s.repo} | unknown (${s.unknown}) | — | — | — | — | — | — | — |`);
       continue;
     }
     const files = !s.synced ? '—' : s.problems.length ? `✗ ${s.problems.length} differ` : '✓ match';
     const pkgs = !s.packages.length ? '—' : s.packages.every((p) => p.ok) ? '✓' : `✗ ${s.packages.filter((p) => !p.ok).map((p) => `${p.name} ${p.actual ?? 'none'}≠${p.expected}`).join(', ')}`;
     const pr = s.syncPr ? `[#${s.syncPr.number}](${s.syncPr.url}) ${s.syncPr.ageDays} days old` : 'none';
     const env = s.profile !== 'app' ? '—' : s.envProblems.length ? `✗ ${s.envProblems.length} differ` : '✓';
-    lines.push(`| ${s.repo} | ${s.synced ? '✓' : 'not yet'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} |`);
+    lines.push(`| ${s.repo} | ${s.synced ? '✓' : 'not yet'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} | ${koreanCell(s.korean)} |`);
   }
   const details = statuses.filter((s) => !s.unknown && (s.problems.length || s.envProblems.length));
   if (details.length) {
@@ -133,6 +142,15 @@ export function renderCompliance(statuses, { generatedAt, centralSha }) {
     for (const s of withSettings) {
       lines.push(`### ${s.repo}`, '', '| Status | Item | Current | Expected |', '|---|---|---|---|');
       for (const r of s.settings.filter((x) => x.status !== 'ok')) lines.push(`| ${MARK[r.status]} | ${cell(r.label)} | ${cell(r.actual)} | ${cell(r.expected)} |`);
+      lines.push('');
+    }
+  }
+  const withKorean = statuses.filter((s) => s.korean?.files.length);
+  if (withKorean.length) {
+    lines.push('', '## Korean text', '', 'Warning only for now (#493). Markdown files and code-comment lines that still contain Korean; the first 10 files per repo are listed. Literals that must stay Korean are on the allow list in `scripts/lib/korean-text.mjs`.', '');
+    for (const s of withKorean) {
+      lines.push(`### ${s.repo}`, '', ...s.korean.files.slice(0, 10).map((f) => `- \`${cell(f)}\``));
+      if (s.korean.files.length > 10) lines.push(`- and ${s.korean.files.length - 10} more`);
       lines.push('');
     }
   }

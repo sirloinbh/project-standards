@@ -20,6 +20,8 @@ export async function openRemote(api, repo) {
     baseSha: ref.object.sha,
     treeSha: commit.tree.sha,
     has: (file) => blobs.has(file),
+    /** Every file path of the default branch. */
+    paths: () => [...blobs.keys()],
     fetchText,
     /** Synchronous read of files fetched before. */
     read: (file) => cache.get(file) ?? null,
