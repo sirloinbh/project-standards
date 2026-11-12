@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderCompliance, renderEnvMatrix, repoStatus } from './lib/compliance.mjs';
 import { createClient, getInstallationToken, mapLimit } from './lib/github-app.mjs';
+import { koreanStats, scannable } from './lib/korean-text.mjs';
 import { MANIFEST_PATH } from './lib/manifest.mjs';
 import { loadAll } from './lib/registry.mjs';
 import { openRemote } from './lib/remote-repo.mjs';
@@ -33,6 +34,21 @@ const RATE_LIMITED = /\b(403|429)\b.*rate limit/i;
 /** Repositories whose status was lost to a rate limit; the report is not published while any remain. */
 export const rateLimitedRepos = (statuses) => statuses.filter((s) => s.rateLimited).map((s) => s.repo);
 
+// A remote scan reads one blob per file, so it is capped to stay inside the API rate limit (#464).
+export const KOREAN_SCAN_CAP = 100;
+
+/** Every file path under dir, skipping directories the Korean-text check never reads. */
+function walk(dir, rel = '') {
+  const out = [];
+  for (const e of fs.readdirSync(path.join(dir, rel), { withFileTypes: true })) {
+    const next = rel ? `${rel}/${e.name}` : e.name;
+    if (e.isDirectory()) {
+      if (!['node_modules', '.git', 'dist', 'build', 'coverage'].includes(e.name)) out.push(...walk(dir, next));
+    } else out.push(next);
+  }
+  return out;
+}
+
 const projectOf = (data, target) => data.projects.projects.find((p) => p.name === target.project);
 
 function localStatuses(data, local, now) {
@@ -40,7 +56,8 @@ function localStatuses(data, local, now) {
     const dir = local[target.repo.split('/')[1]];
     if (!dir) return { repo: target.repo, profile: target.profile, unknown: 'no local clone' };
     const read = (rel) => (fs.existsSync(path.join(dir, rel)) ? fs.readFileSync(path.join(dir, rel), 'utf8') : null);
-    return repoStatus({ target, project: projectOf(data, target), read, now });
+    const korean = koreanStats(scannable(walk(dir)).map((p) => ({ path: p, text: read(p) ?? '' })));
+    return repoStatus({ target, project: projectOf(data, target), read, now, korean });
   });
 }
 
@@ -54,7 +71,11 @@ export async function remoteStatuses({ data, getClient, now = new Date() }) {
       const manifest = repo.read(MANIFEST_PATH) ? JSON.parse(repo.read(MANIFEST_PATH)) : { files: {} };
       await mapLimit([...Object.keys(manifest.files ?? {}), '.env.example', 'package.json'], repo.fetchText);
       const pulls = await api('GET', `/repos/${target.repo}/pulls?state=open&per_page=100`);
-      const status = repoStatus({ target, project: projectOf(data, target), read: repo.read, pulls, now });
+      const candidates = scannable(repo.paths());
+      const picked = candidates.slice(0, KOREAN_SCAN_CAP);
+      await mapLimit(picked, repo.fetchText);
+      const korean = koreanStats(picked.map((p) => ({ path: p, text: repo.read(p) ?? '' })), { partial: candidates.length > picked.length });
+      const status = repoStatus({ target, project: projectOf(data, target), read: repo.read, pulls, now, korean });
       // Settings are judged separately so a missing permission only blanks this column (#22).
       try {
         status.settings = evaluateSettings(await collectSettings(api, target.repo), target);

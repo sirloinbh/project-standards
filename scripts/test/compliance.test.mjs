@@ -140,3 +140,40 @@ test('table cells escape backslashes before pipes so a trailing backslash cannot
   assert.equal(cell(`p${bs}|q`), `p${bs}${bs}${bs}|q`, 'an escaped pipe in the value stays escaped');
   assert.equal(cell(42), '42');
 });
+
+test('Korean-text check counts markdown files and comment lines, and skips allowed or excluded content (#493)', async () => {
+  const { koreanStats, DEFAULT_ALLOW, fileKind } = await import('../lib/korean-text.mjs');
+  const { LEGACY_HEADER_TEXT } = await import('../lib/render.mjs');
+  assert.ok(DEFAULT_ALLOW.includes(LEGACY_HEADER_TEXT));
+  const files = [
+    { path: 'README.md', text: '# 제목\nenglish\n한국어 문장\n' },
+    { path: 'docs/ok.md', text: 'All English\n' },
+    { path: 'src/a.ts', text: "const s = '한글 문자열';\n// 한글 주석\nconst x = 1; // 설명\n/* 블록\n * 별표 줄\n */\n" },
+    { path: 'run.sh', text: '# 주석\necho hi\n' },
+    { path: 'src/b.ts', text: `// ${LEGACY_HEADER_TEXT} main\n// chore: 중앙 표준 동기화 (project-standards@abc\n` },
+    { path: 'node_modules/x/README.md', text: '한글\n' },
+    { path: 'package-lock.json', text: '한글\n' },
+    { path: 'test/__snapshots__/a.snap', text: '한글\n' },
+    { path: 'logo.png', text: '한글\n' },
+  ];
+  const stats = koreanStats(files);
+  assert.equal(stats.markdownFiles, 1);
+  assert.equal(stats.commentLines, 5); // 한글 주석, 설명, 블록, 별표 줄 + shell comment
+  assert.deepEqual(stats.files, ['README.md', 'src/a.ts', 'run.sh']);
+  assert.equal(fileKind('node_modules/a.js'), null);
+  assert.equal(fileKind('logo.png'), null);
+});
+
+test('the report shows Korean text as a warning, not a failure (#493)', async () => {
+  const { koreanCell } = await import('../lib/compliance.mjs');
+  assert.equal(koreanCell(null), '—');
+  assert.equal(koreanCell({ markdownFiles: 0, commentLines: 0, files: [], partial: false }), '✓');
+  assert.equal(koreanCell({ markdownFiles: 2, commentLines: 7, files: ['a.md'], partial: true }), '△ 2 md, 7 comments (partial scan)');
+  const korean = { markdownFiles: 1, commentLines: 0, files: ['README.md'], partial: false };
+  const status = { ...repoStatus({ target: studyTarget, project: study, read: () => null }), korean };
+  const report = renderCompliance([status], meta);
+  assert.match(report, /\| Korean text \|/);
+  assert.match(report, /\| △ 1 md, 0 comments \|/);
+  assert.match(report, /## Korean text[\s\S]*- `README\.md`/);
+  assert.doesNotMatch(report, /✗ 1 md/);
+});

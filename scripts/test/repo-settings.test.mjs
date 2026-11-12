@@ -117,7 +117,7 @@ test('only names are collected: variable values are dropped and never reach the 
   const reports = renderReports([status], meta);
   for (const text of Object.values(reports)) assert.ok(!text.includes(VALUE));
   const compliance = reports['docs/compliance.md'];
-  assert.match(compliance, /\| sirloinbh\/workout-memo \| not yet \|.*\| ✗ 2 △ 4 \|$/m);
+  assert.match(compliance, /\| sirloinbh\/workout-memo \| not yet \|.*\| ✗ 2 △ 4 \| — \|$/m);
   assert.match(compliance, /## Repo settings/);
   assert.match(compliance, /\| — plan \| main branch protection \| not available for private repos on the Free plan \| on \|/);
   assert.match(compliance, /\| △ recommended \| Actions variable names \| not in the list: DEPLOY_HOST \| none \|/);
