@@ -1,26 +1,26 @@
-# #3 공통 스킬 std-backlog
+# #3 Common skill std-backlog
 
-## 변경
+## Change
 
-- `templates/common/skills/std-backlog/SKILL.md`: 요구사항을 작은 이슈로 나눠 등록하고, 우선순위·특성 라벨을 달고, 이전 PR이 병합된 뒤 다음 작업을 고르는 절차. B안 동기화로 모든 하위 리포에 배포할 원본이다.
-- `.claude/skills/std-backlog/SKILL.md`: 중앙 리포에서 Claude Code가 읽는 복제본
-- `AGENTS.md`: 작업 절차에 std-backlog 참조 추가 (Codex는 이 참조로 스킬을 찾는다)
+- `templates/common/skills/std-backlog/SKILL.md`: the procedure for splitting requirements into small issues, registering them, adding priority and characteristic labels, and choosing the next task after the previous PR is merged. This is the source that option B sync distributes to every downstream repo.
+- `.claude/skills/std-backlog/SKILL.md`: the copy that Claude Code reads in the central repo
+- `AGENTS.md`: added a std-backlog reference to the work procedure (Codex finds the skill through this reference)
 
-## GitHub 설정 (리포 밖 변경)
+## GitHub settings (changes outside the repo)
 
-sirloinbh/project-standards에 라벨 20개를 만들었다.
+I created 20 labels in sirloinbh/project-standards.
 
-- 우선순위: `priority/P0`~`P4`
-- 특성: `type/feature|docs|security|chore|research`, `area/templates|tooling|compliance|registry|scaffold|ci|deploy|agent`
-- 기타: `origin/added`, `needs-user`
+- Priority: `priority/P0` to `P4`
+- Characteristic: `type/feature|docs|security|chore|research`, `area/templates|tooling|compliance|registry|scaffold|ci|deploy|agent`
+- Other: `origin/added`, `needs-user`
 
-이 이슈(#3)는 작업 중 추가된 요구사항이므로 `priority/P0`와 `origin/added`를 달았다. #1에는 `priority/P1`, `type/docs`를 달았다.
+This issue (#3) is a requirement added during the work, so I gave it `priority/P0` and `origin/added`. I gave #1 `priority/P1` and `type/docs`.
 
-## 하위 리포 적용
+## Applying to downstream repos
 
-하위 리포 배포는 동기화 스크립트가 생긴 뒤 `templates/common/skills/` 경로를 통해 이뤄진다. 하위 리포에 직접 push하지 않는다. 라벨을 9개 리포에 맞추는 작업은 별도 백로그 이슈로 등록했다.
+Distribution to downstream repos goes through the `templates/common/skills/` path once the sync script exists. We do not push directly to downstream repos. Aligning the labels across the 9 repos is registered as a separate backlog issue.
 
-## 검증
+## Checks
 
-- 원본과 Claude Code 복제본이 같은지 `diff`로 확인했다(차이 없음).
-- 스킬 frontmatter의 `name`이 디렉토리 이름(`std-backlog`)과 같은지 확인했다.
+- I confirmed with `diff` that the source and the Claude Code copy are the same (no differences).
+- I confirmed that the `name` in the skill frontmatter equals the directory name (`std-backlog`).
