@@ -17,7 +17,7 @@
 - 
 
 ## Check before merging
-<!-- Things the user must decide or run. "None" if nothing -->
+<!-- Things the user must decide or run, plus choices you made without asking (default chosen, why, how to reverse). "None" if nothing -->
 - [ ] 
 
 ## Impact
