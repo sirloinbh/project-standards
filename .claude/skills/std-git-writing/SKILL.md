@@ -121,6 +121,7 @@ Write the sections of the PR template (`.github/pull_request_template.md` at the
 | `Closes #number` | One line per issue to close. At the end of the body, just before the co-author note |
 
 - Who merges follows the repo's `AGENTS.md` (the user only, if it says nothing). Even in repos where the agent merges, do not merge and ask instead when "Check before merging" has an item that needs the user's judgment.
+- Reviewing a PR and answering review comments follow [std-code-review](../std-code-review/SKILL.md).
 - When you add commits to a PR, update "Main changes" and `Closes` in the body too.
 
 ## 6. Checklist before posting
