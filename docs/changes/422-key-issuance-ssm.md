@@ -1,20 +1,20 @@
-# #422 사용자 단계의 OAuth·API 키 발급 절차와 SSM 보관 방식 조사
+# #422 Research on OAuth and API key issuance steps for users, and how to store them in SSM
 
-사용자가 2026-11-08에 요청했다. 환경변수와 API 키는 SSM으로 관리하기로 했다.
+The user asked for this on 2026-11-08. It was decided to manage environment variables and API keys with SSM.
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/research/app-secrets-ssm.md` | 대상 8개 이슈의 발급 절차, 만료·갱신 일정, SSM 경로·권한 제안, 후속 구현 목록 |
+| `docs/research/app-secrets-ssm.md` | Issuance steps for the 8 target issues, expiry and renewal schedule, proposed SSM paths and permissions, list of follow-up implementation |
 
-## 정한 것 (제안, 구현 이슈에서 확정)
+## Decisions (proposals, to be confirmed in the implementation issues)
 
-- 경로: 여러 앱이 쓰는 키는 `/sirloinbh/shared/<이름>`, 한 앱만 쓰는 키는 `/sirloinbh/<앱>/<이름>`. 공공데이터포털 키는 계정에 하나라 공용 경로 하나로 둔다.
-- 어느 변수에 어느 파라미터를 넣는지는 `.env.example`의 `@ssm=` 태그로 적는다.
-- OAuth refresh token처럼 앱이 실행 중에 받는 값은 SSM이 아니라 앱 DB에 둔다.
+- Path: a key used by several apps is `/sirloinbh/shared/<name>`, and a key used by only one app is `/sirloinbh/<app>/<name>`. The data.go.kr (public data portal) key is one per account, so it gets one shared path.
+- Which parameter goes into which variable is written with the `@ssm=` tag in `.env.example`.
+- A value the app receives while running, such as an OAuth refresh token, is kept in the app DB, not in SSM.
 
-## 검증
+## Checks
 
-- 외부 서비스 조건은 웹 조사로 확인했고, 공식 출처와 2차 출처, 미확인을 문서에 구분했다. 가입이나 발급은 하지 않았다.
-- `npm run check`: 결과는 PR 본문에 적는다.
+- Conditions of external services were checked by web research, and the document distinguishes official sources, secondary sources, and unconfirmed items. No sign-up or issuance was done.
+- `npm run check`: the result is written in the PR body.

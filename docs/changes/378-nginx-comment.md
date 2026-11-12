@@ -1,17 +1,17 @@
-# #378 nginx.conf 템플릿 주석을 앱 요청 제한에 맞게 수정
+# #378 Fix the nginx.conf template comment to match app request limits
 
-- 이슈: [#378](https://github.com/sirloinbh/project-standards/issues/378)
-- 브랜치: `docs/378-nginx-comment`
+- Issue: [#378](https://github.com/sirloinbh/project-standards/issues/378)
+- Branch: `docs/378-nginx-comment`
 
-## 목적
+## Purpose
 
-템플릿 주석이 "API에는 제한이 없다"고 단정했다. `sirloinbh/life-journal`은 API에 요청 제한을 넣어 이 주석이 사실과 달라졌다(life-journal#34).
+The template comment stated flatly that "there is no limit on the API". `sirloinbh/life-journal` added a request limit to its API, so this comment became untrue (life-journal#34).
 
-## 변경 — 2026-11-01
+## Change (2026-11-01)
 
-`templates/app/frontend/nginx.conf.tmpl`의 주석만 고쳤다. 앱이 API에 제한을 더할 수 있고, 이 제한은 그 앞단에서 적용된다고 적었다. 설정 줄은 그대로다.
+Only the comment in `templates/app/frontend/nginx.conf.tmpl` was fixed. It now says that an app may add a limit on the API, and that this limit is applied behind it. The config lines are unchanged.
 
-## 검증
+## Checks
 
-- `git diff`: 바뀐 줄은 주석뿐이다.
-- 이 작업 폴더에는 의존성을 설치하지 않아 `npm run check`를 로컬에서 돌리지 않았다. 결과는 PR의 CI로 확인한다.
+- `git diff`: the only changed lines are comments.
+- Dependencies are not installed in this working folder, so `npm run check` was not run locally. The result is checked through the PR's CI.

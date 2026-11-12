@@ -1,28 +1,28 @@
-# #313 중앙 스킬 std-communication과 앱 스킬 정리
+# #313 Central skill std-communication and app skill cleanup
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/common/skills/std-communication/SKILL.md` | 새 공통 스킬: 사용자에게 하는 설명은 한국어, 명령·경로·식별자·오류 원문은 그대로 |
-| `.claude/skills/std-communication/SKILL.md` | 이 리포의 복제본 |
-| `templates/app/AGENTS.md.tmpl`, `AGENTS.md` | 스킬 안내에 추가 |
-| `scripts/test/agents.test.mjs`, 스냅샷 | 앱 8개와 인프라 리포가 받는지, `.claude/skills/` 복제가 같은지 |
+| `templates/common/skills/std-communication/SKILL.md` | New shared skill: explanations to the user are in Korean (at the time of this change), and commands, paths, identifiers, and original error text stay as they are |
+| `.claude/skills/std-communication/SKILL.md` | This repo's copy |
+| `templates/app/AGENTS.md.tmpl`, `AGENTS.md` | Added to the skill guide |
+| `scripts/test/agents.test.mjs`, snapshot | Whether the 8 apps and the infrastructure repo receive it, and whether the `.claude/skills/` copy is identical |
 
-## 정한 것
+## Decisions
 
-- 바탕은 workout-memo의 `workout-communication`이다. 앱 이름을 빼고, "보고 쓰는 법"(결과 먼저, 사용자 할 일 따로, 실행 결과는 사실대로)을 더했다.
-- 템플릿 변수를 쓰지 않았다. 이 리포의 `.claude/skills/` 복제본을 원본과 똑같이 두기 위해서다.
-- `templates/common/`에 두어 인프라 리포도 받는다.
+- The basis is workout-memo's `workout-communication`. The app name was removed, and "how to write reports" was added (result first, user tasks separate, run results stated as facts).
+- No template variables are used. This keeps the copy in this repo's `.claude/skills/` identical to the source.
+- It is placed in `templates/common/` so the infrastructure repo receives it too.
 
-## 앱 스킬 정리
+## App skill cleanup
 
-앱 리포 PR로 한다(병합은 사용자). 동기화 PR로 `std-communication`이 들어간 뒤 병합한다.
+Done as app repo PRs (the user merges). Merge after `std-communication` arrives through the sync PR.
 
-- workout-memo: `workout-communication` 삭제(중앙 스킬로 대체)
-- study-log·plan-routine: `*-testing`의 "아직 도입하지 않은 Vitest·Playwright", `*-foundation`의 `frontend/src/style.css` 토큰 설명 고치기
-- 세 앱의 `*-implementation`: 중앙 `std-implementation`·`std-git-writing`과 같은 줄 지우기
+- workout-memo: delete `workout-communication` (replaced by the central skill)
+- study-log and plan-routine: fix "Vitest and Playwright not yet introduced" in `*-testing`, and the `frontend/src/style.css` token description in `*-foundation`
+- `*-implementation` in the three apps: delete lines that are the same as the central `std-implementation` and `std-git-writing`
 
-## 검증
+## Checks
 
-- `npm test`: 489개 중 488개 통과, 1개 건너뜀, 실패 0
+- `npm test`: 488 of 489 passed, 1 skipped, 0 failed

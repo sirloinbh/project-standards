@@ -1,8 +1,8 @@
-# 일일 작업 기록
+# Daily work log
 
-여러 리포에 걸친 진행 상황을 Asia/Seoul 기준 작업일마다 `YYYY-MM-DD.md`에 정리한다. 앱 하나의 기록은 그 앱의 `docs/daily/`에 둔다. 과거 상태를 오늘 상태로 덮어쓰지 않는다.
+Progress across several repos is written into `YYYY-MM-DD.md` for each working day in Asia/Seoul time. A record for a single app lives in that app's `docs/daily/`. Do not overwrite a past state with today's state.
 
-## 날짜별 정리
+## By date
 
 - [2026-11-12](2026-11-12.md)
 - [2026-11-11](2026-11-11.md)

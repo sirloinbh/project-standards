@@ -1,18 +1,18 @@
-# #393 중앙 리포에 일일 작업 기록 두기
+# #393 Keep daily work records in the central repo
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/daily/README.md` | 일일 기록의 규칙과 목록 |
-| `docs/daily/2026-11-01.md` | 2026-11-01에 한 일과 내일 할 일 |
+| `docs/daily/README.md` | Rules and list of the daily records |
+| `docs/daily/2026-11-01.md` | What was done on 2026-11-01 and what to do tomorrow |
 
-## 정한 것
+## Decisions
 
-- 앱 리포의 `docs/daily/`와 같은 형식이고, 여러 리포에 걸친 내용만 여기에 둔다. 앱 하나의 내용은 그 앱에 둔다.
-- 앱에 동기화하지 않는다. `templates/`를 바꾸지 않았다.
+- The format is the same as `docs/daily/` in the app repos, and only content that spans several repos goes here. Content for a single app goes in that app.
+- It is not synced to apps. `templates/` was not changed.
 
-## 확인
+## Checks
 
-- `npm run check`를 실행했다.
-- 기록의 PR 번호와 이슈 상태는 `git log`와 GitHub에서 조회해 옮겼다.
+- Ran `npm run check`.
+- The PR numbers and issue states in the record were looked up from `git log` and GitHub and copied over.

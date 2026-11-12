@@ -1,30 +1,30 @@
-# #328 앱에 공유 ESLint 설정 1.1.0 반영 (관례 규칙만)
+# #328 Apply shared ESLint config 1.1.0 to the apps (convention rules only)
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `versions.json` | `packages.@sirloinbh/eslint-config` 1.0.0 → 1.1.0 |
-| `docs/versions.md` | 다시 생성 |
-| `scripts/test/templates.test.mjs` | 기대 버전을 `versions.json`에서 읽음 |
+| `versions.json` | `packages.@sirloinbh/eslint-config` 1.0.0 to 1.1.0 |
+| `docs/versions.md` | Regenerated |
+| `scripts/test/templates.test.mjs` | Reads the expected version from `versions.json` |
 
-## 정한 것
+## Decisions
 
-- 1.1.0은 2026-10-28 사용자가 태그 `eslint-config/v1.1.0`을 push해 배포했다(`publish` 성공, Release 생성).
-- 앱 템플릿 `eslint.config.mjs`는 바꾸지 않았다. `tsconfigRootDir`와 플러그인을 넘기지 않으므로 앱에서 새로 켜지는 규칙은 `type`만 쓰기와 default export 금지뿐이다. 앱 8개의 위반은 0개다(#308).
+- On 2026-10-28 the user pushed the tag `eslint-config/v1.1.0` and released 1.1.0 (`publish` succeeded, Release created).
+- The app template `eslint.config.mjs` was not changed. It does not pass `tsconfigRootDir` or plugins, so the only rules newly turned on in the apps are type-only writing and no default exports. The 8 apps have 0 violations (#308).
 
-## 동기화 PR에서 사용자가 할 일
+## What the user does in the sync PRs
 
-동기화 PR은 앱 루트 `package.json`의 `@sirloinbh/eslint-config`만 1.1.0으로 바꾸고 lockfile은 그대로 둔다. 그래서 그 PR의 CI는 `npm ci`에서 실패한다. 앱마다 그 PR 브랜치에서 다음을 실행해 lockfile을 맞춘다.
+The sync PR changes only `@sirloinbh/eslint-config` in the app root `package.json` to 1.1.0 and leaves the lockfile as it is. So the CI of that PR fails at `npm ci`. In each app, run the following on that PR branch to match the lockfile.
 
 ```
 npm install --ignore-scripts
 npm run lockfiles:sync
 ```
 
-`@sirloinbh/*`는 자체 패키지라 14일 규칙 대신 출처 확인으로 검증한다(ADR-0004). 새로 들어오는 외부 패키지는 없다(1.1.0도 의존성 0개).
+`@sirloinbh/*` is our own package, so it is verified by checking the origin instead of the 14-day rule (ADR-0004). No new external packages come in (1.1.0 also has 0 dependencies).
 
-## 검증
+## Checks
 
-- `npm run check`: 테스트 491개 중 490개 통과, 1개 건너뜀, 실패 0
-- `npm run sync:preview`: 앱 manifest의 `@sirloinbh/eslint-config`가 1.1.0
+- `npm run check`: 490 of 491 tests passed, 1 skipped, 0 failed
+- `npm run sync:preview`: `@sirloinbh/eslint-config` in the app manifest is 1.1.0
