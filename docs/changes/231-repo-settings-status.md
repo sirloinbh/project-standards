@@ -1,13 +1,13 @@
-# #231 리포 설정 문서에 2026-10-26 설정 완료 결과 적기
+# #231 Record the 2026-10-26 settings result in the repo settings doc
 
-`docs/repo-settings.md`에는 2026-10-22 위반 목록만 있어 지금도 위반이 남은 것처럼 읽혔다. 2026-10-26 사용자가 9개 리포 설정을 기준에 맞췄고, 준수 현황(#230)에서 모두 ✓다.
+`docs/repo-settings.md` had only the 2026-10-22 violation list, so it read as if violations still remained. On 2026-10-26 the user brought the settings of the 9 repos in line with the standard, and all are ✓ in the compliance report (#230).
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/repo-settings.md` | "2026-10-26 맞춘 결과" 단락 추가, 이후 상태는 compliance.md를 보도록 안내 |
+| `docs/repo-settings.md` | Added a "Result of the 2026-10-26 settings" paragraph and a note to see compliance.md for later status |
 
-## 검증
+## Verification
 
-- `npm run check`: 통과
+- `npm run check`: passed

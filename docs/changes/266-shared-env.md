@@ -1,27 +1,27 @@
-# #266 공용 키를 project-standards 한 곳에 두기
+# #266 Keep the shared keys in one place, project-standards
 
-- 이슈: #266 (ADR-0010 변경)
-- 브랜치: `docs/266-shared-claude-workspace`
+- Issue: #266 (ADR-0010 change)
+- Branch: `docs/266-shared-claude-workspace`
 
-## 목적
+## Goal
 
-공용 Claude API 키와 서버 AWS 키를 특정 앱(study-log, workout-memo)에 묶지 않고, 서버와 PC 모두 `project-standards` 한 곳에 둔다(사용자 결정, 2026-10-29).
+Do not tie the shared Claude API key and the server AWS key to a specific app (study-log, workout-memo). Keep them in one place, `project-standards`, on both the server and the PC (user decision, 2026-10-29).
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/app/deploy/ssm-get.sh.tmpl` | `SECRETS_AWS_*`를 서버 공용 파일 `/opt/project-standards/.env`에서 먼저 읽고, 없으면 앱 `.env`에서 읽음 |
-| `templates/app/deploy/backup.sh.tmpl` | `BACKUP_S3_*`, `BACKUP_AWS_*`도 같은 순서로 읽음 |
-| `templates/app/deploy/remote-deploy.sh.tmpl` | 두 파일 중 하나에 `SECRETS_AWS_ACCESS_KEY_ID`가 있으면 SSM에서 Claude 키를 읽음 |
-| `tools/app-secrets.mjs` | `pull`은 앱 `.env` 대신 `project-standards/.env` 한 곳에 씀. `check`는 그 파일과 키를 읽는 앱 목록을 보여 줌. `--app`·`--base` 옵션 삭제 |
-| `docs/adr/0010-claude-api-key-ssm.md`, `docs/user-steps.md`, `docs/tools.md`, `docs/runbooks/` | 위치·이름 변경, Max 크레딧 사용, 앱 공용 workspace |
+| `templates/app/deploy/ssm-get.sh.tmpl` | Reads `SECRETS_AWS_*` first from the shared server file `/opt/project-standards/.env`, and from the app `.env` if it is not there |
+| `templates/app/deploy/backup.sh.tmpl` | Reads `BACKUP_S3_*` and `BACKUP_AWS_*` in the same order |
+| `templates/app/deploy/remote-deploy.sh.tmpl` | If either file has `SECRETS_AWS_ACCESS_KEY_ID`, reads the Claude key from SSM |
+| `tools/app-secrets.mjs` | `pull` writes to the single `project-standards/.env` instead of the app `.env`. `check` shows that file and the list of apps that read the key. Removed the `--app` and `--base` options |
+| `docs/adr/0010-claude-api-key-ssm.md`, `docs/user-steps.md`, `docs/tools.md`, `docs/runbooks/` | Location and name changes, use of Max credit, and a workspace shared by apps |
 
-- 스크립트는 `STANDARDS_ENV_FILE`로 공용 파일 경로를 바꿀 수 있다(테스트용).
-- 앱 `.env`에 남은 키는 대체용으로만 쓴다. 공용 파일에 같은 키가 있으면 공용 파일이 이긴다.
+- Scripts can change the shared file path with `STANDARDS_ENV_FILE` (for tests).
+- Keys left in the app `.env` are used only as a fallback. If the shared file has the same key, the shared file wins.
 
-## 남은 일
+## Remaining work
 
-- shared-aws-infrastructure: IAM 사용자 이름 `workout-memo-*` → `sirloinbh-apps-*` (별도 PR, 사용자가 apply)
-- study-log: 백엔드 `dev` 스크립트가 `../../project-standards/.env`를 읽도록 (별도 PR)
-- 앱 8개: 다음 동기화 PR로 배포 스크립트 반영
+- shared-aws-infrastructure: rename IAM users `workout-memo-*` to `sirloinbh-apps-*` (separate PR, the user applies it)
+- study-log: make the backend `dev` script read `../../project-standards/.env` (separate PR)
+- 8 apps: pick up the deploy script changes with the next sync PR

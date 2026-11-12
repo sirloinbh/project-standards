@@ -1,24 +1,24 @@
-# #268 리포 전체 의존성 PR 현황 보기와 일괄 닫기 명령
+# #268 Commands to view dependency PRs across all repos and close them in bulk
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `tools/dependency-prs.mjs` | `list`: 열린 Dependabot PR을 패키지·목표 버전별 표로. `close`: 패키지(목표 버전·리포로 좁힘) PR을 확인 질문 뒤에 이유 댓글과 함께 닫음. 병합 없음. sirloinbh 계정이 아니면 멈춤 |
-| `scripts/test/dependency-prs.test.mjs` | 가짜 gh로 제목 해석, 묶음, 계정 확인, 확인 질문, 닫기 실패 보고 (6개) |
-| `docs/tools.md` | 사용법 |
+| `tools/dependency-prs.mjs` | `list`: shows open Dependabot PRs as a table by package and target version. `close`: closes the PRs of a package (narrowed by target version and repo) with a reason comment after a confirmation question. No merging. Stops if the account is not sirloinbh |
+| `scripts/test/dependency-prs.test.mjs` | 6 tests with a fake gh: title parsing, grouping, account check, confirmation question, and close failure report |
+| `docs/tools.md` | Usage |
 
-## 실제 실행 (2026-10-27, `list`, 읽기 전용)
+## Real run (2026-10-27, `list`, read-only)
 
-| 패키지 | 변경 | 종류 | 리포 | PR 수 |
+| Package | Change | Kind | Repos | PRs |
 |---|---|---|---|---|
-| `body-parser` | 2.3.0 → 2.4.0 | 마이너·패치 | 8 | 16 |
-| `zod` | 3.25.76 → 4.6.7 | 메이저 | 8 | 10 |
-| `zod` | 3.25.76 → 4.6.6 | 메이저 | 7 | 7 |
-| `undici` | 8.11.2 → 8.12.3 | 마이너·패치 | 1 | 1 |
+| `body-parser` | 2.3.0 → 2.4.0 | minor/patch | 8 | 16 |
+| `zod` | 3.25.76 → 4.6.7 | major | 8 | 10 |
+| `zod` | 3.25.76 → 4.6.6 | major | 7 | 7 |
+| `undici` | 8.11.2 → 8.12.3 | minor/patch | 1 | 1 |
 
-열린 PR 34개, 업데이트 4종. #256 조사와 같다. 닫기는 실행하지 않았다(묶음 PR이 열린 뒤 사용자 확인을 받아 한다).
+34 open PRs and 4 kinds of updates, the same as the #256 survey. Closing was not run (we will do it after grouped PRs open and the user confirms).
 
-## 검증
+## Verification
 
-- `node --test scripts/test/dependency-prs.test.mjs`: 6개 통과
+- `node --test scripts/test/dependency-prs.test.mjs`: 6 passed

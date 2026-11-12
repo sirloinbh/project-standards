@@ -1,26 +1,26 @@
-# #276 리포 일괄 상태·pull·실행 명령과 VS Code 작업공간 파일
+# #276 Commands for batch repo status, pull, and run, and a VS Code workspace file
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `tools/repos.mjs` | `status`(브랜치·변경·뒤/앞), `pull`(main이고 깨끗한 클론만 `--ff-only`), `run -- <명령>`(설치 명령은 차단 훅의 `findInstall`로 거부), `workspace`(`.local/sirloinbh.code-workspace`) |
-| `scripts/test/repos.test.mjs` | 임시 origin과 클론으로 6개 |
-| `docs/tools.md` | 사용법 |
+| `tools/repos.mjs` | `status` (branch, changes, behind/ahead), `pull` (`--ff-only`, only for clones that are on main and clean), `run -- <command>` (install commands are rejected with `findInstall` from the blocking hook), `workspace` (`.local/sirloinbh.code-workspace`) |
+| `scripts/test/repos.test.mjs` | 6 tests with a temporary origin and clones |
+| `docs/tools.md` | Usage |
 
-리포 목록은 이 리포와 `sync.config.json` 대상이다. file-control은 레지스트리에 없어서 넣지 않았다. GitHub Pull Requests 권장 확장은 #247에서 `.vscode/extensions.json`과 함께 넣는다.
+The repo list is this repo plus the targets in `sync.config.json`. file-control is not in the registry, so it is not included. The recommended GitHub Pull Requests extension is added in #247 together with `.vscode/extensions.json`.
 
-## 실제 실행 (2026-10-27, `status`, fetch 없음)
+## Real run (2026-10-27, `status`, no fetch)
 
-| 리포 | 브랜치 | 커밋 안 한 변경 | 뒤 / 앞 |
+| Repo | Branch | Uncommitted changes | Behind / ahead |
 |---|---|---|---|
 | project-standards | feat/276-repos-command | 3 | 0 / 0 |
 | workout-memo | research/112-ux-audit | 0 | 44 / 0 |
-| study-log 외 앱 6개 | main | 0 | 0 / 0 |
-| shared-aws-infrastructure | (클론 없음) | | |
+| study-log and 6 other apps | main | 0 | 0 / 0 |
+| shared-aws-infrastructure | (no clone) | | |
 
-`workspace`로 리포 10개짜리 작업공간 파일을 만들었다.
+We created a workspace file with 10 repos using `workspace`.
 
-## 검증
+## Verification
 
-- `node --test scripts/test/repos.test.mjs`: 6개 통과
+- `node --test scripts/test/repos.test.mjs`: 6 passed
