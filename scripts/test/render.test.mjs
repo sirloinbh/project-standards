@@ -80,3 +80,18 @@ test('.ps1 headers stay ASCII for Windows PowerShell 5.1 and are not added twice
   assert.ok([...once].every((ch) => ch.charCodeAt(0) < 128), once);
   assert.equal(addHeader(once, 'scripts/x.ps1', 'templates/app/scripts/x.ps1'), once);
 });
+
+test('a hand-written header line in a template matches the header text, so the sync adds no second header (#494)', async () => {
+  const { readdir, readFile } = await import('node:fs/promises');
+  const { join } = await import('node:path');
+  const bad = [];
+  const walk = async (dir) => {
+    for (const entry of await readdir(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) await walk(path);
+      else for (const line of (await readFile(path, 'utf8')).split('\n')) if (/managed file\. edit it in/i.test(line) && !hasHeader(line)) bad.push(`${path}: ${line.trim()}`);
+    }
+  };
+  await walk(new URL('../../templates', import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1'));
+  assert.deepEqual(bad, []);
+});
