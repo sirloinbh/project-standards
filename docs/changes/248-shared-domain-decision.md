@@ -1,23 +1,23 @@
-# #248 공용 도메인과 앱별 서브도메인 방식 결정
+# #248 Decision on a shared domain and per-app subdomains
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/adr/0012-shared-domain-subdomains.md` | 도메인·DNS·서브도메인·프록시·인증서·접속 결정과 후속 이슈에 정해진 것 |
-| `docs/adr/0009-multi-app-single-lightsail.md` | "접속" 결정을 ADR-0012가 대체한다고 표시 |
-| `docs/research/domain.md` | Route 53 .com 가격을 채우고 결정 기록. ADR 번호를 0012로 고침 |
-| `docs/costs.md` | 도메인 비용 표(1년 $22) 추가 |
+| `docs/adr/0012-shared-domain-subdomains.md` | Decisions on domain, DNS, subdomains, proxy, certificate, and access, plus what was settled for follow-up issues |
+| `docs/adr/0009-multi-app-single-lightsail.md` | Marks that ADR-0012 supersedes the "access" decision |
+| `docs/research/domain.md` | Filled in the Route 53 .com price and recorded the decision. Fixed the ADR number to 0012 |
+| `docs/costs.md` | Added a domain cost table ($22 per year) |
 
-## 정한 것
+## Decisions
 
-- 사용자가 "AWS로 모두 관리"를 골랐다. 도메인 등록과 DNS를 모두 Route 53에 둔다. 나머지 항목은 권장안대로다.
-- ADR 번호는 0011을 #354가 먼저 써서 0012다.
-- 서브도메인은 앱마다 A 레코드를 두고 와일드카드 A 레코드는 두지 않는다. 사용자에게 묻지 않고 정했으며 등록하지 않은 이름이 서버로 가지 않게 하려는 것이다. 인증서는 와일드카드 하나다.
-- 구매 전이라 2장 월 합계와 4장 앱별 표는 바꾸지 않았다.
+- The user chose "manage everything with AWS". Both domain registration and DNS go to Route 53. The other items follow the recommendation.
+- The ADR number is 0012 because #354 used 0011 first.
+- Subdomains get one A record per app, and no wildcard A record. This was decided without asking the user, so that unregistered names do not reach the server. The certificate is a single wildcard.
+- The domain is not purchased yet, so the monthly total in section 2 and the per-app table in section 4 are unchanged.
 
-## 확인
+## Checks
 
-- Route 53 호스팅 영역·질의 요금은 AWS 요금 페이지에서 확인했다(2026-11-01).
-- `.com` $16은 AWS 가격표를 인용한 글 두 편의 값이다. 가격표 PDF의 본문은 읽지 못했으므로 구매 화면에서 다시 확인한다.
-- 구매·DNS·Terraform 변경은 하지 않았다.
+- Route 53 hosted zone and query prices were checked on the AWS pricing page (2026-11-01).
+- The `.com` $16 is the value from two articles that quote the AWS price list. We could not read the body of the price list PDF, so confirm it again on the purchase screen.
+- No purchase, DNS, or Terraform change was made.

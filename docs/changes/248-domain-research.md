@@ -1,18 +1,18 @@
-# #248 공용 도메인과 앱별 서브도메인 방식 조사
+# #248 Research on a shared domain and per-app subdomains
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/research/domain.md` | 도메인·등록 업체, DNS 위치, 서브도메인 이름, 프록시·인증서, 접속 제한, 비용, 권장안 |
+| `docs/research/domain.md` | Domain and registrar, DNS location, subdomain names, proxy and certificate, access restriction, cost, and the recommendation |
 
-## 정한 것
+## Decisions
 
-- 조사만 했다. 구매·설정·코드 변경은 없다.
-- 권장안은 "허용 IP만 연다"는 지금 방화벽 규칙(shared-aws-infrastructure의 `/0` 금지 검사)을 유지하는 조합이다. 그래서 인증서는 80을 전체에 열 필요가 없는 DNS-01(와일드카드)을 권했다.
-- ADR은 사용자가 고른 뒤 쓴다.
+- Research only. No purchase, setup, or code change.
+- The recommendation is a combination that keeps the current firewall rule "open only to allowed IPs" (the `/0` ban check in shared-aws-infrastructure). So for certificates it recommends DNS-01 (wildcard), which does not need port 80 open to everyone.
+- The ADR will be written after the user chooses.
 
-## 검증
+## Verification
 
-- 가격은 웹 검색으로 확인하고 출처를 문서에 적었다. Route 53의 .com 등록 가격과 Lightsail DNS 영역 한도는 공식 수치를 확인하지 못해 "확인 필요"로 적었다.
-- 방화벽·DNS 현황은 shared-aws-infrastructure `origin/main`의 `main.tf`·`variables.tf`를 읽어 확인했다.
+- Prices were checked by web search and the sources are in the document. The Route 53 .com registration price and the Lightsail DNS zone limit could not be confirmed from official figures, so they are marked "to be confirmed".
+- The firewall and DNS status were checked by reading `main.tf` and `variables.tf` on `origin/main` of shared-aws-infrastructure.
