@@ -1,25 +1,25 @@
-# #16 에이전트의 npm 설치 차단
+# #16 Block npm installs by agents
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/common/.claude/settings.json` | Claude Code `permissions.deny` 66개: 설치 계열 npm 하위 명령 26개와 npx·pnpm·pnpx·yarn·bun·bunx·corepack을 Bash·PowerShell 도구 모두에서 거부 |
-| `templates/common/.codex/rules/package-installs.rules` | Codex `prefix_rule` 3개(`forbidden`): 같은 명령 목록 |
-| `.claude/settings.json`, `.codex/rules/` (중앙) | 템플릿과 같은 파일. 중앙 리포에 먼저 적용 |
-| `templates/app/.prettierignore` | `.claude/settings.json` (#154 규칙) |
-| `scripts/test/agent-guardrails.test.mjs` | 중앙 사본 일치, Bash·PowerShell 목록 일치, Codex 목록 일치, Codex CLI가 있으면 실제 판정 |
-| `docs/agent-guardrails.md` | 막는 명령, 확인 결과, 한계, 바꾸는 법, 출처 |
-| `docs/dependency-policy.md` | 승인된 설치는 사용자가 직접 실행한다는 문장과 링크 |
+| `templates/common/.claude/settings.json` | 66 Claude Code `permissions.deny` entries: 26 install-type npm subcommands, plus npx, pnpm, pnpx, yarn, bun, bunx, and corepack, denied in both the Bash and PowerShell tools |
+| `templates/common/.codex/rules/package-installs.rules` | 3 Codex `prefix_rule` entries (`forbidden`): the same command list |
+| `.claude/settings.json`, `.codex/rules/` (central) | Same files as the templates. Applied to the central repo first |
+| `templates/app/.prettierignore` | `.claude/settings.json` (#154 rule) |
+| `scripts/test/agent-guardrails.test.mjs` | Central copy matches, Bash and PowerShell lists match, Codex list matches, and real verdicts when the Codex CLI is available |
+| `docs/agent-guardrails.md` | Blocked commands, verified results, limits, how to change, sources |
+| `docs/dependency-policy.md` | A sentence and link saying the user runs approved installs directly |
 
-하위 리포 검사: 두 파일은 전체 관리 파일이라 standards-check가 해시로 확인한다. 별도 검사는 만들지 않았다.
+Downstream repo check: both files are fully managed files, so standards-check verifies them by hash. No separate check was created.
 
-## 검증
+## Checks
 
-- 중앙 리포에서 `npm install --dry-run`(Bash, PowerShell)과 `FOO=1 npx --version`이 거부됐다. `npm run`, `npm ls`는 실행됐다.
-- `codex execpolicy check`(Codex CLI 0.144.4)로 설치 계열 7개 `forbidden`, `npm run check`·`npm ls`·`npm audit`는 규칙에 걸리지 않음을 확인했다.
-- `npm run check` 통과(161개). 동기화 스냅샷: 9개 리포에 파일 2개씩 추가.
+- In the central repo, `npm install --dry-run` (Bash, PowerShell) and `FOO=1 npx --version` were denied. `npm run` and `npm ls` ran.
+- With `codex execpolicy check` (Codex CLI 0.144.4), I confirmed 7 install-type commands are `forbidden`, and `npm run check`, `npm ls`, and `npm audit` do not match a rule.
+- `npm run check` passed (161 tests). Sync snapshot: 2 files added to each of the 9 repos.
 
-## 후속 수정: npm 별칭 추가
+## Follow-up fix: add npm aliases
 
-자동 보안 검토가 빠진 별칭을 찾았다. npm은 `install`의 줄임·오타 별칭(`ins`, `inst`, `insta`, `instal`, `isnt`, `isnta`, `isntal`), `update`의 오타 별칭 `udpate`, 의존성을 설치하는 `link`(`ln`)도 받아들인다. 세 목록(Bash·PowerShell·Codex)에 추가해 거부 규칙은 86개가 됐다. `npm insta --dry-run`이 거부되는 것과 `codex execpolicy check` 판정을 확인했다. 명령을 해석해서 막는 PreToolUse 훅은 #162에서 검토한다.
+The automated security review found missing aliases. npm also accepts short and misspelled aliases of `install` (`ins`, `inst`, `insta`, `instal`, `isnt`, `isnta`, `isntal`), the misspelled alias `udpate` of `update`, and `link` (`ln`), which installs dependencies. I added them to all three lists (Bash, PowerShell, Codex), bringing the deny rules to 86. I confirmed that `npm insta --dry-run` is denied and checked the `codex execpolicy check` verdicts. A PreToolUse hook that parses the command before blocking it will be considered in #162.

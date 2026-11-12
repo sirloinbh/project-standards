@@ -1,36 +1,36 @@
-# #1 통합 표준 리포 설계 문서와 ADR 초안
+# #1 Integrated standards repo design document and ADR drafts
 
-## 변경
+## Change
 
-- `docs/design.md`: 조사 결과, 핵심 결정, 중앙 리포 구조, A안·B안 배포 흐름, 파일 분류표, manifest, `sync.config` 스키마와 초기값, 레지스트리와 포트 체계, 감지·안내 흐름, 충돌 처리 규칙, 인프라 예외, GitHub App, 단계별 적용 계획
-- `docs/adr/0001`~`0006`: A안·B안 역할 분담, GitHub App, 감지·안내만 하는 이유, 자체 패키지 출처 확인, shared-aws-infrastructure 예외, 포트 슬롯 배정
-- `README.md`: 현재 상태를 설계 검토 단계로 갱신
+- `docs/design.md`: research results, key decisions, central repo structure, deployment flows for option A and option B, file classification table, manifest, `sync.config` schema and initial values, registry and port scheme, detect-and-guide flow, conflict handling rules, infrastructure exception, GitHub App, phased rollout plan
+- `docs/adr/0001` to `0006`: division of roles between option A and option B, GitHub App, why we only detect and guide, provenance check for our own packages, the shared-aws-infrastructure exception, port slot assignment
+- `README.md`: updated the current status to the design review phase
 
-## 반영한 사용자 결정
+## User decisions applied
 
-| 질문 | 결정 |
+| Question | Decision |
 |---|---|
-| 인프라 원본 | shared-aws-infrastructure를 독립 원본으로 승격 |
-| tsconfig | A안 패키지 |
-| standards-check | 하위 리포에 복사 |
-| 포트 | 슬롯 기반으로 전체 재배정, 7개 앱의 e2e 포트 확정 |
-| 공통 스킬 | `std-*`, 기존 `<proj>-*`는 고유 스킬 |
-| 동기화 PR 갱신 | 처음 SHA 브랜치를 유지하고 제목·본문만 최신 SHA로 갱신 |
-| `^` 범위 고정 | 첫 동기화 PR에 포함 |
-| design-tokens | 1단계에 포함 |
-| 도메인·AWS 접두어 | `null` 키로 준비 (`projects.json`의 `service`, `aws`, `platform.json`) |
+| Infrastructure source | Promote shared-aws-infrastructure to an independent source |
+| tsconfig | Option A package |
+| standards-check | Copy to downstream repos |
+| Ports | Reassign everything by slot; e2e ports of the 7 apps fixed |
+| Common skills | `std-*`; existing `<proj>-*` are project-specific skills |
+| Sync PR updates | Keep the branch from the first SHA and only update the title and body to the latest SHA |
+| Pinning `^` ranges | Included in the first sync PR |
+| design-tokens | Included in phase 1 |
+| Domain and AWS prefix | Prepared as `null` keys (`service`, `aws` in `projects.json`, `platform.json`) |
 
-## 요구사항과 달라진 점
+## Differences from the requirements
 
-- GitHub App 권한에 Workflows: write를 추가했다. 워크플로 파일을 동기화하려면 이 권한이 필요하다(ADR-0002).
-- 관리 대상 `.npmrc`에 `ignore-scripts=true`를 넣는다(design.md 4.3).
-- 테스트 DB 이름은 `<name>_test`로 분리한다.
+- Added Workflows: write to the GitHub App permissions. This permission is needed to sync workflow files (ADR-0002).
+- The managed `.npmrc` contains `ignore-scripts=true` (design.md 4.3).
+- The test DB name is separated as `<name>_test`.
 
-## 검증
+## Checks
 
-- 문서만 변경했으므로 실행할 테스트가 없다.
-- 임시 Node 스크립트(내장 모듈만 사용)로 다음을 확인했다.
-  - 문서 9개의 상대 링크: 깨진 링크 0개
-  - 포트 공식: 99개 슬롯 × 6종 = 594개 포트가 모두 서로 다름
-  - 예약 포트와 겹침: 처음에는 1건(슬롯 28 api = 3128)이 있었다. 3128을 예약 목록에서 빼서 0건으로 만들었다.
-- 포트 범위를 정할 때 이 PC의 예약 포트(`netsh ... excludedportrange`: 50000–50059)와 사용 중인 포트(55536)를 확인했다.
+- Only documents changed, so there are no tests to run.
+- A temporary Node script (built-in modules only) confirmed the following.
+  - Relative links in the 9 documents: 0 broken links
+  - Port formula: 99 slots x 6 kinds = 594 ports, all distinct
+  - Overlap with reserved ports: at first there was 1 (slot 28 api = 3128). I removed 3128 from the reserved list, bringing it to 0.
+- When choosing the port range, I checked this PC's reserved ports (`netsh ... excludedportrange`: 50000–50059) and the port in use (55536).

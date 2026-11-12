@@ -1,35 +1,35 @@
-# #40 이슈 라벨을 하위 리포에 동기화
+# #40 Sync issue labels to downstream repos
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/common/labels.json` | std-backlog 라벨 20개(`priority/*` 5, `type/*` 5, `area/*` 8, `needs-user`, `origin/added`)의 이름·색·설명. 2026-10-22 중앙 리포 라벨을 `label list --json`으로 내보내 만들었다 |
-| `templates/index.json`, `scripts/lib/templates.mjs` | `data` 목록. 여기 적힌 파일(`common/labels.json`)은 대상 리포에 파일로 복사하지 않는다 |
-| `scripts/lib/labels.mjs` | 라벨 목록 검사, 대상 리포 라벨과 비교(생성·갱신·그대로·관리 밖), 생성·갱신 API 호출 |
-| `scripts/sync.mjs` | `--apply`가 동기화 PR 다음에 라벨을 맞춘다. `--dry-run --labels-from <리포>=<파일>`로 라벨 변경을 미리 본다 |
-| `scripts/test/labels.test.mjs`, `fake-github.mjs` | 가짜 GitHub에 라벨 API를 추가하고 테스트 8개 |
-| `docs/adr/0002-github-app-for-sync.md`, `docs/github-app.md`, `docs/user-steps.md` | App 권한에 Issues 쓰기 추가. 사용자 단계 6 |
+| `templates/common/labels.json` | Name, color, and description of the 20 std-backlog labels (5 `priority/*`, 5 `type/*`, 8 `area/*`, `needs-user`, `origin/added`). Built by exporting the central repo labels of 2026-10-22 with `label list --json` |
+| `templates/index.json`, `scripts/lib/templates.mjs` | A `data` list. Files listed there (`common/labels.json`) are not copied to target repos as files |
+| `scripts/lib/labels.mjs` | Validates the label list, compares it with the target repo labels (create, update, unchanged, unmanaged), and calls the create and update APIs |
+| `scripts/sync.mjs` | `--apply` aligns labels after the sync PR. `--dry-run --labels-from <repo>=<file>` previews label changes |
+| `scripts/test/labels.test.mjs`, `fake-github.mjs` | Added a label API to the fake GitHub, and 8 tests |
+| `docs/adr/0002-github-app-for-sync.md`, `docs/github-app.md`, `docs/user-steps.md` | Added Issues write to the App permissions. User step 6 |
 
-## 결정
+## Decisions
 
-- **포함한 라벨:** std-backlog 스킬이 정한 라벨만 넣었다. GitHub 기본 라벨(`bug`, `enhancement` 등 9개 리포에 이미 있는 것)은 넣지 않았다. `area/*`는 중앙 리포 기준 이름이지만 스킬이 모든 리포에 같은 목록을 쓰라고 하므로 그대로 넣었다.
-- **지우지 않는다:** `labels.json`에 없는 라벨은 "관리 밖"으로 보고만 하고 지우지 않는다. 지우면 그 라벨이 달린 이슈에서 라벨이 사라지기 때문이다.
-- **이름 대소문자:** GitHub 라벨 이름은 대소문자를 구분하지 않는다. `Priority/P1`이 있으면 새로 만들지 않고 이름을 `priority/P1`로 고친다. 색은 대소문자 차이를 변경으로 보지 않는다.
-- **실패 처리:** 라벨 실패(예: Issues 권한 없음 403)는 동기화 PR 결과와 따로 `labelsError`로 남긴다. PR은 그대로 열리고, 워크플로는 실패로 끝나 알 수 있게 한다.
-- **실행 범위:** 파일 동기화와 같은 `maxRollout` 대상에만 적용한다. `maxRollout`이 0인 지금은 어느 리포의 라벨도 바뀌지 않는다.
-- **미리보기:** 기존 dry-run은 네트워크를 쓰지 않으므로, 대상 리포 라벨은 사용자가 내보낸 파일로 받는다(`docs/github-app.md` 5단계).
+- **Labels included:** only the labels the std-backlog skill defines. The GitHub default labels (`bug`, `enhancement`, and others that the 9 repos already have) are not included. `area/*` are names based on the central repo, but the skill says to use the same list in every repo, so they are included as is.
+- **Never delete:** labels not in `labels.json` are only reported as "unmanaged" and are not deleted, because deleting would remove the label from the issues that carry it.
+- **Name case:** GitHub label names are case-insensitive. If `Priority/P1` exists, it is not created again; its name is corrected to `priority/P1`. Color case differences are not treated as changes.
+- **Failure handling:** a label failure (for example 403 without Issues permission) is recorded as `labelsError`, separately from the sync PR result. The PR still opens, and the workflow ends as failed so it is noticed.
+- **Scope of execution:** applies only to the same `maxRollout` targets as the file sync. With `maxRollout` at 0 now, no repo's labels change.
+- **Preview:** the existing dry-run does not use the network, so the target repo labels are supplied from a file the user exports (step 5 of `docs/github-app.md`).
 
-## 검증
+## Checks
 
-- `node --test scripts/test/labels.test.mjs`: 8개 통과
-  - 스킬에 적힌 라벨이 모두 있고 그 밖의 라벨이 없음
-  - 9개 대상 계획에 `labels.json`이 파일로 들어가지 않음
-  - 잘못된 색·긴 설명·중복 이름 거부
-  - 생성·갱신·그대로·관리 밖 구분(이름 대소문자, 색 대소문자, 설명 없음)
-  - dry run은 쓰기 호출 없음, 실제 실행 후 다시 실행하면 쓰기 없음, DELETE 호출 없음, 관리 밖 라벨 유지
-  - 라벨 150개 이상일 때 두 번째 페이지까지 읽음
-  - `apply`가 대상 리포 라벨을 만들고, 403이면 PR 결과는 유지한 채 `labelsError` 기록
-  - dry-run CLI `--labels-from`(BOM 있는 파일)이 `plan.json`과 콘솔에 계획을 씀
-- `npm run check`: 통과(테스트 174개 중 173개 통과·1개 건너뜀·실패 0, `check-workflows: ok (8 files)`)
-- 실제 리포에는 실행하지 않았다. App에 Issues 권한이 추가되고 `maxRollout`이 올라간 뒤 `sync` 실행 로그로 확인한다.
+- `node --test scripts/test/labels.test.mjs`: 8 passed
+  - All labels written in the skill exist and no other labels exist
+  - `labels.json` is not included as a file in the plans of the 9 targets
+  - Invalid colors, long descriptions, and duplicate names are rejected
+  - Distinguishes create, update, unchanged, and unmanaged (name case, color case, no description)
+  - A dry run makes no write calls; running again after a real run makes no writes; no DELETE calls; unmanaged labels are kept
+  - With 150 or more labels, it reads up to the second page
+  - `apply` creates the target repo labels, and on 403 keeps the PR result and records `labelsError`
+  - The dry-run CLI `--labels-from` (file with a BOM) writes the plan to `plan.json` and the console
+- `npm run check`: passed (173 of 174 tests passed, 1 skipped, 0 failed, `check-workflows: ok (8 files)`)
+- It was not run against real repos. After the Issues permission is added to the App and `maxRollout` is raised, it will be verified in the `sync` run log.
