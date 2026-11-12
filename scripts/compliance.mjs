@@ -35,7 +35,7 @@ const RATE_LIMITED = /\b(403|429)\b.*rate limit/i;
 export const rateLimitedRepos = (statuses) => statuses.filter((s) => s.rateLimited).map((s) => s.repo);
 
 // A remote scan reads one blob per file, so it is capped to stay inside the API rate limit (#464).
-export const KOREAN_SCAN_CAP = 300;
+export const KOREAN_SCAN_CAP = 100;
 
 /** Every file path under dir, skipping directories the Korean-text check never reads. */
 function walk(dir, rel = '') {

@@ -8,7 +8,7 @@ The English switch (#453) spans 11 repos. Nothing confirmed that a repo was full
 
 - `scripts/lib/korean-text.mjs` (new): counts markdown files and code-comment lines containing Hangul. It skips `node_modules`, `dist`, `build`, `coverage`, `.git`, lockfiles, binary or unknown file types, and snapshot fixtures. `DEFAULT_ALLOW` keeps the legacy header (`LEGACY_HEADER_TEXT`) and the pre-#455 sync commit prefix.
 - `scripts/lib/compliance.mjs`: `repoStatus` carries a `korean` result; the report has a "Korean text" column (`✓`, or `△ N md, M comments` as a warning, not `✗`) and a "Korean text" section listing the first 10 files per repo.
-- `scripts/compliance.mjs`: scans local clones fully; the API scan reads at most 300 files per repo (markdown first) and marks the result "partial scan" when capped.
+- `scripts/compliance.mjs`: scans local clones fully; the API scan reads at most 100 files per repo (to stay inside the rate limit, #464) (markdown first) and marks the result "partial scan" when capped.
 - `scripts/lib/remote-repo.mjs`: `paths()` lists the files of the default branch.
 - `docs/korean-text-check.md` (new): what is counted, how to read the result, and the allow list.
 - Tests in `scripts/test/compliance.test.mjs`; the column regex in `scripts/test/repo-settings.test.mjs` was updated.

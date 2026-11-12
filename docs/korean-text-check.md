@@ -13,7 +13,7 @@ The daily compliance report ([compliance.md](compliance.md)) has a "Korean text"
 - `✓`: no Korean found.
 - `△ N md, M comments`: a warning, not `✗`. Switch it to `✗` once every repo is translated.
 - `—`: the repo was not scanned (unknown status).
-- `(partial scan)`: the API scan reads one blob per file, so it is capped at 300 files per repo (markdown first). The count is a lower bound.
+- `(partial scan)`: the API scan reads one blob per file, so it is capped at 100 files per repo (markdown first) so the daily run stays well inside the API rate limit (#464). The count is a lower bound; a local run scans everything.
 - The "Korean text" section lists the first 10 files per repo.
 
 ## Allow list
