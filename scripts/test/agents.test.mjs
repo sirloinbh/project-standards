@@ -71,9 +71,9 @@ test('the instructions loaded every session stay within the line budget', () => 
   assert.ok(total <= CENTRAL_BUDGET, `project-standards: ${total} lines`);
 });
 
-test('app repositories get all seven shared skills, mirrored into .claude/skills', () => {
+test('app repositories get all shared skills, mirrored into .claude/skills', () => {
   for (const { target, files } of apps) {
-    for (const skill of ['std-implementation', 'std-testing', 'std-foundation', 'std-ux-audit', 'std-backlog', 'std-git-writing', 'std-communication', 'std-session-notes']) {
+    for (const skill of ['std-implementation', 'std-testing', 'std-foundation', 'std-ux-audit', 'std-backlog', 'std-git-writing', 'std-communication', 'std-session-notes', 'std-code-review']) {
       const source = files[`skills/${skill}/SKILL.md`];
       const mirror = files[`.claude/skills/${skill}/SKILL.md`];
       assert.ok(source, `${target.repo} ${skill}`);
