@@ -64,7 +64,7 @@ Unifying labels means moving the old priority and characteristic labels in each 
 | Tool | What it does | Install | Need now | Verdict |
 |---|---|---|---|---|
 | API mocks (MSW) | Builds mock responses from the OpenAPI contract, for frontend development and tests without a backend | npm dev dependency (`msw`) per app | Medium. Only workout-memo has `features.openapi` and `contract` turned on, so the effect is small | Later (after seeing the #240 and #241 results) |
-| Lighthouse CI | Checks accessibility and performance scores on every PR. Automates the checks in `docs/conventions/ux-audit.md` | External Action or npm package, Chrome in CI | Medium. All 8 apps use the same UI components, so a standard decided once can apply to all | **Recommended (start with a warning-only trial in workout-memo)** |
+| Lighthouse CI | Checks accessibility and performance scores on every PR. Automates the checks in the `std-ux-audit` skill | External Action or npm package, Chrome in CI | Medium. All 8 apps use the same UI components, so a standard decided once can apply to all | **Recommended (start with a warning-only trial in workout-memo)** |
 | Dev Container | Sets up Node, npm, and DB in one go on a new PC | Docker Desktop + VS Code extension, container image | Low. There are only 1 to 2 Windows work PCs, and versions are already aligned by `.nvmrc`, `versions.json`, and `npm run check` | Not recommended (for now) |
 
 ## Summary of recommendations

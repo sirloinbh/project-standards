@@ -9,7 +9,7 @@ The central repository that manages, in one place, the shared standards for the 
 
 The design is in [docs/design.md](docs/design.md), the reasons for decisions are in [docs/adr/](docs/adr/), and per-project values are in [docs/projects.md](docs/projects.md). Everything you need to do yourself is collected in [docs/user-steps.md](docs/user-steps.md).
 
-Rule documents: [Tech stack](docs/stack.md) · [Dependency policy](docs/dependency-policy.md) · [Git conventions](docs/git-conventions.md) · [Directories and routing](docs/directory-rules.md) · [Design system](docs/design-system.md) · [Design tokens](docs/design-tokens.md) · [Environment variables](docs/env-conventions.md) · [DB migrations](docs/conventions/database.md) · [Shared domain rules](docs/conventions/domain.md) · [UX and accessibility audit](docs/conventions/ux-audit.md) · [Runbook templates](docs/runbooks/README.md) · [Web app install (PWA)](docs/pwa.md) · [Repo settings](docs/repo-settings.md) · [Test config](docs/test-config.md)
+Rule documents: [Tech stack](docs/stack.md) · [Dependency policy](docs/dependency-policy.md) · [Git conventions](docs/git-conventions.md) · [Directories and routing](docs/directory-rules.md) · [Design system](docs/design-system.md) · [Design tokens](docs/design-tokens.md) · [Environment variables](docs/env-conventions.md) · [DB migrations](docs/conventions/database.md) · [Shared domain rules](docs/conventions/domain.md) · [Runbook templates](docs/runbooks/README.md) · [Web app install (PWA)](docs/pwa.md) · [Repo settings](docs/repo-settings.md) · [Test config](docs/test-config.md)
 
 ## Current status
 
