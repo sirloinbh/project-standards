@@ -1,23 +1,23 @@
-# #184 에이전트 자동 병합 기본값과 하위 리포 병합 확인 규칙 맞추기
+# #184 Align the agent auto-merge default and the downstream repo merge confirmation rule
 
-## 결정 (2026-10-23 사용자)
+## Decision (user, 2026-10-23)
 
-`.agents.json`의 `autoMerge` 기본값 `true`를 유지하고, 자동 병합을 허용하지 않은 리포만 `false`로 끈다.
+Keep the `autoMerge` default `true` in `.agents.json`, and turn it off with `false` only for repos that do not allow auto merge.
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `AGENTS.md` | "하위 리포 PR은 사용자 확인"에 예외 추가: 워커가 여는 PR은 그 리포 `.agents.json`의 `autoMerge`를 따른다 |
-| `docs/tools.md` | "리포별 자동 병합" 표(workout-memo `true`, 나머지 앱 7개 `false`, 중앙·인프라 리포는 해당 없음), 파일이 없으면 자동 병합된다는 주의, 동기화로 배포하지 않는 이유 |
-| `templates/app/AGENTS.md.tmpl` | 앱 리포 병합 규칙에 워커 예외 한 문장 |
+| `AGENTS.md` | Added an exception to "Downstream repo PRs need user confirmation": a PR the worker opens follows `autoMerge` in that repo's `.agents.json` |
+| `docs/tools.md` | A "Auto merge per repo" table (workout-memo `true`, the other 7 apps `false`, not applicable to the central and infrastructure repos), a warning that without the file it auto merges, and why it is not distributed by sync |
+| `templates/app/AGENTS.md.tmpl` | One sentence about the worker exception in the app repo merge rule |
 
-정한 것:
+Decisions:
 
-- **코드 기본값은 바꾸지 않는다.** `tools/agents/config.mjs`의 `autoMerge: true`와 테스트는 그대로다.
-- **`.agents.json`은 동기화로 배포하지 않는다.** 리포마다 다른 값(`checkScript`, `database.tables`)을 담고, 동기화의 `fields` 방식은 없는 파일을 만들지 않는다(`scripts/lib/sync-plan.mjs`의 `fieldsPending`). 리포별 값은 `docs/tools.md` 표가 원본이고, `false`인 리포는 워커 도입 PR에 `.agents.json`을 함께 넣는다.
-- **`false` 대상:** 앱 `AGENTS.md`가 "main 병합은 곧 운영 배포"라고 정하고 있고 자동 병합을 허용한 결정이 #128(workout-memo)뿐이라, 나머지 앱 7개를 `false`로 적었다.
+- **We do not change the code default.** `autoMerge: true` in `tools/agents/config.mjs` and its tests are unchanged.
+- **`.agents.json` is not distributed by sync.** It holds values that differ per repo (`checkScript`, `database.tables`), and the sync `fields` mode does not create a file that does not exist (`fieldsPending` in `scripts/lib/sync-plan.mjs`). The table in `docs/tools.md` is the source of the per-repo values, and for a repo with `false`, `.agents.json` goes into the PR that introduces the worker.
+- **Targets of `false`:** The app `AGENTS.md` says "merging to main is a production deploy", and the only decision that allowed auto merge was #128 (workout-memo), so we wrote `false` for the other 7 apps.
 
-## 검증
+## Verification
 
-- `npm run check` 통과(테스트 392개 모두 통과, 건너뜀 0). 코드와 동기화 스냅샷은 바뀌지 않았다(앱 `AGENTS.md`는 내용이 아니라 경로만 스냅샷에 있다).
+- `npm run check` passed (all 392 tests passed, 0 skipped). The code and the sync snapshot did not change (only the path of the app `AGENTS.md`, not its content, is in the snapshot).

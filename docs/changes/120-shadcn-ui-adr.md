@@ -1,25 +1,25 @@
-# #120 UI 컴포넌트를 shadcn/ui로 확정하고 아이콘·이모지 소스 정하기
+# #120 Settle on shadcn/ui for UI components and choose the icon and emoji sources
 
-## 변경
+## Change
 
-- `docs/adr/0007-shadcn-ui-icons-emoji.md`: shadcn/ui 채택과 소스 직접 작성 방식, lucide-react, Fluent Emoji Flat, 의존성 고정 버전 표, 아이콘·이모지 사용 규칙
+- `docs/adr/0007-shadcn-ui-icons-emoji.md`: adoption of shadcn/ui and writing the source directly, lucide-react, Fluent Emoji Flat, a table of pinned dependency versions, and rules for using icons and emoji
 
-## 결정 과정
+## How we decided
 
-- **UI 컴포넌트:** 사용자가 조사 없이 shadcn/ui로 정했다.
-- **이모지:** 4개 후보를 비교해 사용자에게 물었고, 사용자가 Fluent Emoji Flat을 골랐다.
+- **UI components:** The user chose shadcn/ui without a comparison.
+- **Emoji:** We compared 4 candidates and asked the user, who chose Fluent Emoji Flat.
 
-  | 후보 | 라이선스 | SVG | 비고 |
+  | Candidate | License | SVG | Note |
   |---|---|---|---|
-  | Fluent Emoji Flat | MIT (GitHub API로 확인) | 있음 | 고른 것 |
-  | Noto Emoji | 이미지 Apache-2.0, 폰트 OFL-1.1 | 있음 | |
-  | Twemoji (jdecked 포크) | 그림 CC-BY 4.0, 코드 MIT | 있음 | 저작자 표시 필요 |
-  | Tossface | 공식 조건 확인 못 함 | 주로 폰트 | |
+  | Fluent Emoji Flat | MIT (checked with the GitHub API) | Yes | Chosen |
+  | Noto Emoji | Images Apache-2.0, font OFL-1.1 | Yes | |
+  | Twemoji (jdecked fork) | Graphics CC-BY 4.0, code MIT | Yes | Needs attribution |
+  | Tossface | Could not confirm the official terms | Mostly a font | |
 
-- **의존성 버전:** `npm view`(읽기 전용)로 버전, 게시일, 라이선스, 저장소, 설치 스크립트 여부를 조회했다. 2026-10-08 이전에 게시된 버전 중 가장 새 것을 골랐다.
-- **lucide-react:** 최신은 1.61.0이지만 앱들이 0.468.0을 쓰고 있다. 메이저 업그레이드라서 지금 버전을 유지하고, 업그레이드 검토는 별도 이슈로 등록했다.
+- **Dependency versions:** We used `npm view` (read-only) to look up version, publish date, license, repository, and whether there is an install script. We chose the newest version published before 2026-10-08.
+- **lucide-react:** The latest is 1.61.0, but the apps use 0.468.0. It is a major upgrade, so we keep the current version and registered the upgrade review as a separate issue.
 
-## 검증
+## Verification
 
-- 문서만 바꿨다. `npm run check` 통과.
-- ADR의 모든 패키지에 설치 스크립트가 없음을 `npm view <패키지>@<버전> scripts`로 확인했다.
+- Only documents changed. `npm run check` passed.
+- Confirmed with `npm view <package>@<version> scripts` that none of the packages in the ADR has an install script.
