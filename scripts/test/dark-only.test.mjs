@@ -1,4 +1,4 @@
-// features.darkOnly (#354, ADR-0011 예정): a dark-only app is dark from the first paint, has no
+// features.darkOnly (#354, ADR-0011 planned): a dark-only app is dark from the first paint, has no
 // mode menu and uses the dark background for its PWA colours; other apps keep the three modes.
 import assert from 'node:assert/strict';
 import path from 'node:path';
