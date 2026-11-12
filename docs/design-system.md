@@ -45,7 +45,7 @@ These are the screen rules all 8 apps follow. Values are in [design-tokens.md](d
 - On touch devices, pressable elements are at least 44×44px.
 - Menus, modals, and drawers must be openable and closable with the keyboard alone. Do not remove the focus indicator (`ring`).
 - When you change a screen, check it at 390×844 (mobile) and 1440×900 (PC) and write the result in the PR.
-- When you change the screen structure significantly, do a [UX and accessibility audit](conventions/ux-audit.md) before and after.
+- When you change the screen structure significantly, do a UX and accessibility audit (the `std-ux-audit` skill in app repos) before and after.
 
 ## Migrating existing apps
 

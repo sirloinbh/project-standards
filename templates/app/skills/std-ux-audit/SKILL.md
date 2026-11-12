@@ -1,8 +1,13 @@
-# UX and accessibility audit checklist
+---
+name: std-ux-audit
+description: Audit an app's screens for usability and accessibility by using them in task order, measuring set metrics at 390x844 and 1440x900, and recording improvements as issues. Use before or after a major screen structure change, when the main screens of a new app are first in place, or when the user asks for a UX or accessibility audit.
+---
 
-This is the procedure for using an app's screens yourself in the order of the user's tasks, measuring set metrics, and leaving improvements as issues. The screen rules themselves are in the [design system](../design-system.md); this document defines **how to audit against those rules and where to record it**.
+# {{project.title}} UX and Accessibility Audit
 
-Basis: workout-memo `docs/ux-audit/2026-10-21.md` (workout-memo #112). This document carries that method over to all 8 apps.
+This is the procedure for using an app's screens yourself in the order of the user's tasks, measuring set metrics, and leaving improvements as issues. The screen rules themselves are in the [design system](https://github.com/sirloinbh/project-standards/blob/main/docs/design-system.md); this skill defines **how to audit against those rules and where to record it**.
+
+Basis: workout-memo `docs/ux-audit/2026-10-21.md` (workout-memo #112). This method applies to all 8 apps.
 
 ## When to do it
 
@@ -44,7 +49,7 @@ For each task, record the following.
 ### Evaluation criteria
 
 - Nielsen's 10 usability heuristics
-- The responsive, accessibility, and loading indicator rules of the [design system](../design-system.md)
+- The responsive, accessibility, and loading indicator rules of the [design system](https://github.com/sirloinbh/project-standards/blob/main/docs/design-system.md)
 - Mobile first: the apps are mainly used on phones
 
 ## Method
@@ -52,14 +57,14 @@ For each task, record the following.
 1. **Prepare the data.** Do not use a personal DB.
    - In the local test DB container, create an audit DB (`<db>_ux_audit`) and run `npm run db:migrate`.
    - Put in an amount of data similar to real use through the API (for example, the last 4 weeks of records). Write the seed composition in the audit document.
-2. **Start the app.** Start the API and the screen the same way as e2e. Use the e2e port from the [project overview](../projects.md), or pick an unused port and write it in the document.
+2. **Start the app.** Start the API and the screen the same way as e2e. Use the e2e port from the [project overview](https://github.com/sirloinbh/project-standards/blob/main/docs/projects.md), or pick an unused port and write it in the document.
 3. **Measure.** With Playwright (installed Chrome), measure the per-page items above and take screenshots.
    - Screen sizes: 390×844 (mobile), 1440×900 (PC)
 4. **Perform the scenarios.** Perform the task scenarios at 390×844 and record them.
 5. **Supplement with a real device and Lighthouse.** Perform 1 or 2 scenarios on a real phone and write down the model and browser. Write down the accessibility and best-practices scores from Chrome DevTools Lighthouse (mobile).
 6. **Write down what you could not do.** For items you could not run, write the reason and how you will do it next. Do not record a measurement you did not run as a pass.
 
-If you need a new measurement tool or npm package, do not install it; follow the adoption procedure in the [dependency policy](../dependency-policy.md).
+If you need a new measurement tool or npm package, do not install it; follow the adoption procedure in the [dependency policy](https://github.com/sirloinbh/project-standards/blob/main/docs/dependency-policy.md).
 
 ## Improvements and severity
 
@@ -71,7 +76,7 @@ Give each improvement a number (`U-01`…) and a severity.
 | P2 | Inconvenient or risks a wrong press |
 | P3 | Polish |
 
-- Register improvements as issues in the app repo and link the issue numbers in the audit document. Issue priority follows [std-backlog](../../templates/common/skills/std-backlog/SKILL.md).
+- Register improvements as issues in the app repo and link the issue numbers in the audit document. Issue priority follows [std-backlog](../std-backlog/SKILL.md).
 - For improvements shared by several apps (design system, shared layout, shared components), open an issue in the central repo.
 - At the end of the audit document, write the order of changes.
 

@@ -15,6 +15,7 @@
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-session-notes/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .claude/skills/std-ux-audit/SKILL.md",
     "full .codex/hooks.json",
     "full .codex/rules/git-branch.rules",
     "full .codex/rules/package-installs.rules",
@@ -139,7 +140,8 @@
     "full skills/std-git-writing/SKILL.md",
     "full skills/std-implementation/SKILL.md",
     "full skills/std-session-notes/SKILL.md",
-    "full skills/std-testing/SKILL.md"
+    "full skills/std-testing/SKILL.md",
+    "full skills/std-ux-audit/SKILL.md"
   ],
   "sirloinbh/study-log": [
     "full .claude/hooks/block-forbidden-commands.mjs",
@@ -157,6 +159,7 @@
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-session-notes/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .claude/skills/std-ux-audit/SKILL.md",
     "full .codex/hooks.json",
     "full .codex/rules/git-branch.rules",
     "full .codex/rules/package-installs.rules",
@@ -276,7 +279,8 @@
     "full skills/std-git-writing/SKILL.md",
     "full skills/std-implementation/SKILL.md",
     "full skills/std-session-notes/SKILL.md",
-    "full skills/std-testing/SKILL.md"
+    "full skills/std-testing/SKILL.md",
+    "full skills/std-ux-audit/SKILL.md"
   ],
   "sirloinbh/health-log": [
     "full .claude/hooks/block-forbidden-commands.mjs",
@@ -294,6 +298,7 @@
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-session-notes/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .claude/skills/std-ux-audit/SKILL.md",
     "full .codex/hooks.json",
     "full .codex/rules/git-branch.rules",
     "full .codex/rules/package-installs.rules",
@@ -413,7 +418,8 @@
     "full skills/std-git-writing/SKILL.md",
     "full skills/std-implementation/SKILL.md",
     "full skills/std-session-notes/SKILL.md",
-    "full skills/std-testing/SKILL.md"
+    "full skills/std-testing/SKILL.md",
+    "full skills/std-ux-audit/SKILL.md"
   ],
   "sirloinbh/life-journal": [
     "full .claude/hooks/block-forbidden-commands.mjs",
@@ -431,6 +437,7 @@
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-session-notes/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .claude/skills/std-ux-audit/SKILL.md",
     "full .codex/hooks.json",
     "full .codex/rules/git-branch.rules",
     "full .codex/rules/package-installs.rules",
@@ -550,7 +557,8 @@
     "full skills/std-git-writing/SKILL.md",
     "full skills/std-implementation/SKILL.md",
     "full skills/std-session-notes/SKILL.md",
-    "full skills/std-testing/SKILL.md"
+    "full skills/std-testing/SKILL.md",
+    "full skills/std-ux-audit/SKILL.md"
   ],
   "sirloinbh/money-ledger": [
     "full .claude/hooks/block-forbidden-commands.mjs",
@@ -568,6 +576,7 @@
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-session-notes/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .claude/skills/std-ux-audit/SKILL.md",
     "full .codex/hooks.json",
     "full .codex/rules/git-branch.rules",
     "full .codex/rules/package-installs.rules",
@@ -687,7 +696,8 @@
     "full skills/std-git-writing/SKILL.md",
     "full skills/std-implementation/SKILL.md",
     "full skills/std-session-notes/SKILL.md",
-    "full skills/std-testing/SKILL.md"
+    "full skills/std-testing/SKILL.md",
+    "full skills/std-ux-audit/SKILL.md"
   ],
   "sirloinbh/cert-manager": [
     "full .claude/hooks/block-forbidden-commands.mjs",
@@ -705,6 +715,7 @@
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-session-notes/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .claude/skills/std-ux-audit/SKILL.md",
     "full .codex/hooks.json",
     "full .codex/rules/git-branch.rules",
     "full .codex/rules/package-installs.rules",
@@ -824,7 +835,8 @@
     "full skills/std-git-writing/SKILL.md",
     "full skills/std-implementation/SKILL.md",
     "full skills/std-session-notes/SKILL.md",
-    "full skills/std-testing/SKILL.md"
+    "full skills/std-testing/SKILL.md",
+    "full skills/std-ux-audit/SKILL.md"
   ],
   "sirloinbh/plan-routine": [
     "full .claude/hooks/block-forbidden-commands.mjs",
@@ -842,6 +854,7 @@
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-session-notes/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .claude/skills/std-ux-audit/SKILL.md",
     "full .codex/hooks.json",
     "full .codex/rules/git-branch.rules",
     "full .codex/rules/package-installs.rules",
@@ -961,7 +974,8 @@
     "full skills/std-git-writing/SKILL.md",
     "full skills/std-implementation/SKILL.md",
     "full skills/std-session-notes/SKILL.md",
-    "full skills/std-testing/SKILL.md"
+    "full skills/std-testing/SKILL.md",
+    "full skills/std-ux-audit/SKILL.md"
   ],
   "sirloinbh/dev-career-portfolio": [
     "full .claude/hooks/block-forbidden-commands.mjs",
@@ -979,6 +993,7 @@
     "full .claude/skills/std-implementation/SKILL.md",
     "full .claude/skills/std-session-notes/SKILL.md",
     "full .claude/skills/std-testing/SKILL.md",
+    "full .claude/skills/std-ux-audit/SKILL.md",
     "full .codex/hooks.json",
     "full .codex/rules/git-branch.rules",
     "full .codex/rules/package-installs.rules",
@@ -1098,7 +1113,8 @@
     "full skills/std-git-writing/SKILL.md",
     "full skills/std-implementation/SKILL.md",
     "full skills/std-session-notes/SKILL.md",
-    "full skills/std-testing/SKILL.md"
+    "full skills/std-testing/SKILL.md",
+    "full skills/std-ux-audit/SKILL.md"
   ],
   "sirloinbh/shared-aws-infrastructure": [
     "full .claude/hooks/block-forbidden-commands.mjs",
