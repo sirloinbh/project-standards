@@ -1,19 +1,19 @@
 # {{project.title}} PostgreSQL
 
-PostgreSQL {{versions.postgres}}. 스키마의 원본은 `migrations/NNN_<설명>.sql`이며 파일 이름 순서로 적용합니다.
+PostgreSQL {{versions.postgres}}. The source of the schema is `migrations/NNN_<description>.sql`, applied in file name order.
 
-## 마이그레이션 적용
+## Applying migrations
 
-우산 리포 루트에서 실행합니다. `.env`의 `DATABASE_URL`(호스트 포트 {{project.ports.db}})을 씁니다.
+Run from the umbrella repo root. It uses `DATABASE_URL` in `.env` (host port {{project.ports.db}}).
 
 ```powershell
-npm run db:migrate              # 적용하지 않은 파일만 순서대로 적용
-npm run db:migrate -- --status  # 적용됨·대기 목록만 확인 (DB 변경 없음)
+npm run db:migrate              # apply only the files not yet applied, in order
+npm run db:migrate -- --status  # only show applied and pending lists (no DB change)
 ```
 
-- 실행기는 `backend/src/migrations.ts`(규칙)와 `backend/src/migrate.ts`(명령)입니다. 규칙의 원본은 중앙 리포 `project-standards`의 `docs/conventions/database.md`입니다.
-- 적용 이력은 `schema_migrations`(파일 이름 `name`, 체크섬 `checksum`, 적용 시각 `applied_at`)에 남습니다. 파일 하나와 그 기록은 한 트랜잭션으로 커밋됩니다. 실패하면 그 파일만 되돌리고 멈춥니다.
-- 다음 경우에는 아무것도 적용하지 않고 실패합니다: 적용한 파일을 고치거나 지운 경우, 이미 적용한 번호보다 앞선 새 파일, 번호 중복, 형식에 맞지 않는 이름. 고칠 내용은 새 번호의 파일로 추가합니다.
-- 되돌리기(down) 파일은 쓰지 않습니다. 잘못 적용한 변경은 새 번호의 파일로 바로잡고, 데이터 복구는 백업으로 합니다.
-- 모든 파일은 다시 실행해도 안전하게 씁니다(`IF NOT EXISTS`, `ON CONFLICT` 등). 빈 볼륨에서는 Docker 초기화가 먼저 실행하기 때문입니다. 공통 CI가 같은 순서(psql로 한 번, 실행기로 한 번)로 확인합니다.
-- PowerShell 파이프(`Get-Content … | psql`)로 SQL을 넘기지 않습니다. Windows PowerShell 5.1이 한글을 깨뜨립니다.
+- The runner is `backend/src/migrations.ts` (rules) and `backend/src/migrate.ts` (command). The source of the rules is `docs/conventions/database.md` in the central repo `project-standards`.
+- The applied history is kept in `schema_migrations` (file name `name`, checksum `checksum`, applied time `applied_at`). A file and its record are committed in one transaction. On failure, only that file is rolled back and the run stops.
+- In these cases it fails without applying anything: an applied file was edited or deleted, a new file has a number lower than one already applied, a number is duplicated, or a name does not match the format. Add the fix as a file with a new number.
+- Do not use down (rollback) files. Correct a wrongly applied change with a file with a new number, and recover data from a backup.
+- Write every file so that it is safe to run again (`IF NOT EXISTS`, `ON CONFLICT`, and so on). This is because on an empty volume, the Docker initialization runs first. The shared CI checks in the same order (once with psql, once with the runner).
+- Do not pass SQL through a PowerShell pipe (`Get-Content … | psql`). Windows PowerShell 5.1 garbles Korean text.

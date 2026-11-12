@@ -1,20 +1,20 @@
-# #35 배포·운영 문서 템플릿 (배포 runbook, 일일 기록, 백업·복구)
+# #35 Deploy and operations document templates (deploy runbook, daily log, backup and restore)
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/runbooks/deploy.md` | workout-memo `docs/deployment.md`를 일반화했다. 앱별 값은 `{{project.*}}`, 서버 `.env`는 키 이름과 만드는 곳만 표로 적는다(`NODE_AUTH_TOKEN` 추가) |
-| `docs/runbooks/backup-restore.md` | 배포 문서에 섞여 있던 백업·복원 절차를 떼어 내고, 복원 확인 뒤 임시 DB 삭제와 서버 전체 복구 후 Terraform 확인을 더했다 |
-| `docs/runbooks/daily.md`, `next-steps.md` | workout-memo의 일일 기록·다음 작업 규칙을 옮기고, 날짜 파일 형식과 "사용자가 할 일" 절을 정했다 |
-| `docs/runbooks/README.md` | 쓰는 법, 동기화하지 않는 이유, workout-memo 문서와의 차이표 |
-| `scripts/test/runbooks.test.mjs` | 모든 템플릿이 모든 레지스트리 프로젝트에서 빈칸 없이 렌더링되는지, 서버 `.env` 키에 값이 없는지 검사 |
+| `docs/runbooks/deploy.md` | Generalized workout-memo `docs/deployment.md`. App-specific values are `{{project.*}}`, and the server `.env` is described only as a table of key names and where they are created (`NODE_AUTH_TOKEN` added) |
+| `docs/runbooks/backup-restore.md` | Split the backup and restore steps out of the deploy document, and added deleting the temporary DB after verifying a restore and a Terraform check after a full server recovery |
+| `docs/runbooks/daily.md`, `next-steps.md` | Moved workout-memo's daily log and next-steps rules, and defined the dated file format and a "user to-do" section |
+| `docs/runbooks/README.md` | How to use them, why they are not synced, and a comparison table with the workout-memo documents |
+| `scripts/test/runbooks.test.mjs` | Checks that every template renders without blanks for every registry project, and that server `.env` keys have no values |
 
-## 결정
+## Decisions
 
-- **동기화하지 않는다.** 운영 문서에는 앱마다 비용표·운영 이력이 붙으므로 전체 관리(full)로 덮어쓰면 안 된다. 새 앱은 스캐폴드(#85)가 한 번 복사한다.
-- 서버 이름 접두어(timer, 잠금, 백업 폴더, AWS 프로필)는 `project.db.name`으로 정했다. workout-memo의 `workout-`이 DB 이름과 같아 바꿀 필요가 없다.
+- **Not synced.** Operations documents carry per-app cost tables and operating history, so overwriting them with full management (full) is wrong. The scaffold (#85) copies them once for a new app.
+- The server name prefix (timer, lock, backup folder, AWS profile) is set from `project.db.name`. workout-memo's `workout-` is the same as the DB name, so there is nothing to change.
 
-## 검증
+## Checks
 
-- `npm run check` 통과.
+- `npm run check` passed.

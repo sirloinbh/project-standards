@@ -1,20 +1,20 @@
-# #116 전체 적용 마무리 (운영 지침)
+# #116 Finish the full rollout (operating instructions)
 
-design.md "12. 단계별 적용 계획"의 마지막 단계(7)다. 앱 8개 동기화(#97, #98, #113, #114)와 인프라 리포 동기화 PR(#115)이 끝났다.
+This is the last step (7) of design.md "12. Phased rollout plan". The sync of the 8 apps (#97, #98, #113, #114) and the infrastructure repo sync PR (#115) are done.
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `AGENTS.md` | "현재 단계"를 운영 기준으로 바꿈: 표준 변경 순서, 동기화 PR에 직접 커밋할 때 중앙 병합을 멈추는 규칙(#114 경험), 준수 현황 PR 처리. 앱 배포 설명을 실제 상태(서버에는 workout-memo만 있음)에 맞춤. 예전 도구 폴더는 쓰지 않는다고 정리 |
-| `README.md` | "현재 상태"를 운영 단계로 바꾸고 준수 현황 링크 추가 |
+| `AGENTS.md` | Changed "Current phase" to the operation phase: the order for changing a standard, the rule to stop the central merge when a commit is added directly to a sync PR (lesson from #114), and handling of the compliance report PR. Matched the app deploy description to the real state (only workout-memo is on the server). Stated that the old tools folder is no longer used |
+| `README.md` | Changed "Current status" to the operation phase and added a link to the compliance report |
 
-## 정한 것
+## Decisions
 
-- `compliance.yml`의 매일 실행(00:00 KST)은 이미 켜져 있고 10-24, 10-25 실행이 성공했다. 워크플로는 바꾸지 않고, 이번 적용 결과를 반영하려고 한 번 수동 실행했다.
-- 예전 폴더 `%LOCALAPPDATA%\gh-workout-memo` 삭제는 사용자 단계로 남긴다(docs/tools.md 6단계).
+- The daily run of `compliance.yml` (00:00 KST) is already on, and the 10-24 and 10-25 runs succeeded. We did not change the workflow; we ran it once manually to reflect the result of this rollout.
+- Deleting the old folder `%LOCALAPPDATA%\gh-workout-memo` stays a user step (docs/tools.md step 6).
 
-## 검증
+## Verification
 
-- `npm run check`: 통과(테스트 413개 중 412개 통과, 1개 건너뜀, 실패 0)
-- 준수 현황 수동 실행(중앙 `519222e`): 9개 리포가 모두 표에 나오고, 앱 8개는 동기화·관리 파일·공유 패키지 모두 ✓. 인프라는 동기화 PR(shared-aws-infrastructure#5) 병합 대기
+- `npm run check`: passed (412 of 413 tests passed, 1 skipped, 0 failed)
+- Manual compliance run (central `519222e`): all 9 repos appear in the table, and the 8 apps are ✓ for sync, managed files, and shared packages. The infrastructure repo is waiting for its sync PR (shared-aws-infrastructure#5) to be merged.

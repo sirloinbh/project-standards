@@ -1,19 +1,19 @@
-# #128 중앙 리포 PR을 에이전트가 병합하도록 규칙 변경
+# #128 Change the rule so the agent merges central repo PRs
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `AGENTS.md` | 이 리포의 PR은 `npm run check` 통과 후 에이전트가 merge commit으로 병합하고 다음 이슈를 진행한다. 하위 리포 PR, 사용자 단계, 사전 승인 범위 밖의 설치, 사용자 결정 항목은 계속 사용자에게 먼저 확인한다 |
-| `templates/common/skills/std-backlog/SKILL.md` | 병합 주체를 리포의 `AGENTS.md`가 정하도록 바꿨다. 정해져 있지 않으면 사용자만 병합한다 |
-| `templates/common/skills/std-git-writing/SKILL.md` | 같은 규칙. "병합 전에 확인해 주세요"에 사용자 판단 항목이 있으면 병합하지 않는다 |
-| `.claude/skills/` | 복제본 갱신 |
+| `AGENTS.md` | PRs in this repo are merged by the agent with a merge commit after `npm run check` passes, and then the agent continues with the next issue. Downstream repo PRs, user steps, installs outside the pre-approved scope, and items for the user to decide still go to the user first |
+| `templates/common/skills/std-backlog/SKILL.md` | Changed who merges so that each repo's `AGENTS.md` decides. If it is not specified, only the user merges |
+| `templates/common/skills/std-git-writing/SKILL.md` | Same rule. If "Check before merging" has an item for the user to decide, do not merge |
+| `.claude/skills/` | Updated the copies |
 
-## 이유
+## Why
 
-사용자가 2026-10-22에 "중앙 리포 작업은 문서·텍스트 작업이므로 PR이 올라오면 자동으로 병합하고 다음 작업을 진행하라"고 정했다. 공통 스킬은 하위 리포에도 배포되므로, 스킬에는 "병합 주체는 각 리포의 AGENTS.md가 정한다"고만 쓰고, 자동 병합 허용은 이 리포의 `AGENTS.md`에만 둔다. 앱 리포는 main 병합이 곧 운영 배포이므로 계속 사용자가 병합한다.
+On 2026-10-22 the user decided: "Central repo work is documents and text, so merge PRs automatically when they come up and continue with the next task." Common skills are also distributed to downstream repos, so the skills only say "who merges is decided by each repo's AGENTS.md", and the permission for automatic merging lives only in this repo's `AGENTS.md`. App repos are still merged by the user, because merging to main is a production deploy.
 
-## 검증
+## Verification
 
-- 스킬 원본과 복제본을 `diff`로 비교했다(차이 없음).
-- `npm run check` 통과.
+- Compared the skill sources and copies with `diff` (no differences).
+- `npm run check` passed.

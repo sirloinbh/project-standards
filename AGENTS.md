@@ -23,7 +23,7 @@ This repository is the central repo for `sirloinbh`'s personal app portfolio (8 
 3. Commit the implementation, the tests, and the `docs/changes/<issue-number>-<slug>.md` record together.
 4. Run the relevant tests before committing and before creating or updating a PR. Record the results in the docs and the PR.
 5. **The agent merges PRs in this repo.** After `npm run check` passes and the PR body follows the template, merge with a merge commit (`pr merge --merge`; do not use `--delete-branch`, because local branches are cleaned up with the git CLI steps in std-git-writing), then continue with the next issue in std-backlog order. The user set this rule on 2026-10-22 (#128).
-   - Still ask the user first for: downstream repo PRs (merging an app repo to main is a production deploy), `[직접]` and `needs-user` issues, package installs outside the pre-approved scope, and decisions the issue marks as "user confirmation".
+   - Still ask the user first for: downstream repo PRs (merging an app repo to main is a production deploy), `[직접]` (user does it directly) and `needs-user` issues, package installs outside the pre-approved scope, and decisions the issue marks as "user confirmation".
    - If the PR body lists an item to confirm before merging, do not merge; ask the user.
    - Exception: PRs that an agent worker (`tools/agents`) opens in a downstream repo follow `autoMerge` in that repo's `.agents.json` (default `true`; per-repo values are in the table in [docs/tools.md](docs/tools.md#auto-merge-per-repo)). For a repo marked `false` in the table, include `.agents.json` in the PR that introduces the worker (#184).
 

@@ -1,22 +1,22 @@
-# #260 리포 설정 기준에 CodeQL 코드 스캔과 secret scanning 넣기
+# #260 Add CodeQL code scanning and secret scanning to the repo settings standard
 
-## 결정
+## Decision
 
-- 리포 11개가 모두 공개(2026-10-27)라 secret scanning·push protection과 CodeQL을 모든 리포 필수로 본다.
-- CodeQL은 **기본 설정**(default setup)을 쓴다. 고급 설정은 `codeql.yml`을 관리 파일로 두고 언어·빌드를 맞춰야 하는데, 지금 앱은 모두 JavaScript/TypeScript라 기본 설정으로 충분하고 동기화할 파일이 늘지 않는다.
-- 준수 현황은 `GET repos/<리포>/code-scanning/default-setup`의 `state`가 `configured`인지 본다. 동기화 App에 Code scanning alerts 읽기 권한이 필요하다. 권한을 더하기 전에는 "확인 못 함"으로 나온다.
+- All 11 repos are public (2026-10-27), so secret scanning, push protection, and CodeQL are required for every repo.
+- CodeQL uses the **default setup**. The advanced setup would need `codeql.yml` as a managed file and matching language and build, but all apps are JavaScript/TypeScript now, so the default setup is enough and the number of files to sync does not grow.
+- The compliance report checks whether `state` of `GET repos/<repo>/code-scanning/default-setup` is `configured`. The sync App needs Code scanning alerts read permission. Until the permission is added, it shows "cannot confirm".
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `scripts/lib/repo-settings.mjs` | CodeQL 기본 설정 수집·판정(`configured` 통과, 그 밖 실패, 비공개는 요금제, 못 읽으면 확인 못 함) |
-| `scripts/test/repo-settings.test.mjs` | 통과·비공개·꺼짐·권한 없음 경우 |
-| `docs/repo-settings.md` | 공개 여부 갱신, CodeQL 기준 행, 맞추는 법을 모든 리포 기준으로 |
-| `docs/github-app.md`, `docs/adr/0002-github-app-for-sync.md` | App 권한에 Code scanning alerts 읽기 추가 |
-| `docs/user-steps.md` | 9. 리포 보안 설정 켜기와 App 권한 추가 (#261) |
+| `scripts/lib/repo-settings.mjs` | Collects and judges the CodeQL default setup (`configured` passes, anything else fails, private repos depend on the plan, and unreadable means cannot confirm) |
+| `scripts/test/repo-settings.test.mjs` | Cases for pass, private, off, and no permission |
+| `docs/repo-settings.md` | Updated visibility, added a CodeQL standard row, and made the how-to apply to all repos |
+| `docs/github-app.md`, `docs/adr/0002-github-app-for-sync.md` | Added Code scanning alerts read to the App permissions |
+| `docs/user-steps.md` | 9. Turn on repo security settings and add the App permission (#261) |
 
-## 검증
+## Verification
 
-- `node --test scripts/test/repo-settings.test.mjs`: 6개 통과
-- `npm run check`: PR 본문 참고
+- `node --test scripts/test/repo-settings.test.mjs`: 6 passed
+- `npm run check`: see the PR body

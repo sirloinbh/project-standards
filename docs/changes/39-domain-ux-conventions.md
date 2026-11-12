@@ -1,52 +1,52 @@
-# #39 공통 규칙 문서 (도메인 규칙, UX 점검표)
+# #39 Common rule documents (domain rules, UX checklist)
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/conventions/domain.md` | 시간대(`Asia/Seoul`, `serviceDate()`), 날짜·시각·시점·기간의 저장·API 형식, 화면 표시, 금액(원 단위 정수, `bigint`), 수량 단위(미터법, `numeric` 자릿수, `NULL`과 0 구분), 서버 검증·한국어 메시지 |
-| `docs/conventions/ux-audit.md` | 점검 시기, 페이지별 측정 항목(가로 넘침, 44px 터치, 16px 입력, axe, 키보드, 라이트·다크), 과업 시나리오, 방법(점검용 DB·시드, Playwright, 실기기·Lighthouse), 심각도 P1–P3, 기록 위치 `docs/ux-audit/YYYY-MM-DD.md` |
-| `docs/design-system.md` | 반응형·접근성 절에 UX 점검 문서 링크 한 줄 |
+| `docs/conventions/domain.md` | Time zone (`Asia/Seoul`, `serviceDate()`), storage and API formats for dates, times, points in time, and durations, screen display, money (integer won, `bigint`), quantity units (metric, `numeric` precision, distinguishing `NULL` from 0), and server validation and Korean messages |
+| `docs/conventions/ux-audit.md` | When to audit, per-page measurement items (horizontal overflow, 44px touch targets, 16px inputs, axe, keyboard, light and dark), task scenarios, methods (audit DB and seed, Playwright, real devices and Lighthouse), severity P1–P3, and the record location `docs/ux-audit/YYYY-MM-DD.md` |
+| `docs/design-system.md` | One line linking the UX audit document in the responsive and accessibility section |
 
-`docs/conventions/`에 목차 파일은 만들지 않았다. 같은 폴더에 #27의 `database.md`가 따로 들어올 예정이라, README 링크는 두 문서가 모두 들어온 뒤 한 번에 추가한다.
+I did not create an index file in `docs/conventions/`. `database.md` from #27 will arrive in the same folder separately, so the README link is added once, after both documents are in.
 
-## 근거
+## Sources
 
-- workout-memo: `AGENTS.md`·`AGENTS.project.md`의 날짜·시간대·총중량 kg 규칙, `shared/contract.ts`의 `date` 스키마, `database/migrations/001_initial.sql`의 `date`·`timestamptz`·`numeric(7,2)`, `docs/ux-audit/2026-10-21.md`의 방법·지표·심각도·다시 측정 절차
-- study-log: `backend/src/app.ts`의 `serviceDate()`(`Intl.DateTimeFormat`, `Asia/Seoul`), `studyMinutes()`의 자정 넘김 처리
-- 금액 규칙과 주 시작 요일은 기존 앱에 근거가 없어 새로 정했다. money-ledger에는 아직 금액 코드가 없다.
+- workout-memo: the date, time zone, and total weight kg rules in `AGENTS.md` and `AGENTS.project.md`, the `date` schema in `shared/contract.ts`, `date`, `timestamptz`, and `numeric(7,2)` in `database/migrations/001_initial.sql`, and the method, metrics, severity, and re-measurement procedure in `docs/ux-audit/2026-10-21.md`
+- study-log: `serviceDate()` in `backend/src/app.ts` (`Intl.DateTimeFormat`, `Asia/Seoul`), and the midnight-crossing handling in `studyMinutes()`
+- The money rules and the first day of the week have no basis in the existing apps, so they were newly decided. money-ledger has no money code yet.
 
-## 사용자 결정 (2026-10-22)
+## User decisions (2026-10-22)
 
-PR #169 검토에서 사용자가 정했다.
+The user decided these in the review of PR #169.
 
-- 한 주는 **일요일**에 시작한다. 처음 제안한 월요일(ISO 8601)에서 바꿨다.
-- 승인: 금액은 원 단위 정수로 `bigint`에 저장한다.
-- 승인: 수입·지출 방향은 부호 대신 종류 필드(`kind`)로 나타낸다.
-- 승인: 외화·소수 자산은 money-ledger에서 필요해질 때 이슈로 정한다.
-- 참고: workout-memo의 목표 종료일 기본값은 "이번 주 일요일"이다(2026-10-21 UX 점검 시나리오 3). 일요일 시작 주에서는 일요일이 주의 첫날이므로, 이 동작을 공통 규칙에 맞출지는 workout-memo에서 따로 정한다.
+- A week starts on **Sunday**. This changed the originally proposed Monday (ISO 8601).
+- Approved: money is stored as integer won in `bigint`.
+- Approved: the direction of income and expense is expressed by a kind field (`kind`) instead of a sign.
+- Approved: foreign currency and fractional assets will be decided in an issue when money-ledger needs them.
+- Note: the default goal end date in workout-memo is "this week's Sunday" (2026-10-21 UX audit scenario 3). In a Sunday-start week, Sunday is the first day of the week, so whether to align this behavior with the common rule is decided separately in workout-memo.
 
-## 8개 앱 AGENTS.md와 충돌 확인
+## Conflict check against the AGENTS.md of the 8 apps
 
-2026-10-22에 8개 앱의 `AGENTS.md`와 `AGENTS.project.md`를 API로 읽어 비교했다(main 브랜치).
+On 2026-10-22, I read and compared the `AGENTS.md` and `AGENTS.project.md` of the 8 apps through the API (main branch).
 
-| 앱 | 날짜·시간대 | 화면 확인 크기 | 서비스 규칙 | 충돌 |
+| App | Date and time zone | Screen check sizes | Service rules | Conflict |
 |---|---|---|---|---|
-| workout-memo | `YYYY-MM-DD`, `Asia/Seoul` | AGENTS에 크기 없음(e2e 반응형·axe 검사) | 총중량 kg, 모르는 기본중량은 NULL | 없음 |
-| study-log | `YYYY-MM-DD`, `Asia/Seoul`, `serviceDate()` | 390×844, 1440×900 | 없음 | 없음 |
-| health-log | 위와 같음 | 위와 같음 | 없음 | 없음 |
-| life-journal | 위와 같음 | 위와 같음 | 없음 | 없음 |
-| money-ledger | 위와 같음 | 위와 같음 | 없음 | 없음 |
-| english-study | 위와 같음 | 위와 같음 | 없음 | 없음 |
-| plan-routine | 위와 같음 | 위와 같음 | 없음 | 없음 |
-| dev-career-portfolio | 위와 같음 | 위와 같음 | 없음 | 없음 |
+| workout-memo | `YYYY-MM-DD`, `Asia/Seoul` | No size in AGENTS (e2e responsive and axe checks) | Total weight kg, unknown default weight is NULL | None |
+| study-log | `YYYY-MM-DD`, `Asia/Seoul`, `serviceDate()` | 390×844, 1440×900 | None | None |
+| health-log | Same as above | Same as above | None | None |
+| life-journal | Same as above | Same as above | None | None |
+| money-ledger | Same as above | Same as above | None | None |
+| english-study | Same as above | Same as above | None | None |
+| plan-routine | Same as above | Same as above | None | None |
+| dev-career-portfolio | Same as above | Same as above | None | None |
 
-- 7개 앱(workout-memo 제외)의 `AGENTS.md`는 앱 이름·설명·포트만 다르고 나머지 줄은 같다.
-- 충돌하는 규칙은 없다. 참고할 차이는 두 가지다.
-  - workout-memo의 2026-10-21 점검은 PC 비교 화면을 1280×800으로 찍었다. 이 문서는 디자인 시스템과 7개 앱 AGENTS.md에 맞춰 1440×900을 쓴다. 기존 기록은 고치지 않는다.
-  - workout-memo `AGENTS.md`에는 "오늘은 `serviceDate()`로 계산" 문장이 없다. 규칙이 다른 것이 아니라 빠진 것이므로 동기화 때 맞춘다.
+- The `AGENTS.md` of the 7 apps (excluding workout-memo) differ only in the app name, description, and ports; all other lines are the same.
+- No rules conflict. There are two differences worth noting.
+  - The workout-memo audit of 2026-10-21 took its PC comparison screenshots at 1280×800. This document uses 1440×900, matching the design system and the AGENTS.md of the 7 apps. The existing record is not changed.
+  - workout-memo `AGENTS.md` lacks the sentence "compute today with `serviceDate()`". The rule is missing rather than different, so it is aligned at sync time.
 
-## 검증
+## Checks
 
-- 문서만 바꿨다. `npm run check` 통과(테스트 166개 중 165개 통과, 실패 0, `registry:check`·`docs:check`·`tokens:check`·`packages:check`·`workflows:check` 모두 ok).
-- 새 문서의 상대 링크(`../design-system.md`, `../projects.md`, `../dependency-policy.md`, std-backlog `SKILL.md`, `conventions/ux-audit.md`) 대상 파일이 있는지 확인했다.
+- Only documents changed. `npm run check` passed (165 of 166 tests passed, 0 failed, and `registry:check`, `docs:check`, `tokens:check`, `packages:check`, and `workflows:check` all ok).
+- I checked that the targets of the relative links in the new documents (`../design-system.md`, `../projects.md`, `../dependency-policy.md`, the std-backlog `SKILL.md`, `conventions/ux-audit.md`) exist.

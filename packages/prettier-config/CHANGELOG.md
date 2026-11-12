@@ -1,5 +1,5 @@
-# 변경 기록
+# Changelog
 
 ## 1.0.0
 
-- 첫 버전. 8개 앱의 기존 `.prettierrc.json`과 같은 설정(#65).
+- First version. The same settings as the 8 apps' existing `.prettierrc.json` (#65).

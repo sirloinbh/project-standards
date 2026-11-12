@@ -1,30 +1,30 @@
-# #71 CI 워크플로 (중앙 CI, 앱·인프라 공통 CI)
+# #71 CI workflows (central CI, common app and infra CI)
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `.github/workflows/ci.yml` | 중앙 리포 검증: `npm run check`(테스트, 레지스트리, 생성 파일, 패키지 규칙, 워크플로 검사)와 `ioc-scan`. 외부 의존성이 없어 `npm ci`가 필요 없다 |
-| `.github/workflows/reusable-app-ci.yml` | 앱 공통 CI. 다음 순서로 실행한다: 공급망 점검 → `npm ci --ignore-scripts` → 중앙 표준 검사 → 설치 후 공급망 점검 → DB 마이그레이션 → `npm run check`. e2e(선택)와 Docker 빌드(BuildKit secret으로 패키지 인증)도 있다 |
-| `.github/workflows/reusable-infra-ci.yml` | 인프라 공통 CI: 중앙 표준 검사, 공급망 점검, `terraform fmt -check`·`init -backend=false`·`validate`, 셸 스크립트 `bash -n`. apply는 하지 않는다 |
-| `templates/app/.github/workflows/ci.yml.tmpl`, `templates/infra/...` | 하위 리포 호출부. 중앙 워크플로를 동기화한 중앙 커밋 SHA로 고정하고, 레지스트리·versions 값을 넘긴다 |
-| `scripts/lib/vars.mjs`, `sync-plan.mjs` | 템플릿 변수에 `central.sha` 추가 |
-| `versions.json` | Terraform CLI `1.16.5`. 2026-10-02 릴리스로, 14일 기준을 넘긴 가장 새 버전이다. 1.16.6과 1.17.0은 14일이 안 됐다 |
-| `scripts/check-workflows.mjs` | `run:` 스크립트 안의 `${{ }}` 금지 규칙 추가(아래 보안 수정) |
-| `scripts/test/` | 호출부 렌더링, 스크립트 주입 검사 테스트, 스냅샷 갱신(대상마다 `ci.yml` 1개 추가) |
+| `.github/workflows/ci.yml` | Central repo verification: `npm run check` (tests, registry, generated files, package rules, workflow check) and `ioc-scan`. It has no external dependencies, so `npm ci` is not needed |
+| `.github/workflows/reusable-app-ci.yml` | Common app CI. It runs in this order: supply chain check, `npm ci --ignore-scripts`, central standards check, post-install supply chain check, DB migration, `npm run check`. It also has e2e (optional) and a Docker build (package auth with a BuildKit secret) |
+| `.github/workflows/reusable-infra-ci.yml` | Common infrastructure CI: central standards check, supply chain check, `terraform fmt -check`, `init -backend=false`, `validate`, and `bash -n` on shell scripts. It does not apply |
+| `templates/app/.github/workflows/ci.yml.tmpl`, `templates/infra/...` | The caller in downstream repos. It pins the central workflow to the central commit SHA being synced and passes the registry and versions values |
+| `scripts/lib/vars.mjs`, `sync-plan.mjs` | Added `central.sha` to the template variables |
+| `versions.json` | Terraform CLI `1.16.5`. It was released on 2026-10-02 and is the newest version that is past the 14-day rule. 1.16.6 and 1.17.0 are not 14 days old yet |
+| `scripts/check-workflows.mjs` | Added a rule forbidding `${{ }}` inside `run:` scripts (security fix below) |
+| `scripts/test/` | Caller rendering, a script injection check test, and a snapshot update (1 `ci.yml` added per target) |
 
-## 보안 수정: publish.yml 스크립트 주입
+## Security fix: script injection in publish.yml
 
-- **문제:** 이전 PR(#70)로 병합된 `publish.yml`에 자동 보안 검토가 스크립트 주입 위험을 찾았다. `${{ github.ref_name }}`(태그 이름)을 `run:` 셸에 직접 넣고 있었다. Git 태그 이름에는 `'`, `$`, `;` 같은 문자를 쓸 수 있어서, 태그 이름으로 명령을 실행할 수 있었다.
-- **수정:**
-  - 태그 값은 `env: TAG`로만 넘긴다.
-  - 첫 단계에서 `^[a-z][a-z0-9-]*/v\d+\.\d+\.\d+$` 형식인지 검사한다. 이 검사는 checkout보다 먼저 한다.
-  - 패키지 이름·버전·실행 URL도 환경변수로 넘긴다.
-  - 공통 CI의 `inputs.npm-version`도 같은 방식으로 바꿨다.
-- **재발 방지:** `check-workflows`가 `run:` 스크립트 안의 `${{ }}`를 모두 실패로 처리한다.
+- **Problem:** The automated security review found a script injection risk in `publish.yml`, which was merged in the previous PR (#70). It put `${{ github.ref_name }}` (the tag name) directly into a `run:` shell. A Git tag name can contain characters such as `'`, `$`, and `;`, so a command could be run through a tag name.
+- **Fix:**
+  - The tag value is passed only through `env: TAG`.
+  - The first step checks that it matches `^[a-z][a-z0-9-]*/v\d+\.\d+\.\d+$`. This check runs before checkout.
+  - The package name, version, and run URL are also passed as environment variables.
+  - `inputs.npm-version` in the common CI was changed the same way.
+- **Preventing recurrence:** `check-workflows` fails on any `${{ }}` inside a `run:` script.
 
-## 검증
+## Checks
 
-- `npm run check`: 테스트 99개 통과, `check-workflows: ok (6 files)`. 6개는 중앙 워크플로 4개와 템플릿 2개다.
-- 하위 리포의 실제 CI 실행은 첫 동기화(#97)에서 확인한다. 하위 리포가 이 워크플로를 호출하려면 사용자 단계(#86의 Actions 접근 허용)가 먼저 필요하다.
-- actionlint는 설치되어 있지 않다.
+- `npm run check`: 99 tests passed, `check-workflows: ok (6 files)`. The 6 are 4 central workflows and 2 templates.
+- A real CI run in downstream repos will be verified at the first sync (#97). For downstream repos to call this workflow, a user step (allowing Actions access in #86) is needed first.
+- actionlint is not installed.
