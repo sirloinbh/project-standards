@@ -1,25 +1,25 @@
-# #6 Docker 빌드 파일 템플릿 (Dockerfile 2종, nginx, compose 검사)
+# #6 Docker build file templates (2 Dockerfiles, nginx, compose check)
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/app/frontend/Dockerfile.tmpl` | 8개 앱의 현재 파일 기준 |
-| `templates/app/backend/Dockerfile.tmpl` | 같음. `EXPOSE`는 레지스트리 API 포트 |
-| `templates/app/frontend/nginx.conf.tmpl` | 8개 앱의 현재 파일과 같음. `proxy_pass`만 레지스트리 API 포트 |
-| `scripts/standards-check.mjs` | Dockerfile을 중앙에서 관리하는 리포는 `compose.yaml`도 검사한다. 모든 `build`가 `secrets: [npm_token]`을 넘기는지, 최상위 `secrets.npm_token.environment: NODE_AUTH_TOKEN`이 있는지 본다 |
-| `docs/design.md` 5.1 | 분류표에서 Dockerfile 2종과 nginx.conf를 프로젝트 고유에서 B안 전체 관리로 옮기고, 주입 변수표를 추가했다 |
-| `scripts/test/docker.test.mjs`, `standards-check.test.mjs`, 스냅샷 | 렌더링 결과, 토큰 전달 방식, compose 검사. 하위 리포 파일 목록에 앱마다 3개 추가 |
+| `templates/app/frontend/Dockerfile.tmpl` | Based on the current files of the 8 apps |
+| `templates/app/backend/Dockerfile.tmpl` | Same. `EXPOSE` is the registry API port |
+| `templates/app/frontend/nginx.conf.tmpl` | Same as the current files of the 8 apps. Only `proxy_pass` is the registry API port |
+| `scripts/standards-check.mjs` | A repo whose Dockerfile is managed centrally also gets its `compose.yaml` checked. It checks that every `build` passes `secrets: [npm_token]` and that the top-level `secrets.npm_token.environment: NODE_AUTH_TOKEN` exists |
+| `docs/design.md` 5.1 | In the classification table, moved the 2 Dockerfiles and nginx.conf from project-specific to option B full management, and added an injected variable table |
+| `scripts/test/docker.test.mjs`, `standards-check.test.mjs`, snapshot | Rendering results, how the token is passed, and the compose check. 3 files added per app to the downstream repo file list |
 
-## 현재 파일과 다른 점 (의도한 변경)
+## Differences from the current files (intended changes)
 
-- **토큰 전달:** `npm ci`는 BuildKit secret(`npm_token`)으로만 토큰을 받는다. ARG·ENV로 넘기지 않으므로 이미지 레이어에 토큰이 남지 않는다. 테스트가 ARG·ENV 줄이 없음을 확인한다.
-- **설치 옵션:** `npm install --global npm@…`, `npm ci`, `npm prune`에 모두 `--ignore-scripts`를 붙였다.
-- **`.npmrc` 복사:** `COPY package*.json .npmrc ./`로 `.npmrc`를 함께 복사한다. 패키지 레지스트리 설정이 `npm ci` 전에 있어야 하기 때문이다.
-- **secret이 없을 때:** 로컬 `docker compose build`처럼 secret이 없으면 토큰은 빈 값이 된다. 공유 패키지가 아직 없는 동안은 그래도 빌드된다.
-- `# syntax=` 지시어는 쓰지 않았다. Docker Hub에서 빌더 이미지를 따로 내려받기 때문이다. `RUN --mount`는 기본 BuildKit에서 동작한다.
+- **Token passing:** `npm ci` receives the token only through a BuildKit secret (`npm_token`). It is not passed by ARG or ENV, so no token remains in image layers. A test confirms there are no ARG or ENV lines.
+- **Install options:** `--ignore-scripts` is added to `npm install --global npm@…`, `npm ci`, and `npm prune`.
+- **`.npmrc` copy:** `.npmrc` is copied together with `COPY package*.json .npmrc ./`, because the package registry settings must be present before `npm ci`.
+- **When there is no secret:** without a secret, as in a local `docker compose build`, the token is empty. While there are no shared packages yet, it still builds.
+- The `# syntax=` directive is not used, because it would pull the builder image separately from Docker Hub. `RUN --mount` works in the default BuildKit.
 
-## 검증
+## Checks
 
-- `npm run check`: 테스트 123개 통과, `check-workflows: ok (8 files)`
-- 하위 리포의 실제 Docker 빌드는 첫 동기화(#97)의 CI `docker-build` 작업에서 확인한다(`--secret id=npm_token,env=NODE_AUTH_TOKEN`).
+- `npm run check`: 123 tests passed, `check-workflows: ok (8 files)`
+- The real Docker build of downstream repos will be verified in the `docker-build` job of the CI of the first sync (#97) (`--secret id=npm_token,env=NODE_AUTH_TOKEN`).

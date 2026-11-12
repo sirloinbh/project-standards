@@ -2,46 +2,46 @@
 
 {{project.summary}}
 
-## 개발 기준
+## Development baseline
 
-Node.js **{{versions.node}}**, npm **{{versions.npm}}**. 공통 규칙은 중앙 리포 [sirloinbh/project-standards](https://github.com/sirloinbh/project-standards)가 원본이고, 이 리포의 중앙 관리 파일은 동기화 PR로만 바뀝니다.
+Node.js **{{versions.node}}**, npm **{{versions.npm}}**. The common rules come from the central repo [sirloinbh/project-standards](https://github.com/sirloinbh/project-standards), and the centrally managed files in this repo change only through sync PRs.
 
-| 명령 | 하는 일 |
+| Command | What it does |
 |---|---|
-| `npm ci` | 의존성 설치 (`.npmrc`가 설치 스크립트를 막음) |
-| `npm run check` | 포맷, 린트, 계약 복제본, 스킬 복제본, 타입, 테스트, 빌드 |
-| `npm run standards:check` | 중앙 관리 파일과 레지스트리 값 확인 |
-| `npm run lockfiles:sync` | 의존성을 바꾼 뒤 `frontend/`·`backend/` lockfile을 루트 lockfile 버전으로 맞추기 (설치 없음) |
-| `npm run test:e2e` | Playwright 브라우저 검사 (테스트 DB 필요) |
-| `npm run db:migrate` | DB 마이그레이션 적용 |
-| `npm run openapi` | API를 바꾼 뒤 `docs/openapi.json` 다시 만들기 |
+| `npm ci` | Install dependencies (`.npmrc` blocks install scripts) |
+| `npm run check` | Format, lint, contract copy, skill copy, types, tests, build |
+| `npm run standards:check` | Check the centrally managed files and the registry values |
+| `npm run lockfiles:sync` | After changing dependencies, align the `frontend/` and `backend/` lockfiles to the root lockfile versions (no install) |
+| `npm run test:e2e` | Playwright browser checks (needs a test DB) |
+| `npm run db:migrate` | Apply DB migrations |
+| `npm run openapi` | Regenerate `docs/openapi.json` after changing the API |
 
-## 실행
+## Run
 
 ```powershell
-Copy-Item .env.example .env   # 비밀번호를 바꾼 뒤 실행
+Copy-Item .env.example .env   # change the password, then run
 docker compose up --build -d
 ```
 
-접속: http://localhost:{{project.ports.web}} . 데이터는 `{{project.db.name}}-data` 볼륨에 저장됩니다. `docker compose down -v`는 데이터를 지웁니다.
+Open http://localhost:{{project.ports.web}} . Data is stored in the `{{project.db.name}}-data` volume. `docker compose down -v` deletes the data.
 
-## 포트 (중앙 레지스트리 슬롯 {{project.slot}})
+## Ports (central registry slot {{project.slot}})
 
-| 용도 | 포트 |
+| Use | Port |
 |---|---|
-| 웹 (Docker) | {{project.ports.web}} |
+| Web (Docker) | {{project.ports.web}} |
 | API | {{project.ports.api}} |
-| Vite 개발 서버 | {{project.ports.vite}} |
-| DB (호스트) | {{project.ports.db}} |
-| e2e API / 웹 | {{project.ports.e2eApi}} / {{project.ports.e2eWeb}} |
+| Vite dev server | {{project.ports.vite}} |
+| DB (host) | {{project.ports.db}} |
+| e2e API / web | {{project.ports.e2eApi}} / {{project.ports.e2eWeb}} |
 
-## 리포 구성
+## Repo layout
 
-우산 리포 `{{project.repos.umbrella}}`가 원본이고, `frontend/`·`backend/`·`database/`는 subtree로 `{{project.repos.frontend}}`, `{{project.repos.backend}}`, `{{project.repos.db}}`에 나갑니다(`scripts/push-repositories.ps1`).
+The umbrella repo `{{project.repos.umbrella}}` is the source, and `frontend/`, `backend/`, and `database/` go out as subtrees to `{{project.repos.frontend}}`, `{{project.repos.backend}}`, and `{{project.repos.db}}` (`scripts/push-repositories.ps1`).
 
-## 문서
+## Docs
 
-- [에이전트 지침](AGENTS.md), [프로젝트 고유 지침](AGENTS.project.md)
-- [배포·운영](docs/deployment.md), [백업·복구](docs/backup-restore.md)
-- [일일 기록](docs/daily/README.md), [다음 작업](docs/next-steps/README.md)
-- [DB 마이그레이션](database/README.md)
+- [Agent instructions](AGENTS.md), [Project-specific instructions](AGENTS.project.md)
+- [Deployment and operations](docs/deployment.md), [Backup and restore](docs/backup-restore.md)
+- [Daily log](docs/daily/README.md), [Next steps](docs/next-steps/README.md)
+- [DB migrations](database/README.md)

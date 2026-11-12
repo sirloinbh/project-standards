@@ -1,29 +1,29 @@
-# #61 동기화 스크립트: 렌더링과 미리보기(dry-run)
+# #61 Sync script: rendering and preview (dry-run)
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `scripts/lib/sync-plan.mjs` | 대상 하나의 동기화 계획을 계산한다: 프로필 템플릿 렌더링, 허용된 차이(`allowedDifferences`) 건너뛰기, 보호 경로(`neverTouch`) 위반 시 실패, `package.json` 필드 병합, `.standards/manifest.json` 생성 |
-| `scripts/sync.mjs` | `--dry-run --out <폴더>`로 대상별 결과 파일과 `plan.json`을 쓴다. `--local <리포>=<경로>`를 주면 로컬 클론을 읽어 실제 파일과 병합한 결과를 보여 준다 |
-| `scripts/lib/render.mjs` | 처음 동기화하는 구간 관리 파일의 프로젝트 고유 줄 보존(아래) |
-| `scripts/test/sync.test.mjs`, `fixtures/sync-snapshot.json` | glob, 필드 병합, 계획, CLI 테스트와 9개 대상의 파일 목록 스냅샷 |
-| `package.json` | `npm run sync:preview` (결과는 무시되는 `.local/sync-preview/`) |
+| `scripts/lib/sync-plan.mjs` | Computes the sync plan for one target: renders the profile templates, skips allowed differences (`allowedDifferences`), fails on a protected path (`neverTouch`) violation, merges `package.json` fields, and generates `.standards/manifest.json` |
+| `scripts/sync.mjs` | `--dry-run --out <folder>` writes the per-target result files and `plan.json`. With `--local <repo>=<path>`, it reads the local clone and shows the result merged with the real files |
+| `scripts/lib/render.mjs` | Preserves project-specific lines of section-managed files at first sync (below) |
+| `scripts/test/sync.test.mjs`, `fixtures/sync-snapshot.json` | Tests for glob, field merge, plan, and CLI, and a file list snapshot of the 9 targets |
+| `package.json` | `npm run sync:preview` (the result goes to the ignored `.local/sync-preview/`) |
 
-## 미리보기에서 발견한 문제와 수정
+## Problem found in the preview and its fix
 
-로컬 workout-memo 클론으로 미리보기를 돌려 보니, `.gitignore`와 `.prettierignore`에 있던 프로젝트 고유 줄(`test-results/`, `playwright-report/`, `docs/openapi.json`)이 첫 동기화에서 사라지는 문제가 있었다. 아직 `# --- project ---` 표시 줄이 없는 파일이었기 때문이다.
+When I ran the preview with the local workout-memo clone, the project-specific lines in `.gitignore` and `.prettierignore` (`test-results/`, `playwright-report/`, `docs/openapi.json`) disappeared at the first sync. This was because those files did not yet have the `# --- project ---` marker line.
 
-그래서 표시 줄이 없는 파일을 처음 동기화할 때는, 중앙 구간에 없는 기존 줄을 프로젝트 구간으로 옮기도록 바꿨다. 수정 후 다시 미리보기를 돌려 세 줄이 표시 줄 아래에 남는 것을 확인했다.
+So for the first sync of a file without the marker line, I changed it to move existing lines that are not in the central section into the project section. After the fix, I ran the preview again and confirmed that the three lines remain below the marker line.
 
-## 스냅샷
+## Snapshot
 
-`scripts/test/fixtures/sync-snapshot.json`은 9개 대상이 받는 파일과 관리 방식(전체·구간·필드)의 목록이다. 앱 리포는 31개, 인프라 리포는 15개다. 템플릿을 일부러 바꿨다면 `UPDATE_SNAPSHOT=1 npm test`로 갱신하고, 리뷰에서 하위 리포에 무엇이 바뀌는지 확인한다.
+`scripts/test/fixtures/sync-snapshot.json` is the list of files the 9 targets receive and their management mode (full, section, fields). App repos get 31 files and the infrastructure repo gets 15. If you changed a template on purpose, update it with `UPDATE_SNAPSHOT=1 npm test` and check in review what changes in downstream repos.
 
-## 검증
+## Checks
 
-- `npm run check`: 테스트 73개 통과, `registry-check: ok`, `docs/projects.md: up to date`
-- 로컬 미리보기(`--local study-log=../study-log --local workout-memo=../workout-memo`):
-  - 각각 파일 32개(manifest 포함)가 만들어졌다.
-  - workout-memo `package.json`은 기존 스크립트 19개와 devDependencies 9개를 유지한 채 관리 필드만 바뀌었다.
-  - study-log `.editorconfig`는 헤더 한 줄만 추가됐다.
+- `npm run check`: 73 tests passed, `registry-check: ok`, `docs/projects.md: up to date`
+- Local preview (`--local study-log=../study-log --local workout-memo=../workout-memo`):
+  - 32 files each (including the manifest) were produced.
+  - workout-memo `package.json` kept its existing 19 scripts and 9 devDependencies, and only the managed fields changed.
+  - study-log `.editorconfig` got only one header line added.
