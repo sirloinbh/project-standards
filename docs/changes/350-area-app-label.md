@@ -1,13 +1,13 @@
-# #350 앱 기능 이슈용 area/app 라벨 추가
+# #350 Add the area/app label for app feature issues
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/common/labels.json` | `area/app` 라벨 추가. 동기화가 대상 리포에 만든다 |
-| `templates/common/skills/std-backlog/SKILL.md`와 복제본 | 3장 `area/*` 목록에 `app` 추가 |
+| `templates/common/labels.json` | Added the `area/app` label. The sync creates it in target repos |
+| `templates/common/skills/std-backlog/SKILL.md` and its copy | Added `app` to the `area/*` list in chapter 3 |
 
-## 정한 것
+## Decisions
 
-- 이름, 색(`#bfdadc`), 설명은 sirloinbh/cert-manager에 먼저 만든 라벨과 같게 했다.
-- 중앙 리포는 동기화 대상이 아니라서 라벨을 직접 만들었다.
+- The name, color (`#bfdadc`), and description are the same as the label first created in sirloinbh/cert-manager.
+- The central repo is not a sync target, so the label was created by hand.

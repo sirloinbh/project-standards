@@ -1,25 +1,25 @@
-# #326 zod 보안 권고 대응: 길이 제한 없는 배열 막기와 검사
+# #326 Response to the zod security advisory: block unbounded arrays and add a check
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/app/backend/src/standard/http.ts` | zod 이슈 메시지를 앞 10개(`MAX_ISSUES`)와 "외 N개"만 응답 |
-| `scripts/standards-check.mjs` | `checkZodArrays`: 길이 제한 없는 `z.array`·`.array()` 경고 |
-| `scripts/test/backend-http.test.mjs`, `scripts/test/standards-check.test.mjs` | 테스트 |
-| `docs/research/zod4.md` | 결정 |
-| `docs/directory-rules.md` | 검사 경고 목록, 400 응답 설명 |
+| `templates/app/backend/src/standard/http.ts` | Responds with only the first 10 zod issue messages (`MAX_ISSUES`) and "외 N개" (and N more) |
+| `scripts/standards-check.mjs` | `checkZodArrays`: warns about `z.array` and `.array()` without a length limit |
+| `scripts/test/backend-http.test.mjs`, `scripts/test/standards-check.test.mjs` | Tests |
+| `docs/research/zod4.md` | Decision |
+| `docs/directory-rules.md` | List of check warnings, description of the 400 response |
 
-## 정한 것
+## Decisions
 
-- 사용자가 #307 후보 A를 골랐다. zod는 3.25.76에 머물고, 공격 경로(길이 제한 없는 배열)를 막는다.
-- 응답 메시지를 줄여도 메모리 문제가 사라지지는 않는다. 이슈는 zod 안에서 이미 쌓인 뒤이기 때문이다. 실제 대책은 배열에 `.max()`를 붙이는 것이고, 메시지 제한은 수 MB 응답을 막는 보조 장치다.
-- 검사는 경고만 한다(API 규칙 경고와 같다). 여러 줄에 걸친 체인도 괄호를 따라가며 `.max()`·`.length()`를 찾는다. zod를 import하지 않는 파일은 읽지 않는다.
-- study-log `backend/src/textbook-contents.ts`의 `ids`는 study-log PR로 고친다.
+- The user chose option A in #307. zod stays at 3.25.76, and the attack path (an array without a length limit) is blocked.
+- Shortening the response message does not remove the memory problem, because the issues have already piled up inside zod. The real fix is adding `.max()` to arrays, and the message limit is a supporting measure that prevents responses of several MB.
+- The check only warns (same as the API rule warnings). It follows parentheses through chains that span several lines to find `.max()` and `.length()`. Files that do not import zod are not read.
+- `ids` in study-log `backend/src/textbook-contents.ts` is fixed in a study-log PR.
 
-## 검증
+## Checks
 
-- `node --test scripts/test/backend-http.test.mjs`: 8개 통과 (이슈 5만 개 → 메시지 10개 + "외 49990개")
-- `node --test scripts/test/standards-check.test.mjs scripts/test/scaffold.test.mjs`: 30개 통과
-- 앱 8개 `origin/main`의 `backend/src`에 `checkZodArrays`: study-log `textbook-contents.ts:54` 1곳만 경고
-- 관리 파일을 workout-memo의 TypeScript로 타입 검사, 같은 앱의 ESLint·Prettier로 검사: 문제 없음
+- `node --test scripts/test/backend-http.test.mjs`: 8 passed (50,000 issues give 10 messages plus "외 49990개", meaning "and 49,990 more")
+- `node --test scripts/test/standards-check.test.mjs scripts/test/scaffold.test.mjs`: 30 passed
+- `checkZodArrays` on `backend/src` of the 8 apps' `origin/main`: only 1 warning, study-log `textbook-contents.ts:54`
+- Type-checked the managed file with workout-memo's TypeScript and checked it with the same app's ESLint and Prettier: no problems

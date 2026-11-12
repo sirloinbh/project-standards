@@ -1,41 +1,41 @@
-# #309 백엔드 공통 HTTP 파일 (오류 처리기·404·ID·날짜)
+# #309 Shared backend HTTP file (error handler, 404, ID, date)
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/app/backend/src/standard/http.ts` | 새 중앙 관리 파일: `errorHandler`, `notFound`, `HttpError`, `sendError`, `parseId`·`ID_PATTERN`, `serviceDate`·`serviceTimeZone`, `ApiError` |
-| `templates/app/.prettierignore.tmpl` | `backend/src/standard/` (관리 파일 해시 유지, #154) |
-| `scaffold/app/backend/src/routes/shared.ts` | 직접 쓰던 오류 처리기 대신 `standard/http.ts`를 다시 내보냄 |
-| `scripts/test/backend-http.test.mjs` | 관리 파일 테스트 (Node 타입 제거로 바로 실행) |
-| `scripts/test/fixtures/sync-snapshot.json` | 앱 8개에 파일 1개 추가 |
-| `docs/directory-rules.md`, `docs/design.md` | 위치, 상태 코드 표, 앱 고유 오류, ID와 날짜 |
+| `templates/app/backend/src/standard/http.ts` | New centrally managed file: `errorHandler`, `notFound`, `HttpError`, `sendError`, `parseId` and `ID_PATTERN`, `serviceDate` and `serviceTimeZone`, `ApiError` |
+| `templates/app/.prettierignore.tmpl` | `backend/src/standard/` (keeps the managed file hash, #154) |
+| `scaffold/app/backend/src/routes/shared.ts` | Re-exports `standard/http.ts` instead of a hand-written error handler |
+| `scripts/test/backend-http.test.mjs` | Managed file tests (run directly with Node type stripping) |
+| `scripts/test/fixtures/sync-snapshot.json` | Added 1 file to the 8 apps |
+| `docs/directory-rules.md`, `docs/design.md` | Location, status code table, app-specific errors, ID and date |
 
-## 정한 것
+## Decisions
 
-- 기준은 study-log의 오류 처리기다. 8개 앱 가운데 다루는 오류가 가장 많다(깨진 JSON `400`, 큰 본문 `413`, 그 밖의 `4xx` 유지, `NUL` 문자 `22021` → `400`, `23505` → `409`).
-- 파일은 타입만 import한다. `ZodError`는 `instanceof` 대신 모양(`name === 'ZodError'`, `issues` 배열)으로 알아본다. 그래서 zod 3·4 어느 쪽이든 동작하고(#306·#307), 중앙 리포는 패키지 설치 없이 Node의 타입 제거로 바로 테스트한다.
-- ID 검증은 zod 스키마 대신 함수 `parseId(value, label)`로 했다. 실패하면 `HttpError(400)`를 던진다. zod 스키마에서 쓰도록 `ID_PATTERN`도 내보낸다. 규칙은 study-log와 같다: 1~15자리, 앞자리 0 없음. workout-memo의 `z.coerce`가 받던 `"1e3"`, `" 7 "`는 받지 않는다.
-- 라우트가 원하는 상태 코드를 내도록 `HttpError`를 넣었다(`throw new HttpError(404, '…')`).
-- 앱 고유 오류는 이 파일에 넣지 않는다. 앱의 오류 미들웨어를 `errorHandler` 앞에 둔다.
-- 위치는 `backend/src/standard/`다. 앱 코드와 섞이지 않고 이름만 보고 중앙 관리 파일인지 알 수 있다.
+- The basis is study-log's error handler. Of the 8 apps, it handles the most errors (broken JSON `400`, large body `413`, other `4xx` kept, `NUL` character `22021` to `400`, `23505` to `409`).
+- The file imports only types. `ZodError` is recognized by shape (`name === 'ZodError'`, an `issues` array) instead of `instanceof`. So it works with either zod 3 or 4 (#306, #307), and the central repo tests it directly with Node type stripping, without installing packages.
+- ID validation uses a function `parseId(value, label)` instead of a zod schema. On failure it throws `HttpError(400)`. `ID_PATTERN` is also exported so zod schemas can use it. The rule is the same as study-log: 1 to 15 digits, no leading zero. The `"1e3"` and `" 7 "` that workout-memo's `z.coerce` accepted are not accepted.
+- `HttpError` was added so a route can send the status code it wants (`throw new HttpError(404, '…')`).
+- App-specific errors are not put in this file. Place the app's error middleware before `errorHandler`.
+- The location is `backend/src/standard/`. It does not mix with app code, and you can tell from the name that it is a centrally managed file.
 
-## 앱에 들어간 뒤 (앱마다 바꿀 것)
+## After it reaches the apps (what to change in each app)
 
-동기화 PR은 파일만 더한다. 앱이 이 파일을 쓰도록 바꾸는 일은 앱 리포에서 한다(병합은 사용자).
+The sync PR only adds the file. Changing the app to use this file is done in the app repo (the user merges).
 
-| 앱 | 바꿀 것 | 고쳐지는 것 |
+| App | What to change | What gets fixed |
 |---|---|---|
-| health-log, life-journal, money-ledger, english-study, dev-career-portfolio | `app.ts`의 익명 오류 처리기와 404를 `import { errorHandler, notFound, serviceDate } from './standard/http.js'`로 바꾸고, `serviceDate`·`serviceTimeZone` 복사본을 지운다 | 깨진 JSON·큰 본문이 `500` 대신 `400`·`413` |
-| plan-routine | 위와 같음. ID 정규식(`^\d{1,18}$`)은 문자열 ID 응답과 함께 그대로 둔다 | 깨진 JSON `500` → `400` |
-| study-log | 위와 같음. 라우트의 `idParam` 정규식은 `ID_PATTERN` 또는 `parseId`로 바꿀 수 있다(같은 규칙) | 중복 코드 제거 |
-| workout-memo | `routes/shared.ts`의 오류 처리기를 지우고 `23503`·백업 `413` 전용 메시지만 앱 오류 미들웨어로 남긴다. `app.use('/api', notFound)`를 더한다. `id()`(`z.coerce`)를 `parseId`로 바꾸고, goals 삭제의 `404 { ok: false }`를 `404 { error }`로 고친다 | 없는 `/api` 경로가 HTML 대신 JSON 404, ID `"1e3"` 거부, 삭제 실패 본문 통일 |
+| health-log, life-journal, money-ledger, english-study, dev-career-portfolio | Replace the anonymous error handler and 404 in `app.ts` with `import { errorHandler, notFound, serviceDate } from './standard/http.js'`, and delete the copies of `serviceDate` and `serviceTimeZone` | Broken JSON and large bodies give `400` and `413` instead of `500` |
+| plan-routine | Same as above. Keep the ID regex (`^\d{1,18}$`) as it is, together with the string ID responses | Broken JSON `500` to `400` |
+| study-log | Same as above. The route's `idParam` regex can be replaced with `ID_PATTERN` or `parseId` (same rule) | Removes duplicate code |
+| workout-memo | Delete the error handler in `routes/shared.ts` and leave only the dedicated messages for `23503` and backup `413` in the app error middleware. Add `app.use('/api', notFound)`. Replace `id()` (`z.coerce`) with `parseId`, and change the goals delete `404 { ok: false }` to `404 { error }` | A missing `/api` path gives a JSON 404 instead of HTML, ID `"1e3"` is rejected, and the delete failure body is unified |
 
-workout-memo 몫은 sirloinbh/workout-memo#172로 따로 열었다(#241 후보 E).
+The workout-memo part was opened separately as sirloinbh/workout-memo#172 (#241 candidate E).
 
-## 검증
+## Checks
 
-- `node --test scripts/test/backend-http.test.mjs`: 7개 통과 (깨진 JSON `400`, 큰 본문 `413`, 그 밖의 `4xx`, zod 오류 `400`, `HttpError`, `22021`·`23505`, `500`과 로그, JSON 404, ID 경계값, Asia/Seoul 날짜 경계)
-- workout-memo에 설치된 TypeScript 5.9.3과 `@types/express`·`@types/pg`로 관리 파일과 스캐폴드 `routes/shared.ts`를 `strict`·`NodeNext`로 타입 검사: 오류 없음
-- 같은 앱의 ESLint로 1.1.0 공유 설정을 적용해 검사: 위반 없음. 공유 Prettier 설정으로 포맷함
-- `npm run check` 결과는 PR에 적는다
+- `node --test scripts/test/backend-http.test.mjs`: 7 passed (broken JSON `400`, large body `413`, other `4xx`, zod error `400`, `HttpError`, `22021` and `23505`, `500` and logging, JSON 404, ID boundary values, Asia/Seoul date boundary)
+- Type-checked the managed file and the scaffold `routes/shared.ts` with `strict` and `NodeNext`, using TypeScript 5.9.3 and `@types/express` and `@types/pg` installed in workout-memo: no errors
+- Checked with the 1.1.0 shared config applied through the same app's ESLint: no violations. Formatted with the shared Prettier config
+- The result of `npm run check` is written in the PR

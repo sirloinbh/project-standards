@@ -1,25 +1,25 @@
-# #304 앱 공통 의존성 버전을 versions.json에 두고 관리 필드로 검사
+# #304 Keep shared app dependency versions in versions.json and check them as managed fields
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `versions.json`, `versions.schema.json` | `dependencies`: 앱 8개와 스캐폴드가 같은 파일·칸·버전으로 쓰는 외부 의존성 37개 (`root`·`frontend`·`backend`) |
-| `templates/index.json` | `dependencyFields`: 위 값을 앱 `package.json` 3개의 관리 필드로 쓰는 설정 |
-| `scripts/lib/templates.mjs` | `sharedDependencyFields`: 관리 필드로 펼치고, 이름에 점이 있거나 `fields`와 겹치면 멈춤 |
-| `scripts/gen-docs.mjs`, `docs/versions.md` | `versions.json`에서 버전 표 생성 |
-| `docs/dependency-policy.md` | 손으로 쓰던 버전 표를 `versions.md` 안내와 한 앱만 쓰는 패키지 표로 바꿈 |
-| `AGENTS.md`, `docs/design.md`, `docs/stack.md` | 원본 위치 안내 |
-| `scripts/test/*` | 관리 필드·드리프트·생성 문서 테스트, 기존 fixture에 공통 의존성 추가 |
+| `versions.json`, `versions.schema.json` | `dependencies`: 37 external dependencies that the 8 apps and the scaffold use with the same file, section, and version (`root`, `frontend`, `backend`) |
+| `templates/index.json` | `dependencyFields`: the setting that uses the values above as managed fields of the 3 app `package.json` files |
+| `scripts/lib/templates.mjs` | `sharedDependencyFields`: expands them into managed fields, and stops if a name contains a dot or overlaps with `fields` |
+| `scripts/gen-docs.mjs`, `docs/versions.md` | Generate the version table from `versions.json` |
+| `docs/dependency-policy.md` | Replaced the hand-written version table with a pointer to `versions.md` and a table of packages used by only one app |
+| `AGENTS.md`, `docs/design.md`, `docs/stack.md` | Pointers to the source location |
+| `scripts/test/*` | Tests for managed fields, drift, and generated docs; added the shared dependencies to the existing fixtures |
 
-## 정한 것
+## Decisions
 
-- 검사는 새로 만들지 않고 기존 관리 필드(manifest `fields`)를 쓴다. 그래서 앱 하나만 버전이 다르면 `standards-check`가 "관리 필드가 다릅니다"로 실패하고, 중앙에서 버전을 올리면 동기화 PR이 앱 `package.json`을 바꾼다.
-- 대상은 앱 8개와 스캐폴드(`scaffold/app/`)가 모두 같은 파일·같은 칸에 쓰는 것만이다. `concurrently`는 앱 8개는 쓰지만 스캐폴드에 없어서 뺐다. `@sirloinbh/*`는 이미 `packages`로 관리한다.
-- 관리 필드 경로가 점으로 나뉘므로(`devDependencies.vite`) 이름에 점이 든 패키지(`tesseract.js` 등)는 넣을 수 없다. 넣으면 렌더링이 멈춘다.
-- 동기화 PR이 `package.json` 버전을 바꾸면 lockfile은 그대로라 `npm ci`가 실패한다. 버전을 올리는 동기화 PR에서는 사용자가 `npm install --ignore-scripts`로 lockfile을 맞추고 `npm run lockfiles:sync`(#303)를 실행한다. 이번 변경은 지금 버전을 그대로 옮긴 것이라 앱에서 바뀌는 버전은 없다.
+- No new check is created; the existing managed fields (manifest `fields`) are used. So if only one app has a different version, `standards-check` fails with "managed fields differ" (the original message is in Korean), and when a version is raised centrally, the sync PR changes the app `package.json`.
+- Only dependencies that all 8 apps and the scaffold (`scaffold/app/`) write in the same file and the same section are targets. `concurrently` is used by the 8 apps but not in the scaffold, so it was left out. `@sirloinbh/*` is already managed as `packages`.
+- Managed field paths are split on dots (`devDependencies.vite`), so packages whose names contain a dot (such as `tesseract.js`) cannot be included. Including one stops rendering.
+- If a sync PR changes versions in `package.json`, the lockfile stays as it is and `npm ci` fails. In a sync PR that raises versions, the user matches the lockfile with `npm install --ignore-scripts` and runs `npm run lockfiles:sync` (#303). This change carried over the current versions as they are, so no app versions change.
 
-## 검증
+## Checks
 
-- 앱 8개 `origin/main`의 `package.json` 3개를 37개 필드와 비교: 모두 같음
-- `npm run check` 결과는 PR에 적는다
+- Compared the 3 `package.json` files of the 8 apps on `origin/main` with the 37 fields: all match
+- The result of `npm run check` is written in the PR

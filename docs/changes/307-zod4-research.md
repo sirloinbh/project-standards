@@ -1,19 +1,19 @@
-# #307 zod 4 이전 조사
+# #307 Research on moving to zod 4
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/research/zod4.md` | 보안 권고, 앱의 실제 노출, zod 4에서 바뀌는 API 수, 후보 A~D |
+| `docs/research/zod4.md` | Security advisory, the apps' actual exposure, the number of APIs that change in zod 4, options A to D |
 
-## 정한 것
+## Decisions
 
-- 조사만 했다. 코드는 바꾸지 않았다.
-- #240의 "zod 3 유지" 권장은 zod 4 PR이 보안 업데이트라는 점을 빠뜨렸다. 이 문서가 그 판단을 다시 한다(#306은 보류 중).
+- This was research only. No code was changed.
+- The "stay on zod 3" recommendation in #240 missed that the zod 4 PR is a security update. This document makes that judgment again (#306 is on hold).
 
-## 검증
+## Checks
 
-- 앱 8개 `origin/main`을 `git show`로 읽어 셌다. 배열 스키마는 여러 줄에 걸친 체인까지 괄호를 따라가며 확인했다.
-- 패키지 정보는 `npm view zod@<버전> exports`, `npm view zod time`(읽기 전용)으로 확인했다.
-- Dependabot 알림 내용은 GitHub API(`dependabot/alerts`)로 읽었다.
-- zod 묶음 PR의 CI 실패 원인은 health-log 작업 로그에서 확인했다.
+- Read the 8 apps' `origin/main` with `git show` and counted. Array schemas were checked by following parentheses, including chains that span several lines.
+- Package information was checked with `npm view zod@<version> exports` and `npm view zod time` (read-only).
+- The Dependabot alert content was read through the GitHub API (`dependabot/alerts`).
+- The cause of the CI failure of the zod bundle PR was confirmed in the health-log work log.

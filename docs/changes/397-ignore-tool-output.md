@@ -1,16 +1,16 @@
-# #397 중앙 리포 .gitignore에 도구 부산물 폴더 추가
+# #397 Add tool output folders to the central repo .gitignore
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `.gitignore` | `.bkit/`, `.playwright-mcp/` 추가 |
+| `.gitignore` | Added `.bkit/` and `.playwright-mcp/` |
 
-## 앱 8개
+## The 8 apps
 
-앱이 받는 `templates/common/.gitignore.tmpl`에는 두 폴더가 이미 있다. 앱 8개의 `.gitignore`에도 있음을 확인해서 동기화 PR이 따로 필요 없다.
+The `templates/common/.gitignore.tmpl` that apps receive already has both folders. I confirmed that the `.gitignore` of the 8 apps also has them, so no separate sync PR is needed.
 
-## 검증
+## Checks
 
-- `git check-ignore`: 두 폴더 모두 무시됨
-- `npm run check`: 통과
+- `git check-ignore`: both folders are ignored
+- `npm run check`: passed

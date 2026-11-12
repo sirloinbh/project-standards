@@ -1,23 +1,23 @@
-# #367 동기화 봇이 사람이 더한 커밋을 덮어쓰지 않게 하기
+# #367 Stop the sync bot from overwriting commits added by people
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `scripts/lib/sync-pr.mjs` | 브랜치를 갱신하기 전에 PR 커밋을 확인하고, 직접 커밋이 있으면 건드리지 않고 PR에 댓글을 남김 |
-| `scripts/sync.mjs` | 건너뛴 리포를 워크플로 경고로 표시 |
-| `scripts/test/sync-pr.test.mjs`, `scripts/test/fake-github.mjs` | 유지, 조회 실패, 병합 후 동작 테스트와 가짜 API 경로 |
-| `AGENTS.md`, `docs/design.md` | 규칙과 동기화 흐름 갱신 |
+| `scripts/lib/sync-pr.mjs` | Checks the PR commits before updating the branch, and if there is a direct commit it leaves the branch alone and posts a comment on the PR |
+| `scripts/sync.mjs` | Shows skipped repos as a workflow warning |
+| `scripts/test/sync-pr.test.mjs`, `scripts/test/fake-github.mjs` | Tests for keeping, lookup failure, and post-merge behavior, and the fake API route |
+| `AGENTS.md`, `docs/design.md` | Updated the rule and the sync flow |
 
-## 정한 것
+## Decisions
 
-- 봇 커밋은 메시지 시작(`chore: 중앙 표준 동기화 (project-standards@`)으로 구별한다. 앱 계정 이름이 바뀌어도 동작한다.
-- 커밋 목록을 읽지 못하면 그 리포를 실패로 처리하고 덮어쓰지 않는다.
-- 커밋과 트리를 만들기 전에 확인해서, 건너뛸 때 쓰지 않는 객체가 하위 리포에 생기지 않는다.
-- App 권한은 그대로다. 커밋 조회와 PR 댓글은 기존 Pull requests 권한으로 된다.
-- 건너뛴 리포는 실패가 아니라 `kept` 상태라 워크플로를 실패시키지 않는다.
+- Bot commits are recognized by the start of the message (`chore: 중앙 표준 동기화 (project-standards@`, the legacy Korean sync commit prefix, kept as is because the code matches on it). It works even if the app account name changes.
+- If the commit list cannot be read, that repo is treated as a failure and nothing is overwritten.
+- It checks before creating commits and trees, so no unused objects are created in the downstream repo when skipping.
+- App permissions are unchanged. Reading commits and posting PR comments work with the existing Pull requests permission.
+- A skipped repo is in the `kept` state, not a failure, so it does not fail the workflow.
 
-## 한계
+## Limits
 
-- 그 PR이 열려 있는 동안 중앙 변경은 그 리포에 반영되지 않는다. 병합한 뒤 `sync` 워크플로를 실행해야 한다.
-- 실제 앱 리포에서는 아직 동작을 보지 못했다. 가짜 API 테스트로 확인했다.
+- While that PR is open, central changes are not applied to that repo. After merging it, run the `sync` workflow.
+- The behavior has not been seen in a real app repo yet. It was checked with fake API tests.

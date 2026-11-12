@@ -1,38 +1,38 @@
-# #390 앱 프론트엔드 테스트 시간 제한을 15초로 올리기
+# #390 Raise the app frontend test timeout to 15 seconds
 
-- 이슈: [#390](https://github.com/sirloinbh/project-standards/issues/390)
-- 발견한 곳: [sirloinbh/cert-manager#80](https://github.com/sirloinbh/cert-manager/issues/80)
+- Issue: [#390](https://github.com/sirloinbh/project-standards/issues/390)
+- Found in: [sirloinbh/cert-manager#80](https://github.com/sirloinbh/cert-manager/issues/80)
 
-## 목적
+## Purpose
 
-같은 PC에 다른 작업이 돌면 앱의 화면 테스트가 Vitest 기본 제한 5초에 닿아 코드와 상관없이 필수 검사가 실패한다. 사용자가 15초로 정했다(2026-11-01).
+When other work runs on the same PC, an app's screen tests hit the Vitest default limit of 5 seconds, and a required check fails regardless of the code. The user decided on 15 seconds (2026-11-01).
 
-## 변경
+## Change
 
-- `templates/vitest/frontend/vitest.config.ts.tmpl`: `testTimeout: 15_000` 추가.
-- `docs/test-config.md`: 값과 이유 기록.
+- `templates/vitest/frontend/vitest.config.ts.tmpl`: added `testTimeout: 15_000`.
+- `docs/test-config.md`: recorded the value and the reason.
 
-`features.vitest`가 켜진 앱에 동기화 PR로 반영된다. 받을 파일 목록은 바뀌지 않아 스냅샷은 그대로다.
+It reaches apps with `features.vitest` on through the sync PR. The list of files they receive does not change, so the snapshot is unchanged.
 
-## 측정
+## Measurement
 
-cert-manager 프론트엔드 전체를 CPU 코어 12개인 PC에서 돌렸다. 앱 설정 파일은 바꾸지 않고 `--testTimeout` 옵션으로 쟀다.
+I ran the whole cert-manager frontend on a PC with 12 CPU cores. I measured with the `--testTimeout` option, without changing the app config file.
 
-| 제한 | 부하 | 실행 | 실패 | 가장 느린 테스트 |
+| Limit | Load | Runs | Failures | Slowest test |
 | ---- | ---- | ---: | ---: | ---: |
-| 5초 | 바쁜 프로세스 24개 | 3회 | 회당 9~18개 | 10.3~12.6초(실패) |
-| 15초 | 바쁜 프로세스 24개 이상 | 3회 | 0개 | 첫 회 제외 11.5~14.5초 |
-| 5초 | 다른 작업 적음 | 4회 | 0개 | 1.9~2.2초 |
+| 5 s | 24 busy processes | 3 | 9 to 18 per run | 10.3 to 12.6 s (failed) |
+| 15 s | 24 or more busy processes | 3 | 0 | 11.5 to 14.5 s except the first run |
+| 5 s | little other work | 4 | 0 | 1.9 to 2.2 s |
 
-- 15초 측정 때는 앞선 측정에서 끝나지 않은 부하 프로세스가 일부 남아 있어 부하가 24개보다 컸다. 정확한 양은 재지 않았다.
-- 15초 첫 회의 시간 기록은 가장 느린 테스트가 3.6초로 나와 실행 시간 260초와 맞지 않는다. 원인을 찾지 않았고 실패 0개만 기록한다.
-- 여유가 크지는 않다. 더 심한 부하에서는 15초에도 닿을 수 있다.
-- 다른 앱은 재지 않았다.
+- During the 15 s measurement, some load processes from the earlier measurement had not finished, so the load was greater than 24. The exact amount was not measured.
+- In the first 15 s run, the time record shows the slowest test as 3.6 s, which does not match the run time of 260 s. I did not look for the cause and record only 0 failures.
+- The margin is not large. Under a heavier load, even 15 s could be reached.
+- Other apps were not measured.
 
-## 검증
+## Checks
 
-- `npm run check`: 통과.
+- `npm run check`: passed.
 
-## 제한·후속 작업
+## Limits and follow-up
 
-- 앱 쪽 동기화 PR은 사용자가 병합한다.
+- The user merges the sync PRs on the app side.

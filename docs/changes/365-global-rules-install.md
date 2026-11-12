@@ -1,19 +1,19 @@
-# #365 install.ps1로 PC별 전역 지침을 git CLI 규칙으로 맞추기
+# #365 Align per-PC global instructions with the git CLI rules using install.ps1
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `tools/global-instructions/git-branches.md` | 전역 지침에 넣는 브랜치 규칙의 원본 추가 |
-| `tools/install.ps1` | 전역 지침의 브랜치 절 교체와 Fork 규칙 메모리 정리 추가 |
-| `tools/check-git-permissions.mjs` | 이 PC의 실제 권한 판정을 확인하는 명령 추가 |
-| `scripts/test/tools.test.mjs` | 절 교체, 반복 실행, 메모리 정리, 실행 조건 테스트 추가 |
-| `docs/tools.md`, `docs/user-steps.md` | 도구 설명과 사용자 단계 16 추가 |
+| `tools/global-instructions/git-branches.md` | Added the source of the branch rules that go into the global instructions |
+| `tools/install.ps1` | Added replacing the branch section of the global instructions and cleaning up the Fork rule memory |
+| `tools/check-git-permissions.mjs` | Added a command that checks this PC's actual permission decisions |
+| `scripts/test/tools.test.mjs` | Added tests for section replacement, repeated runs, memory cleanup, and run conditions |
+| `docs/tools.md`, `docs/user-steps.md` | Added the tool description and user step 16 |
 
-## 정한 것
+## Decisions
 
-- 없는 전역 파일은 만들지 않는다. 충돌할 규칙이 없고, 같은 규칙이 각 리포에 있다.
-- 제목에 `Fork` 또는 `git CLI`가 들어 있는 절만 바꾸고, 그런 절이 없으면 파일 끝에 붙인다. 다른 절은 그대로 둔다. 바꾼 파일과 메모리는 `.bak-<시각>`으로 남긴다.
-- `-Destination`만 지정한 설치는 전역 지침을 건드리지 않는다. 테스트가 실제 홈 폴더를 고치지 않게 하기 위해서다.
-- 권한 확인은 승인 요청을 모두 거부하는 방식으로 한다. `dontAsk` 모드와 달리 승인 필요와 차단을 구별할 수 있고, 승인 필요 명령은 실행되지 않는다.
-- 다른 PC는 이 PC에서 고칠 수 없다. 그 PC에서 실행하는 일은 사용자 단계 16과 #361에서 추적한다.
+- A missing global file is not created. There is no rule to conflict with, and the same rules are in each repo.
+- Only a section whose title contains `Fork` or `git CLI` is replaced, and if there is no such section it is appended to the end of the file. Other sections are left as they are. The changed file and memory are kept as `.bak-<time>`.
+- An install that specifies only `-Destination` does not touch the global instructions. This is so tests do not modify the real home folder.
+- The permission check works by denying all approval requests. Unlike `dontAsk` mode, it can tell "approval needed" from "blocked", and commands that need approval are not run.
+- Other PCs cannot be fixed from this PC. Running it on those PCs is tracked in user step 16 and #361.

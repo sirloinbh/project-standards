@@ -1,31 +1,31 @@
-# #417 autodeploy가 GitHub가 직접 돌리는 실행 때문에 배포를 멈추지 않게 하기
+# #417 Stop autodeploy from halting deploys because of runs that GitHub starts itself
 
-## 문제
+## Problem
 
-`autodeploy.sh`의 `ci_state`는 main 커밋에 붙은 check run이 **모두** 성공해야 배포했다. workout-memo에서 2026-11-08에 두 번 배포가 멈췄다.
+`ci_state` in `autodeploy.sh` deployed only when **all** check runs attached to the main commit succeeded. In workout-memo, deploys halted twice on 2026-11-08.
 
-- `254e1f7`: Dependabot 보안 업데이트 run(`npm_and_yarn in /. for minimatch - Update`)이 실패했다. 고친 버전이 아직 없어서다.
-- `593a906`: CodeQL 기본 설정 run이 CLI를 받다가 504로 실패했다. 기본 설정 run은 다시 돌릴 수 없다.
+- `254e1f7`: A Dependabot security update run (`npm_and_yarn in /. for minimatch - Update`) failed, because no fixed version exists yet.
+- `593a906`: A CodeQL default setup run failed with a 504 while downloading the CLI. A default setup run cannot be re-run.
 
-두 경우 모두 우리 `ci` 워크플로(verify·docker-build·e2e-visual)와 `windows-auth`는 통과했다.
+In both cases our own `ci` workflow (verify, docker-build, e2e-visual) and `windows-auth` passed.
 
-## 확인한 것
+## What was checked
 
-- 이슈 본문의 제안인 `app.slug == "dependabot"` 필터는 맞지 않는다. 실제 응답에서 Dependabot check run의 `app.slug`도 `github-actions`다.
-- workflow runs API(`/actions/runs?head_sha=`)에서는 Dependabot 업데이트와 CodeQL 기본 설정 둘 다 `event: "dynamic"`이고 `path`가 `dynamic/...`이다. 리포 워크플로는 `push` 등 실제 이벤트다.
+- The `app.slug == "dependabot"` filter proposed in the issue body does not work. In the real response, the `app.slug` of a Dependabot check run is also `github-actions`.
+- In the workflow runs API (`/actions/runs?head_sha=`), both the Dependabot update and the CodeQL default setup have `event: "dynamic"` and a `path` of `dynamic/...`. Repo workflows have real events such as `push`.
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/app/deploy/autodeploy.sh.tmpl` | check-runs 대신 workflow runs API를 읽고, `event`가 `dynamic`인 실행을 뺀 나머지가 모두 success·skipped·neutral이면 배포 |
-| `scripts/test/deploy-templates.test.mjs` | 입력을 `workflow_runs`로 바꾸고 dynamic 실행 실패·진행 중·dynamic만 있는 경우를 추가 |
-| `docs/runbooks/deploy.md` | 배포 조건 설명에 dynamic 실행 제외를 적음 |
+| `templates/app/deploy/autodeploy.sh.tmpl` | Reads the workflow runs API instead of check-runs, and deploys if everything except runs whose `event` is `dynamic` is success, skipped, or neutral |
+| `scripts/test/deploy-templates.test.mjs` | Changed the input to `workflow_runs` and added cases for a failed dynamic run, an in-progress run, and only dynamic runs |
+| `docs/runbooks/deploy.md` | Wrote the exclusion of dynamic runs in the description of the deploy conditions |
 
-이슈 댓글의 제안(배포 판단을 리포 워크플로로 좁히기)과 같은 결과다. 브랜치 보호의 필수 검사 목록을 읽는 방식은 인증이 필요해서 쓰지 않았다(서버는 공개 API만 쓴다). CodeQL 경보는 code scanning에서 따로 본다.
+This gives the same result as the proposal in the issue comment (narrowing the deploy decision to repo workflows). The approach of reading the required checks list from branch protection was not used because it needs authentication (the server uses only the public API). CodeQL alerts are viewed separately in code scanning.
 
-## 검증
+## Checks
 
-- 로컬 Windows에는 python3가 없어 해당 테스트가 건너뛰어진다(CI의 ubuntu에서는 돈다). 그래서 WSL Ubuntu에서 렌더링한 스크립트의 `ci-state`를 직접 돌렸다: pending·pass·fail 판정과 dynamic 실행 사례 7가지가 모두 기대대로 나왔고, workout-memo 실제 커밋 `254e1f7`·`593a906`의 workflow runs 응답이 둘 다 `pass`였다(바뀌기 전에는 `fail`).
-- `npm run check`: 결과는 PR 본문에 적는다.
-- 반영: 동기화 PR로 각 앱의 `deploy/autodeploy.sh`가 바뀐다. workout-memo는 동기화 PR 병합 뒤 `.autodeploy-failed`가 남아 있으면 다음 main 커밋에서 다시 판단한다(지금 `593a906`이 기록돼 있다면 `rm /opt/workout-memo/.autodeploy-failed`로 바로 다시 시도할 수 있다).
+- The local Windows machine has no python3, so that test is skipped (it runs on ubuntu in CI). So I ran `ci-state` of the script rendered in WSL Ubuntu directly: the pending, pass, and fail decisions and 7 dynamic-run cases all came out as expected, and the workflow runs responses for workout-memo's real commits `254e1f7` and `593a906` were both `pass` (before the change they were `fail`).
+- `npm run check`: the result is written in the PR body.
+- Rollout: the sync PR changes `deploy/autodeploy.sh` in each app. For workout-memo, if `.autodeploy-failed` remains after the sync PR is merged, it is judged again at the next main commit (if `593a906` is currently recorded, you can retry right away with `rm /opt/workout-memo/.autodeploy-failed`).

@@ -1,20 +1,20 @@
-# #420 하위 이슈를 같은 워크트리에서 이어 가고 상위 이슈도 함께 닫기
+# #420 Continue sub-issues in the same worktree and close the parent issue with them
 
-사용자가 2026-11-08에 요청했다. #404에서 만든 상위·하위 이슈 규칙에 진행 순서와 닫는 때를 더한다.
+The user asked for this on 2026-11-08. It adds the order of work and when to close to the parent and sub-issue rules made in #404.
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `templates/common/skills/std-backlog/SKILL.md` | 규칙 5번에 요약. 5장 3단계에 "같은 상위 이슈를 먼저 이어 간다"와 "같은 워크트리에서 진행". 6장 "닫는 시점"을 마지막 하위 이슈가 닫힐 때로 바꿈 |
-| `.claude/skills/std-backlog/SKILL.md` | 이 리포의 복제본 |
+| `templates/common/skills/std-backlog/SKILL.md` | Summarized in rule 5. Added "continue the same parent issue first" and "proceed in the same worktree" to step 3 of chapter 5. Changed "when to close" in chapter 6 to when the last sub-issue closes |
+| `.claude/skills/std-backlog/SKILL.md` | This repo's copy |
 
-## 정한 것
+## Decisions
 
-- **이어 가는 순서:** 방금 끝낸 이슈의 상위 이슈에 후보가 남아 있으면 그중에서 고른다. 다른 상위 이슈에 우선순위 숫자가 더 작은 후보가 있을 때만 옮긴다. 같은 등급의 다른 분야 `origin/added` 이슈보다 같은 상위 이슈를 먼저 둔다. 사용자는 이 순서를 직접 정하지 않았다.
-- **워크트리:** 병합 뒤 정리를 마친 같은 체크아웃에서 `origin/main` 기준 새 브랜치를 만든다. 이전 PR이 병합돼야 다음 이슈를 시작한다는 5장 1단계는 그대로다.
-- **상위 이슈 닫기:** 마지막 하위 이슈가 닫히면 다음 작업을 고르기 전에 닫는다. 열린 하위 이슈 0개를 확인하고 목표와 대조한 댓글을 남긴다. 목표에 남은 일이 있으면 하위 이슈로 등록하고 열어 둔다. 본문에 "열어 둔다"고 적은 상위 이슈(#411)는 예외다.
+- **Order to continue:** If candidates remain under the parent issue of the issue just finished, pick from them. Move only when another parent issue has a candidate with a smaller priority number. Put the same parent issue before an `origin/added` issue of the same level in another area. The user did not decide this order directly.
+- **Worktree:** In the same checkout where the cleanup after merge is done, create a new branch from `origin/main`. Step 1 of chapter 5, that the next issue starts only after the previous PR is merged, is unchanged.
+- **Closing the parent issue:** When the last sub-issue closes, close it before picking the next task. Confirm 0 open sub-issues and leave a comment checked against the goal. If work remains in the goal, register it as a sub-issue and leave the parent open. A parent issue whose body says "keep open" (#411) is an exception.
 
-## 검증
+## Checks
 
-- `npm run check`: 결과는 PR 본문에 적는다.
+- `npm run check`: the result is written in the PR body.

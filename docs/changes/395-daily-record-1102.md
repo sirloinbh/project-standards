@@ -1,13 +1,13 @@
-# #395 2026-11-02 작업 기록 남기기
+# #395 Keep the 2026-11-02 work record
 
-## 변경
+## Change
 
-| 파일 | 내용 |
+| File | Content |
 |---|---|
-| `docs/daily/2026-11-02.md` | 2026-11-02에 한 일과 이어서 할 일 |
-| `docs/daily/README.md` | 목록에 추가 |
+| `docs/daily/2026-11-02.md` | What was done on 2026-11-02 and what to do next |
+| `docs/daily/README.md` | Added to the list |
 
-## 확인
+## Checks
 
-- `npm run check`를 실행했다.
-- PR과 이슈 상태는 GitHub에서 조회해 옮겼다.
+- Ran `npm run check`.
+- The PR and issue states were looked up from GitHub and copied over.
