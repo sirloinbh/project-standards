@@ -17,6 +17,8 @@ The [std-git-writing](../templates/common/skills/std-git-writing/SKILL.md) skill
 
 `type`: `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`
 
+Reviewing PRs follows the [std-code-review](../templates/common/skills/std-code-review/SKILL.md) skill. To write an issue card outside Claude Code (for example in claude.ai chat), use the copy-paste prompt in [issue-prompt.md](issue-prompt.md).
+
 ## Merge policy
 
 | Repo | Who merges | Why |
