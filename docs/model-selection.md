@@ -30,7 +30,7 @@ Which Claude model and effort to use for each kind of task, and the rules for ke
 - Decide the model when you launch a worktree session and do not change it mid-session. Switching rebuilds the prompt cache, so the next request is expensive.
 - One issue is one session. Run `/clear` when the work changes to a different issue.
 - Avoid effort `max`. Raise from medium to high only when stuck.
-- Run `/usage` before starting Fable 5.2 work.
+- Run `/usage` before starting Fable 5.2 work, and once a week to see how close the weekly limits are (#445).
 - Whether the Opus and Sonnet weekly limits are separate is not confirmed in the official docs. Until it is, `/usage` is the reference and this guide does not assume they are separate.
 
 ## How the subagent model is set
@@ -46,13 +46,18 @@ To revert, change `model` in `Explore.md` to `sonnet` or delete the file.
 
 The Claude Code settings above are separate from the local agent worker (`tools/agents`, [docs/tools.md](tools.md#local-agent-worker-toolsagents)). The worker does not run Claude. It routes by role in `tools/agents/models.mjs` to Codex models, and passes them to the CLI as `--model` with `model_reasoning_effort`. Change that file to change the worker's routing; nothing in this guide affects it.
 
-### Check in a new session (user step)
+Checked on 2026-11-14 (#440): a live session lists Explore with exactly the tool set of the user-defined file, so the file loads. Orca runs Claude Code with its own config folder (`%APPDATA%\orca\claude-profiles\<id>\home`) and copies keys from `~/.claude/settings.json` into its `settings.json`. That folder also has its own `agents/Explore.md`. When you change a user-level setting, check both places.
 
-The environment and files above were verified to exist (`CLAUDE_CODE_SUBAGENT_MODEL` is `sonnet` in `~/.claude/settings.json`, and `Explore.md` has `model: haiku`). Whether they apply to a running session can only be seen in a new interactive session:
+## Other user-level settings on this PC
 
-1. Run `/agents` and confirm Explore appears as the user-defined agent on haiku.
-2. Launch a non-Explore subagent and confirm it runs on Sonnet.
-3. Leave the result as a comment on #440.
+These also live outside the repo, in `~/.claude/settings.json` and the Orca profile `settings.json`.
+
+| Setting | Value | Why |
+|---|---|---|
+| `autoUpdatesChannel` | `stable` | Fewer updates, so fewer restarts and prompt-cache rebuilds (#445). `latest` is the other value |
+| `crossSessionInbound` | `accept` | Messages from your other local sessions (other worktrees) are delivered without the Approve/Deny dialog (#419). The dialog appears when one session bypasses permissions and the other does not. Other values: `hold`, `refuse`. Also settable in `/config` as "Messages from your other sessions" ([docs](https://code.claude.com/docs/en/cross-session-messaging.md)) |
+
+MCP servers: the connected servers' tools are deferred (only names are listed until a tool search loads them), so they do not add tool definitions to every session. Turn off a server you never use in `/mcp`.
 
 ## Keeping instructions small
 
