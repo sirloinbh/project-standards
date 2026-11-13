@@ -84,10 +84,10 @@ const decide = (tool, command) => {
   return 'none';
 };
 
-test('Claude Code runs the git branch commands without asking and keeps the dangerous forms out (#361)', () => {
+test('Claude Code runs the git branch commands, including the destructive ones, without asking and keeps force push and push to main out (#361, #418)', () => {
   const expected = {
-    allow: ['git switch main', 'git switch feat/1-force-x', 'git switch --create feat/1-x origin/main', 'git pull --ff-only', 'git branch --delete feat/1-x', 'git branch --delete docs/1-fix-x', 'git fetch origin', 'git fetch --prune origin'],
-    ask: ['git switch -f main', 'git switch main -f', 'git switch --force main', 'git switch --discard-changes main', 'git switch -C x origin/main', 'git switch --force-create x',
+    allow: ['git switch main', 'git switch feat/1-force-x', 'git switch --create feat/1-x origin/main', 'git pull --ff-only', 'git branch --delete feat/1-x', 'git branch --delete docs/1-fix-x', 'git fetch origin', 'git fetch --prune origin', 'git branch -d feat/1-x',
+      'git switch -f main', 'git switch main -f', 'git switch --force main', 'git switch --discard-changes main', 'git switch -C x origin/main', 'git switch --force-create x',
       'git branch -D feat/1-x', 'git branch --delete -f feat/1-x', 'git branch --delete --force feat/1-x', 'git reset --hard', 'git reset --hard origin/main', 'git clean -fd', 'git stash', 'git stash pop', 'git rebase main'],
     deny: ['git push --force origin x', 'git push -f origin x', 'git push origin x --force', 'git push origin x -f', 'git push --force-with-lease origin x', 'git push origin +x',
       'git push origin main', 'git push origin HEAD:main', 'git push origin x:main'],
@@ -101,24 +101,24 @@ test('Claude Code runs the git branch commands without asking and keeps the dang
 });
 
 test('PowerShell treats the short -c and -d like -C and -D, so the rules use --create and --delete (#361)', () => {
-  assert.equal(decide('PowerShell', 'git switch -c feat/1-x origin/main'), 'ask');
-  assert.equal(decide('PowerShell', 'git branch -d feat/1-x'), 'ask');
+  assert.equal(decide('PowerShell', 'git switch -c feat/1-x origin/main'), 'allow');
+  assert.equal(decide('PowerShell', 'git branch -d feat/1-x'), 'allow');
   assert.equal(decide('Bash', 'git switch -c feat/1-x origin/main'), 'allow');
-  assert.equal(decide('Bash', 'git branch -d feat/1-x'), 'none');
+  assert.equal(decide('Bash', 'git branch -d feat/1-x'), 'allow');
 });
 
 test('the git rules are the same for Bash and PowerShell (#361)', () => {
-  for (const decision of ['allow', 'ask', 'deny']) {
+  for (const decision of ['allow', 'deny']) {
     const of = (tool) => permissions[decision].filter((r) => r.startsWith(`${tool}(git `)).map((r) => r.slice(tool.length));
     assert.ok(of('Bash').length > 0, decision);
     assert.deepEqual(of('PowerShell'), of('Bash'), decision);
   }
 });
 
-test('the Codex git rules allow, prompt, and forbid the same kinds of commands (#361)', () => {
+test('the Codex git rules allow and forbid the same kinds of commands (#361)', () => {
   const rules = read(GIT_RULES);
-  assert.equal((rules.match(/decision = "allow"/g) ?? []).length, 4);
-  assert.equal((rules.match(/decision = "prompt"/g) ?? []).length, 5);
+  assert.equal((rules.match(/decision = "allow"/g) ?? []).length, 9);
+  assert.equal((rules.match(/decision = "prompt"/g) ?? []).length, 0);
   assert.equal((rules.match(/decision = "forbidden"/g) ?? []).length, 2);
 });
 

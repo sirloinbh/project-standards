@@ -73,21 +73,31 @@ The commands in "Local branch management (git CLI)" of [std-git-writing](../temp
 
 | Decision | Commands |
 |---|---|
-| Run without asking | `git switch`, `git pull --ff-only`, `git branch --delete`, `git fetch origin`, `git fetch --prune origin` |
-| Needs approval | `-f`, `-C`, `--force`, `--force-create`, `--discard-changes` of `git switch`; `-D`, `-f`, `--force` of `git branch`; `git reset --hard`, `git clean`, `git stash`, `git rebase` |
+| Run without asking | `git switch`, `git pull --ff-only`, `git branch --delete` / `-d`, `git fetch origin`, `git fetch --prune origin` |
+| Run without asking (destructive, user decision 2026-11-08, #418) | `-f`, `-C`, `--force`, `--force-create`, `--discard-changes` of `git switch`; `-D`, `-f`, `--force` of `git branch`; `git reset --hard`, `git clean`, `git stash`, `git rebase` |
 | Blocked | Force push (`-f`, `--force`, `--force-with-lease`, `origin +branch`), direct push to main |
 
-- Claude Code puts the Bash and PowerShell tool rules together in `permissions.allow`, `ask`, and `deny` of `.claude/settings.json`. The priority is deny, then ask, then allow. `scripts/test/agent-guardrails.test.mjs` decides sample commands in the same order.
+- Claude Code puts the Bash and PowerShell tool rules together in `permissions.allow` and `deny` of `.claude/settings.json`. There is no `ask` list since #418. The priority is deny, then ask, then allow. `scripts/test/agent-guardrails.test.mjs` decides sample commands in the same order.
 - Codex uses `.codex/rules/git-branch.rules`. It compares only the start of the command, so it cannot tell apart an option attached at the end (`git switch main -f`).
-- PowerShell tool rules are case-insensitive (confirmed by an actual run on 2026-10-31). `git branch -d` matches the `-D` approval rule and `git switch -c` matches the `-C` approval rule, so the skill uses `--delete` and `--create`.
+- PowerShell tool rules are case-insensitive (confirmed by an actual run on 2026-10-31). `git branch -d` matches the `-D` rule and `git switch -c` matches the `-C` rule. Both are allowed now (#418), but the skill still writes `--delete` and `--create`.
 - A project's `permissions.allow` applies only in folders the user has trusted. On a new PC or a new clone, open Claude Code interactively once and accept the trust prompt.
 - Combined short options (`git switch -fc x`) cannot be told apart by either side's rules. The rules reduce mistakes and are not a security boundary.
 - Pushing a work branch, `git add`, and `git commit` are not in these rules. They follow each PC's settings.
 - If the global instructions (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`) still have a Fork rule section, the Claude Code `SessionStart` hook (`.claude/hooks/pc-setup-notice.mjs`) tells the user how to fix it at session start (#368). It only reads, and an error does not block the session. It does not appear in clones from before they received the repo's hook, or in Codex sessions.
 
+### Why destructive git commands run without asking (#418)
+
+The user decided on 2026-11-08: "always yes". `git reset --hard`, `git branch -D`, `git clean`, `git stash`, `git rebase`, and the forced forms of `git switch` and `git branch` moved from `permissions.ask` to `permissions.allow` (Bash and PowerShell), and from `prompt` to `allow` in `.codex/rules/git-branch.rules`. Reasons:
+
+- Many sessions run with permission prompts skipped, where an `ask` rule did not stop anything, and an unattended agent that waits for a prompt just stalls.
+- The same user wants one rule, not a rule that depends on the session mode.
+- A reset or delete of local work is limited to this PC, and pushed work stays on the remote.
+
+Kept as before, outside this decision: the package-install hook and deny list, force push (`-f`, `--force`, `--force-with-lease`, `origin +branch`), and direct push to main (the hook and `permissions.deny`). The skill and the global instructions still tell the agent to stop when there are uncommitted changes or the branch is not merged, and not to switch to `--force` or `-D` on its own when `git branch --delete` is refused; being allowed is not a reason to use them. `tools/check-git-permissions.mjs` now expects every local git command to run.
+
 ## Hook for AGENTS.md prohibitions (#450)
 
-A sentence in AGENTS.md holds only while the agent remembers it, and `ask` rules may not stop anything when a session skips permission prompts (#418). So every prohibition that a tool call can show is blocked by the `PreToolUse` hook `.claude/hooks/block-forbidden-commands.mjs`. It exits with code 2 and prints the reason and the right way (for example the `ghp` wrapper). It reuses the command splitter of `block-package-installs.mjs`, so it has the same limits (commands in variables or script files are not seen).
+A sentence in AGENTS.md holds only while the agent remembers it, and permission rules may not stop anything when a session skips permission prompts (#418). So every prohibition that a tool call can show is blocked by the `PreToolUse` hook `.claude/hooks/block-forbidden-commands.mjs`. It exits with code 2 and prints the reason and the right way (for example the `ghp` wrapper). It reuses the command splitter of `block-package-installs.mjs`, so it has the same limits (commands in variables or script files are not seen).
 
 | Prohibition (central and app AGENTS.md, global instructions) | Enforced by |
 |---|---|
@@ -98,7 +108,7 @@ A sentence in AGENTS.md holds only while the agent remembers it, and `ask` rules
 | Remote changes through the default `gh` (company account) on Windows: `gh pr/issue/repo/release/workflow/run/label/... <verb>` other than list/view/status/diff/checks/watch/download/checkout/clone; `gh api` with a non-GET method, with fields, or with a GraphQL mutation | Hook. Allowed when `GH_CONFIG_DIR` points to `gh-personal`. Not checked on Linux (devcontainers) |
 | `pr merge --delete-branch` (`-d`) through `gh` or the wrapper | Hook |
 | Editing the `.claude/skills/` copies with Edit, Write, or NotebookEdit | Hook. Shell copies (`cp`, `npm run skills:sync`) stay allowed because that is how copies are made |
-| `git reset --hard`, `git clean`, `git stash`, `git rebase`, `git branch -D`, `git switch -f` | `permissions.ask` is enough: they are sometimes right, and the user decides |
+| `git reset --hard`, `git clean`, `git stash`, `git rebase`, `git branch -D`, `git switch -f` | Not blocked. The user decided on 2026-11-08 (#418) that they run without asking, so they are in `permissions.allow` (see "Why destructive git commands run without asking") |
 | Pushing directly to downstream or subtree repos (`scripts/push-repositories.ps1`), merging downstream PRs, raising `maxRollout`, doing user steps, writing secrets into docs, PRs, or logs, overwriting user changes | Sentence in AGENTS.md: legitimate uses look the same as the forbidden ones, so a hook cannot tell them apart |
 
 - The hook runs before the permission check. A fresh `claude -p` session that explicitly allowed `git add .env` and `git push origin main` with `--allowedTools` was still blocked by the hook, and nothing was staged (2026-11-11). Claude Code runs `PreToolUse` hooks in every permission mode, `bypassPermissions` included (hooks docs).

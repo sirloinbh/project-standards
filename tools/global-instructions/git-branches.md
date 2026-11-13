@@ -7,5 +7,5 @@ Local Git branches in every project are managed with the git CLI. The source rul
 - Stop and tell the user if there are uncommitted changes, the branch to delete is not merged, another session or worktree uses it, or `git pull --ff-only` fails.
 - If `git branch --delete` is refused, do not switch to `--force` or `-D`; report the reason.
 - If a folder lock makes git ask whether to retry, answer `n` and do not repeat the command. Check the result with `git branch --list <branch>` and report it.
-- Use `git branch -D`, `git reset --hard`, `git clean`, `git stash`, and `git rebase` only when the user asked for and approved them. Never force-push or push directly to main.
+- `git branch -D`, `git reset --hard`, `git clean`, `git stash`, and `git rebase` may be run without asking the user. Never force-push or push directly to main.
 - Do not add `--delete-branch` to `pr merge`.
