@@ -4,8 +4,11 @@ import { LEGACY_HEADER_TEXT } from './render.mjs';
 
 const HANGUL = /[\uAC00-\uD7A3]/;
 
-/** Literals that must stay Korean because code matches on them (legacy header, pre-#455 sync commit prefix). */
-export const DEFAULT_ALLOW = [LEGACY_HEADER_TEXT, 'chore: 중앙 표준 동기화 (project-standards@'];
+/**
+ * Literals that must stay Korean because code matches on them (legacy header, pre-#455 sync commit prefix),
+ * and the quoted legacy header name that AGENTS.md keeps so readers can recognise older managed files (#512).
+ */
+export const DEFAULT_ALLOW = [LEGACY_HEADER_TEXT, 'chore: 중앙 표준 동기화 (project-standards@', '"중앙 관리 파일"'];
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', 'coverage', '.git', '__snapshots__', 'snapshots', 'fixtures']);
 const SKIP_FILES = /(^|\/)(package-lock\.json|yarn\.lock|pnpm-lock\.yaml|bun\.lockb|[^/]*\.lock|[^/]*\.snap)$/;

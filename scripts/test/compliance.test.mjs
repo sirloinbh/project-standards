@@ -151,6 +151,7 @@ test('Korean-text check counts markdown files and comment lines, and skips allow
     { path: 'src/a.ts', text: "const s = '한글 문자열';\n// 한글 주석\nconst x = 1; // 설명\n/* 블록\n * 별표 줄\n */\n" },
     { path: 'run.sh', text: '# 주석\necho hi\n' },
     { path: 'src/b.ts', text: `// ${LEGACY_HEADER_TEXT} main\n// chore: 중앙 표준 동기화 (project-standards@abc\n` },
+    { path: 'AGENTS.md', text: 'Managed file (older files: "중앙 관리 파일") header.\n' },
     { path: 'node_modules/x/README.md', text: '한글\n' },
     { path: 'package-lock.json', text: '한글\n' },
     { path: 'test/__snapshots__/a.snap', text: '한글\n' },
@@ -160,6 +161,8 @@ test('Korean-text check counts markdown files and comment lines, and skips allow
   assert.equal(stats.markdownFiles, 1);
   assert.equal(stats.commentLines, 5); // 한글 주석, 설명, 블록, 별표 줄 + shell comment
   assert.deepEqual(stats.files, ['README.md', 'src/a.ts', 'run.sh']);
+  // The quoted legacy header name is allowed, but other Korean on the same line still counts (#512).
+  assert.equal(koreanStats([{ path: 'a.md', text: '"중앙 관리 파일" 그리고 설명\n' }]).markdownFiles, 1);
   assert.equal(fileKind('node_modules/a.js'), null);
   assert.equal(fileKind('logo.png'), null);
 });
