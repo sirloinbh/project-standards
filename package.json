@@ -14,9 +14,11 @@
     "sync:preview": "node scripts/sync.mjs --dry-run --out .local/sync-preview",
     "tokens": "node scripts/build-tokens.mjs",
     "tokens:check": "node scripts/build-tokens.mjs --check",
+    "plugin": "node scripts/build-plugin.mjs",
+    "plugin:check": "node scripts/build-plugin.mjs --check",
     "packages:check": "node scripts/package-guard.mjs",
     "workflows:check": "node scripts/check-workflows.mjs",
     "secrets:check": "node scripts/secret-scan.mjs",
-    "check": "npm run test && npm run registry:check && npm run docs:check && npm run tokens:check && npm run packages:check && npm run workflows:check && npm run secrets:check"
+    "check": "npm run test && npm run registry:check && npm run docs:check && npm run tokens:check && npm run plugin:check && npm run packages:check && npm run workflows:check && npm run secrets:check"
   }
 }

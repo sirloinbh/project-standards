@@ -1,0 +1,7 @@
+{
+  "name": "sirloinbh-standards",
+  "description": "sirloinbh shared std skills and guard hooks, for repos outside file sync (ADR-0013).",
+  "author": {
+    "name": "sirloinbh"
+  }
+}
