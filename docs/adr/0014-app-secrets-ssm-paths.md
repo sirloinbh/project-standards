@@ -22,7 +22,7 @@
 | Local development | `node tools/app-secrets.mjs pull <app>` writes the app's tagged keys into that app's `.env`. `check <app>` reports presence only. `set <parameter>` stores any allowed name from standard input. Without an app, the commands keep handling the Claude key in `project-standards/.env` (ADR-0010) |
 | Checks | `standards-check` (in each app) and the compliance report fail on a tag that breaks the rules above, including a parameter of another app. `docs/env-matrix.md` shows the parameter name, never the value |
 | Server permission | `sirloinbh-apps-secrets-reader` may `ssm:GetParameter` on `parameter/sirloinbh/shared/*` and `parameter/sirloinbh/<app>/*` for the apps on the server (shared-aws-infrastructure) |
-| User permission | The user's personal AWS identity gets `ssm:PutParameter`, `GetParameter`, and `DeleteParameter` on `parameter/sirloinbh/*` (a user step in the AWS console; this identity is not managed by Terraform) |
+| User permission | The user's personal AWS identity gets `ssm:PutParameter`, `GetParameter`, and `DeleteParameter` on `parameter/sirloinbh/*` (a user step in the AWS console; this identity is not managed by Terraform). It is the customer managed policy `sirloinbh-ssm-write` attached to the user, because the user's existing inline policy leaves no room under IAM's 2048-character limit for inline policies |
 | Agents and CI | No access. Tests use a fake AWS CLI and a fake `ssm-get.sh` |
 
 ## Not in SSM
