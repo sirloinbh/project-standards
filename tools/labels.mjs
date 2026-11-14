@@ -25,7 +25,7 @@ function gh(args) {
   const r = fake
     ? spawnSync(process.execPath, [fake, ...args], { encoding: 'utf8' })
     : process.platform === 'win32'
-      ? spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-File', path.join(toolDir, 'gh-project.ps1'), ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
+      ? spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-File', path.join(toolDir, 'gh-project.ps1'), ...args], { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 })
       : spawnSync('gh', args, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 });
   if (r.error) throw new Error(`could not run gh: ${r.error.message}`);
   if (r.status !== 0) throw new Error(`gh ${args.slice(0, 2).join(' ')} failed (exit code ${r.status}): ${r.stderr.trim()}`);
