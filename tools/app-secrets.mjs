@@ -65,6 +65,17 @@ export function parameterProblem(parameter, root = central) {
   return null;
 }
 
+/**
+ * Why a value cannot be stored, or null (#531). A key is one token: copied terminal text has line
+ * breaks or spaces. The message never repeats the value.
+ */
+export function valueProblem(parameter, value) {
+  if (/[\r\n]/.test(value)) return `the value has ${value.split(/\r?\n/).length} lines, so it is not a key. Copy only the key and try again`;
+  if (/\s/.test(value)) return 'the value contains spaces, so it is not a key. Copy only the key and try again';
+  if (parameter === PARAMETER && !/^sk-ant-[A-Za-z0-9_-]+$/.test(value)) return 'the value does not look like a Claude API key (sk-ant-...). Copy the key from the Claude Console and try again';
+  return null;
+}
+
 /** The @ssm= tagged keys of an app's .env.example: [{ key, parameter }]. Throws when a tag breaks the rules. */
 export function appKeys(app, dir) {
   const file = path.join(dir, '.env.example');
@@ -88,6 +99,8 @@ const lastModified = (parameter, profile) => aws(['ssm', 'get-parameter', '--nam
 function getValue(parameter, profile) {
   const value = aws(['ssm', 'get-parameter', '--name', parameter, '--with-decryption', '--query', 'Parameter.Value', '--output', 'text'], profile).trim();
   if (!value) throw new Error(`SSM ${parameter} value is empty`);
+  // A stored value with line breaks would split into several .env lines.
+  if (/[\r\n]/.test(value)) throw new Error(`SSM ${parameter} value has line breaks, so it is not a key. Store the key again with set`);
   return value;
 }
 const readText = (file) => (fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '');
@@ -112,6 +125,8 @@ export async function run(argv, { root = central, log = console.log, input = rea
     if (problem) throw new Error(problem);
     const value = (await input()).trim();
     if (!value) throw new Error('Pass the key value on standard input. Example: Get-Clipboard | node tools/app-secrets.mjs set <parameter> --profile <profile>');
+    const bad = valueProblem(parameter, value);
+    if (bad) throw new Error(`${parameter}: ${bad}`);
     // The value goes to the AWS CLI through a private temporary file, not as an argument.
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'app-secrets-'));
     const file = path.join(dir, 'value');
