@@ -59,8 +59,9 @@ test('no file has leftover placeholders', () => {
 });
 
 test('refuses to render without a root domain or for an app outside it', () => {
-  assert.equal(data.platform.rootDomain, null);
-  assert.throws(() => renderProxy(data), /rootDomain is not set yet \(#539\)/);
+  const unset = structuredClone(data);
+  unset.platform.rootDomain = null;
+  assert.throws(() => renderProxy(unset), /rootDomain is not set yet \(#539\)/);
   const copy = structuredClone(data);
   copy.projects.projects[0].service.domain = 'other.net';
   assert.throws(() => renderProxy(copy, { domain }), /workout-memo: service\.domain "other\.net" is not covered/);
@@ -76,9 +77,19 @@ test('the command writes the files with Linux line endings', () => {
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
   }
-  const missing = spawnSync(process.execPath, [path.join(root, 'scripts/proxy-config.mjs'), '--out', os.tmpdir()], { encoding: 'utf8' });
-  assert.equal(missing.status, 1);
-  assert.match(missing.stderr, /rootDomain is not set yet/);
+});
+
+test('without --domain the command uses the registry root domain', () => {
+  assert.equal(data.platform.rootDomain, 'daysofme.com');
+  const out = fs.mkdtempSync(path.join(os.tmpdir(), 'proxy-'));
+  try {
+    execFileSync(process.execPath, [path.join(root, 'scripts/proxy-config.mjs'), '--out', out]);
+    const written = fs.readFileSync(path.join(out, 'nginx/apps.conf'), 'utf8');
+    assert.match(written, /server_name workout-memo\.daysofme\.com;/);
+    assert.match(written, /\/etc\/letsencrypt\/live\/daysofme\.com\/fullchain\.pem/);
+  } finally {
+    fs.rmSync(out, { recursive: true, force: true });
+  }
 });
 
 test('cert.sh is valid bash', { skip: spawnSync('bash', ['--version']).status !== 0 && 'bash not found' }, () => {

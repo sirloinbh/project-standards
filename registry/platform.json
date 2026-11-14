@@ -1,6 +1,6 @@
 {
   "$schema": "./platform.schema.json",
-  "rootDomain": null,
+  "rootDomain": "daysofme.com",
   "aws": {
     "region": "ap-northeast-2",
     "accountAlias": null,

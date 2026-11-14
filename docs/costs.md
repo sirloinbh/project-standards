@@ -36,9 +36,9 @@ This assumes an exchange rate of $1 = 1,400 KRW and 10% VAT. Pre-tax won = month
 
 This is not a live exchange rate or an actual payment amount. It varies with the payment exchange rate, taxes, and card fees.
 
-### Domain (before purchase)
+### Domain (`daysofme.com`)
 
-If you buy as in [ADR-0012](adr/0012-shared-domain-subdomains.md), the costs below are added. We have not bought it yet, so it is not included in the total above or in the per-app table in chapter 4. Recalculate after the purchase (#249).
+The user registered `daysofme.com` in Route 53 on 2026-11-14 ([ADR-0012](adr/0012-shared-domain-subdomains.md), #249). Route 53 registration needs a paid AWS plan, so the account was moved off the Free plan first. The costs below are paid yearly, so they are kept out of the monthly total above and the per-app table in chapter 4. The domain price is the research value (2026-10-28); replace it with the amount on the first bill.
 
 | Item | 1 year |
 |---|---:|
@@ -47,7 +47,7 @@ If you buy as in [ADR-0012](adr/0012-shared-domain-subdomains.md), the costs bel
 | Certificate (Let's Encrypt) | $0.00 |
 | **Total, before tax** | **$22.00** |
 
-On the conversion basis above, that is 30,800 KRW per year before tax and 33,880 KRW after tax, and divided by month, about $1.83. DNS query charges are $0.40 per million queries, so at personal-app usage I did not include them in the total.
+On the conversion basis above, that is 30,800 KRW per year before tax and 33,880 KRW after tax, and divided by month, about $1.83 (about $0.23 per app per month when split equally by 8). DNS query charges are $0.40 per million queries, so at personal-app usage I did not include them in the total.
 
 ### Storage assumption
 

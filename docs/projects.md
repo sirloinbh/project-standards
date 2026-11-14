@@ -6,14 +6,14 @@
 
 | Slot | Project | Name | Display name | Domain | Status | DB / test DB | Service address | AWS prefix | Rollout stage |
 |---|---|---|---|---|---|---|---|---|---|
-| 01 | workout-memo | Workout Log | FORM · My Workout Log | 운동 | active | workout / workout_test | TBD | TBD | 1 |
-| 02 | study-log | Study Log | Study Log | 공부 | active | study / study_test | TBD | TBD | 2 |
-| 03 | health-log | Health Log | Diet, Sleep and Health Log | 건강 | active | health / health_test | TBD | TBD | 2 |
-| 04 | life-journal | Reviews & Diary | Reviews & Diary | 일기 | active | journal / journal_test | TBD | TBD | 2 |
-| 05 | money-ledger | Money Ledger | Ledger, Assets, Mock Trading | 재무 | active | money / money_test | TBD | TBD | 2 |
-| 06 | cert-manager | Cert Manager | Cert Manager | 자격증 | active | cert / cert_test | TBD | TBD | 2 |
-| 07 | plan-routine | Plan Routine | Plan · Practice · Routine · Feedback | 루틴 | active | plan / plan_test | TBD | TBD | 2 |
-| 08 | dev-career-portfolio | Dev Career | Dev Career Portfolio | 커리어 | active | career / career_test | TBD | TBD | 2 |
+| 01 | workout-memo | Workout Log | FORM · My Workout Log | 운동 | active | workout / workout_test | workout-memo.daysofme.com | TBD | 1 |
+| 02 | study-log | Study Log | Study Log | 공부 | active | study / study_test | study-log.daysofme.com | TBD | 2 |
+| 03 | health-log | Health Log | Diet, Sleep and Health Log | 건강 | active | health / health_test | health-log.daysofme.com | TBD | 2 |
+| 04 | life-journal | Reviews & Diary | Reviews & Diary | 일기 | active | journal / journal_test | life-journal.daysofme.com | TBD | 2 |
+| 05 | money-ledger | Money Ledger | Ledger, Assets, Mock Trading | 재무 | active | money / money_test | money-ledger.daysofme.com | TBD | 2 |
+| 06 | cert-manager | Cert Manager | Cert Manager | 자격증 | active | cert / cert_test | cert-manager.daysofme.com | TBD | 2 |
+| 07 | plan-routine | Plan Routine | Plan · Practice · Routine · Feedback | 루틴 | active | plan / plan_test | plan-routine.daysofme.com | TBD | 2 |
+| 08 | dev-career-portfolio | Dev Career | Dev Career Portfolio | 커리어 | active | career / career_test | dev-career-portfolio.daysofme.com | TBD | 2 |
 
 ## Ports
 
@@ -42,7 +42,7 @@ Port formula: base value + slot. web 8100, api 3100, e2e api 3200, vite 5200, e2
 
 | Item | Value |
 |---|---|
-| Root domain | TBD |
+| Root domain | daysofme.com |
 | AWS region | ap-northeast-2 |
 | AWS account alias | TBD |
 | AWS shared prefix | TBD |
