@@ -12,9 +12,9 @@ const { data } = loadAll(root);
 
 test('lists every project with ports and shows unset values as TBD', () => {
   const text = renderProjects(data);
-  assert.match(text, /\| 01 \| workout-memo \| Workout Log \| FORM · My Workout Log \| 운동 \| active \| workout \/ workout_test \| TBD \| TBD \| 1 \|/);
+  assert.match(text, /\| 01 \| workout-memo \| Workout Log \| FORM · My Workout Log \| 운동 \| active \| workout \/ workout_test \| workout-memo\.daysofme\.com \| TBD \| 1 \|/);
   assert.match(text, /\| dev-career-portfolio \| 8108 \| 3108 \| 3208 \| 5208 \| 5308 \| 15408 \|/);
-  assert.match(text, /\| Root domain \| TBD \|/);
+  assert.match(text, /\| Root domain \| daysofme\.com \|/);
   assert.match(text, /\| AWS region \| ap-northeast-2 \|/);
 });
 
