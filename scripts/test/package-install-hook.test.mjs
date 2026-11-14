@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { findInstall, npmCommand, splitCommands } from '../../templates/common/.claude/hooks/block-package-installs.mjs';
@@ -236,5 +237,24 @@ test('the Codex hook command blocks installs from the repository root and from a
     assert.equal(run(cwd, 'npm ci').status, 0);
     const allowed = run(cwd, 'npm ls');
     assert.equal(allowed.status, 0, allowed.stderr);
+  }
+});
+
+test('both guard hooks still block when started through a junction or symlink (#526)', () => {
+  // Orca's Claude profile reaches plugins through a junction, so ${CLAUDE_PLUGIN_ROOT} is a link path.
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hook-link-'));
+  const link = path.join(dir, 'hooks');
+  try {
+    fs.symlinkSync(path.join(root, 'templates/common/.claude/hooks'), link, process.platform === 'win32' ? 'junction' : 'dir');
+    const run = (file, command) =>
+      spawnSync(process.execPath, [path.join(link, file)], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command } }), encoding: 'utf8' });
+    const install = run('block-package-installs.mjs', 'npm install left-pad');
+    assert.equal(install.status, 2, install.stderr);
+    const push = run('block-forbidden-commands.mjs', 'git push --force origin main');
+    assert.equal(push.status, 2, push.stderr);
+    assert.equal(run('block-package-installs.mjs', 'npm run check').status, 0);
+  } finally {
+    if (fs.existsSync(link)) fs.rmSync(link, { recursive: false, force: true });
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });
