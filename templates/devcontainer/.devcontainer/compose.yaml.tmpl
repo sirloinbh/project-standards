@@ -9,7 +9,8 @@ services:
     image: {{versions.images.devcontainerNode}}
     command: sleep infinity
     volumes:
-      - ..:/workspaces/{{project.repos.umbrella}}:cached
+      # Compose resolves relative paths from the first file (the root compose.yaml), so "." is the repo root.
+      - .:/workspaces/{{project.repos.umbrella}}:cached
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER:-{{project.db.name}}}:${POSTGRES_PASSWORD:?Copy .env.example to .env and set password}@db:5432/${POSTGRES_DB:-{{project.db.name}}}
       TZ: Asia/Seoul
