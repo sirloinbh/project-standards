@@ -14,12 +14,10 @@ Confirmed:
 - Entries add to the per-user "Worktree Shared Paths" setting and never replace it.
 - Deleting a worktree removes its directory and branch.
 
-Not documented (unconfirmed):
+Tested on this PC on 2026-11-14 (Windows 11, no administrator rights, no developer mode), in plan-routine with `orca worktree create` and `orca worktree rm`:
 
-- Whether Windows gets a symlink or a junction, and whether symlinks need developer mode or administrator rights. The settings page says only "APFS clone-copy on macOS when possible, otherwise symlink".
-- What deleting a worktree does to a shared link.
-
-From this PC: junctions made with `cmd /c mklink /J` for `node_modules` and `frontend/node_modules` work without administrator rights. Whether Orca itself manages to create a link on this PC must be tested (see "User test").
+- Orca makes a **junction** for each listed folder that exists in the main checkout (`node_modules`, `frontend/node_modules`). A listed folder that does not exist (`backend/node_modules`) is skipped.
+- Removing the worktree with Orca removes only the links. The main checkout's `node_modules` kept all 20,794 files (compared with a backup taken before the test).
 
 ## Share
 
@@ -46,10 +44,7 @@ A link looks like a real folder. Never delete it with `rm -r`, `Remove-Item -Rec
 - Symlink on macOS or Linux: `rm <path>` without `-r` and without a trailing slash.
 - To check first: `dir <parent>` shows `<JUNCTION>` or `<SYMLINKD>` for a link.
 
-## User test
+## Checking a worktree
 
-1. Merge the sync PR so the repo has `orca.yaml`, and make sure the main checkout has `node_modules`.
-2. Create a new worktree in Orca for that repo.
-3. In the worktree, run `cmd /c dir node_modules /AL` (or `dir /AL`). It should show a link. Then run `npm run check`.
-4. If no link appears, Windows probably needs developer mode; report it on #441.
-5. Delete the test worktree in Orca, then confirm the main checkout's `node_modules` is still intact.
+- `cmd /c dir /AL` in the worktree lists the links. If a listed folder is a normal folder, Orca did not link it (for example, it did not exist in the main checkout when the worktree was made).
+- Delete worktrees through Orca (or `orca worktree rm`), not by deleting the folder by hand.
