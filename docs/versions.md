@@ -15,6 +15,7 @@ Tool and package versions set centrally. To change them, follow the [dependency 
 | GitHub runner | `ubuntu-24.04` |
 | Image node | `node:24.21.0-alpine` |
 | Image nginx | `nginx:1.27-alpine` |
+| Image certbot | `certbot/dns-route53:v5.9.0` (digest pinned) |
 | Image postgres | `postgres:17-alpine` |
 | Image devcontainerNode | `node:24.21.0-bookworm` (digest pinned) |
 | Image playwright | `mcr.microsoft.com/playwright:v1.63.0-noble` (digest pinned) |

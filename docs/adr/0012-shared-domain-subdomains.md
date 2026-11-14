@@ -30,7 +30,7 @@ Lightsail DNS is also inside AWS, but it is not used because certbot has no offi
 - **Firewall:** There is no need to open 80 to everyone to get the certificate. The `/0` ban check in shared-aws-infrastructure stays as is.
 - **Access scope:** Places where the IP changes, such as a phone's mobile data network, cannot connect the way they do now. The Play Store (TWA) needs Google to read `assetlinks.json`, so it cannot proceed before the apps are made public.
 - **Server key:** For the Lightsail server to renew the certificate, one more AWS key is needed. Its permission is narrowed so it can only change records in this hosted zone, and the value is kept only on the server.
-- **Failure scope:** If the proxy or certificate has a problem, access to all 8 apps breaks together. How to notice a renewal failure is decided in #251.
+- **Failure scope:** If the proxy or certificate has a problem, access to all 8 apps breaks together. How to notice a renewal failure was decided in #251: the renewal timer pings healthchecks.io (`HEALTHCHECK_URL_CERT`, [server-proxy.md](../server-proxy.md)).
 
 ## Follow-up work
 
