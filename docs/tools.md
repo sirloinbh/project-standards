@@ -183,6 +183,10 @@ Apps that turn on `features.devcontainer` in the registry (currently workout-mem
 - VS Code forwards the vite and api ports (registry values) to the PC.
 - A folder path containing Korean (such as `문서`) can cause problems with Docker Desktop bind mounts. If problems occur, clone to an English path and open it there.
 
+## Sharing node_modules between Orca worktrees
+
+The synced `orca.yaml` shares `node_modules` folders with new Orca worktrees (#441). Rules and safe removal: [worktree-shared-deps.md](worktree-shared-deps.md).
+
 ## Auto-format on save (.vscode/settings.json)
 
 The synced `.vscode/settings.json` turns on cleanup on save, along with the terminal settings (#247). It fixes files with bad formatting in the editor, before they reach CI.
