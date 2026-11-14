@@ -27,7 +27,7 @@ function withSlot99() {
     repos: { umbrella: 'sample-app', frontend: 'sample-app-frontend', backend: 'sample-app-backend', db: 'sample-app-db' },
     ports: { web: 8199, api: 3199, e2eApi: 3299, vite: 5299, e2eWeb: 5399, db: 15499 },
     db: { name: 'sample', testName: 'sample_test' },
-    service: { domain: null, subdomain: null },
+    service: { domain: null, subdomain: 'sample-app' },
     aws: { prefix: null },
     features: { e2e: true, e2eVisual: false, openapi: false, contract: true, ui: true, vitest: true, claude: false, devcontainer: false, lighthouse: false, msw: false, knipStrict: false, darkOnly: false },
     skills: [],

@@ -30,7 +30,7 @@
       },
       "service": {
         "domain": null,
-        "subdomain": null
+        "subdomain": "workout-memo"
       },
       "aws": {
         "prefix": null
@@ -87,7 +87,7 @@
       },
       "service": {
         "domain": null,
-        "subdomain": null
+        "subdomain": "study-log"
       },
       "aws": {
         "prefix": null
@@ -142,7 +142,7 @@
       },
       "service": {
         "domain": null,
-        "subdomain": null
+        "subdomain": "health-log"
       },
       "aws": {
         "prefix": null
@@ -197,7 +197,7 @@
       },
       "service": {
         "domain": null,
-        "subdomain": null
+        "subdomain": "life-journal"
       },
       "aws": {
         "prefix": null
@@ -252,7 +252,7 @@
       },
       "service": {
         "domain": null,
-        "subdomain": null
+        "subdomain": "money-ledger"
       },
       "aws": {
         "prefix": null
@@ -307,7 +307,7 @@
       },
       "service": {
         "domain": null,
-        "subdomain": null
+        "subdomain": "cert-manager"
       },
       "aws": {
         "prefix": null
@@ -362,7 +362,7 @@
       },
       "service": {
         "domain": null,
-        "subdomain": null
+        "subdomain": "plan-routine"
       },
       "aws": {
         "prefix": null
@@ -417,7 +417,7 @@
       },
       "service": {
         "domain": null,
-        "subdomain": null
+        "subdomain": "dev-career-portfolio"
       },
       "aws": {
         "prefix": null

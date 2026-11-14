@@ -24,6 +24,13 @@ test('shows a service host once it is set', () => {
   assert.match(renderProjects(copy), /\| workout\.example\.com \|/);
 });
 
+test('shows every app under the root domain once it is set', () => {
+  const copy = structuredClone(data);
+  copy.platform.rootDomain = 'example.com';
+  const text = renderProjects(copy);
+  for (const p of copy.projects.projects) assert.match(text, new RegExp(`\\| ${p.name}\\.example\\.com \\|`), p.name);
+});
+
 test('the committed docs/projects.md is up to date', () => {
   const committed = fs.readFileSync(path.join(root, 'docs/projects.md'), 'utf8').replace(/\r\n/g, '\n');
   assert.equal(committed, renderProjects(data));
