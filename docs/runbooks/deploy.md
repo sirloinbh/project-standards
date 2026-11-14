@@ -1,6 +1,6 @@
 # Deployment and operations ({{project.title}})
 
-It runs on a single personal-account Lightsail server with Docker Compose (web, API, PostgreSQL). All 8 apps run on the same server, each with its own compose ([ADR-0009](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0009-multi-app-single-lightsail.md)). Access is possible only from allowed IPs.
+It runs on a single personal-account Lightsail server with Docker Compose (web, API, PostgreSQL). All 8 apps run on the same server, each with its own compose ([ADR-0009](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0009-multi-app-single-lightsail.md)). Access is possible only from allowed IPs, through the app's own address `https://{{service.host}}` ([ADR-0012](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0012-shared-domain-subdomains.md)).
 
 ## Value summary
 
@@ -8,7 +8,8 @@ It runs on a single personal-account Lightsail server with Docker Compose (web, 
 |---|---|
 | Server app folder | `/opt/{{project.name}}` |
 | Local web / DB ports | `127.0.0.1:{{project.ports.web}}` / `127.0.0.1:{{project.ports.db}}` |
-| Server web | `0.0.0.0:{{project.ports.web}}` (`WEB_BIND` and `WEB_PORT` in the server `.env`. The deploy script also checks health on this `WEB_PORT`) |
+| Address | `https://{{service.host}}` (the shared proxy on the server forwards it to the web port below, [server-proxy.md](https://github.com/sirloinbh/project-standards/blob/main/docs/server-proxy.md)) |
+| Server web | `127.0.0.1:{{project.ports.web}}` (`WEB_BIND` and `WEB_PORT` in the server `.env`. The deploy script also checks health on this `WEB_PORT`) |
 | DB name | `{{project.db.name}}` |
 | Auto-deploy timer | `{{project.db.name}}-autodeploy.timer` (starts at `3min {{project.slot}}0s` after boot, then every 2 minutes) |
 | Deploy lock | `/run/lock/apps-deploy.lock` (shared by every app on the server. Only one app builds and deploys at a time) |
@@ -24,8 +25,8 @@ Create the values only on the server and never leave them in the repository, cha
 | `POSTGRES_DB` | user-data (first boot) | `{{project.db.name}}` |
 | `POSTGRES_USER` | user-data | `{{project.db.name}}` |
 | `POSTGRES_PASSWORD` | user-data (generated randomly on the server) | Secret value. Never take it off the server |
-| `WEB_BIND` | user-data | `0.0.0.0` |
-| `WEB_PORT` | user-data | `{{project.ports.web}}`. This port must be open in the firewall (shared-aws-infrastructure) |
+| `WEB_BIND` | user-data | `127.0.0.1`. Only the proxy on the same server reaches the app; the web port is not open in the firewall |
+| `WEB_PORT` | user-data | `{{project.ports.web}}`. The proxy forwards `{{service.host}}` to this port, so it must match the registry |
 | `NODE_AUTH_TOKEN` | [User] enter directly | Classic PAT for reading GitHub Packages (`read:packages` only). Secret value |
 | `BACKUP_S3_BUCKET`, `BACKUP_S3_REGION` | [User] enter in the shared file | Bucket and region for the S3 copy of DB dumps. If absent, backups stay only on the server ([Backup and restore](backup-restore.md)) |
 | `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY` | [User] enter in the shared file | Upload-only key for the bucket. Secret value |
@@ -135,13 +136,13 @@ The firewall is open only to allowed IPs, so an outside monitoring service canno
 The nginx in the web container (`frontend/nginx.conf`, a centrally managed file) limits `/api/` requests to an average of 10 per second per client IP. Up to 40 at once pass immediately, and requests beyond that receive `429` (#291). The API server itself has no limit.
 
 - Normal use (one screen calling several APIs at the same time) does not hit it. If you see a 429 on a screen, first check whether that screen calls the API repeatedly.
-- If you later put a reverse proxy in front of the server (domain work #251), every request will appear to come from the proxy IP. At that point, add a `real_ip` setting (use the real IP the proxy passes on) to nginx as well.
+- Behind the shared proxy, `frontend/nginx.conf` takes the client IP from `X-Forwarded-For` (`real_ip`, #254), so the limit still counts each client, not the proxy.
 
 ## 5. Access
 
-- **Browser:** `http://<static_ip>:<WEB_PORT>` (from allowed IPs only)
+- **Browser:** `https://{{service.host}}` (from allowed IPs only)
 - **SSH:** `ssh -i ~/.ssh/{{project.name}}-lightsail ubuntu@<static_ip>`
-- **SSH tunnel (encrypted transport):** `ssh -i ~/.ssh/{{project.name}}-lightsail -L {{project.ports.web}}:127.0.0.1:<WEB_PORT> ubuntu@<static_ip>`, then `http://localhost:{{project.ports.web}}`
+- **SSH tunnel (if the proxy is down):** `ssh -i ~/.ssh/{{project.name}}-lightsail -L {{project.ports.web}}:127.0.0.1:<WEB_PORT> ubuntu@<static_ip>`, then `http://localhost:{{project.ports.web}}`
 - **Logs:** on the server, `cd /opt/{{project.name}} && docker compose logs --tail 100 api`
 
 ## 6. Changing the allowed IPs

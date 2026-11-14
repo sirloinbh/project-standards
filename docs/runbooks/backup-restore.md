@@ -64,7 +64,7 @@ This cannot be undone. First make a dump of the current state.
 1. `bash /opt/{{project.name}}/deploy/backup.sh dump`
 2. `docker compose stop api web`
 3. Drop and recreate the `{{project.db.name}}` DB, then restore into it by using `-d {{project.db.name}}` in the restore command above.
-4. `docker compose start api web`, then `curl -fsS http://127.0.0.1/api/health`
+4. `docker compose start api web`, then `curl -fsS http://127.0.0.1:{{project.ports.web}}/api/health`
 
 ## Full server recovery [User]
 

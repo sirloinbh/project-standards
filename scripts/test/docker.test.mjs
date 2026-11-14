@@ -54,3 +54,11 @@ test('nginx limits API requests per client IP and answers 429 above the limit (#
   assert.match(api, /proxy_pass http:\/\/api:3102;/);
   assert.doesNotMatch(conf.replace(api, ''), /limit_req zone=/, 'only the API is limited, not the static files');
 });
+
+test('nginx answers to the app subdomain and limits by the client IP the proxy forwards (#254)', () => {
+  assert.match(study['frontend/nginx.conf'], /listen 80 default_server;\n[\s\S]*server_name study-log\.daysofme\.com;/);
+  assert.match(workout['frontend/nginx.conf'], /server_name workout-memo\.daysofme\.com;/);
+  const conf = study['frontend/nginx.conf'];
+  assert.match(conf, /set_real_ip_from 127\.0\.0\.1;\n {2}set_real_ip_from 172\.16\.0\.0\/12;\n {2}real_ip_header X-Forwarded-For;/);
+  assert.doesNotMatch(conf, /server_name _;|real_ip_recursive/);
+});

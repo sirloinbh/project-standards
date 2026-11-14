@@ -2,6 +2,7 @@
 import { APP_CI, inlineAppCi, REUSABLE_APP_CI } from './inline-ci.mjs';
 import { buildManifest, MANIFEST_PATH } from './manifest.mjs';
 import { renderProfile } from './templates.mjs';
+import { serviceHost } from './registry.mjs';
 import { buildVars } from './vars.mjs';
 
 /** Converts a path pattern with `*` and `**` into a RegExp matching whole repository paths. */
@@ -66,7 +67,7 @@ export function planTarget({ root, data, target, centralSha, workflowSha = centr
   }
 
   const packages = Object.fromEntries(profile.packages.map((name) => [name, data.versions.packages[name] ?? null]));
-  const registry = project ? { ports: project.ports, db: project.db } : null;
+  const registry = project ? { ports: project.ports, db: project.db, host: serviceHost(project, data.platform) } : null;
   const manifest = buildManifest({ centralSha, profile: target.profile, project: target.project, files: kept, packages, registry });
 
   const files = [];

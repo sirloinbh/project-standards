@@ -38,6 +38,7 @@ Use the following tags on the single line right above a key.
 
 - Do not write real values for `@secret` keys. Values do not appear in `docs/env-matrix.md` either.
 - Ports and DB names must match the registry values. `standards-check` compares `PORT`, the port and DB name in `DATABASE_URL`, and `POSTGRES_DB`.
+- The server `.env` sets `WEB_BIND=127.0.0.1` and `WEB_PORT=<ports.web>`. The app is reached only through the shared proxy at `https://<subdomain>.<root domain>`, and `standards-check` compares `server_name` in `frontend/nginx.conf` with that address (#254).
 - Values that go into the frontend build (the `VITE_` prefix) must not be secret. They are exposed to the browser as is.
 - When adding a new key, fix `.env.example`, the code that uses it, and the deploy runbook (the server `.env` key list) in the same PR.
 
