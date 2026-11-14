@@ -2,38 +2,10 @@
 // (docs/env-matrix.md) from what each project repository currently contains.
 // Secret values never leave this module: only key names and metadata are rendered.
 import { checkManifest, MANIFEST_PATH } from './manifest.mjs';
+import { parseEnvExample, ssmProblems } from './env-tags.mjs';
 import { BRANCH_PREFIX } from './sync-pr.mjs';
 
-const TAG = /@(desc|required|secret|used)(?:=([^\s@]+)|\s+([^@]*))?/g;
-
-/** Parses .env.example: [{ key, value, desc, required, secret, used, section }]. */
-export function parseEnvExample(text) {
-  const entries = [];
-  let comment = '';
-  let section = 'central';
-  for (const raw of text.replace(/\r\n/g, '\n').split('\n')) {
-    const line = raw.trim();
-    if (line === '# --- project ---') {
-      section = 'project';
-      comment = '';
-    } else if (line.startsWith('#')) comment = line.slice(1).trim();
-    else if (/^[A-Z][A-Z0-9_]*=/.test(line)) {
-      const [key, ...rest] = line.split('=');
-      const meta = { desc: '', required: false, secret: false, used: [] };
-      for (const m of comment.matchAll(TAG)) {
-        if (m[1] === 'desc') meta.desc = (m[3] ?? '').trim();
-        if (m[1] === 'required') meta.required = true;
-        if (m[1] === 'secret') meta.secret = true;
-        if (m[1] === 'used') meta.used = (m[2] ?? m[3] ?? '').split(',').map((s) => s.trim()).filter(Boolean);
-      }
-      // Without tags, guess secrecy from the name so a legacy file never leaks a password.
-      if (!comment.includes('@') && /PASSWORD|SECRET|TOKEN|KEY|DATABASE_URL/.test(key)) meta.secret = true;
-      entries.push({ key, value: rest.join('='), ...meta, section });
-      comment = '';
-    } else comment = '';
-  }
-  return entries;
-}
+export { parseEnvExample };
 
 /** Registry cross-check for .env.example values: returns human-readable mismatches. */
 export function envMismatches(entries, project) {
@@ -44,6 +16,7 @@ export function envMismatches(entries, project) {
   if (url && url[1] !== String(project.ports.db)) problems.push(`DATABASE_URL port ${url[1]} ≠ registry db ${project.ports.db}`);
   if (url && url[2] !== project.db.name) problems.push(`DATABASE_URL DB name ${url[2]} ≠ registry ${project.db.name}`);
   if (value('POSTGRES_DB') !== undefined && value('POSTGRES_DB') !== project.db.name) problems.push(`POSTGRES_DB ${value('POSTGRES_DB')} ≠ registry ${project.db.name}`);
+  problems.push(...ssmProblems(entries, project.name));
   return problems;
 }
 
@@ -177,10 +150,10 @@ export function renderEnvMatrix(statuses, { generatedAt }) {
       lines.push('`.env.example` is missing.', '');
       continue;
     }
-    lines.push('| Key | Description | Required | Secret | Default | Used by | Section |', '|---|---|---|---|---|---|---|');
+    lines.push('| Key | Description | Required | Secret | Default | Used by | SSM parameter | Section |', '|---|---|---|---|---|---|---|---|');
     for (const e of s.env) {
       const shown = e.secret ? '(secret)' : e.value ? `\`${cell(e.value)}\`` : '';
-      lines.push(`| \`${e.key}\` | ${cell(e.desc || '(no description)')} | ${e.required ? 'yes' : ''} | ${e.secret ? 'yes' : ''} | ${shown} | ${e.used.join(', ')} | ${e.section === 'central' ? 'central' : 'project'} |`);
+      lines.push(`| \`${e.key}\` | ${cell(e.desc || '(no description)')} | ${e.required ? 'yes' : ''} | ${e.secret ? 'yes' : ''} | ${shown} | ${e.used.join(', ')} | ${e.ssm ? `\`${cell(e.ssm)}\`` : ''} | ${e.section === 'central' ? 'central' : 'project'} |`);
     }
     if (s.envProblems.length) lines.push('', ...s.envProblems.map((p) => `- ✗ ${p}`));
     lines.push('');

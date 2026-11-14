@@ -248,15 +248,26 @@ It succeeded if the last line shows `All decisions match.`. Leave the output as 
    2. In the upper left of the Console, check that the organization is `Quantified ESG`, and check that the credit appears under Promotional credits in Billing. Do not turn on a payment method or auto-reload. When the credit runs out, calls stop until the next grant date, and nothing is billed on top of the subscription fee. If the organization already has another payment method or auto-reload, usage may move to it after the credit runs out, so check that first.
    3. Create one workspace shared by all apps, `byunghk-tool`, and set a monthly spending limit on it. Create one API key in that workspace (for example, `byunghk-tool-shared`). All apps fetch this single key from SSM (ADR-0010).
    4. Do not use the Console's Workload Identity Federation guide. This is because an IAM role cannot be attached to Lightsail.
-3. With the key copied, run this in the project-standards folder:
+3. Give your personal AWS identity write access to `/sirloinbh/*` in SSM (once; it was denied before, ADR-0014). In the AWS console → IAM → Users → the user of your personal AWS profile → Add permissions → Create inline policy → JSON, paste this, and name it `sirloinbh-ssm-write`:
+   ```json
+   {
+     "Version": "2012-10-17",
+     "Statement": [{
+       "Effect": "Allow",
+       "Action": ["ssm:PutParameter", "ssm:GetParameter", "ssm:DeleteParameter"],
+       "Resource": "arn:aws:ssm:ap-northeast-2:*:parameter/sirloinbh/*"
+     }]
+   }
+   ```
+4. With the key copied, run this in the project-standards folder (it stores the key at `/sirloinbh/shared/anthropic-api-key`):
    ```powershell
    $env:SIRLOINBH_AWS_PROFILE = '<personal AWS profile>'
    Get-Clipboard | node tools/app-secrets.mjs set
    node tools/app-secrets.mjs pull      # puts it in the one place project-standards/.env
-   node tools/app-secrets.mjs check     # success if everything shows "있음" (present)
+   node tools/app-secrets.mjs check     # success if every line shows "present"
    ```
    Apps read `project-standards/.env` during local development. Do not put the key in an app's `.env`.
-4. In the AWS console, create access keys for the 2 server IAM users (use case "Application running outside AWS") and put them in one place, the server's shared file `/opt/project-standards/.env`. Do not put them in each app. The command that creates the file for the first time is in "Shared file" in the [deploy runbook](runbooks/deploy.md).
+5. In the AWS console, create access keys for the 2 server IAM users (use case "Application running outside AWS") and put them in one place, the server's shared file `/opt/project-standards/.env`. Do not put them in each app. The command that creates the file for the first time is in "Shared file" in the [deploy runbook](runbooks/deploy.md).
 
    | IAM user | Keys to put in the shared file |
    |---|---|
@@ -264,7 +275,7 @@ It succeeded if the last line shows `All decisions match.`. Leave the output as 
    | `sirloinbh-apps-backup-uploader` | `BACKUP_AWS_ACCESS_KEY_ID`, `BACKUP_AWS_SECRET_ACCESS_KEY`, `BACKUP_S3_BUCKET` (= `terraform output backup_bucket`) |
 
    From the next deploy, apps that use the Claude API read the key from SSM, and from the next dump, every app's backup is uploaded to S3. After that, you may delete the `ANTHROPIC_API_KEY` line from the study-log server `.env`.
-5. If there is an old key, revoke it in the Console. When you finish, leave a comment "done" on #266 (do not write the value).
+6. If there is an old key, revoke it in the Console. When you finish, leave a comment "done" on #266 (do not write the value).
 
 ## 11. Turn on healthchecks.io alerts (#286)
 

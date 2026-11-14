@@ -278,7 +278,7 @@ test('backup timers run nightly and weekly in Seoul time and the units copy the 
 const python = has('python3') ? 'python3' : has('python') ? 'python' : null;
 
 // Runs the rendered ssm-get.sh with a fake curl that answers like SSM GetParameter.
-function ssmRun(args, { env = '', shared = null, response = '{"Parameter":{"Name":"/sirloinbh/anthropic-api-key","Value":"value-from-ssm"}}' } = {}) {
+function ssmRun(args, { env = '', shared = null, response = '{"Parameter":{"Name":"/sirloinbh/shared/anthropic-api-key","Value":"value-from-ssm"}}' } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ssm-'));
   const bin = path.join(dir, 'bin');
   const app = path.join(dir, 'app');
@@ -302,19 +302,19 @@ function ssmRun(args, { env = '', shared = null, response = '{"Parameter":{"Name
 const SECRETS_ENV = 'SECRETS_AWS_ACCESS_KEY_ID=fake-reader-id\nSECRETS_AWS_SECRET_ACCESS_KEY=fake-reader-secret\n';
 
 test('ssm-get signs a GetParameter call and prints only the value', { skip: !(has('bash') && python) && 'bash or python not found' }, () => {
-  const r = ssmRun(['/sirloinbh/anthropic-api-key'], { env: SECRETS_ENV });
+  const r = ssmRun(['/sirloinbh/shared/anthropic-api-key'], { env: SECRETS_ENV });
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout, 'value-from-ssm');
   assert.match(r.curlArgs, /--aws-sigv4 aws:amz:ap-northeast-2:ssm /);
   assert.match(r.curlArgs, /X-Amz-Target: AmazonSSM\.GetParameter/);
-  assert.match(r.curlArgs, /--data \{"Name":"\/sirloinbh\/anthropic-api-key","WithDecryption":true\} https:\/\/ssm\.ap-northeast-2\.amazonaws\.com\/$/m);
+  assert.match(r.curlArgs, /--data \{"Name":"\/sirloinbh\/shared\/anthropic-api-key","WithDecryption":true\} https:\/\/ssm\.ap-northeast-2\.amazonaws\.com\/$/m);
   assert.ok(!r.curlArgs.includes('fake-reader-secret'), 'the secret must not be a curl argument');
   assert.equal(r.curlStdin, 'user = "fake-reader-id:fake-reader-secret"\n');
   assert.equal(r.stderr, '');
 });
 
 test('ssm-get takes the key pair from the shared server file, and it wins over the app .env', { skip: !(has('bash') && python) && 'bash or python not found' }, () => {
-  const r = ssmRun(['/sirloinbh/anthropic-api-key'], { shared: SECRETS_ENV, env: 'SECRETS_AWS_ACCESS_KEY_ID=old-id\nSECRETS_AWS_SECRET_ACCESS_KEY=old-secret\n' });
+  const r = ssmRun(['/sirloinbh/shared/anthropic-api-key'], { shared: SECRETS_ENV, env: 'SECRETS_AWS_ACCESS_KEY_ID=old-id\nSECRETS_AWS_SECRET_ACCESS_KEY=old-secret\n' });
   assert.equal(r.status, 0, r.stderr);
   assert.equal(r.stdout, 'value-from-ssm');
   assert.equal(r.curlStdin, 'user = "fake-reader-id:fake-reader-secret"\n');
@@ -324,44 +324,76 @@ test('ssm-get refuses odd names and reports a missing key pair with exit 3', { s
   const odd = ssmRun(['/x","WithDecryption":false,"a":"'], { env: SECRETS_ENV });
   assert.equal(odd.status, 2);
   assert.equal(odd.curlArgs, '');
-  const missing = ssmRun(['/sirloinbh/anthropic-api-key']);
+  const missing = ssmRun(['/sirloinbh/shared/anthropic-api-key']);
   assert.equal(missing.status, 3);
   assert.match(missing.stderr, /SECRETS_AWS_ACCESS_KEY_ID or SECRETS_AWS_SECRET_ACCESS_KEY is missing/);
   assert.equal(missing.stdout, '');
 });
 
-test('remote-deploy reads the Claude key from SSM only for apps with features.claude', { skip: !has('bash') && 'bash not found' }, () => {
+test('remote-deploy exports every @ssm= tagged key, and the Claude key for apps with features.claude', { skip: !has('bash') && 'bash not found' }, () => {
+  const loader = (name) => rendered[name]['deploy/remote-deploy.sh'].match(/^ssm_keys\(\) \{[\s\S]*?^load_ssm_env\(\) \{[\s\S]*?^\}$/m)[0];
   for (const [name, files] of Object.entries(rendered)) {
-    assert.match(files['deploy/remote-deploy.sh'], new RegExp(`^if \\[ "${project(name).features.claude}" = true \\] && grep -q`, 'm'), name);
+    assert.match(files['deploy/remote-deploy.sh'], new RegExp(`^  if \\[ "${project(name).features.claude}" = true \\] && ! printf`, 'm'), name);
+    // Both the deploy and start paths read the keys after checking out the commit they start.
+    assert.equal((files['deploy/remote-deploy.sh'].match(/git checkout --quiet --detach "\$(1|ref)"\n\s+load_ssm_env$/gm) ?? []).length, 2, name);
   }
-  const text = rendered['study-log']['deploy/remote-deploy.sh'];
-  const block = text.match(/^if \[ "true" = true \] && grep -q[\s\S]*?^fi$/m)[0];
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'claude-key-'));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ssm-keys-'));
   fs.mkdirSync(path.join(dir, 'deploy'));
   const sharedFile = path.join(dir, 'shared.env');
-  const run = (env, fake, shared = '') => {
+  const EXAMPLE = [
+    '# @desc Public data key @secret @used=backend @ssm=/sirloinbh/shared/data-go-kr-service-key',
+    'HOLIDAY_API_KEY=',
+    '# @desc Tiingo token @secret @used=backend @ssm=/sirloinbh/study-log/tiingo-api-key',
+    'TIINGO_API_KEY=',
+    '# @desc Not from SSM @secret @used=backend',
+    'LOCAL_ONLY_KEY=',
+    '# @desc A tag separated by a blank line does not apply @ssm=/sirloinbh/shared/stray',
+    '',
+    'STRAY_KEY=',
+    '',
+  ].join('\n');
+  const KEYS = ['HOLIDAY_API_KEY', 'TIINGO_API_KEY', 'LOCAL_ONLY_KEY', 'STRAY_KEY', 'ANTHROPIC_API_KEY'];
+  const run = (app, { env = SECRETS_ENV, shared = '', fake = 'printf "v:%s" "$1"', example = EXAMPLE } = {}) => {
     fs.writeFileSync(path.join(dir, '.env'), env);
+    fs.writeFileSync(path.join(dir, '.env.example'), example);
     fs.writeFileSync(sharedFile, shared);
     fs.writeFileSync(path.join(dir, 'deploy/ssm-get.sh'), fake);
-    return spawnSync('bash', ['-c', `set -euo pipefail\n${block}\nbash -c 'printf %s "\${ANTHROPIC_API_KEY:-unset}"'`], {
+    const show = KEYS.map((k) => `printf "%s=%s\\n" ${k} "\${${k}:-unset}"`).join('; ');
+    const r = spawnSync('bash', ['-c', `set -euo pipefail\n${loader(app)}\nload_ssm_env\nbash -c '${show}'`], {
       cwd: dir,
       encoding: 'utf8',
-      env: { ...process.env, ANTHROPIC_API_KEY: '', STANDARDS_ENV_FILE: sharedFile.split(path.sep).join('/') },
+      env: { ...process.env, ...Object.fromEntries(KEYS.map((k) => [k, ''])), STANDARDS_ENV_FILE: sharedFile.split(path.sep).join('/') },
     });
+    return { ...r, values: Object.fromEntries(r.stdout.trim().split('\n').filter(Boolean).map((l) => l.split(/=(.*)/s).slice(0, 2))) };
   };
   try {
-    const ok = run(SECRETS_ENV, 'printf %s key-from-ssm');
+    const ok = run('study-log');
     assert.equal(ok.status, 0, ok.stderr);
-    assert.equal(ok.stdout, 'key-from-ssm');
-    const failed = run(SECRETS_ENV, 'exit 1');
+    assert.deepEqual(ok.values, {
+      HOLIDAY_API_KEY: 'v:/sirloinbh/shared/data-go-kr-service-key',
+      TIINGO_API_KEY: 'v:/sirloinbh/study-log/tiingo-api-key',
+      LOCAL_ONLY_KEY: 'unset',
+      STRAY_KEY: 'unset',
+      ANTHROPIC_API_KEY: 'v:/sirloinbh/shared/anthropic-api-key',
+    });
+    assert.equal(ok.stderr, '');
+    const tagged = run('study-log', { example: '# @desc Claude @secret @ssm=/sirloinbh/study-log/anthropic-api-key\nANTHROPIC_API_KEY=\n' });
+    assert.equal(tagged.values.ANTHROPIC_API_KEY, 'v:/sirloinbh/study-log/anthropic-api-key', 'a tag wins over the features.claude default');
+    const noClaude = run('workout-memo');
+    assert.equal(noClaude.values.ANTHROPIC_API_KEY, 'unset');
+    assert.equal(noClaude.values.HOLIDAY_API_KEY, 'v:/sirloinbh/shared/data-go-kr-service-key');
+    const failed = run('study-log', { fake: 'echo leaked-value; exit 1' });
     assert.equal(failed.status, 0, 'a failed SSM read must not stop the deploy');
-    assert.match(failed.stderr, /could not read the Claude API key from SSM/);
-    const noPair = run('ANTHROPIC_API_KEY=from-env-file\n', 'echo should-not-run; exit 9');
+    assert.equal(failed.values.HOLIDAY_API_KEY, 'unset');
+    assert.match(failed.stderr, /could not read HOLIDAY_API_KEY from SSM \(\/sirloinbh\/shared\/data-go-kr-service-key\)/);
+    assert.ok(!failed.stderr.includes('leaked-value'));
+    const noPair = run('study-log', { env: 'HOLIDAY_API_KEY=from-env-file\n', fake: 'echo should-not-run; exit 9' });
     assert.equal(noPair.status, 0);
-    assert.equal(noPair.stdout, 'unset', 'without the key pair compose keeps reading .env');
-    const shared = run('', 'printf %s key-from-ssm', SECRETS_ENV);
-    assert.equal(shared.status, 0, shared.stderr);
-    assert.equal(shared.stdout, 'key-from-ssm', 'the pair in the shared server file is enough');
+    assert.equal(noPair.values.HOLIDAY_API_KEY, 'unset', 'without the key pair compose keeps reading .env');
+    const shared = run('study-log', { env: '', shared: SECRETS_ENV });
+    assert.equal(shared.values.TIINGO_API_KEY, 'v:/sirloinbh/study-log/tiingo-api-key', 'the pair in the shared server file is enough');
+    const noExample = run('workout-memo', { example: '' });
+    assert.equal(noExample.status, 0, noExample.stderr);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

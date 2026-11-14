@@ -156,9 +156,11 @@ Keep the default `true`, and turn it off with `false` only for repos where auto-
 }
 ```
 
-## Shared Claude API key (tools/app-secrets.mjs)
+## App keys in SSM (tools/app-secrets.mjs)
 
-The source of truth for the Claude API key is a single AWS SSM Parameter Store entry, `/sirloinbh/anthropic-api-key` ([ADR-0010](adr/0010-claude-api-key-ssm.md)). This command puts the key into SSM, checks that it exists, and puts it into one place, this repo's local `.env` (excluded from Git). It never prints the value on screen.
+App keys live in AWS SSM Parameter Store: the shared Claude key at `/sirloinbh/shared/anthropic-api-key`, other keys at `/sirloinbh/shared/<name>` or `/sirloinbh/<app>/<name>` ([ADR-0010](adr/0010-claude-api-key-ssm.md), [ADR-0014](adr/0014-app-secrets-ssm-paths.md)). This command stores a value, checks that values exist, and copies them into a local `.env` (excluded from Git). It never prints a value on screen.
+
+Shared Claude key (kept in this repo's `.env`):
 
 ```powershell
 $env:SIRLOINBH_AWS_PROFILE = '<personal AWS profile>'   # do not use the company profile
@@ -166,6 +168,17 @@ Get-Clipboard | node tools/app-secrets.mjs set     # store or replace the key (v
 node tools/app-secrets.mjs check                   # whether the key is in SSM and project-standards/.env (only present/absent)
 node tools/app-secrets.mjs pull                    # put it in project-standards/.env
 ```
+
+Other keys, and the keys an app tags with `@ssm=` in its `.env.example`:
+
+```powershell
+Get-Clipboard | node tools/app-secrets.mjs set /sirloinbh/money-ledger/tiingo-api-key   # store one key
+node tools/app-secrets.mjs check money-ledger      # each tagged key: in SSM? in ../money-ledger/.env? (present/absent only)
+node tools/app-secrets.mjs pull money-ledger       # write the tagged keys into ../money-ledger/.env
+```
+
+- `<app>` is the registry name. The app clone is `../<app>` next to this repo; pass `--dir <path>` for another clone (for example a worktree).
+- `set` refuses names outside `/sirloinbh/shared/` and `/sirloinbh/<active app>/` before it reads the value. `pull` reads every value first, so a failed read leaves the `.env` unchanged.
 
 - Apps read `../project-standards/.env` during local development (assuming the app clone is in the same parent folder as this repo). Do not put the key in an app's `.env`. Example: the `--env-file-if-exists=../../project-standards/.env` in the study-log backend `dev` script. This file is read after the app `.env`, so if the same key is in both, it wins.
 - `set` passes the value to the AWS CLI not as a command-line argument but through a temporary file with narrowed permissions, and deletes it right away.
