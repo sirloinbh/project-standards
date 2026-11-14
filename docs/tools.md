@@ -185,6 +185,25 @@ node tools/app-secrets.mjs pull money-ledger       # write the tagged keys into 
 - Production servers do not use this command. The deploy script (`deploy/ssm-get.sh`) reads from SSM on every deploy. The AWS key that reads SSM is in the server's shared file `/opt/project-standards/.env` ([deploy runbook](runbooks/deploy.md)).
 - After changing the key: the server uses the new key from the next deploy. On a PC, run `pull` again.
 
+## Adopted multi-app tools (#258)
+
+What we adopted from the research on managing the 8 apps together (#255, #256, #257), where it lives, and how to use it. Details are in the linked sections and change records.
+
+| Tool | Issue | Where | How to use |
+|---|---|---|---|
+| Repo batch commands and VS Code workspace | #276 | `tools/repos.mjs` | `status`, `pull`, `run`, `workspace` across this repo and the sync targets. See [below](#repo-batch-commands-and-vs-code-workspace-toolsreposmjs) |
+| Standard labels in app repos | #277 | `tools/labels.mjs` | `plan`, then `apply` after user confirmation. See [below](#unifying-app-repo-labels-toolslabelsmjs) |
+| One issue board for all apps | #278, #279 | `tools/project-board.mjs`, Projects board `sirloinbh apps` | `plan`, then `sync`. See [below](#one-issue-board-for-all-apps-toolsproject-boardmjs) |
+| Grouped Dependabot security updates | #267 | `templates/app/.github/dependabot.yml` | Synced to every app. Security updates arrive as 2 PRs per app (minor and patch, major). See [dependency policy](dependency-policy.md#automatic-updates) |
+| Dependency PR status and bulk closing | #268 | `tools/dependency-prs.mjs` | `list`, then `close --package <name> --to <version>`. It never merges. See [below](#dependency-pr-status-and-bulk-closing-toolsdependency-prsmjs) |
+| knip (unused files, exports, dependencies) | #263, #342 | `templates/app/knip.json`, app CI `verify` job | Runs in every app's CI. It warns, and fails only in apps with `features.knipStrict` (health-log, life-journal, money-ledger, cert-manager, dev-career-portfolio). Locally: `npm run knip` in the app |
+| Lighthouse CI score warnings | #280 | `templates/lighthouse/lighthouserc.json`, app CI `verify` job | Apps with `features.lighthouse` (workout-memo). Scores are in the job summary and the `lighthouse-report` artifact; it never fails CI. To turn it on for another app, install `@lhci/cli` (approval needed) and set the flag |
+| MSW mocks from the OpenAPI contract | #281 | `templates/msw/frontend/src/test/contract-api.ts` | Apps with `features.msw` (workout-memo). In a test: `const api = setupContractApi({ emptyBody: [] })`, and `api.use(...contractHandlers({...}))` for data |
+| Dev Container | #282 | `templates/devcontainer/.devcontainer/` | Apps with `features.devcontainer` (workout-memo). See [Dev Container](#dev-container-featuresdevcontainer) |
+| Server alerts and daily report | #284, #285, #286 | `deploy/notify.sh`, `deploy/report.sh`, health and report timers | The server sends signals to healthchecks.io; an email arrives when a signal fails or stops. Addresses are `HEALTHCHECK_URL_*` in the server `.env`. See [deploy runbook](runbooks/deploy.md#4-1-alerts-healthchecksio) |
+
+The install approval for the new packages (knip, Lighthouse CI, MSW) was #245.
+
 ## Dev Container (features.devcontainer)
 
 Apps that turn on `features.devcontainer` in the registry (currently workout-memo) receive `.devcontainer/` (#282). It is for developing right away in VS Code on a new PC without matching the Node and npm versions by hand.
