@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
-import { loadAll } from '../lib/registry.mjs';
+import { loadAll, serviceHost } from '../lib/registry.mjs';
 import { checkApi, checkFileNames, checkZodArrays, formatReport, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
@@ -16,6 +16,7 @@ const { data } = loadAll(root);
 const target = data.sync.targets.find((t) => t.project === 'study-log');
 const project = data.projects.projects.find((p) => p.name === 'study-log');
 const { ports, db } = project;
+const host = serviceHost(project, data.platform);
 
 // Files that carry registry values, written the way study-log writes them today.
 const appFiles = {
@@ -51,7 +52,7 @@ function makeRepo(edit = () => {}) {
     project: 'study-log',
     files,
     packages: { '@sirloinbh/tsconfig': '1.0.0', '@sirloinbh/design-tokens': null },
-    registry: { ports, db },
+    registry: { ports, db, host },
   });
   write(MANIFEST_PATH, JSON.stringify(manifest, null, 2));
   edit({ dir, write, read: (rel) => fs.readFileSync(path.join(dir, rel), 'utf8') });
@@ -142,6 +143,12 @@ test('compose must pass the npm_token build secret to every build when Dockerfil
     'build secret|top-level secrets.npm_token.environment: NODE_AUTH_TOKEN is missing',
     'build secret|only 1 of 2 builds pass secrets: [npm_token]',
   ]);
+});
+
+test('an nginx server_name that differs from the registry subdomain fails (#254)', () => {
+  assert.equal(host, 'study-log.daysofme.com');
+  const result = check(({ write, read }) => write('frontend/nginx.conf', read('frontend/nginx.conf').replace(`server_name ${host};`, 'server_name study.example.com;')));
+  assert.ok(result.problems.some((x) => x.path === 'frontend/nginx.conf' && x.message === `server_name is study.example.com. The registry value is ${host}`), JSON.stringify(result.problems));
 });
 
 test('the compose form ${WEB_PORT:-8101}:80 is understood', () => {
