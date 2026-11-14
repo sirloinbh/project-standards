@@ -27,3 +27,8 @@
 - `node --test scripts/test/deploy-templates.test.mjs`: the loader exports tagged shared and app keys, ignores untagged keys and tags split by a blank line, adds the Claude key only for `features.claude` apps (a tag wins), warns without printing on a failed read, does nothing without the key pair, and works with no `.env.example`.
 - `node --test scripts/test/app-secrets.test.mjs`: 12 passed (`set <parameter>` refuses other names before reading the value; `pull <app>` writes only tagged keys and fails before writing when a tag breaks the rules; values never reach output or arguments).
 - `node --test scripts/test/standards-check.test.mjs scripts/test/compliance.test.mjs`: 34 passed.
+
+## Follow-up (2026-11-14)
+
+- The user's write permission could not be an inline policy: the console refused it because `terraform-workout` already has an inline policy and IAM counts all inline policies of a user against 2048 characters. `docs/user-steps.md` (section 10, step 3) and ADR-0014 now say to create the customer managed policy `sirloinbh-ssm-write` and attach it to the user.
+- Server permission: applied through shared-aws-infrastructure #27 and #30 (the PC's state lacked the backup bucket and IAM users, so they were imported first).
