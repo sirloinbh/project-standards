@@ -37,7 +37,7 @@ test('the container uses the app compose db, registry ports and the workspace fo
   assert.equal(config.service, 'dev');
   assert.equal(config.workspaceFolder, `/workspaces/${project.repos.umbrella}`);
   assert.deepEqual(config.forwardPorts, [project.ports.vite, project.ports.api]);
-  assert.match(compose, new RegExp(`- \\.\\.:/workspaces/${project.repos.umbrella}:cached`));
+  assert.match(compose, new RegExp(`- \\.:/workspaces/${project.repos.umbrella}:cached`));
   assert.match(compose, /@db:5432\/\$\{POSTGRES_DB:-workout\}/);
 });
 
@@ -78,7 +78,11 @@ test('docker compose merges the container with an app compose.yaml', { skip: !ha
     const merged = JSON.parse(r.stdout);
     assert.equal(merged.services.dev.environment.DATABASE_URL, 'postgres://workout:dev-only@db:5432/workout');
     assert.equal(merged.services.dev.depends_on.db.condition, 'service_healthy');
-    assert.ok(merged.services.dev.volumes.some((v) => v.target === `/workspaces/${project.repos.umbrella}`));
+    // Compose resolves relative paths from the first file's folder (the repo root), so the
+    // source must be the repo root itself, not its parent (#282).
+    const mount = merged.services.dev.volumes.find((v) => v.target === `/workspaces/${project.repos.umbrella}`);
+    assert.ok(mount);
+    assert.equal(path.resolve(mount.source), path.resolve(fs.realpathSync(dir)));
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
