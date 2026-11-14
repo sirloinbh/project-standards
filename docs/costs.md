@@ -23,7 +23,31 @@ The figures below are **not a per-app price but the total for the whole server**
 | Lightsail snapshot: 20 GB-month × $0.05 | $1.00 | $1.00 |
 | **Monthly total, before tax** | **$13.00** | **$25.00** |
 
-The Lightsail base prices by spec are 0.5 GB $5, 1 GB $7, 2 GB $12, and 4 GB $24. With 0.5–1 GB there is almost no headroom to run 8 apps and 8 postgres instances all the time and to build images on the server, so start by considering 2 GB, and raise to 4 GB after looking at the actual memory usage. Whether each spec can actually run this has not been verified yet.
+The Lightsail base prices by spec are 0.5 GB $5, 1 GB $7, 2 GB $12, and 4 GB $24. With 0.5–1 GB there is almost no headroom to run 8 apps and 8 postgres instances all the time and to build images on the server, so start by considering 2 GB, and raise to 4 GB after looking at the actual memory usage. The measurement below shows that 1 GB is not enough.
+
+### Measured usage (2026-11-15, #564)
+
+The user ran `docker ps`, `docker stats --no-stream`, `free -m`, and `df -h /` on the server right after a reboot for kernel updates.
+
+- The server is still the **1 GB** instance (909 MiB usable), with 2 GB of swap. [ADR-0009](adr/0009-multi-app-single-lightsail.md) planned the move to 2 GB for the second app, and that has not happened yet.
+- Only workout-memo runs, plus the shared reverse proxy (`proxy-nginx`, #251). The other 7 apps are not deployed.
+
+| Container | Memory |
+|---|---:|
+| `workout-memo-db` (postgres) | 61.5 MiB |
+| `workout-memo-api` | 28.8 MiB |
+| `workout-memo-web` (nginx) | 3.3 MiB |
+| `proxy-nginx` | 4.1 MiB |
+
+| Whole server | Value |
+|---|---:|
+| Memory used / available | 436 / 472 MiB |
+| Swap used | 0 of 2,047 MiB |
+| Disk `/` used | 8.2 of 38 GB (22%) |
+
+Idle values right after a reboot are the low end. One app takes about 95 MiB idle, so 8 apps take about 750 MiB. The OS and Docker already use about 340 MiB, so 8 apps alone fill a 1 GB server before the auth service (#548), the job workers (#555), and the image builds that run on the server.
+
+**Decision:** move to **2 GB** before deploying the second app or the auth service, as ADR-0009 says. 2 GB leaves about 900 MiB for builds, the auth service, and workers. Raise to 4 GB if, after the first few apps move in, available memory stays under about 300 MiB or swap is used during builds. The spec change is a user step: a snapshot, a new instance from it, and moving the static IP (ADR-0009).
 
 ### Conversion to Korean won (for illustration)
 
