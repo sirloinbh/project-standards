@@ -296,3 +296,20 @@ test('checkZodArrays warns when an array limit comes after a refinement', () => 
   assert.match(check('.superRefine(ok).length(3)')[0], /the array \.length\(\) comes after \.refine/);
   assert.deepEqual(check('.min(1).max(3).refine(ok)'), []);
 });
+
+test('@ssm= tags must name a shared or own-app parameter on an empty secret key (ADR-0014)', () => {
+  const good = check(({ write, read }) => write('.env.example', `${read('.env.example')}# @desc Holidays @secret @used=backend @ssm=/sirloinbh/shared/data-go-kr-service-key\nHOLIDAY_API_KEY=\n`));
+  assert.deepEqual(good.problems, []);
+  const bad = check(({ write, read }) =>
+    write(
+      '.env.example',
+      `${read('.env.example')}# @desc Other app @secret @ssm=/sirloinbh/money-ledger/tiingo-api-key\nTIINGO_API_KEY=\n# @desc Not secret @ssm=/sirloinbh/shared/x\nPLAIN_KEY=value\n# @desc Bad shape @secret @ssm=/sirloinbh/anthropic-api-key\nOLD_KEY=\n`,
+    ),
+  );
+  assert.deepEqual(bad.problems.map((p) => `${p.group}|${p.message}`), [
+    'SSM key|TIINGO_API_KEY: /sirloinbh/money-ledger/tiingo-api-key belongs to money-ledger; this app may read only /sirloinbh/shared/ and /sirloinbh/study-log/',
+    'SSM key|PLAIN_KEY: a key read from SSM must also have @secret',
+    'SSM key|PLAIN_KEY: a key read from SSM must have an empty example value',
+    'SSM key|OLD_KEY: /sirloinbh/anthropic-api-key is not /sirloinbh/shared/<name> or /sirloinbh/study-log/<name> (lowercase letters, digits, hyphens)',
+  ]);
+});

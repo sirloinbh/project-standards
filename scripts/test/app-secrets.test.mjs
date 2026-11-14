@@ -113,3 +113,71 @@ test('check fails without the parameter, and a profile is required', () =>
     },
     { fail: true },
   ));
+
+// ADR-0014: keys an app tags with @ssm= in .env.example, and set <parameter>.
+const APP_EXAMPLE = [
+  '# @desc Public data key @secret @used=backend @ssm=/sirloinbh/shared/data-go-kr-service-key',
+  'HOLIDAY_API_KEY=',
+  '# @desc Tiingo token @secret @used=backend @ssm=/sirloinbh/money-ledger/tiingo-api-key',
+  'TIINGO_API_KEY=',
+  '# @desc Not in SSM @secret @used=backend',
+  'LOCAL_KEY=',
+  '',
+].join('\n');
+
+test('pull <app> writes every @ssm= key into the app clone .env, and only names the keys', () =>
+  workspace(async ({ dir, central, lines, log }) => {
+    const app = path.join(dir, 'money-ledger');
+    fs.mkdirSync(app);
+    fs.writeFileSync(path.join(app, '.env.example'), APP_EXAMPLE);
+    fs.writeFileSync(path.join(app, '.env'), 'LOCAL_KEY=keep\r\nTIINGO_API_KEY=old\r\n');
+    assert.equal(await run(['pull', 'money-ledger', '--profile', 'p'], { root: central, log }), 0);
+    assert.equal(fs.readFileSync(path.join(app, '.env'), 'utf8'), `LOCAL_KEY=keep\r\nTIINGO_API_KEY=${VALUE}\r\nHOLIDAY_API_KEY=${VALUE}\r\n`);
+    assert.deepEqual(calls(dir).map((c) => c.args[3]), ['/sirloinbh/shared/data-go-kr-service-key', '/sirloinbh/money-ledger/tiingo-api-key']);
+    assert.deepEqual(lines, ['money-ledger/.env HOLIDAY_API_KEY: written', 'money-ledger/.env TIINGO_API_KEY: written']);
+    assert.ok(!fs.existsSync(path.join(central, '.env')), 'the central .env is not touched');
+  }));
+
+test('check <app> reports each tagged key in SSM and in the app .env, with --dir for another clone', () =>
+  workspace(async ({ dir, central, lines, log }) => {
+    const app = path.join(dir, 'elsewhere');
+    fs.mkdirSync(app);
+    fs.writeFileSync(path.join(app, '.env.example'), APP_EXAMPLE);
+    fs.writeFileSync(path.join(app, '.env'), `HOLIDAY_API_KEY=${VALUE}\n`);
+    assert.equal(await run(['check', 'money-ledger', '--dir', app, '--profile', 'p'], { root: central, log }), 1, 'TIINGO_API_KEY is missing locally');
+    assert.deepEqual(lines, [
+      'SSM /sirloinbh/shared/data-go-kr-service-key: present (last modified 2026-10-27T05:00:00+09:00)',
+      'money-ledger/.env HOLIDAY_API_KEY: present',
+      'SSM /sirloinbh/money-ledger/tiingo-api-key: present (last modified 2026-10-27T05:00:00+09:00)',
+      'money-ledger/.env TIINGO_API_KEY: missing',
+    ]);
+    assert.ok(!lines.join('\n').includes(VALUE));
+  }));
+
+test('an app may read only shared keys and its own, and pull fails before writing anything', () =>
+  workspace(async ({ dir, central, log }) => {
+    const app = path.join(dir, 'study-log');
+    fs.mkdirSync(app);
+    fs.writeFileSync(path.join(app, '.env.example'), '# @desc x @secret @ssm=/sirloinbh/money-ledger/tiingo-api-key\nTIINGO_API_KEY=\n');
+    await assert.rejects(run(['pull', 'study-log', '--profile', 'p'], { root: central, log }), /belongs to money-ledger/);
+    assert.ok(!fs.existsSync(path.join(app, '.env')));
+    assert.ok(!fs.existsSync(path.join(dir, 'aws.log')), 'no AWS call');
+    await assert.rejects(run(['pull', 'not-an-app', '--profile', 'p'], { root: central, log }), /not an active app/);
+  }));
+
+test('set <parameter> stores any shared or app key, and refuses other names before reading the value', () =>
+  workspace(async ({ dir, central, lines, log }) => {
+    assert.equal(await run(['set', '/sirloinbh/life-journal/tmdb-read-access-token', '--profile', 'p'], { root: central, log, input: async () => VALUE }), 0);
+    assert.equal(calls(dir)[0].args[3], '/sirloinbh/life-journal/tmdb-read-access-token');
+    assert.equal(calls(dir)[0].fileValue, VALUE);
+    for (const bad of ['/sirloinbh/anthropic-api-key', '/sirloinbh/unknown-app/key', '/other/shared/key', '/sirloinbh/shared/Upper_Case']) {
+      let asked = false;
+      await assert.rejects(run(['set', bad, '--profile', 'p'], { root: central, log, input: async () => ((asked = true), VALUE) }), Error, bad);
+      assert.ok(!asked, `${bad}: the value is not read`);
+    }
+    assert.ok(!lines.join('\n').includes(VALUE));
+  }));
+
+test('the shared Claude key moved to /sirloinbh/shared/ (ADR-0014)', () => {
+  assert.equal(PARAMETER, '/sirloinbh/shared/anthropic-api-key');
+});

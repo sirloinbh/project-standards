@@ -32,6 +32,7 @@ Use the following tags on the single line right above a key.
 | `@required` | The app does not work without it |
 | `@secret` | A secret value. Leave the example value empty or put only a placeholder such as `<password>` |
 | `@used=<place>` | Where it is used: `backend`, `frontend`, `compose`, `npm`, `ci`, comma-separated |
+| `@ssm=<parameter>` | The value comes from AWS SSM Parameter Store (`/sirloinbh/shared/<name>` or `/sirloinbh/<app>/<name>`, [ADR-0014](adr/0014-app-secrets-ssm-paths.md)). The key must also have `@secret` and an empty example value, and must not start with `VITE_` |
 
 ## What to follow
 
@@ -54,7 +55,7 @@ CI runs `secret-scan` every time to check the files being committed for tokens a
 
 ## Common keys: Claude API (#264)
 
-Apps that use the Claude API use the names below. The source of truth for the key value is one place, AWS SSM Parameter Store `/sirloinbh/anthropic-api-key` ([ADR-0010](adr/0010-claude-api-key-ssm.md)).
+Apps that use the Claude API use the names below. The source of truth for the key value is one place, AWS SSM Parameter Store `/sirloinbh/shared/anthropic-api-key` ([ADR-0010](adr/0010-claude-api-key-ssm.md), [ADR-0014](adr/0014-app-secrets-ssm-paths.md)).
 
 | Key | Tags | Description |
 |---|---|---|
@@ -64,6 +65,16 @@ Apps that use the Claude API use the names below. The source of truth for the ke
 - Do not pass the Claude API key to the frontend (the `VITE_` prefix). It would be exposed to the browser. Make calls only from the backend.
 - CI holds no real key. Tests replace the API call with a fake.
 
-## Per-app external service keys (#422, proposal)
+## External service keys from SSM (#424)
 
-The option of also keeping external service keys other than the Claude API key (the public data portal, Google OAuth, market price APIs, and so on) in SSM, and the issuing procedure, are in the [survey document](research/app-secrets-ssm.md). Until that is adopted and implemented, they are kept in each app's `.env`.
+External service keys (the public data portal, Google OAuth, market price APIs, and so on) live in AWS SSM, like the Claude key ([ADR-0014](adr/0014-app-secrets-ssm-paths.md)). Tag the key in `.env.example`:
+
+```dotenv
+# @desc Public Data Portal auth key (Decoding) for holiday lookup @secret @used=backend @ssm=/sirloinbh/shared/data-go-kr-service-key
+HOLIDAY_API_KEY=
+```
+
+- Server: the deploy script reads every tagged key from SSM on each deploy and passes it to compose. Pass it to the container in `compose.yaml` (`HOLIDAY_API_KEY: ${HOLIDAY_API_KEY:-}`). Do not write it in the server `.env`.
+- PC: `node tools/app-secrets.mjs pull <app>` in project-standards writes the tagged keys into the app `.env` ([tools.md](tools.md#app-keys-in-ssm-toolsapp-secretsmjs)).
+- A key shared by several apps uses `/sirloinbh/shared/<name>`; one app's key uses `/sirloinbh/<app>/<name>`. An app may not tag another app's parameter. `standards-check` enforces this.
+- How to issue each service's key: the [survey document](research/app-secrets-ssm.md).

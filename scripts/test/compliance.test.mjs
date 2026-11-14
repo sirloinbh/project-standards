@@ -99,7 +99,7 @@ test('reports never contain secret values', () => {
     assert.ok(!text.includes('topsecret'));
   }
   assert.match(matrix, /\| `POSTGRES_PASSWORD` \| PostgreSQL 비밀번호 \| yes \| yes \| \(secret\) \|/);
-  assert.match(matrix, /\| `VITE_FEATURE` \| 기능 플래그 \|  \|  \| `on` \| frontend \| project \|/);
+  assert.match(matrix, /\| `VITE_FEATURE` \| 기능 플래그 \|  \|  \| `on` \| frontend \|  \| project \|/);
   assert.match(compliance, /\| sirloinbh\/study-log \| not yet \|/);
   assert.match(compliance, /\| sirloinbh\/x \| unknown \(no local clone\) \|/);
 });
@@ -179,4 +179,14 @@ test('the report shows Korean text as a warning, not a failure (#493)', async ()
   assert.match(report, /\| △ 1 md, 0 comments \|/);
   assert.match(report, /## Korean text[\s\S]*- `README\.md`/);
   assert.doesNotMatch(report, /✗ 1 md/);
+});
+
+test('@ssm= tags are parsed, checked against the app, and shown in the env matrix without values (ADR-0014)', () => {
+  const text = `${annotated}\n# @desc Holidays @secret @used=backend @ssm=/sirloinbh/shared/data-go-kr-service-key\nHOLIDAY_API_KEY=\n# @desc Wrong app @secret @ssm=/sirloinbh/money-ledger/tiingo-api-key\nTIINGO_API_KEY=\n`;
+  const entries = parseEnvExample(text);
+  assert.equal(entries.find((e) => e.key === 'HOLIDAY_API_KEY').ssm, '/sirloinbh/shared/data-go-kr-service-key');
+  assert.equal(entries.find((e) => e.key === 'PORT').ssm, null);
+  assert.deepEqual(envMismatches(entries, study), ['TIINGO_API_KEY: /sirloinbh/money-ledger/tiingo-api-key belongs to money-ledger; this app may read only /sirloinbh/shared/ and /sirloinbh/study-log/']);
+  const md = renderEnvMatrix([{ repo: 'sirloinbh/study-log', profile: 'app', env: entries, envProblems: [] }], meta);
+  assert.match(md, /\| `HOLIDAY_API_KEY` \| Holidays \|  \| yes \| \(secret\) \| backend \| `\/sirloinbh\/shared\/data-go-kr-service-key` \| project \|/);
 });

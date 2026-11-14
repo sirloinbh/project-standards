@@ -2,6 +2,7 @@
 
 - Survey date: 2026-11-08. Issuance conditions and limits can change, so check the official guidance again right before issuing.
 - User decision (2026-11-08): environment variables and API keys are managed in AWS SSM Parameter Store.
+- Adopted in [ADR-0014](../adr/0014-app-secrets-ssm-paths.md) and implemented in #424 (2026-11-14): `set <parameter>`, `check <app>`, `pull <app>` in `tools/app-secrets.mjs`, the `@ssm=` tag, and the deploy script.
 - Evidence level: **official** is a value read directly from the provider's page, **secondary** is a value seen only in blogs or search results, and **unconfirmed** is a value I could not find.
 
 ## Summary

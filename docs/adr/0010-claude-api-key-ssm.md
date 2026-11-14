@@ -1,6 +1,6 @@
 # 0010. Keep the Claude API key in one place in AWS SSM Parameter Store and have apps fetch it
 
-- Status: Accepted (issue #264)
+- Status: Accepted (issue #264), amended by [ADR-0014](0014-app-secrets-ssm-paths.md) (the key is now `/sirloinbh/shared/anthropic-api-key`, and other app keys follow the same path rules)
 - Date: 2026-10-27
 
 ## Context
