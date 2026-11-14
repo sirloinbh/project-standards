@@ -75,6 +75,26 @@ test('rejects reserved ports and a port scheme that would hit them for any slot'
   assert.ok(errors.some((e) => e === 'portScheme.web + slot 3 hits reserved port 8103'));
 });
 
+// #435: a local tool holds a slot and lists only the ports it uses.
+test('file-control holds slot 9 as a local tool with web 8109 only', () => {
+  const [tool] = original.data.projects.localTools;
+  assert.deepEqual([tool.name, tool.slot, tool.ports], ['file-control', 9, { web: 8109 }]);
+  assert.ok(!original.data.projects.projects.some((p) => p.slot === 9), 'no app has slot 9');
+});
+
+test('local tools share the slot sequence and port formula with apps, and need one port', () => {
+  const { errors } = fixture((d) => {
+    const [tool] = d.projects.localTools;
+    tool.slot = 2;
+    d.projects.localTools.push({ slot: 10, name: 'other-tool', repo: 'other-tool', summary: 'a test tool', ports: { api: 3111 } }, { slot: 11, name: 'empty-tool', repo: 'empty-tool', summary: 'a test tool', ports: {} });
+  });
+  assert.ok(errors.some((e) => e.startsWith('slot "2" is used by study-log, file-control')), errors.join('\n'));
+  assert.ok(errors.some((e) => e === 'file-control.ports.web is 8109, expected 8102 (8100 + slot 2)'));
+  assert.ok(errors.some((e) => e === 'other-tool.ports.api is 3111, expected 3110 (3100 + slot 10)'));
+  assert.ok(errors.some((e) => e === 'empty-tool: a local tool must list at least one port'));
+  assert.ok(!errors.some((e) => e.includes('other-tool.ports.web')), 'unlisted ports are not checked');
+});
+
 test('display names must be unique because they are the only difference between apps', () => {
   const { errors } = fixture((d) => {
     byName(d, 'health-log').displayName = byName(d, 'study-log').displayName;

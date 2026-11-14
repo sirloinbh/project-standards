@@ -31,6 +31,15 @@ export function renderProjects({ projects, platform, sync }) {
     const ports = p.ports;
     lines.push(`| ${p.name} | ${ports.web} | ${ports.api} | ${ports.e2eApi} | ${ports.vite} | ${ports.e2eWeb} | ${ports.db} |`);
   }
+  const tools = [...(projects.localTools ?? [])].sort((a, b) => a.slot - b.slot);
+  if (tools.length) {
+    lines.push('', '## Local tools', '', 'Not apps: no deploy, DB, or sync. They hold a slot so their ports never collide with an app, and use only the ports listed.', '');
+    lines.push('| Slot | Tool | Repository | Ports | Summary |', '|---|---|---|---|---|');
+    for (const t of tools) {
+      const ports = Object.entries(t.ports).map(([kind, port]) => `${kind} ${port}`).join(', ');
+      lines.push(`| ${String(t.slot).padStart(2, '0')} | ${t.name} | ${t.repo} | ${ports} | ${t.summary} |`);
+    }
+  }
   const s = platform.portScheme;
   lines.push(
     '',
