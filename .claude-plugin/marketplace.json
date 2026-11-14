@@ -1,0 +1,14 @@
+{
+  "name": "sirloinbh-standards",
+  "owner": {
+    "name": "sirloinbh"
+  },
+  "description": "sirloinbh shared std skills and guard hooks for repos outside file sync.",
+  "plugins": [
+    {
+      "name": "sirloinbh-standards",
+      "source": "./plugins/sirloinbh-standards",
+      "description": "Shared std skills and guard hooks for repos outside sync."
+    }
+  ]
+}
