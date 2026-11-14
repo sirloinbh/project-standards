@@ -4,7 +4,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { loadAll } from './lib/registry.mjs';
+import { loadAll, serviceHost } from './lib/registry.mjs';
 
 const UNSET = 'TBD';
 
@@ -21,7 +21,7 @@ export function renderProjects({ projects, platform, sync }) {
     '|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const p of [...projects.projects].sort((a, b) => a.slot - b.slot)) {
-    const host = p.service.domain ? [p.service.subdomain, p.service.domain].filter(Boolean).join('.') : UNSET;
+    const host = serviceHost(p, platform) ?? UNSET;
     lines.push(
       `| ${String(p.slot).padStart(2, '0')} | ${p.name} | ${p.title} | ${p.displayName} | ${p.domain} | ${p.status} | ${p.db.name} / ${p.db.testName} | ${host} | ${p.aws.prefix ?? UNSET} | ${rollout.get(p.name) ?? '-'} |`,
     );

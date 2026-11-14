@@ -325,7 +325,7 @@ When the DB port changes, `DATABASE_URL` in each user's local `.env` must also b
   },
   "ports": { "web": 8101, "api": 3101, "e2eApi": 3201, "vite": 5201, "e2eWeb": 5301, "db": 15401 },
   "db": { "name": "workout", "testName": "workout_test" },
-  "service": { "domain": null, "subdomain": null },   // undecided. Fill in only the values once they exist
+  "service": { "domain": null, "subdomain": "workout-memo" },   // domain null = platform rootDomain (ADR-0012)
   "aws": { "prefix": null },                          // undecided
   "features": { "e2e": true, "openapi": true, "contract": true },
   "skills": ["workout-foundation", "workout-implementation", "workout-testing"],
@@ -333,7 +333,8 @@ When the DB port changes, `DATABASE_URL` in each user's local `.env` must also b
 }
 ```
 
-- The schema allows `null` for `service.domain`, `service.subdomain`, and `aws.prefix`. `null` values are skipped in conflict checks and cross checks, and `docs/projects.md` shows them as "미정" (undecided).
+- The schema allows `null` for `service.domain` and `aws.prefix`. `null` values are skipped in conflict checks and cross checks, and `docs/projects.md` shows them as "TBD".
+- `service.subdomain` is one DNS label equal to `name`, and not a reserved name such as `www` or `api` (ADR-0012, #250). The address is `<subdomain>.<service.domain or rootDomain>`; `registry-check` fails on a duplicate subdomain or address. While `rootDomain` is `null`, `docs/projects.md` shows the address as "TBD".
 - `ports` are written explicitly so they are easy to search. `registry-check` verifies they match the formula (`base value + slot`) and fails if they do not.
 
 ### 6.4 `registry/platform.json`

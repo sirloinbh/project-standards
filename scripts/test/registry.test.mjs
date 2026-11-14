@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { checkAll, loadAll } from '../lib/registry.mjs';
+import { checkAll, loadAll, serviceHost } from '../lib/registry.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const original = loadAll(root);
@@ -59,12 +59,44 @@ test('null domains and AWS prefixes are not duplicates, real values are', () => 
   assert.deepEqual(fixture(() => {}).errors, []);
   const { errors } = fixture((d) => {
     for (const name of ['study-log', 'health-log']) {
-      byName(d, name).service = { domain: 'example.com', subdomain: 'app' };
+      byName(d, name).service = { domain: 'example.com', subdomain: 'shared' };
       byName(d, name).aws.prefix = 'shared';
     }
   });
-  assert.ok(errors.some((e) => e.startsWith('service host "app.example.com"')));
+  assert.ok(errors.some((e) => e.startsWith('subdomain "shared" is used by study-log, health-log')), errors.join('\n'));
+  assert.ok(errors.some((e) => e.startsWith('service host "shared.example.com"')));
   assert.ok(errors.some((e) => e.startsWith('AWS prefix "shared"')));
+});
+
+test('each subdomain is the app name under the root domain (ADR-0012)', () => {
+  for (const p of original.data.projects.projects) {
+    assert.equal(p.service.subdomain, p.name);
+    assert.equal(serviceHost(p, { rootDomain: null }), null);
+    assert.equal(serviceHost(p, { rootDomain: 'example.com' }), `${p.name}.example.com`);
+  }
+  // A per-app domain overrides the root domain.
+  assert.equal(serviceHost({ service: { domain: 'other.net', subdomain: 'study-log' } }, { rootDomain: 'example.com' }), 'study-log.other.net');
+  const { errors } = fixture((d) => {
+    d.platform.rootDomain = 'example.com';
+    byName(d, 'study-log').service.subdomain = 'workout-memo';
+  });
+  assert.ok(errors.some((e) => e.startsWith('subdomain "workout-memo" is used by workout-memo, study-log')), errors.join('\n'));
+  assert.ok(errors.some((e) => e.startsWith('service host "workout-memo.example.com"')));
+  assert.ok(errors.some((e) => e === 'study-log: service.subdomain "workout-memo" must equal name (ADR-0012)'));
+});
+
+test('subdomains must be one DNS label and not a reserved name', () => {
+  const reserved = fixture((d) => {
+    byName(d, 'study-log').service.subdomain = 'www';
+  }).errors;
+  assert.ok(reserved.includes('study-log: service.subdomain "www" is reserved'), reserved.join('\n'));
+  for (const bad of ['study.log', 'Study-Log', '-study', 'study_log', null]) {
+    const { errors } = fixture((d) => {
+      byName(d, 'study-log').service.subdomain = bad;
+    });
+    assert.equal(errors.length, 1, `${bad}: ${errors.join('\n')}`);
+    assert.match(errors[0], /^registry\/projects\.json \/projects\/1\/service\/subdomain: /);
+  }
 });
 
 test('rejects reserved ports and a port scheme that would hit them for any slot', () => {

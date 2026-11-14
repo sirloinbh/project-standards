@@ -26,6 +26,15 @@ export function loadAll(root) {
 
 export const PORT_KINDS = ['web', 'api', 'e2eApi', 'vite', 'e2eWeb', 'db'];
 
+// Subdomains kept for the shared domain itself, mail, DNS, and later shared services.
+export const RESERVED_SUBDOMAINS = ['www', 'api', 'app', 'admin', 'mail', 'smtp', 'imap', 'pop', 'ftp', 'ns', 'ns1', 'ns2', 'status', 'static', 'cdn', 'auth', 'login'];
+
+/** The app's address (`<subdomain>.<service.domain or rootDomain>`), or null while no domain exists (ADR-0012). */
+export function serviceHost(project, platform) {
+  const parent = project.service.domain ?? platform.rootDomain;
+  return parent ? `${project.service.subdomain}.${parent}` : null;
+}
+
 // Reports every value that appears more than once, naming who uses it.
 function duplicates(entries, label, errors) {
   const owners = new Map();
@@ -72,11 +81,13 @@ export function checkAll({ data, schemas }, { today = new Date().toISOString().s
     'database name',
     errors,
   );
-  duplicates(
-    projects.map((p) => [p.service.domain && [p.service.subdomain, p.service.domain].filter(Boolean).join('.'), p.name]),
-    'service host',
-    errors,
-  );
+  duplicates(projects.map((p) => [p.service.subdomain, p.name]), 'subdomain', errors);
+  duplicates(projects.map((p) => [serviceHost(p, data.platform), p.name]), 'service host', errors);
+  for (const p of projects) {
+    // Each app gets its own A record and nginx server block named after the app (ADR-0012).
+    if (p.service.subdomain !== p.name) errors.push(`${p.name}: service.subdomain "${p.service.subdomain}" must equal name (ADR-0012)`);
+    if (RESERVED_SUBDOMAINS.includes(p.service.subdomain)) errors.push(`${p.name}: service.subdomain "${p.service.subdomain}" is reserved`);
+  }
   duplicates(projects.map((p) => [p.aws.prefix, p.name]), 'AWS prefix', errors);
   duplicates(
     holders.flatMap((p) => PORT_KINDS.map((kind) => [p.ports[kind], `${p.name}.${kind}`])),
