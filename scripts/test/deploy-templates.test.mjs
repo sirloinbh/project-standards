@@ -307,7 +307,7 @@ test('ssm-get signs a GetParameter call and prints only the value', { skip: !(ha
   assert.equal(r.stdout, 'value-from-ssm');
   assert.match(r.curlArgs, /--aws-sigv4 aws:amz:ap-northeast-2:ssm /);
   assert.match(r.curlArgs, /X-Amz-Target: AmazonSSM\.GetParameter/);
-  assert.match(r.curlArgs, /--data \{"Name":"\/sirloinbh\/anthropic-api-key","WithDecryption":true\} https:\/\/ssm\.ap-northeast-2\.amazonaws\.com\/$/m);
+  assert.match(r.curlArgs, /--data \{"Name":"\/sirloinbh\/shared\/anthropic-api-key","WithDecryption":true\} https:\/\/ssm\.ap-northeast-2\.amazonaws\.com\/$/m);
   assert.ok(!r.curlArgs.includes('fake-reader-secret'), 'the secret must not be a curl argument');
   assert.equal(r.curlStdin, 'user = "fake-reader-id:fake-reader-secret"\n');
   assert.equal(r.stderr, '');
