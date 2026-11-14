@@ -32,15 +32,25 @@ These go into the shared file `/opt/project-standards/.env` (ADR-0010). Write on
 
 Prerequisites: the domain is bought (#249), `rootDomain` is filled (#539), and the DNS records, 443 firewall rule, and certbot IAM key are applied (#252).
 
-1. On the PC, generate the files and copy them to the server.
+1. On the PC, generate the files and copy them to the server. Keep each `ssh` command on one line; a line break inside the quotes sends two broken commands.
    ```powershell
    node scripts/proxy-config.mjs
-   ssh -i ~/.ssh/<key> ubuntu@<static_ip> "sudo install -d -m 755 /opt/project-standards/proxy/nginx"
-   scp -i ~/.ssh/<key> -r .local/proxy/* ubuntu@<static_ip>:/tmp/proxy/
-   ssh -i ~/.ssh/<key> ubuntu@<static_ip> "sudo cp -r /tmp/proxy/. /opt/project-standards/proxy/ && rm -rf /tmp/proxy"
+   $k = "~/.ssh/<key>"; $s = "ubuntu@<static_ip>"
+   ssh -i $k $s "mkdir -p /tmp/proxy"
+   scp -i $k -r .local/proxy/* "${s}:/tmp/proxy/"
+   ssh -i $k $s "sudo install -d -m 755 /opt/project-standards/proxy && sudo cp -r /tmp/proxy/. /opt/project-standards/proxy/ && rm -rf /tmp/proxy"
    ```
+   Run the remaining steps in an `ssh -i $k $s` session on the server. Windows PowerShell 5.1 drops double quotes nested inside an `ssh` argument, so commands with quotes, `(`, or `|` break when sent from the PC.
 2. On the server, add the three keys above to `/opt/project-standards/.env`.
-3. Check that nothing else listens on 80 or 443: `sudo ss -ltnp '( sport = :80 or sport = :443 )'` shows nothing.
+3. Check that nothing else listens on 80 or 443: `sudo ss -ltnp '( sport = :80 or sport = :443 )'` shows only the header line. An app deployed before the proxy may publish its web container on `0.0.0.0:80` (`WEB_BIND=0.0.0.0`, `WEB_PORT=80` in its `.env`). Move it to its registry port, which the proxy forwards to (#253):
+   ```bash
+   cd /opt/<app>
+   sudo cp .env .env.bak-proxy
+   sudo sed -i '/^WEB_BIND=/d;/^WEB_PORT=/d' .env
+   printf 'WEB_BIND=127.0.0.1\nWEB_PORT=<ports.web>\n' | sudo tee -a .env >/dev/null
+   sudo IMAGE_TAG=$(cat .deployed) docker compose up -d --no-deps web
+   curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:<ports.web>/api/health   # 200
+   ```
 4. Issue the certificate, then start nginx (nginx cannot start before the certificate exists).
    ```bash
    cd /opt/project-standards/proxy
@@ -48,7 +58,7 @@ Prerequisites: the domain is bought (#249), `rootDomain` is filled (#539), and t
    sudo docker compose up -d nginx
    sudo bash cert.sh install       # renewal timer
    ```
-5. Check from an allowed IP: `curl -I https://<app>.<root domain>` returns the app's response for each app, and `sudo bash cert.sh dry-run` ends with "Congratulations, all simulated renewals succeeded". Post the results on #253.
+5. Check from an allowed IP: `curl -I https://<app>.<root domain>` returns the app's response for each app, and `sudo bash cert.sh dry-run` ends with "Congratulations, all simulated renewals succeeded". An app that is not deployed on the server yet returns 502. First install results: #253.
 
 ## Changes later
 
@@ -58,5 +68,5 @@ Prerequisites: the domain is bought (#249), `rootDomain` is filled (#539), and t
 
 ## Limits
 
-- If the proxy or the certificate breaks, all 8 subdomains break together. Until #254 closes the web ports, `http://<static_ip>:<WEB_PORT>` still works as a fallback.
+- If the proxy or the certificate breaks, all 8 subdomains break together. The firewall never opened the app web ports, so the fallback is an SSH tunnel to the app's web port: `ssh -i ~/.ssh/<key> -L <ports.web>:127.0.0.1:<ports.web> ubuntu@<static_ip>`, then `http://localhost:<ports.web>`.
 - Behind the proxy, every request reaches the app's nginx from `127.0.0.1`, so the per-IP API rate limit (10 per second, burst 40) is shared by all clients of that app until #254 adds a `real_ip` setting. With one user per app this does not matter.
