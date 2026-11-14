@@ -238,6 +238,21 @@ node tools/labels.mjs apply --remove-old --overrides .local/labels-overrides.jso
 - `--remove-old` first adds the standard labels to closed issues as well, and then deletes the old labels in the mapping table from the repo. It does not delete in a repo that has an issue where adding a label failed.
 - It changes app repos, so run it only after user confirmation.
 
+## One issue board for all apps (tools/project-board.mjs)
+
+It puts the open issues of the same repos as `labels.mjs` (sync targets and file-control) on the GitHub Projects board `sirloinbh apps` (number 5), and fills the board's **Priority** field from the `priority/P0`–`P4` labels (#279).
+
+```powershell
+node tools/project-board.mjs plan                 # read-only: issues to add and Priority to set, per repo
+node tools/project-board.mjs sync                 # does it after a confirmation question
+node tools/project-board.mjs sync --project 6     # another board
+```
+
+- Needs the `project` scope on the personal gh token (`ghp auth refresh -s project`, #278).
+- It never creates or changes board fields. The board needs a single-select field **Priority** with options containing `P0`–`P4`; if it is missing, the command says how to add it and stops. The repo is the board's built-in **Repository** field.
+- It only adds and sets Priority. It does not remove closed issues or anything else from the board; use the board's built-in workflows (Item closed → Status Done, auto-archive) for that.
+- An issue without a priority label is added with Priority empty. Run it again after `labels.mjs` or after changing priorities.
+
 ## Dependency PR status and bulk closing (tools/dependency-prs.mjs)
 
 It groups the open Dependabot PRs across all sirloinbh repos by package and target version, and closes the groups you choose with a reason comment after a confirmation question (#268). **It does not merge.** Merging an app PR is a production deploy, so the user does it.
@@ -256,6 +271,7 @@ node tools/dependency-prs.mjs close --package body-parser --repo study-log --rea
 - Agent worker: `npm run test:agents`. It is also included in `npm test` (and therefore `npm run check`). On Windows, `.github/workflows/agents.yml` runs it one more time. It uses only fake git, gh, npm, Codex, and temporary repos. The launcher checks (`agents.ps1 -Root <folder> status` installed in a temporary folder shows only each one's own queue in two fake repos, passing of `-Root`, `-BranchType`, and `-Slug`, and 2 PowerShell→Node boundaries) run only on Windows.
 - Repo batch commands: `node --test scripts/test/repos.test.mjs`. It uses only temporary git repos.
 - Label unification: `node --test scripts/test/labels.test.mjs`. It uses only a fake gh (`LABELS_GH`) and checks that deletion happens only after all additions are finished.
+- Issue board: `node --test scripts/test/project-board.test.mjs`. It uses only a fake gh (`BOARD_GH`) and checks that `plan` writes nothing, the ids `sync` sends, the confirmation, and the stop when Priority is missing.
 - Dependency PR command: `node --test scripts/test/dependency-prs.test.mjs`. It uses only a fake gh (`DEPENDENCY_PRS_GH`) and checks the confirmation before closing and that it does not merge.
 - Shared Claude API key: `node --test scripts/test/app-secrets.test.mjs`. It uses only a fake AWS CLI (`APP_SECRETS_AWS`) and checks that the value appears neither in output nor in arguments.
 - Account tools: `node --test scripts/test/tools.test.mjs` (Windows-only checks are skipped on other OSes). The install check also verifies that the worker, registry, and `versions.json` are installed and that changed worker files are backed up. It uses only a fake `gh` and `code`, a temporary user folder, and synthetic tokens, and does not touch real credentials, the installed copy, or VS Code.
