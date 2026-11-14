@@ -51,8 +51,24 @@
 - The two outside repos get the std skills and guard hooks as `/sirloinbh-standards:std-*`. If the plugin is not installed on a PC, they silently run without them, so the install step goes into `docs/tools.md` (#516).
 - Hook scripts must work from `${CLAUDE_PLUGIN_ROOT}` as well as from `.claude/hooks/`. The current scripts use only Node built-ins and `CLAUDE_PROJECT_DIR` or the event `cwd`, so no change is expected.
 
+## Re-check (#517, 2026-11-14)
+
+The Claude Code and Codex docs were checked again. The decision stays: synced repos keep file sync, and nothing switches to a plugin.
+
+| Topic | Finding | Source |
+|---|---|---|
+| Headless `claude -p` | Still does not install a plugin that only the repo enables: "Setting `enabledPlugins` in the repository doesn't install the plugin." A plugin is fetched only when user settings, an untracked `.claude/settings.local.json`, `--settings`, or managed settings enable it. `--plugin-dir` loads one for a single session | [plugins/org](https://code.claude.com/docs/en/plugins/org.md), [plugins/loading](https://code.claude.com/docs/en/plugins/loading.md) |
+| Cloud sessions | Still do not install plugins the repo turns on under `enabledPlugins`. Plugins enabled in server-managed (admin) settings do reach cloud sessions | [cloud-environments](https://code.claude.com/docs/en/cloud-environments.md) |
+| GitHub Action | `anthropics/claude-code-action` installs plugins only from its own `plugins` and `plugin_marketplaces` inputs, not from the repo's settings | [github-actions](https://code.claude.com/docs/en/github-actions.md) |
+| Missing plugin | Still no required mode for a repo-declared plugin. New: `claude -p --output-format stream-json --verbose` lists `plugin_errors` in its `system/init` event, so a script can fail when a plugin did not load | [headless](https://code.claude.com/docs/en/headless.md) |
+| What a plugin ships | Unchanged: no `CLAUDE.md`, `.claude/rules/`, or permission settings. A plugin's hook copy is still not de-duplicated with a settings copy | [plugins/components](https://code.claude.com/docs/en/plugins/components.md), [hooks](https://code.claude.com/docs/en/hooks.md) |
+| Codex plugins | Documented now. The portable manifest is a root `plugin.json` (`.codex-plugin/plugin.json` is a compatibility fallback). A plugin ships `skills/<name>/SKILL.md`, MCP servers, hooks, and assets. A repo lists plugins in `.agents/plugins/marketplace.json`. Not documented: whether `codex exec` and Codex cloud load plugins, and what happens when one is missing (an unresolvable marketplace entry is skipped without failing). Plugins are not available in the IDE extension | [plugins/build](https://developers.openai.com/plugins/build/plugins), [codex/plugins](https://learn.chatgpt.com/docs/plugins) |
+
+- The `tools/agents` workers run Codex non-interactively, and plugin loading there is not documented. Codex stays on `AGENTS.md`, `.codex/` files, and skill files.
+- Check again when the Claude Code docs say that `claude -p` and cloud sessions install plugins a repo enables, or when the Codex docs say that `codex exec` loads plugins and reports a missing one. Until then, file sync stays the only channel for synced repos.
+
 ## Follow-up work
 
 - #515 Build the plugin and marketplace file from the central sources, with a freshness check.
 - #516 Enable the plugin in `file-control` and `develop-skill`, and document the install step.
-- #517 Revisit plugins for synced repos once headless and cloud sessions load repo-declared plugins, and check the Codex plugin format.
+- #517 Revisit plugins for synced repos once headless and cloud sessions load repo-declared plugins, and check the Codex plugin format. Done on 2026-11-14 (see "Re-check" above); the decision stays.
