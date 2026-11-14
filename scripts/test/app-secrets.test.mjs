@@ -5,13 +5,14 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { ENV_KEY, PARAMETER, claudeApps, hasEnvValue, run, setEnvLine } from '../../tools/app-secrets.mjs';
+import { ENV_KEY, PARAMETER, claudeApps, hasEnvValue, run, setEnvLine, valueProblem } from '../../tools/app-secrets.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const VALUE = 'fake-claude-key-value';
+const CLAUDE_VALUE = 'sk-ant-api03-fake_Key-1';
 
 // A fake AWS CLI: records its arguments (and the file:// value it was given) and answers SSM calls.
-function fakeAws(dir, { fail = false } = {}) {
+function fakeAws(dir, { fail = false, stored = VALUE } = {}) {
   const script = path.join(dir, 'fake-aws.mjs');
   fs.writeFileSync(
     script,
@@ -20,7 +21,7 @@ const args = process.argv.slice(2);
 const file = args.find((a) => a.startsWith('file://'));
 fs.appendFileSync(${JSON.stringify(path.join(dir, 'aws.log'))}, JSON.stringify({ args, fileValue: file ? fs.readFileSync(file.slice(7), 'utf8') : null }) + '\\n');
 if (${fail}) { process.stderr.write('ParameterNotFound'); process.exit(254); }
-if (args.includes('Parameter.Value')) process.stdout.write(${JSON.stringify(VALUE + '\n')});
+if (args.includes('Parameter.Value')) process.stdout.write(${JSON.stringify(stored + '\n')});
 else if (args.includes('Parameter.LastModifiedDate')) process.stdout.write('2026-10-27T05:00:00+09:00\\n');
 `,
   );
@@ -78,14 +79,14 @@ test('pull creates the central .env when it does not exist yet, and leaves the a
 
 test('set passes the value through a temporary file that is removed afterwards', () =>
   workspace(async ({ dir, lines, log }) => {
-    assert.equal(await run(['set', '--profile', 'p'], { root, log, input: async () => `  ${VALUE}\r\n` }), 0);
+    assert.equal(await run(['set', '--profile', 'p'], { root, log, input: async () => `  ${CLAUDE_VALUE}\r\n` }), 0);
     const [call] = calls(dir);
     assert.deepEqual(call.args.slice(0, 7), ['ssm', 'put-parameter', '--name', PARAMETER, '--type', 'SecureString', '--overwrite']);
-    assert.equal(call.fileValue, VALUE);
-    assert.ok(!call.args.includes(VALUE), 'the value must not be an argument');
+    assert.equal(call.fileValue, CLAUDE_VALUE);
+    assert.ok(!call.args.includes(CLAUDE_VALUE), 'the value must not be an argument');
     const file = call.args.find((a) => a.startsWith('file://')).slice(7);
     assert.ok(!fs.existsSync(file), 'the temporary file is removed');
-    assert.ok(!lines.join('\n').includes(VALUE));
+    assert.ok(!lines.join('\n').includes(CLAUDE_VALUE));
     await assert.rejects(run(['set', '--profile', 'p'], { root, log, input: async () => '\n' }), /Pass the key value on standard input/);
   }));
 
@@ -177,6 +178,35 @@ test('set <parameter> stores any shared or app key, and refuses other names befo
     }
     assert.ok(!lines.join('\n').includes(VALUE));
   }));
+
+// #531: copied terminal text was once stored as the Claude key.
+test('set refuses text that is not a key before any AWS call, and never repeats it', () =>
+  workspace(async ({ dir, central, log }) => {
+    const pasted = `PS D:\\github\\project-standards> Get-Clipboard | node tools/app-secrets.mjs set\n${CLAUDE_VALUE}\n`;
+    const cases = [
+      [PARAMETER, pasted, /has 2 lines/],
+      [PARAMETER, `${CLAUDE_VALUE} extra`, /contains spaces/],
+      [PARAMETER, VALUE, /does not look like a Claude API key/],
+      ['/sirloinbh/shared/data-go-kr-service-key', 'two\nlines', /has 2 lines/],
+    ];
+    for (const [parameter, input, message] of cases) {
+      const error = await run(['set', parameter, '--profile', 'p'], { root: central, log, input: async () => input }).then(() => null, (e) => e);
+      assert.match(error?.message ?? '', message);
+      assert.ok(!error.message.includes('fake'), 'the error never repeats the value');
+    }
+    assert.ok(!fs.existsSync(path.join(dir, 'aws.log')), 'no AWS call');
+    assert.equal(valueProblem('/sirloinbh/shared/data-go-kr-service-key', VALUE), null, 'other keys only need to be one token');
+  }));
+
+test('pull refuses a stored value with line breaks and leaves the .env untouched', () =>
+  workspace(
+    async ({ central, log }) => {
+      fs.writeFileSync(path.join(central, '.env'), 'ANTHROPIC_API_KEY=old\n');
+      await assert.rejects(run(['pull', '--profile', 'p'], { root: central, log }), /has line breaks/);
+      assert.equal(fs.readFileSync(path.join(central, '.env'), 'utf8'), 'ANTHROPIC_API_KEY=old\n');
+    },
+    { stored: 'PS D:\\github> line one\nline two' },
+  ));
 
 test('the shared Claude key moved to /sirloinbh/shared/ (ADR-0014)', () => {
   assert.equal(PARAMETER, '/sirloinbh/shared/anthropic-api-key');

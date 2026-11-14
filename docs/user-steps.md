@@ -267,6 +267,7 @@ It succeeded if the last line shows `All decisions match.`. Leave the output as 
    node tools/app-secrets.mjs check     # success if every line shows "present"
    ```
    Apps read `project-standards/.env` during local development. Do not put the key in an app's `.env`.
+   **Type the `Get-Clipboard` line instead of pasting it:** copying the command replaces the key on the clipboard. `set` refuses a value with line breaks or spaces, and anything that is not an `sk-ant-` key (#531).
 5. In the AWS console, create access keys for the 2 server IAM users (use case "Application running outside AWS") and put them in one place, the server's shared file `/opt/project-standards/.env`. Do not put them in each app. The command that creates the file for the first time is in "Shared file" in the [deploy runbook](runbooks/deploy.md).
 
    | IAM user | Keys to put in the shared file |
