@@ -10,6 +10,7 @@ These are the shadcn/ui base components all 8 apps use in the same form (#123, [
 | `input.tsx` | `Input` | Error border when `aria-invalid` |
 | `label.tsx` | `Label` | Connect it to the input with `htmlFor` |
 | `checkbox.tsx` | `Checkbox` | The box is 16px, and on touch devices there is an invisible 44px press area |
+| `combobox.tsx`, `combobox-filter.ts` | `Combobox`; `ComboboxGroup`, `filterComboboxGroups`, `maxComboboxOptions`, `looseText` | Text field with suggestions (WAI-ARIA APG combobox, #437). Free text is allowed. `options` is a list of strings, or titled groups (for example "Recently used"). ↓/↑ move, Enter picks without submitting the form, Esc closes, Tab leaves with the typed text. Filtering ignores spaces and letter case, and shows at most 8 (`maxOptions`). `emptyMessage` is announced when nothing matches. `listLabel` names the list and must not contain the field's label. Options are 44px tall on touch screens. No package |
 | `select.tsx` | `Select`, `SelectTrigger`, `SelectValue`, `SelectContent`, `SelectItem`, `SelectGroup`, `SelectLabel`, `SelectSeparator` | Can be opened and chosen with the keyboard |
 | `card.tsx` | `Card`, `CardHeader`, `CardTitle`, `CardDescription`, `CardAction`, `CardContent`, `CardFooter` | `CardTitle` is `h3` by default; match the level with `asHeading` |
 | `badge.tsx` | `Badge`, `badgeVariants` | `variant`: default, secondary, success, warning, destructive, outline |
