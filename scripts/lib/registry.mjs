@@ -53,10 +53,13 @@ export function checkAll({ data, schemas }, { today = new Date().toISOString().s
   if (errors.length) return { errors, warnings };
 
   const { projects } = data.projects;
+  const localTools = data.projects.localTools ?? [];
   const { portScheme, reservedPorts } = data.platform;
 
-  duplicates(projects.map((p) => [p.slot, p.name]), 'slot', errors);
-  duplicates(projects.map((p) => [p.name, `slot ${p.slot}`]), 'project name', errors);
+  // Local tools share the slot sequence and port formula with apps (#435), but nothing else.
+  const holders = [...projects, ...localTools];
+  duplicates(holders.map((p) => [p.slot, p.name]), 'slot', errors);
+  duplicates(holders.map((p) => [p.name, `slot ${p.slot}`]), 'project name', errors);
   // Apps share one look (ADR-0008), so the display name is the only thing that tells them apart.
   duplicates(projects.map((p) => [p.displayName, p.name]), 'display name', errors);
   duplicates(
@@ -76,18 +79,27 @@ export function checkAll({ data, schemas }, { today = new Date().toISOString().s
   );
   duplicates(projects.map((p) => [p.aws.prefix, p.name]), 'AWS prefix', errors);
   duplicates(
-    projects.flatMap((p) => PORT_KINDS.map((kind) => [p.ports[kind], `${p.name}.${kind}`])),
+    holders.flatMap((p) => PORT_KINDS.map((kind) => [p.ports[kind], `${p.name}.${kind}`])),
     'port',
     errors,
   );
 
-  for (const p of projects) {
+  for (const t of localTools) {
+    if (!PORT_KINDS.some((kind) => kind in t.ports)) errors.push(`${t.name}: a local tool must list at least one port`);
+  }
+
+  for (const p of holders) {
     if (p.slot > portScheme.maxSlot) errors.push(`${p.name}: slot ${p.slot} exceeds maxSlot ${portScheme.maxSlot}`);
     for (const kind of PORT_KINDS) {
+      // A local tool lists only the ports it uses.
+      if (!(kind in p.ports)) continue;
       const expected = portScheme[kind] + p.slot;
       if (p.ports[kind] !== expected) errors.push(`${p.name}.ports.${kind} is ${p.ports[kind]}, expected ${expected} (${portScheme[kind]} + slot ${p.slot})`);
       if (reservedPorts.includes(p.ports[kind])) errors.push(`${p.name}.ports.${kind} uses reserved port ${p.ports[kind]}`);
     }
+  }
+
+  for (const p of projects) {
     if (p.db.name === p.db.testName) errors.push(`${p.name}: db.testName must differ from db.name`);
     for (const d of p.allowedDifferences) {
       if (d.until && d.until < today) warnings.push(`${p.name}: allowedDifferences "${d.path}" expired on ${d.until}`);

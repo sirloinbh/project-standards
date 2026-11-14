@@ -28,6 +28,14 @@
 | plan-routine | 8107 | 3107 | 3207 | 5207 | 5307 | 15407 |
 | dev-career-portfolio | 8108 | 3108 | 3208 | 5208 | 5308 | 15408 |
 
+## Local tools
+
+Not apps: no deploy, DB, or sync. They hold a slot so their ports never collide with an app, and use only the ports listed.
+
+| Slot | Tool | Repository | Ports | Summary |
+|---|---|---|---|---|
+| 09 | file-control | file-control | web 8109 | Windows file cleanup CLI (fctl). Its local screen fctl ui serves on 127.0.0.1 only and fails instead of moving when the port is busy. |
+
 Port formula: base value + slot. web 8100, api 3100, e2e api 3200, vite 5200, e2e web 5300, db 15400. Reserved ports (do not assign): 3000, 4173, 5173, 5432, 8080. Basis: [ADR-0006](adr/0006-port-slot-allocation.md)
 
 ## Shared values

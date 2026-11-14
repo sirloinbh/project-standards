@@ -443,5 +443,16 @@
       ],
       "allowedDifferences": []
     }
+  ],
+  "localTools": [
+    {
+      "slot": 9,
+      "name": "file-control",
+      "repo": "file-control",
+      "summary": "Windows file cleanup CLI (fctl). Its local screen fctl ui serves on 127.0.0.1 only and fails instead of moving when the port is busy.",
+      "ports": {
+        "web": 8109
+      }
+    }
   ]
 }

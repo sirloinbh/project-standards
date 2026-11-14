@@ -27,6 +27,7 @@ Each project gets a slot `n` (01–99), and its ports are `base value per kind +
 - The `reservedPorts` in `registry/platform.json` (3000, 4173, 5173, 5432, 8080) are not assigned. None of this list overlaps the official ports of the 99 slots (see docs/changes/1-design-doc.md for the verification result).
 - Vite runs with `strictPort: true`, so if a port collides it fails immediately instead of moving to another port.
 - The registry lists ports explicitly, and central CI checks that they match the formula.
+- Local tools that are not apps (no deploy, DB, or sync) may hold a slot too, in `localTools` of `registry/projects.json`. They list only the ports they use, and those follow the same formula. file-control holds slot 09 with web 8109 only (#435).
 
 ## Consequences
 
