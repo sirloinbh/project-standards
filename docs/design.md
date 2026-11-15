@@ -112,6 +112,7 @@ Central scripts use only Node built-in modules and tests run with `node --test`.
 | `@sirloinbh/prettier-config` | Common options JSON that each app's `prettier.config.mjs` loads | `prettier` | Root |
 | `@sirloinbh/tsconfig` | `base.json`, `react-app.json`, `node-api.json` | `typescript` | `frontend/`, `backend/` |
 | `@sirloinbh/design-tokens` | `tokens.css` (`:root` variables, no Tailwind needed), `tailwind.css` (`@theme static`), list of brand variables | None | `frontend/` |
+| `@sirloinbh/auth-client` | Shared sign-in ([ADR-0015](adr/0015-shared-sign-in.md)): `createAuthMiddleware` (Express session check), `meHandler`, `createUseUser` (React hook built from the app's own React), sign-in and sign-out links | None | `frontend/`, `backend/` (after its first release) |
 
 - The ESLint config is a factory. The downstream `eslint.config.mjs` imports the peer plugins itself and passes them in. Because the package then imports no other modules, central tests can run with stubs and there are no dependency resolution problems.
 - The defaults of design-tokens are the semantic tokens (ink, surface, line, danger, radius, shadow) from workout-memo's `frontend/src/theme.css`. Each app overrides its own brand colors (`--color-primary`, `--color-on-primary`, `--color-accent`, `--color-focus`). Apps without Tailwind use only `tokens.css`.

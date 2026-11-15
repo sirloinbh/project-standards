@@ -15,9 +15,9 @@ const json = (rel) => JSON.parse(read(rel));
 const fixture = (name) => fs.readFileSync(path.join(root, 'scripts/test/fixtures/study-log', `${name}.txt`), 'utf8');
 const tokens = json('design/tokens.json');
 
-test('all four packages pass package-guard', () => {
+test('all five packages pass package-guard', () => {
   assert.deepEqual(checkAll(root), []);
-  assert.deepEqual(fs.readdirSync(path.join(root, 'packages')).sort(), ['design-tokens', 'eslint-config', 'prettier-config', 'tsconfig']);
+  assert.deepEqual(fs.readdirSync(path.join(root, 'packages')).sort(), ['auth-client', 'design-tokens', 'eslint-config', 'prettier-config', 'tsconfig']);
 });
 
 test('package-guard rejects dependencies, install scripts, ranges, privacy, and a missing CHANGELOG entry', () => {
