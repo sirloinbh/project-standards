@@ -42,8 +42,9 @@ function makeRepo(edit = () => {}) {
   const shared = data.versions.dependencies;
   write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write', knip: 'knip' }, devDependencies: { ...shared.root.devDependencies, ...lint } }));
   const tokens = { '@sirloinbh/design-tokens': v['@sirloinbh/design-tokens'] };
-  write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, dependencies: { ...shared.frontend.dependencies, ...tokens }, devDependencies: { ...shared.frontend.devDependencies, ...tsconfig } }));
-  write('backend/package.json', JSON.stringify({ name: 'backend', ...pkgFields, dependencies: shared.backend.dependencies, devDependencies: { ...shared.backend.devDependencies, ...tsconfig } }));
+  const auth = { '@sirloinbh/auth-client': v['@sirloinbh/auth-client'] };
+  write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, dependencies: { ...shared.frontend.dependencies, ...tokens, ...auth }, devDependencies: { ...shared.frontend.devDependencies, ...tsconfig } }));
+  write('backend/package.json', JSON.stringify({ name: 'backend', ...pkgFields, dependencies: { ...shared.backend.dependencies, ...auth }, devDependencies: { ...shared.backend.devDependencies, ...tsconfig } }));
   for (const [rel, text] of Object.entries(appFiles)) write(rel, text);
   write('node_modules/@sirloinbh/tsconfig/package.json', JSON.stringify({ name: '@sirloinbh/tsconfig', version: '1.0.0' }));
   const manifest = buildManifest({

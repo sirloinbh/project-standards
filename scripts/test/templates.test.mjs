@@ -96,12 +96,12 @@ test('package.json fields are rendered from versions.json for all three package 
   const expected = { packageManager: 'npm@11.19.0', 'engines.node': '24.21.0', 'engines.npm': '11.19.0' };
   const tsconfig = { 'devDependencies.@sirloinbh/tsconfig': '1.0.0' };
   const shared = sharedDependencyFields(loadIndex(root), 'app', data.versions);
-  assert.deepEqual(byPath['backend/package.json'], { path: 'backend/package.json', source: 'templates/index.json', mode: 'fields', fields: { ...expected, ...tsconfig, ...shared['backend/package.json'] } });
+  assert.deepEqual(byPath['backend/package.json'], { path: 'backend/package.json', source: 'templates/index.json', mode: 'fields', fields: { ...expected, 'dependencies.@sirloinbh/auth-client': '1.0.0', ...tsconfig, ...shared['backend/package.json'] } });
   assert.deepEqual(byPath['frontend/package.json'], {
     path: 'frontend/package.json',
     source: 'templates/index.json',
     mode: 'fields',
-    fields: { ...expected, 'dependencies.@sirloinbh/design-tokens': '1.0.0', ...tsconfig, ...shared['frontend/package.json'] },
+    fields: { ...expected, 'dependencies.@sirloinbh/auth-client': '1.0.0', 'dependencies.@sirloinbh/design-tokens': '1.0.0', ...tsconfig, ...shared['frontend/package.json'] },
   });
   assert.deepEqual(byPath['package.json'].fields, {
     ...expected,
