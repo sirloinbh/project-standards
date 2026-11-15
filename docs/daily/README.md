@@ -4,6 +4,9 @@ Progress across several repos is written into `YYYY-MM-DD.md` for each working d
 
 ## By date
 
+- [2026-11-15](2026-11-15.md)
+- [2026-11-14](2026-11-14.md)
+- [2026-11-13](2026-11-13.md)
 - [2026-11-12](2026-11-12.md)
 - [2026-11-11](2026-11-11.md)
 - [2026-11-05](2026-11-05.md)
