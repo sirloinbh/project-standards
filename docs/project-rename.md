@@ -19,7 +19,7 @@ Central sync checks that the target repo is `sirloinbh/<repos.umbrella>` (`scrip
    - Generated docs (`npm run docs`), the sync snapshot (`UPDATE_SNAPSHOT=1 npm test`)
    - Tests that contain the name and docs that state current values (the `docs/design.md` table, `docs/tools.md`, `docs/github-app.md`, `docs/user-steps.md`, `docs/costs.md`)
 3. `[User]` On GitHub, rename the umbrella repo and the 3 sub-repos. Merge the PR from step 2 right after.
-4. Check the sync PR that is open in the repo with the new name. The DB name in `AGENTS.md`, `deploy/`, and `compose.yaml` must change to the new value and `standards-check` must pass. The user merges this PR.
+4. Check the sync PR that is open in the repo with the new name. The DB name in `AGENTS.md`, `deploy/`, and `compose.yaml` must change to the new value and `standards-check` must pass. The agent merges this PR after review and green CI.
 5. `[User]` Update the local remote URL, the folder name, and the local DB (`.env`, Docker volume) to match the new name.
 6. Change the names that the app repo manages (package name, UI text, own skills, README) with an app repo issue.
 

@@ -64,7 +64,7 @@ To preview the result merged with local clones, run something like `node scripts
 
 3. If the list of files sub-repos receive changes, update the snapshot with `UPDATE_SNAPSHOT=1 npm test` and review that change in the PR as well.
 4. For a major decision, add an ADR under `docs/adr/`.
-5. After the merge, a sync PR opens in each sub-repo. The user merges the app repos' PRs (merging is the production deployment).
+5. After the merge, a sync PR opens in each sub-repo. The agent reviews and merges them after CI is green (merging an app is the production deployment; user decision, 2026-11-15, #591).
 
 ## When standards-check fails in a sub-repo
 

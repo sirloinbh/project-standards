@@ -27,8 +27,9 @@ test('every app gets AGENTS.md and CLAUDE.md that point to AGENTS.project.md', (
     assert.ok(agents.includes(project.summary), target.repo);
     assert.ok(agents.includes('**Always read and follow [AGENTS.project.md](AGENTS.project.md) as well**'), target.repo);
     assert.ok(agents.includes(`Register an issue in \`sirloinbh/${project.repos.umbrella}\`.`), target.repo);
-    // Merge rules belong to each project (workout-memo lets the agent merge after CI); default is user-only.
-    assert.ok(agents.includes('Follow [AGENTS.project.md](AGENTS.project.md) for PR review and merge rules. If it does not set them, **only the user merges PRs.**'), target.repo);
+    // The agent reviews and merges its own PR in every app repo (#591); AGENTS.project.md may only be stricter.
+    assert.ok(agents.includes('Review and merge your own PR as std-code-review section 8 says'), target.repo);
+    assert.ok(!agents.includes('only the user merges'), target.repo);
     assert.ok(agents.includes(`web ${project.ports.web}, API ${project.ports.api}, Vite ${project.ports.vite}, host DB ${project.ports.db}`), target.repo);
     // Claude Code loads @ imports every session but never follows markdown links (#447).
     assert.match(files['CLAUDE.md'].content, /^@AGENTS\.md\n@AGENTS\.project\.md$/m, target.repo);

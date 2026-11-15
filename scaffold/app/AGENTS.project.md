@@ -10,7 +10,7 @@ This file holds rules that apply only to {{project.name}}. The common instructio
 
 ## Work procedure (in addition to the common procedure)
 
-- After opening a PR, go through automated code review up to 2 times. Apply the improvements as additional commits, and split fixes that are too big for this PR into new issues.
+- After opening a PR, review it 1 or 2 times with std-code-review section 8 (more only while blocking findings remain). Apply the improvements as additional commits, and register fixes that are too big for this PR as new issues.
 - **When all required CI checks on the final head pass, the agent merges the PR** (`--merge --match-head-commit <the verified SHA>`). Do not merge while a check is failing or in progress, do not bypass protection rules (for example `--admin`), do not approve your own PR, do not push directly to main, and do not force push.
 - Once production deploy is connected, merging to main is the deploy. At that point, add the deploy check procedure to this section ([Deployment and operations](docs/deployment.md)).
 

@@ -113,21 +113,21 @@ Commit it at the root of a repo that uses the worker. If it is missing, everythi
 | `checkScript` | `"check"` | The name of the npm script to run as the host check (`npm run <name>`). Shell commands are not accepted |
 | `database.tables` | none | The tables and columns the DB precheck verifies, `{ "<table>": ["<column>", ...] }`. If absent, the schema precheck is skipped. A task that needs a DB still requires a dedicated `TEST_DATABASE_URL` in that case |
 | `browser.checkArgs` | none | Arguments for the browser verification command. The executable is the per-PC `browserExecutable`. If absent, it uses `browserCheckArgs` in the per-PC `config.json` as before |
-| `autoMerge` | `true` | After CI passes, the worker merges the PR. If `false`, it changes the PR to ready and the user merges it |
+| `autoMerge` | `true` | After CI passes, the worker merges the PR. If `false`, it changes the PR to ready and leaves the merge to a person |
 
-**Auto-merge is on by default (user decision, 2026-10-22).** For a repo where a person must confirm the merge, such as one where a merge to main is a production deploy, turn it off by putting `"autoMerge": false` in `.agents.json`.
+**Auto-merge is on by default (user decision, 2026-10-22), and since 2026-11-15 it is on for every repo (#591).** The user decided that agents merge their own PRs in all sirloinbh repos after the review loop, including app repos where a merge to main is a production deploy. Use `"autoMerge": false` in `.agents.json` only for a repo where the user records a new decision to confirm merges himself.
 
 #### Auto-merge per repo
 
-Keep the default `true`, and turn it off with `false` only for repos where auto-merge is not allowed (user decision, 2026-10-23, #184). The rule "ask the user first about downstream repo PRs" in the central `AGENTS.md` applies to interactive agents, and PRs opened by the worker follow this table. The app `AGENTS.md` files state the same exception.
+Keep the default `true` (user decisions 2026-10-23, #184, and 2026-11-15, #591: all repos). The rule "ask the user first about downstream repo PRs" in the central `AGENTS.md` applies to interactive agents, and PRs opened by the worker follow this table. The app `AGENTS.md` files state the same exception.
 
 | Repo | `autoMerge` | Reason |
 |---|---|---|
 | `workout-memo` | `true` (default, not written in the file) | The user allowed auto-merge in #128 |
-| `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio` | `false` | A merge to main is a production deploy, and there is no decision allowing auto-merge |
-| `project-standards`, `shared-aws-infrastructure` | Not applicable | They are not in the registry `repos`, so the worker does not run. `project-standards` is merged by the agent, as the central `AGENTS.md` says |
+| `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio` | `true` (default) | The user allowed auto-merge for all repos on 2026-11-15 (#591), also where a merge to main is a production deploy. A repo whose `.agents.json` still says `false` is listed in the tracking issue and is changed there |
+| `project-standards`, `shared-aws-infrastructure` | Not applicable | They are not in the registry `repos`, so the worker does not run. The agent merges both after the review loop |
 
-- **If the file is missing, it auto-merges.** So for a repo with `false`, include `.agents.json` (at least `{"autoMerge": false}`) in the PR that introduces the worker, and before introducing it, check `autoMerge false` in the `doctor` output of `agents.ps1 -Root <repo> doctor`.
+- **If the file is missing, it auto-merges.** So for a repo that records `false`, include `.agents.json` (at least `{"autoMerge": false}`) in the PR that introduces the worker, and before introducing it, check `autoMerge false` in the `doctor` output of `agents.ps1 -Root <repo> doctor`.
 - **Do not distribute it by sync.** `.agents.json` holds values that differ per repo, such as `checkScript` and `database.tables`, and the sync's JSON field management (`fields`) does not create a missing file, so it cannot solve the "no file means auto-merge" problem. The source of truth for per-repo values is this table, not the registry.
 - To change a value in the table, record the user's decision in an issue and fix this table and that repo's `.agents.json` together.
 

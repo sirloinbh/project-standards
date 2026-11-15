@@ -35,4 +35,4 @@ To adopt a library or tool that is not on this list, open an issue in the centra
 2. Check that the new version is at least 14 days past its release.
 3. If needed, write an ADR and update the version table in [dependency-policy.md](dependency-policy.md). Also update the peerDependencies of the shared packages.
 4. Apply it to workout-memo first and pass CI, e2e, and visual checks.
-5. Apply it to the other apps through a sync PR or per-repo PRs. The user merges the app repo PRs.
+5. Apply it to the other apps through a sync PR or per-repo PRs. The agent merges the app repo PRs after review (#591).
