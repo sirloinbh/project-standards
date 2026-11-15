@@ -13,6 +13,7 @@ This is the code shape all 8 apps follow. Most of it records what all 8 apps wer
 | Backend test location | `backend/test/*.test.ts` (`node:test`, `tsx --test`) | — |
 | Frontend test location | `*.test.ts(x)` next to the target file (Vitest) | — |
 | Browser tests | `e2e/*.spec.ts` (Playwright) | — |
+| Cookie names | An app's own cookie starts with its registry DB name (`workout_<name>`). The shared sign-in session cookie (prefix `sirloinbh`, [ADR-0015](../adr/0015-shared-sign-in.md)) is the only cookie shared across apps | — |
 | Branch, commit, PR | `<type>/<issue-number>-<english-summary>`, `<type>: <what was done> (#number)` | [std-git-writing](../../templates/common/skills/std-git-writing/SKILL.md) |
 
 ## Frontend file names
@@ -20,6 +21,12 @@ This is the code shape all 8 apps follow. Most of it records what all 8 apps wer
 - File names use only lowercase English, digits, and hyphens. A dot is used only to separate kinds: `app.test.tsx`, `vite-env.d.ts`.
 - Do not keep a screen file and that screen's logic file with the same name and different extensions. In study-log, `StudyLogs.tsx` (screen) and `study-logs.ts` (logic) differ only in case, which is confusing on Windows and macOS. Split the names, for example the screen as `study-logs.tsx` and the logic as `study-logs-data.ts`.
 - `standards-check` looks at the `.ts` and `.tsx` file names under `frontend/src` and warns (it is not a failure). Renaming in study-log is done as a study-log repo issue.
+
+## Cookie names
+
+- Since #254 each app has its own host (`<app>.daysofme.com`), so an app's own cookies no longer reach the other apps. Before that, all apps shared one IP and cookies are scoped by host, not port.
+- The shared sign-in sets one cookie on the parent domain `daysofme.com`, which every app receives (#542). An app cookie with the DB name prefix can never collide with it.
+- No app set a cookie when this rule was added (search for `Set-Cookie`, `res.cookie`, `document.cookie` in all 8 apps, 2026-11-15, #565).
 
 ## What was not changed
 
