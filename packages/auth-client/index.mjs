@@ -13,6 +13,13 @@ export function sessionCookies(header) {
     .join('; ');
 }
 
+// A loop instead of /\/+$/, which CodeQL flags as slow on long runs of "/".
+function trimSlashes(url) {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === '/') end--;
+  return url.slice(0, end);
+}
+
 const tokenOf = (cookies) => /(?:^|; )(?:__Secure-)?sirloinbh\.session_token=([^;]+)/.exec(cookies)?.[1] ?? null;
 
 /**
@@ -22,7 +29,7 @@ const tokenOf = (cookies) => /(?:^|; )(?:__Secure-)?sirloinbh\.session_token=([^
  */
 export function createAuthMiddleware({ authUrl, fetch = globalThis.fetch, cacheMs = 30_000, timeoutMs = 3_000, publicPaths = ['/api/health'], maxCached = 100, now = Date.now } = {}) {
   if (!authUrl) throw new Error('createAuthMiddleware: authUrl is required (the auth service on the shared-auth network)');
-  const sessionUrl = `${authUrl.replace(/\/+$/, '')}/api/auth/get-session`;
+  const sessionUrl = `${trimSlashes(authUrl)}/api/auth/get-session`;
   const cache = new Map();
 
   return async function auth(req, res, next) {
@@ -78,12 +85,12 @@ export async function fetchUser({ meUrl = '/api/me', fetch = globalThis.fetch } 
 
 /** Sign-in page of the auth service; it sends the browser back to returnTo afterwards. */
 export function signInUrl(authOrigin, returnTo) {
-  return `${authOrigin.replace(/\/+$/, '')}/sign-in?returnTo=${encodeURIComponent(returnTo)}`;
+  return `${trimSlashes(authOrigin)}/sign-in?returnTo=${encodeURIComponent(returnTo)}`;
 }
 
 /** Sign-out page of the auth service; it ends the session for every app, then returns to returnTo. */
 export function signOutUrl(authOrigin, returnTo) {
-  return `${authOrigin.replace(/\/+$/, '')}/sign-out?returnTo=${encodeURIComponent(returnTo)}`;
+  return `${trimSlashes(authOrigin)}/sign-out?returnTo=${encodeURIComponent(returnTo)}`;
 }
 
 /**
