@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { ENV_KEY, PARAMETER, claudeApps, hasEnvValue, run, setEnvLine, valueProblem } from '../../tools/app-secrets.mjs';
+import { ENV_KEY, PARAMETER, claudeApps, hasEnvValue, parameterProblem, run, setEnvLine, valueProblem } from '../../tools/app-secrets.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const VALUE = 'fake-claude-key-value';
@@ -210,4 +210,11 @@ test('pull refuses a stored value with line breaks and leaves the .env untouched
 
 test('the shared Claude key moved to /sirloinbh/shared/ (ADR-0014)', () => {
   assert.equal(PARAMETER, '/sirloinbh/shared/anthropic-api-key');
+});
+
+test('parameters may belong to the shared space, an active app, or a shared service (ADR-0015)', () => {
+  assert.equal(parameterProblem('/sirloinbh/shared/anthropic-api-key'), null);
+  assert.equal(parameterProblem('/sirloinbh/workout-memo/some-key'), null);
+  assert.equal(parameterProblem('/sirloinbh/shared-auth/github-client-id'), null);
+  assert.equal(parameterProblem('/sirloinbh/not-an-app/key'), 'not-an-app is not an active app or shared service in registry/projects.json');
 });

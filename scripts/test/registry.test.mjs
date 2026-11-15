@@ -123,8 +123,29 @@ test('local tools share the slot sequence and port formula with apps, and need o
   assert.ok(errors.some((e) => e.startsWith('slot "2" is used by study-log, file-control')), errors.join('\n'));
   assert.ok(errors.some((e) => e === 'file-control.ports.web is 8109, expected 8102 (8100 + slot 2)'));
   assert.ok(errors.some((e) => e === 'other-tool.ports.api is 3111, expected 3110 (3100 + slot 10)'));
-  assert.ok(errors.some((e) => e === 'empty-tool: a local tool must list at least one port'));
+  assert.ok(errors.some((e) => e === 'empty-tool: a local tool or shared service must list at least one port'));
   assert.ok(!errors.some((e) => e.includes('other-tool.ports.web')), 'unlisted ports are not checked');
+});
+
+// ADR-0015: the shared sign-in holds slot 10 and the reserved subdomain auth, without being an app.
+test('shared-auth holds slot 10 as a shared service at the reserved subdomain auth', () => {
+  const [service] = original.data.projects.sharedServices;
+  assert.deepEqual([service.name, service.slot, service.subdomain, service.ports], ['shared-auth', 10, 'auth', { web: 8110, api: 3110, db: 15410 }]);
+  assert.equal(original.data.projects.projects.length, 8, 'not counted as an app');
+});
+
+test('shared services share slots, ports, and subdomains with apps, and need one port', () => {
+  const { errors } = fixture((d) => {
+    d.projects.sharedServices.push(
+      { slot: 2, name: 'other-service', repo: 'other-service', subdomain: 'study-log', summary: 'a test service', ports: { web: 8102 } },
+      { slot: 11, name: 'empty-service', repo: 'empty-service', subdomain: 'auth', summary: 'a test service', ports: {} },
+    );
+  });
+  assert.ok(errors.some((e) => e.startsWith('slot "2" is used by study-log, other-service')), errors.join('\n'));
+  assert.ok(errors.some((e) => e.startsWith('subdomain "study-log" is used by study-log, other-service')), errors.join('\n'));
+  assert.ok(errors.some((e) => e.startsWith('subdomain "auth" is used by shared-auth, empty-service')), errors.join('\n'));
+  assert.ok(errors.some((e) => e === 'empty-service: a local tool or shared service must list at least one port'));
+  assert.ok(!errors.some((e) => e.includes('is reserved')), 'a shared service may use a reserved subdomain');
 });
 
 test('display names must be unique because they are the only difference between apps', () => {

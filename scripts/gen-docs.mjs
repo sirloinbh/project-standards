@@ -40,6 +40,16 @@ export function renderProjects({ projects, platform, sync }) {
       lines.push(`| ${String(t.slot).padStart(2, '0')} | ${t.name} | ${t.repo} | ${ports} | ${t.summary} |`);
     }
   }
+  const services = [...(projects.sharedServices ?? [])].sort((a, b) => a.slot - b.slot);
+  if (services.length) {
+    lines.push('', '## Shared services', '', 'Not apps: services every app uses (ADR-0015). They hold a slot, and may use a reserved subdomain.', '');
+    lines.push('| Slot | Service | Repository | Address | Ports | Summary |', '|---|---|---|---|---|---|');
+    for (const t of services) {
+      const ports = Object.entries(t.ports).map(([kind, port]) => `${kind} ${port}`).join(', ');
+      const host = platform.rootDomain ? `${t.subdomain}.${platform.rootDomain}` : UNSET;
+      lines.push(`| ${String(t.slot).padStart(2, '0')} | ${t.name} | ${t.repo} | ${host} | ${ports} | ${t.summary} |`);
+    }
+  }
   const s = platform.portScheme;
   lines.push(
     '',

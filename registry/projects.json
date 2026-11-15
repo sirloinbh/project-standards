@@ -454,5 +454,19 @@
         "web": 8109
       }
     }
+  ],
+  "sharedServices": [
+    {
+      "slot": 10,
+      "name": "shared-auth",
+      "repo": "shared-auth",
+      "subdomain": "auth",
+      "summary": "Shared sign-in for all apps (GitHub and Google, owner only) and the OAuth server for AI tools and MCP clients (ADR-0015).",
+      "ports": {
+        "web": 8110,
+        "api": 3110,
+        "db": 15410
+      }
+    }
   ]
 }

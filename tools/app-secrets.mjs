@@ -28,6 +28,8 @@ const USAGE = 'Usage: node tools/app-secrets.mjs set [<parameter>] | check [<app
 
 const activeProjects = (root) => JSON.parse(fs.readFileSync(path.join(root, 'registry/projects.json'), 'utf8')).projects.filter((p) => p.status === 'active');
 
+const sharedServices = (root) => (JSON.parse(fs.readFileSync(path.join(root, 'registry/projects.json'), 'utf8')).sharedServices ?? []).map((s) => s.name);
+
 export function claudeApps(root = central) {
   return activeProjects(root).filter((p) => p.features?.claude).map((p) => p.name);
 }
@@ -57,11 +59,11 @@ export function setEnvLine(text, key, value) {
 
 export const hasEnvValue = (text, key) => text.split(/\r?\n/).some((l) => l.startsWith(`${key}=`) && l.length > key.length + 1);
 
-/** Why a parameter name cannot be stored, or null: /sirloinbh/shared/<name> or /sirloinbh/<active app>/<name>. */
+/** Why a parameter name cannot be stored, or null: /sirloinbh/shared/<name>, /sirloinbh/<active app>/<name>, or /sirloinbh/<shared service>/<name>. */
 export function parameterProblem(parameter, root = central) {
   const m = SSM_PATH.exec(parameter ?? '');
   if (!m) return `${parameter} is not /sirloinbh/shared/<name> or /sirloinbh/<app>/<name> (lowercase letters, digits, hyphens)`;
-  if (m[1] !== 'shared' && !activeProjects(root).some((p) => p.name === m[1])) return `${m[1]} is not an active app in registry/projects.json`;
+  if (m[1] !== 'shared' && !activeProjects(root).some((p) => p.name === m[1]) && !sharedServices(root).includes(m[1])) return `${m[1]} is not an active app or shared service in registry/projects.json`;
   return null;
 }
 
