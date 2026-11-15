@@ -1,6 +1,6 @@
 # Server reverse proxy and HTTPS
 
-One nginx on the Lightsail server takes 443 for all 8 apps and forwards each subdomain to that app's web port on `127.0.0.1`. One Let's Encrypt wildcard certificate (`*.<root domain>`) covers every app, and certbot renews it through Route 53 DNS validation, so port 80 never has to be open to everyone ([ADR-0012](adr/0012-shared-domain-subdomains.md), #251).
+One nginx on the Lightsail server takes 443 for all 8 apps and the shared sign-in (`auth`, registry `sharedServices`, [ADR-0015](adr/0015-shared-sign-in.md)) and forwards each subdomain to that app's web port on `127.0.0.1`. One Let's Encrypt wildcard certificate (`*.<root domain>`) covers every app, and certbot renews it through Route 53 DNS validation, so port 80 never has to be open to everyone ([ADR-0012](adr/0012-shared-domain-subdomains.md), #251).
 
 The config is generated from the registry, so nothing is edited by hand on the server. Each app publishes its web container only on `127.0.0.1:<ports.web>`, and its own nginx answers to its subdomain and takes the client IP from `X-Forwarded-For` (#254).
 
@@ -68,5 +68,5 @@ Prerequisites: the domain is bought (#249), `rootDomain` is filled (#539), and t
 
 ## Limits
 
-- If the proxy or the certificate breaks, all 8 subdomains break together. The firewall never opened the app web ports, so the fallback is an SSH tunnel to the app's web port: `ssh -i ~/.ssh/<key> -L <ports.web>:127.0.0.1:<ports.web> ubuntu@<static_ip>`, then `http://localhost:<ports.web>`.
+- If the proxy or the certificate breaks, all subdomains break together, sign-in included. The firewall never opened the app web ports, so the fallback is an SSH tunnel to the app's web port: `ssh -i ~/.ssh/<key> -L <ports.web>:127.0.0.1:<ports.web> ubuntu@<static_ip>`, then `http://localhost:<ports.web>`.
 - An app that has not synced #254 yet sees every request as coming from the proxy, so its per-IP API rate limit (10 per second, burst 40) is shared by all its clients. With one user per app this does not matter.

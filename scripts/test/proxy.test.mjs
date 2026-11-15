@@ -23,7 +23,15 @@ test('every active app gets a server block for its subdomain and registry web po
     assert.match(block, /listen 443 ssl;/);
     assert.match(block, /Strict-Transport-Security/);
   }
-  assert.equal(proxyApps(data, domain).length, 8);
+  assert.equal(proxyApps(data, domain).length, 9);
+});
+
+test('the shared sign-in gets auth.<domain> on its registry web port (ADR-0015)', () => {
+  const block = conf.split(/\n\n(?=# )/).find((b) => b.includes(`server_name auth.${domain};`));
+  assert.ok(block, 'auth block');
+  assert.match(block, /proxy_pass http:\/\/127\.0\.0\.1:8110;/);
+  const redirect = conf.split('\n\n').find((b) => b.includes('return 301'));
+  assert.ok(redirect.includes(`auth.${domain}`), 'HTTP redirects auth too');
 });
 
 test('HTTP redirects only app names, and unknown names get nothing', () => {
