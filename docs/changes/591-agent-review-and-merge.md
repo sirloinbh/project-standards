@@ -32,3 +32,8 @@ User decision, 2026-11-15: the agent reviews its own PR in a loop, files issues 
 
 - `tools/agents` code is unchanged (the default was already `true`).
 - Downstream repos with their own "only the user merges" text or `.agents.json` `false` are in the tracking issue.
+
+## Review round 1 (self-review)
+
+- `todo:` `docs/git-conventions.md` merge policy table still said "user only" for app and infra repos. Fixed (with `docs/project-rename.md`).
+- Left as is: `docs/design.md` phased plan and `docs/dependency-policy.md` (Dependabot PRs), which are history or outside this decision.

@@ -24,11 +24,12 @@ Reviewing PRs follows the [std-code-review](../templates/common/skills/std-code-
 | Repo | Who merges | Why |
 |---|---|---|
 | project-standards | The agent (merge commit after CI passes) | User decision (2026-10-22, #128). The work is docs, text, and scripts |
-| The 8 app repos | The user only | Merging to main is a production deploy |
-| shared-aws-infrastructure | The user only | Infrastructure changes need a plan review |
+| The 8 app repos | The agent, after the review loop and green CI | User decision (2026-11-15, #591). Merging to main is a production deploy; the user chose auto-merge there too |
+| shared-aws-infrastructure | The agent, after the review loop and green CI | User decision (2026-11-15, #591). Merging is not applying: `terraform apply` still needs the user |
 
-- Sync PRs (`chore/standards-sync-*`) are also merged by the user in app and infrastructure repos.
-- The agent does not approve its own PR as a substitute for review.
+- The review loop is [std-code-review](../templates/common/skills/std-code-review/SKILL.md) section 8: 1 or 2 rounds (more only while blocking findings remain), fixes on the same branch, a new issue for big problems outside the PR, then `pr merge --merge` and the local cleanup ([ADR-0016](adr/0016-agent-reviews-and-merges-own-prs.md)).
+- Sync PRs (`chore/standards-sync-*`) are reviewed and merged by the agent the same way.
+- The agent does not merge while a check fails, when "Check before merging" has an item for the user, or in place of a review. It never force-pushes or pushes to main.
 
 ## Branch protection checklist
 
