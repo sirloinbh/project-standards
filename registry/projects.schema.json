@@ -12,6 +12,11 @@
       "description": "Local tools that are not apps (no deploy, DB, or sync) but hold a slot so their ports never collide with an app. They list only the ports they use; each follows the same formula (ADR-0006, #435).",
       "type": "array",
       "items": { "$ref": "#/$defs/localTool" }
+    },
+    "sharedServices": {
+      "description": "Services every app uses, such as the shared sign-in (ADR-0015). Not apps: not counted among the 8 apps and not synced as one. They share the slot sequence and port formula with apps (ADR-0006) and may use a reserved subdomain.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/sharedService" }
     }
   },
   "$defs": {
@@ -36,6 +41,19 @@
             "db": { "$ref": "#/$defs/port" }
           }
         }
+      }
+    },
+    "sharedService": {
+      "type": "object",
+      "required": ["slot", "name", "repo", "subdomain", "summary", "ports"],
+      "additionalProperties": false,
+      "properties": {
+        "slot": { "type": "integer", "minimum": 1, "maximum": 99, "description": "Shares the slot sequence with projects. Never reassigned" },
+        "name": { "$ref": "#/$defs/slug", "description": "Also the SSM path segment: /sirloinbh/<name>/<key> (ADR-0014)" },
+        "repo": { "$ref": "#/$defs/slug" },
+        "subdomain": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$", "description": "One DNS label under rootDomain. Reserved names are allowed here" },
+        "summary": { "type": "string", "minLength": 5 },
+        "ports": { "$ref": "#/$defs/localTool/properties/ports" }
       }
     },
     "slug": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },

@@ -63,10 +63,11 @@ export function checkAll({ data, schemas }, { today = new Date().toISOString().s
 
   const { projects } = data.projects;
   const localTools = data.projects.localTools ?? [];
+  const services = data.projects.sharedServices ?? [];
   const { portScheme, reservedPorts } = data.platform;
 
   // Local tools share the slot sequence and port formula with apps (#435), but nothing else.
-  const holders = [...projects, ...localTools];
+  const holders = [...projects, ...localTools, ...services];
   duplicates(holders.map((p) => [p.slot, p.name]), 'slot', errors);
   duplicates(holders.map((p) => [p.name, `slot ${p.slot}`]), 'project name', errors);
   // Apps share one look (ADR-0008), so the display name is the only thing that tells them apart.
@@ -81,7 +82,8 @@ export function checkAll({ data, schemas }, { today = new Date().toISOString().s
     'database name',
     errors,
   );
-  duplicates(projects.map((p) => [p.service.subdomain, p.name]), 'subdomain', errors);
+  // Shared services (ADR-0015) take one subdomain under rootDomain, and may use a reserved name such as auth.
+  duplicates([...projects.map((p) => [p.service.subdomain, p.name]), ...services.map((s) => [s.subdomain, s.name])], 'subdomain', errors);
   duplicates(projects.map((p) => [serviceHost(p, data.platform), p.name]), 'service host', errors);
   for (const p of projects) {
     // Each app gets its own A record and nginx server block named after the app (ADR-0012).
@@ -95,8 +97,8 @@ export function checkAll({ data, schemas }, { today = new Date().toISOString().s
     errors,
   );
 
-  for (const t of localTools) {
-    if (!PORT_KINDS.some((kind) => kind in t.ports)) errors.push(`${t.name}: a local tool must list at least one port`);
+  for (const t of [...localTools, ...services]) {
+    if (!PORT_KINDS.some((kind) => kind in t.ports)) errors.push(`${t.name}: a local tool or shared service must list at least one port`);
   }
 
   for (const p of holders) {
