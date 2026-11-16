@@ -77,9 +77,10 @@ test('the backend follows the API rules: app.ts, routes/, contract copy, OpenAPI
   assert.equal(spec.info.title, '샘플 API');
   assert.match(byPath.get('backend/src/openapi.ts'), /title: '샘플 API'/);
   const operations = [...byPath.get('backend/src/openapi.ts').matchAll(/^ {2}'(GET|POST|PUT|PATCH|DELETE) (\/api\/[^']*)': \{ summary: '([^']+)'/gm)];
-  assert.deepEqual(operations.map((m) => `${m[1]} ${m[2]}`), ['GET /api/health']);
-  assert.deepEqual(Object.keys(spec.paths), ['/api/health']);
+  assert.deepEqual(operations.map((m) => `${m[1]} ${m[2]}`), ['GET /api/health', 'GET /api/me']);
+  assert.deepEqual(Object.keys(spec.paths), ['/api/health', '/api/me']);
   assert.equal(spec.paths['/api/health'].get.summary, operations[0][3]);
+  assert.equal(spec.paths['/api/me'].get.summary, operations[1][3]);
   assert.deepEqual(spec.components.schemas.Error.required, ['error']);
   assert.equal(byPath.get('docs/openapi.json'), `${JSON.stringify(spec, null, 2)}\n`, 'written the way openapi-cli.ts writes it');
 

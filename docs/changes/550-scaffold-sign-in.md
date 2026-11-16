@@ -6,6 +6,7 @@
 |---|---|
 | `scaffold/app/backend/src/app.ts` | `createApp(pool, { auth })` mounts the auth middleware on `/api` before any route and adds `GET /api/me` (`meHandler`) |
 | `scaffold/app/backend/src/server.ts` | Builds the middleware with the managed `sharedAuth()` from `standard/auth.ts` |
+| `scaffold/app/backend/src/openapi.ts`, `docs/openapi.json.tmpl` | `GET /api/me` with 401 and 503 in the OpenAPI document (every registered route must be listed, or the scaffold's `openapi.test.ts` fails) |
 | `scaffold/app/backend/test/sign-in.test.ts` | 401 without a session (except `/api/health`), `/api/me` with one |
 | `scaffold/app/frontend/src/app.tsx` | Wraps the shell in `SignInGate` and shows `AccountActions` in the top bar (both managed, from `templates/ui`) |
 | `scaffold/app/compose.yaml` | The API gets `AUTH_INTERNAL_URL` and joins the external `shared-auth` network |
@@ -24,5 +25,6 @@
 
 ## Verification
 
+- The scaffold was rendered to a temporary folder with workout-memo's `node_modules` linked in (removed afterwards): backend `tsc -p tsconfig.check.json` is clean, backend tests pass (sign-in, openapi), and the frontend `app.test.tsx` passes. Three `health.test.ts` tests fail there because they expect Korean error texts while the managed `standard/http.ts` sends English; that mismatch exists without this change (filed separately).
 - `node --test scripts/test/scaffold.test.mjs`: 12 tests pass, including the rendered tree's standards-check.
 - All `npm run check` steps pass: 600 tests (595 pass, 5 skipped), registry, docs, tokens, plugin, packages, workflows, and secrets checks. A first run through `npm run` had seven deploy-template shell tests fail on this Windows PC (bash environment); they passed when the test files were run directly, with and without this change.

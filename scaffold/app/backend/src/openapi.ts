@@ -138,6 +138,7 @@ type Operation = {
 // Every registered route must appear here exactly once (checked when building).
 export const operations: Record<string, Operation> = {
   'GET /api/health': { summary: '서버와 DB 연결 상태 확인', status: [200, 500] },
+  'GET /api/me': { summary: '로그인한 사용자 확인', status: [200, 401, 503] },
 };
 
 type Layer = { route?: { path: string; methods: Record<string, boolean> } };
@@ -155,8 +156,10 @@ const statusText: Record<number, string> = {
   400: '입력 검증 실패',
   404: '대상 없음',
   409: '중복 또는 충돌',
+  401: '로그인이 필요함',
   413: '요청 크기 한도 초과',
   500: '서버 오류',
+  503: '로그인 서비스를 사용할 수 없음',
 };
 
 export function buildOpenApi(app: express.Express) {
