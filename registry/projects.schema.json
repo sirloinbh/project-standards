@@ -113,7 +113,8 @@
           "additionalProperties": false,
           "properties": {
             "domain": { "$ref": "#/$defs/nullableHost", "description": "Parent domain of this app's address. null uses rootDomain in platform.json (ADR-0012)" },
-            "subdomain": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$", "description": "One DNS label. Must equal name (ADR-0012). The address is <subdomain>.<domain or rootDomain>" }
+            "subdomain": { "type": "string", "pattern": "^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$", "description": "One DNS label. Must equal name (ADR-0012). The address is <subdomain>.<domain or rootDomain>" },
+            "apiBodyMb": { "type": "integer", "minimum": 1, "maximum": 100, "description": "Largest request body in MB that the web server passes to /api/ (nginx client_max_body_size). Optional, default 1 (the nginx default). Set it a little above the API's own upload limit so the API answers with its own 413 (#589)" }
           }
         },
         "aws": {
