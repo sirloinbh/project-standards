@@ -87,7 +87,8 @@
       },
       "service": {
         "domain": null,
-        "subdomain": "study-log"
+        "subdomain": "study-log",
+        "apiBodyMb": 21
       },
       "aws": {
         "prefix": null

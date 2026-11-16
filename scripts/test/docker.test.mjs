@@ -62,3 +62,9 @@ test('nginx answers to the app subdomain and limits by the client IP the proxy f
   assert.match(conf, /set_real_ip_from 127\.0\.0\.1;\n {2}set_real_ip_from 172\.16\.0\.0\/12;\n {2}real_ip_header X-Forwarded-For;/);
   assert.doesNotMatch(conf, /server_name _;|real_ip_recursive/);
 });
+
+test('nginx keeps the 1m body limit for /api/ unless the app sets service.apiBodyMb (#589)', () => {
+  const limit = (conf) => conf.match(/location \/api\/ \{([\s\S]*?)\n {2}\}/)[1].match(/client_max_body_size (\S+);/)?.[1];
+  assert.equal(limit(study['frontend/nginx.conf']), '21m');
+  assert.equal(limit(workout['frontend/nginx.conf']), '1m');
+});

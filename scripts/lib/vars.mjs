@@ -1,5 +1,5 @@
 // Builds the template variables for one sync target.
-// Templates may use: project.* and service.host (app targets only; the app's subdomain, ADR-0012), versions.*, platform.*, target.repo, target.profile,
+// Templates may use: project.* and service.host (app targets only; the app's subdomain, ADR-0012) and service.bodyLimit (the /api/ request body limit, #589), versions.*, platform.*, target.repo, target.profile,
 // central.sha (the central commit being synced) and central.workflowSha (the last central commit that
 // changed the reusable workflows; CI callers pin to it so unrelated central commits do not touch ci.yml).
 // theme.color is the PWA background and bar colour: the dark background for apps with
@@ -25,7 +25,7 @@ export function buildVars(data, target, { centralSha, workflowSha = centralSha }
     project,
     versions: data.versions,
     platform: data.platform,
-    service: project ? { host: serviceHost(project, data.platform) } : undefined,
+    service: project ? { host: serviceHost(project, data.platform), bodyLimit: `${project.service.apiBodyMb ?? 1}m` } : undefined,
     target: { repo: target.repo, profile: target.profile },
     central: centralSha ? { sha: centralSha, workflowSha } : undefined,
     theme: { color: project?.features?.darkOnly ? '#0a0a0a' : '#ffffff', ...OFFLINE_THEME[project?.features?.darkOnly ? 'dark' : 'system'] },
