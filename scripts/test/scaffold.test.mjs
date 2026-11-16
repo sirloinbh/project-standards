@@ -77,9 +77,10 @@ test('the backend follows the API rules: app.ts, routes/, contract copy, OpenAPI
   assert.equal(spec.info.title, '샘플 API');
   assert.match(byPath.get('backend/src/openapi.ts'), /title: '샘플 API'/);
   const operations = [...byPath.get('backend/src/openapi.ts').matchAll(/^ {2}'(GET|POST|PUT|PATCH|DELETE) (\/api\/[^']*)': \{ summary: '([^']+)'/gm)];
-  assert.deepEqual(operations.map((m) => `${m[1]} ${m[2]}`), ['GET /api/health']);
-  assert.deepEqual(Object.keys(spec.paths), ['/api/health']);
+  assert.deepEqual(operations.map((m) => `${m[1]} ${m[2]}`), ['GET /api/health', 'GET /api/me']);
+  assert.deepEqual(Object.keys(spec.paths), ['/api/health', '/api/me']);
   assert.equal(spec.paths['/api/health'].get.summary, operations[0][3]);
+  assert.equal(spec.paths['/api/me'].get.summary, operations[1][3]);
   assert.deepEqual(spec.components.schemas.Error.required, ['error']);
   assert.equal(byPath.get('docs/openapi.json'), `${JSON.stringify(spec, null, 2)}\n`, 'written the way openapi-cli.ts writes it');
 
@@ -88,6 +89,18 @@ test('the backend follows the API rules: app.ts, routes/, contract copy, OpenAPI
   assert.ok(ignore.indexOf('docs/openapi.json') > ignore.indexOf('# --- project ---'));
   assert.equal(JSON.parse(byPath.get('backend/package.json')).scripts.openapi, 'tsx src/openapi-cli.ts');
   assert.equal(JSON.parse(byPath.get('package.json')).scripts.openapi, 'npm run openapi -w backend');
+});
+
+test('a new app starts behind the shared sign-in (#550): middleware, gate, compose network, env key', () => {
+  // The managed files the scaffold imports arrive with the sync (templates/), so they are in the rendered tree.
+  for (const file of ['backend/src/standard/auth.ts', 'frontend/src/sign-in.tsx', 'frontend/src/auth-origin.ts', 'backend/test/sign-in.test.ts']) assert.ok(byPath.has(file), file);
+  assert.match(byPath.get('backend/src/app.ts'), /if \(options\.auth\) app\.use\('\/api', options\.auth\);\n\s+app\.get\('\/api\/me', meHandler\);/);
+  assert.match(byPath.get('backend/src/server.ts'), /createApp\(pool, \{ auth: sharedAuth\(\) \}\)/);
+  assert.match(byPath.get('frontend/src/app.tsx'), /<SignInGate>[\s\S]*<AppShell [^>]*actions=\{<AccountActions \/>\}/);
+  const compose = byPath.get('compose.yaml');
+  assert.match(compose, /AUTH_INTERNAL_URL: \$\{AUTH_INTERNAL_URL:-http:\/\/shared-auth-api:3110\}\n\s+networks: \[default, shared-auth\]/);
+  assert.match(compose, /^networks:\n {2}shared-auth:\n {4}external: true$/m);
+  assert.match(byPath.get('.env.example'), /^AUTH_INTERNAL_URL=$/m);
 });
 
 test('the migration runner keeps the history table and lock key documented in docs/conventions/database.md', () => {
