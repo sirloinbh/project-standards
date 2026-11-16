@@ -57,8 +57,8 @@ test('a plan includes the manifest with central SHA, packages, and the registry 
   assert.equal(manifest.centralSha, 'abc1234');
   assert.equal(manifest.project, 'study-log');
   assert.deepEqual(manifest.registry.ports, original.data.projects.projects.find((p) => p.name === 'study-log').ports);
-  // design-tokens joined again once all 8 apps installed it (#126); the check requires every listed package installed.
-  assert.deepEqual(Object.keys(manifest.packages), ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig', '@sirloinbh/design-tokens']);
+  // design-tokens (#126) and auth-client (#551) joined once all 8 apps installed them; the check requires every listed package installed.
+  assert.deepEqual(Object.keys(manifest.packages), ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig', '@sirloinbh/design-tokens', '@sirloinbh/auth-client']);
   assert.equal(plan.inRollout, true, 'study-log is rollout 2, opened with maxRollout 2 (#113)');
   const infra = original.data.sync.targets.find((t) => t.profile === 'infra');
   const infraPlan = planTarget({ root, data: original.data, target: infra, centralSha: 'abc1234' });
