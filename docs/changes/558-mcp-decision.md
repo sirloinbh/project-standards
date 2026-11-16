@@ -1,13 +1,13 @@
-# 558. MCP tools decision (proposed)
+# 558. AI service decision: integrated MCP and AI shell (proposed)
 
 ## Change
 
-- `docs/adr/0017-mcp-tools-per-app.md`: proposed ADR. Each app backend serves its own MCP tools (no gateway), through one `defineTool` wrapper that checks the scope and writes the audit row. Stage 1 is local stdio (also over SSH to the server); stage 2 opens `/mcp` remotely with OAuth from shared-auth, after a separate user decision on the firewall.
+- `docs/adr/0017-ai-service-mcp-and-shell.md`: proposed ADR. A new shared service `shared-ai` (`ai.daysofme.com`, slot 11) offers one MCP connection for every app's tools and an AI shell backend; a managed panel in `templates/ui` puts the shell in every web app. Tools stay in each app behind one `defineTool` wrapper that checks the scope and writes the audit row. Stage 1 (shell in the browser, stdio over SSH) needs no firewall change; stage 2 (remote MCP clients with OAuth) is a later user decision.
 
 ## Reason
 
-- A gateway would add a process with access to every app and split the audit record from the change. Per-app tools reuse the app's Zod schemas and write the audit row in the same transaction.
-- Remote clients need 443 open to the internet, which is a security change of its own. Stage 1 delivers tools without it.
+- The user asked for an integrated agent and an AI shell across all web projects (2026-11-17), which per-app endpoints alone cannot give.
+- Keeping tools in the apps reuses their Zod schemas and keeps the audit row in the same transaction as the change; the AI service never forwards a client token.
 
 ## Verification
 
@@ -16,4 +16,4 @@
 
 ## Open
 
-- The user accepts, changes, or rejects the ADR. After acceptance: Status to Accepted, #559 updated, and a stage 2 issue registered.
+- The user accepts, changes, or rejects the ADR. After acceptance: Status to Accepted, #559 updated, and issues registered for `shared-ai`, the AI shell, and remote MCP.
