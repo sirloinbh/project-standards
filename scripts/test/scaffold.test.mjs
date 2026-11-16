@@ -90,6 +90,18 @@ test('the backend follows the API rules: app.ts, routes/, contract copy, OpenAPI
   assert.equal(JSON.parse(byPath.get('package.json')).scripts.openapi, 'npm run openapi -w backend');
 });
 
+test('a new app starts behind the shared sign-in (#550): middleware, gate, compose network, env key', () => {
+  // The managed files the scaffold imports arrive with the sync (templates/), so they are in the rendered tree.
+  for (const file of ['backend/src/standard/auth.ts', 'frontend/src/sign-in.tsx', 'frontend/src/auth-origin.ts', 'backend/test/sign-in.test.ts']) assert.ok(byPath.has(file), file);
+  assert.match(byPath.get('backend/src/app.ts'), /if \(options\.auth\) app\.use\('\/api', options\.auth\);\n\s+app\.get\('\/api\/me', meHandler\);/);
+  assert.match(byPath.get('backend/src/server.ts'), /createApp\(pool, \{ auth: sharedAuth\(\) \}\)/);
+  assert.match(byPath.get('frontend/src/app.tsx'), /<SignInGate>[\s\S]*<AppShell [^>]*actions=\{<AccountActions \/>\}/);
+  const compose = byPath.get('compose.yaml');
+  assert.match(compose, /AUTH_INTERNAL_URL: \$\{AUTH_INTERNAL_URL:-http:\/\/shared-auth-api:3110\}\n\s+networks: \[default, shared-auth\]/);
+  assert.match(compose, /^networks:\n {2}shared-auth:\n {4}external: true$/m);
+  assert.match(byPath.get('.env.example'), /^AUTH_INTERNAL_URL=$/m);
+});
+
 test('the migration runner keeps the history table and lock key documented in docs/conventions/database.md', () => {
   const runner = byPath.get('backend/src/migrations.ts');
   const doc = fs.readFileSync(path.join(root, 'docs/conventions/database.md'), 'utf8');

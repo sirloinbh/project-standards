@@ -26,6 +26,9 @@ services:
       DATABASE_URL: postgres://${POSTGRES_USER:-{{project.db.name}}}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-{{project.db.name}}}
       PORT: {{project.ports.api}}
       TZ: Asia/Seoul
+      # The shared sign-in (sirloinbh/shared-auth) checks each /api session on its network.
+      AUTH_INTERNAL_URL: ${AUTH_INTERNAL_URL:-http://shared-auth-api:3110}
+    networks: [default, shared-auth]
     depends_on:
       db: { condition: service_healthy }
     restart: unless-stopped
@@ -43,3 +46,7 @@ secrets:
     environment: NODE_AUTH_TOKEN
 volumes:
   {{project.db.name}}-data:
+# Created by the shared-auth compose project. Locally, run shared-auth first, or once: docker network create shared-auth
+networks:
+  shared-auth:
+    external: true
