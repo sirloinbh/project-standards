@@ -1,6 +1,6 @@
 # 0017. One AI service for all apps: an integrated MCP server and an AI shell in every web app
 
-- Status: Proposed (issue #558). The user decides; the recommendation is marked below
+- Status: Accepted (issue #558; user decision, 2026-11-17)
 - Date: 2026-11-17
 - Builds on: [ADR-0009](0009-multi-app-single-lightsail.md) (one server, IP allow list), [ADR-0010](0010-claude-api-key-ssm.md) and [ADR-0014](0014-app-secrets-ssm-paths.md) (one Claude API key in SSM), [ADR-0015](0015-shared-sign-in.md) (the shared sign-in is the OAuth server; scopes `<app>:read` and `<app>:write`)
 
@@ -32,7 +32,7 @@
 
 (A) cannot give one connection or a cross-app shell. (B) moves tool code away from the data and splits the audit record from the change. (C) gives both requirements and keeps the checks in the apps.
 
-## Decision (recommended)
+## Decision
 
 ### Shape
 
@@ -89,6 +89,6 @@
 |---|---|
 | #553 | `audit_log` needs columns for actor type `ai-tool`, the client, and the tool name |
 | #559 | workout-memo pilot: `defineTool`, 2 or 3 tools, and `/internal/tools` on the `shared-ai` network |
-| New: `shared-ai` service | Repo, registry slot 11, subdomain `ai`, tool hub, integrated MCP server (stdio first), signed internal calls |
-| New: AI shell | The `templates/ui` panel and `POST /api/chat` |
-| New, later: remote MCP | The OAuth provider in shared-auth, the token check in `shared-ai`, the proxy and firewall change (stage 2) |
+| #611 `shared-ai` service | Repo, registry slot 11, subdomain `ai`, tool hub, integrated MCP server (stdio first), signed internal calls |
+| #612 AI shell | The `templates/ui` panel and `POST /api/chat` |
+| #613 remote MCP (later) | The OAuth provider in shared-auth, the token check in `shared-ai`, the proxy and firewall change (stage 2) |

@@ -1,4 +1,4 @@
-# 558. AI service decision: integrated MCP and AI shell (proposed)
+# 558. AI service decision: integrated MCP and AI shell
 
 ## Change
 
@@ -14,6 +14,6 @@
 - Facts checked on 2026-11-17: the MCP TypeScript SDK v2 package split and Express helpers (ts.sdk.modelcontextprotocol.io), and Better Auth's OAuth provider resource-server docs (better-auth.com). App backends all use `zod` 4.6.7; shared-auth uses `better-auth` 1.7.15.
 - `npm run check`: see the PR.
 
-## Open
+## Follow-up
 
-- The user accepts, changes, or rejects the ADR. After acceptance: Status to Accepted, #559 updated, and issues registered for `shared-ai`, the AI shell, and remote MCP.
+- Accepted by the user on 2026-11-17. #559 rewritten for the tool side; new issues #611 (`shared-ai` service), #612 (AI shell), #613 (remote MCP, stage 2), all under #545.
