@@ -96,7 +96,7 @@ These are problems we actually hit while working on #92.
 
 ## 3. Create the GitHub App and set up Actions sharing (#86)
 
-**Why it is needed:** For the central repo to open sync PRs in 9 repos, it needs a dedicated App with narrow permissions. The sharing setting is also needed so that downstream repos can call the central common CI. The detailed procedure and how to rotate the key are in [github-app.md](github-app.md).
+**Why it is needed:** For the central repo to open sync PRs in 10 repos, it needs a dedicated App with narrow permissions. The sharing setting is also needed so that downstream repos can call the central common CI. The detailed procedure and how to rotate the key are in [github-app.md](github-app.md).
 
 ### 3-1. Create the App
 
@@ -125,7 +125,7 @@ Delete the `.pem` file right after registering it. If you need it again, just cr
 
 ### 3-3. Install
 
-App page → Install App → sirloinbh Install → under Only select repositories, choose these 10: project-standards, workout-memo, study-log, health-log, life-journal, money-ledger, cert-manager, plan-routine, dev-career-portfolio, shared-aws-infrastructure.
+App page → Install App → sirloinbh Install → under Only select repositories, choose these 11: project-standards, workout-memo, study-log, health-log, life-journal, money-ledger, cert-manager, plan-routine, dev-career-portfolio, shared-aws-infrastructure, shared-auth (added in #600).
 
 ### 3-4. Allow sharing of the common CI
 

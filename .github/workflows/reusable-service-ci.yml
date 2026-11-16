@@ -1,0 +1,65 @@
+# Shared CI for the shared service repos (shared-auth). Each service's .github/workflows/ci.yml (a centrally managed file) calls it pinned to a commit SHA.
+# It checks the supply chain and secrets, then installs, type-checks, and tests the Node project in `working-directory`, and builds its Docker image.
+name: reusable-service-ci
+
+on:
+  workflow_call:
+    inputs:
+      node-version:
+        type: string
+        required: true
+      npm-version:
+        type: string
+        required: true
+      working-directory:
+        description: Folder that holds the Node project (package.json, Dockerfile)
+        type: string
+        default: backend
+
+permissions:
+  contents: read
+
+env:
+  # inputs are never put into the run shell directly, only used as environment variables (prevents script injection).
+  NPM_VERSION: ${{ inputs.npm-version }}
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    defaults:
+      run:
+        working-directory: ${{ inputs.working-directory }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: ${{ inputs.node-version }}
+          cache: npm
+          cache-dependency-path: ${{ inputs.working-directory }}/package-lock.json
+      - name: Central standards check
+        working-directory: .
+        run: node .standards/check.mjs
+      - name: Supply chain check (before install, based on lockfile)
+        working-directory: .
+        run: node .standards/ioc-scan.mjs
+      - name: Secret leak check (committed tokens and keys, .env)
+        working-directory: .
+        run: node .standards/secret-scan.mjs
+      - run: npm install --global "npm@$NPM_VERSION" --ignore-scripts
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm test
+      - name: Shell script syntax check
+        working-directory: .
+        run: |
+          status=0
+          while IFS= read -r -d '' script; do bash -n "$script" || status=1; done < <(find . -name '*.sh' -not -path '*/node_modules/*' -print0)
+          exit $status
+
+  docker-build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - run: docker build "$WORKDIR"
+        env:
+          WORKDIR: ${{ inputs.working-directory }}
