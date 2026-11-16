@@ -10,6 +10,10 @@
 - `templates/app/.prettierignore.tmpl`: the three frontend files.
 - The package is not in the sync profile `packages` yet: that list makes `standards-check` require it installed, so it joins once all 8 apps have it (as design-tokens did in #126).
 
+## Follow-up: the loading spinner
+
+- `templates/ui/frontend/src/sign-in.tsx`: while the session is checked, the shared `Spinner` sits beside the status line in an `aria-busy` region named "Sign-in check", as workout-memo added in workout-memo#317 after the template was taken. Without it, the sync would have removed that spinner from workout-memo and broken its `sign-in.test.tsx`.
+
 ## What each app adds after its sync PR
 
 The sync PR changes `package.json`, so its lockfiles need `npm install --ignore-scripts` (user step) and `npm run lockfiles:sync`. Then, in the app's own PR:
