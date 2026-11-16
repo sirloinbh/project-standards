@@ -24,6 +24,10 @@ The sync PR changes `package.json`, so its lockfiles need `npm install --ignore-
 4. `frontend/src/app.tsx`: wrap the app in `<SignInGate>` and pass `<AccountActions />` to `AppShell` `actions`.
 5. API docs and OpenAPI: `GET /api/me`, 401 and 503.
 
+## Follow-up: required in every app
+
+- All 8 apps merged their sync PRs with the wiring (workout-memo#320, study-log#212, health-log#163, life-journal#107, money-ledger#140, cert-manager#112, plan-routine#122, dev-career-portfolio#102), so `sync.config.json` adds `@sirloinbh/auth-client` to the `app` profile `packages`, and `standards-check` now requires it.
+
 ## Verification
 
 - `npm run check` passes (596 tests, 591 pass, 0 fail, 5 skipped). `UPDATE_SNAPSHOT=1 npm test`: the snapshot adds `backend/src/standard/auth.ts` and the three frontend files for all 8 apps.
