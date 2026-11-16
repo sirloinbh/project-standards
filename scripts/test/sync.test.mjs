@@ -113,7 +113,7 @@ test('a template that would write a protected path fails', () => {
   assert.throws(() => planTarget({ root, data: copy.data, target: targetOf(copy.data, 'study-log'), centralSha: 'x' }), /would write protected path/);
 });
 
-// What each of the 9 repositories receives. When templates change on purpose, update the snapshot:
+// What each of the 10 repositories receives. When templates change on purpose, update the snapshot:
 //   UPDATE_SNAPSHOT=1 npm test
 test('the file list for all 9 targets matches the reviewed snapshot', () => {
   const actual = Object.fromEntries(
@@ -132,14 +132,29 @@ test('the dry-run CLI writes every target and plan.json', () => {
     const run = spawnSync(process.execPath, [path.join(root, 'scripts/sync.mjs'), '--dry-run', '--out', out, '--sha', 'cli0001'], { encoding: 'utf8' });
     assert.equal(run.status, 0, run.stderr);
     const plan = JSON.parse(fs.readFileSync(path.join(out, 'plan.json'), 'utf8'));
-    assert.equal(plan.targets.length, 9);
+    assert.equal(plan.targets.length, 10);
     assert.ok(fs.existsSync(path.join(out, 'study-log', 'AGENTS.md')));
     assert.ok(fs.existsSync(path.join(out, 'shared-aws-infrastructure', MANIFEST_PATH)));
     assert.ok(!fs.existsSync(path.join(out, 'shared-aws-infrastructure', 'AGENTS.md')));
+    assert.ok(fs.existsSync(path.join(out, 'shared-auth', 'AGENTS.md')), 'the service profile ships AGENTS.md');
     const rejected = spawnSync(process.execPath, [path.join(root, 'scripts/sync.mjs'), '--out', out], { encoding: 'utf8' });
     assert.equal(rejected.status, 1);
     assert.match(rejected.stderr, /use --dry-run --out <folder> to preview, or --apply in the sync workflow/);
   } finally {
     fs.rmSync(out, { recursive: true, force: true });
   }
+});
+
+test('the service profile gives shared-auth the instructions, skills, and CI, and never writes its own source', () => {
+  const target = original.data.sync.targets.find((t) => t.repo === 'sirloinbh/shared-auth');
+  const { files } = planTarget({ root, data: original.data, target, centralSha: 'svc0001' });
+  const paths = files.map((f) => f.path);
+  for (const expected of ['AGENTS.md', 'CLAUDE.md', '.github/workflows/ci.yml', '.claude/skills/std-code-review/SKILL.md', '.claude/hooks/block-package-installs.mjs', '.standards/manifest.json']) {
+    assert.ok(paths.includes(expected), `${expected} is synced`);
+  }
+  assert.ok(!paths.some((p) => /^(backend|deploy)\//.test(p) || ['compose.yaml', 'README.md', 'AGENTS.project.md', 'package.json'].includes(p)), 'no app, deploy, or repo-owned file');
+  const agents = files.find((f) => f.path === 'AGENTS.md').content;
+  assert.match(agents, /std-code-review section 8/);
+  assert.match(agents, /sirloinbh\/shared-auth/);
+  assert.match(files.find((f) => f.path === '.github/workflows/ci.yml').content, /reusable-service-ci\.yml@svc0001/);
 });

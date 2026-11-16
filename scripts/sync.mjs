@@ -23,7 +23,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 /** Last central commit (at or before `sha`) that changed a reusable workflow; CI callers pin to it. */
 export function lastWorkflowCommit(sha) {
-  const out = execFileSync('git', ['log', '-1', '--format=%H', sha, '--', '.github/workflows/reusable-app-ci.yml', '.github/workflows/reusable-infra-ci.yml'], { cwd: root, encoding: 'utf8' }).trim();
+  const out = execFileSync('git', ['log', '-1', '--format=%H', sha, '--', '.github/workflows/reusable-app-ci.yml', '.github/workflows/reusable-infra-ci.yml', '.github/workflows/reusable-service-ci.yml'], { cwd: root, encoding: 'utf8' }).trim();
   if (!out) throw new Error('could not find the commit that last changed the reusable workflows (is the checkout shallow?)');
   return out;
 }

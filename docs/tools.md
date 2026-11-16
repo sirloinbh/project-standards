@@ -125,7 +125,7 @@ Keep the default `true` (user decisions 2026-10-23, #184, and 2026-11-15, #591: 
 |---|---|---|
 | `workout-memo` | `true` (default, not written in the file) | The user allowed auto-merge in #128 |
 | `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio` | `true` (default) | The user allowed auto-merge for all repos on 2026-11-15 (#591), also where a merge to main is a production deploy. A repo whose `.agents.json` still says `false` is listed in the tracking issue and is changed there |
-| `project-standards`, `shared-aws-infrastructure` | Not applicable | They are not in the registry `repos`, so the worker does not run. The agent merges both after the review loop |
+| `project-standards`, `shared-aws-infrastructure`, `shared-auth` | Not applicable | They are not in the registry `repos`, so the worker does not run. The agent merges them after the review loop |
 
 - **If the file is missing, it auto-merges.** So for a repo that records `false`, include `.agents.json` (at least `{"autoMerge": false}`) in the PR that introduces the worker, and before introducing it, check `autoMerge false` in the `doctor` output of `agents.ps1 -Root <repo> doctor`.
 - **Do not distribute it by sync.** `.agents.json` holds values that differ per repo, such as `checkScript` and `database.tables`, and the sync's JSON field management (`fields`) does not create a missing file, so it cannot solve the "no file means auto-merge" problem. The source of truth for per-repo values is this table, not the registry.
@@ -230,7 +230,7 @@ The synced `.vscode/settings.json` turns on cleanup on save, along with the term
 
 ## Repo batch commands and VS Code workspace (tools/repos.mjs)
 
-It handles this repo and the target repos in `sync.config.json` (8 apps and shared-aws-infrastructure) all at once (#276). It assumes the clones are in this repo's parent folder; if not, add `--base <folder>`.
+It handles this repo and the target repos in `sync.config.json` (8 apps, shared-aws-infrastructure, and shared-auth) all at once (#276). It assumes the clones are in this repo's parent folder; if not, add `--base <folder>`.
 
 ```powershell
 node tools/repos.mjs status            # branch, uncommitted changes, behind/ahead of origin/main (--fetch fetches first)

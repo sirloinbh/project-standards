@@ -8,11 +8,11 @@ This is the procedure for the GitHub App `project-standards-sync`, which opens t
 |---|---|
 | App name | `project-standards-sync` |
 | Owner | Personal account `sirloinbh` |
-| Installation scope | Only the 10 repos below (do not choose All repositories) |
+| Installation scope | Only the 11 repos below (do not choose All repositories) |
 | Private key storage | Central repo Actions secret `SYNC_APP_PRIVATE_KEY` |
 | App ID storage | Central repo Actions variable `SYNC_APP_ID` |
 
-Repos to install on: `project-standards`, `workout-memo`, `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio`, `shared-aws-infrastructure`
+Repos to install on: `project-standards`, `workout-memo`, `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio`, `shared-aws-infrastructure`, `shared-auth`
 
 ### Repository permissions
 

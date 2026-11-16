@@ -5,7 +5,7 @@
 
 ## Context
 
-- The central repo copies the shared harness to 9 repos (`sync.config.json`): std skills, guard hooks, permission settings, `AGENTS.md`, CI checks, and configs. `file-control` and `develop-skill` are not sync targets, so they get none of it.
+- The central repo copies the shared harness to 10 repos (`sync.config.json`): std skills, guard hooks, permission settings, `AGENTS.md`, CI checks, and configs. `file-control` and `develop-skill` are not sync targets, so they get none of it.
 - A Claude Code plugin can ship skills, agents, hooks, MCP and LSP servers, output styles, and executables from one marketplace repo. Research for #451 checked the official docs (plugins, marketplaces, loading, hooks, skills, sub-agents, settings, headless, cloud sessions, GitHub Actions) and the central code. The findings that decide this ADR:
 
 | Topic | Finding |
@@ -35,7 +35,7 @@
    - Permission rules cannot ship in a plugin. Those two repos keep their own `.claude/settings.json` permissions.
 4. **Codex is unchanged.** It keeps `AGENTS.md`, `.codex/` files, and skill files. A Codex plugin is looked at again in #517.
 
-| Item | Synced repos (9) | `file-control`, `develop-skill` |
+| Item | Synced repos (10) | `file-control`, `develop-skill` |
 |---|---|---|
 | `AGENTS.md`, `CLAUDE.md`, `.claude/rules/` | Sync | Repo's own files |
 | std skills | Sync (`skills/`, `.claude/skills/`) | Plugin |
