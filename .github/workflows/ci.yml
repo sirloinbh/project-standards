@@ -22,3 +22,27 @@ jobs:
       - run: npm run check
       - run: node scripts/ioc-scan.mjs
       - run: node scripts/secret-scan.mjs
+
+  # Renders a new app from the scaffold and runs its backend tests, so a new app's first npm test cannot fail
+  # unnoticed (#616). The shared packages come from GitHub Packages, so this job reads them with the job token.
+  scaffold-tests:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: read
+    env:
+      NODE_AUTH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0 # the scaffold script looks up the last commit that changed the reusable workflows
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - run: node scripts/scaffold.mjs study-log --out "$RUNNER_TEMP/scaffold"
+      # The scaffold has no lockfile yet, so this is npm install; the rendered .npmrc turns install scripts off.
+      - run: npm install --no-audit --no-fund
+        working-directory: ${{ runner.temp }}/scaffold
+      - run: npm run test -w backend
+        working-directory: ${{ runner.temp }}/scaffold
