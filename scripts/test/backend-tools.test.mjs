@@ -128,6 +128,8 @@ test('a missing, badly signed, wrong-audience, expired or too-long token is a 40
     `Bearer ${token({ iat: now - 400, exp: now - 100 })}`,
     `Bearer ${token({ exp: now + MAX_TOKEN_SECONDS + 60 })}`,
     `Bearer ${token({ sub: '' })}`,
+    `Bearer ${b64(null)}.${b64(null)}.AAAA`,
+    `Bearer ${token().split('.').slice(0, 2).join('.')}.%%%`,
   ]) {
     assert.equal((await call('POST /internal/tools/:name', { auth, name: 'list_items', body: {} })).status, 401, auth);
   }

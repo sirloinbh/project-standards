@@ -93,10 +93,17 @@ export function verifyCallToken(token: string, key: KeyObject, app: string, now 
   } catch {
     throw new CallError(401, 'Invalid call token');
   }
-  if (head.alg !== 'EdDSA') throw new CallError(401, 'Invalid call token');
-  if (!verify(null, Buffer.from(`${header}.${payload}`), key, base64url(signature))) {
+  if (typeof head !== 'object' || head === null || typeof claims !== 'object' || claims === null) {
     throw new CallError(401, 'Invalid call token');
   }
+  if (head.alg !== 'EdDSA') throw new CallError(401, 'Invalid call token');
+  let valid = false;
+  try {
+    valid = verify(null, Buffer.from(`${header}.${payload}`), key, base64url(signature));
+  } catch {
+    // A malformed signature is a bad token, not a server error.
+  }
+  if (!valid) throw new CallError(401, 'Invalid call token');
   const seconds = Math.floor(now / 1000);
   const { iss, aud, sub, client, scope, iat, exp } = claims;
   if (iss !== 'shared-ai' || aud !== app) throw new CallError(401, 'Call token is not for this app');
