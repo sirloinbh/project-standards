@@ -94,7 +94,7 @@
         "prefix": null
       },
       "features": {
-        "e2e": false,
+        "e2e": true,
         "e2eVisual": false,
         "openapi": false,
         "contract": false,
@@ -102,7 +102,7 @@
         "vitest": true,
         "claude": true,
         "devcontainer": false,
-        "lighthouse": false,
+        "lighthouse": true,
         "msw": false,
         "knipStrict": false,
         "darkOnly": false
