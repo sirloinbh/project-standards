@@ -1,6 +1,6 @@
 # 0021. Alert on errors from the JSON logs with the daily report; no error tracker or log service for now
 
-- Status: Proposed (issue #554; waiting for the user's decision)
+- Status: Accepted (issue #554; user decision, 2026-11-18, including the default `REPORT_ERROR_LIMIT=0`)
 - Date: 2026-11-17
 - Builds on: [ADR-0009](0009-multi-app-single-lightsail.md) (one Lightsail server, IP allow list), #552 (JSON request logs, [logging.md](../logging.md)), #284 and #285 (healthchecks.io signals and the daily server report)
 
@@ -45,13 +45,14 @@
 
 (A) and (B) send personal data to a third party for a few errors a day. (C) costs a third to a half of the free memory for the same few errors and adds an internet-facing ingest endpoint. (D) gives no alert, which is the gap the issue names, and puts a frequently patched container on the Docker socket. (E) closes the gap with the scripts and channel we already run.
 
-## Decision (proposed)
+## Decision
 
 (E): no error tracker, no log service, no log viewer for now. The daily report counts error lines and alerts through the existing `report` signal.
 
 | Item | Decision |
 |---|---|
 | Count | `report.sh` counts lines with `"level":"error"` in `docker compose logs --since 24h api` and adds `errors=<N>` to the report line. When N > 0 it also adds up to 5 request IDs with their `status` and `path` (`errors=3 [5f0c… 500 /api/workouts, …]`), so the owner can run the `grep` in [logging.md](../logging.md). No error `message` text goes into the ping body |
+| Deploys | A deploy recreates the `api` container (`remote-deploy.sh`, `docker compose up -d` with a new image tag), and `docker compose logs` then shows only the new container. So `remote-deploy.sh` saves the old container's error lines from the last 24 hours to a file in the app's deploy folder just before `up -d`, and `report.sh` counts that file together with the running container's logs, then empties it. Without this, an app that deploys after an error would report `errors=0` |
 | Alert | The `report` signal is `fail` when N is over `REPORT_ERROR_LIMIT` (server `.env`, default `0`: any error fails the day). healthchecks.io emails on `fail`, as it does for memory and disk today |
 | Services without `report.sh` | shared-auth and `shared-ai` get the same count when their deploy scripts gain the report (they use the same `requestLog` format) |
 | Retention | Unchanged: the Docker `json-file` limit (10 MB × 3 per container). The daily report runs well before a quiet app's errors roll off; a noisy app is the case to decide again |
@@ -70,4 +71,4 @@
 - An error is noticed within a day, not within minutes. A full outage is still caught in 5 minutes by `health`.
 - There is no stack grouping or UI; finding the cause stays `grep` on the server with the request ID.
 - With `REPORT_ERROR_LIMIT=0` a single 500 makes the day's report `fail`. Raise the limit per app in its `.env` if one app has known noisy errors, and open an issue for them.
-- Follow-up when accepted (not implemented here): one issue to add the count, the request ID list, and `REPORT_ERROR_LIMIT` to `templates/app/deploy/report.sh.tmpl` with tests and a line in [logging.md](../logging.md) and [env-conventions.md](../env-conventions.md); one issue to add the same report to shared-auth's deploy scripts.
+- Follow-up when accepted (not implemented here): one issue to add the count, the request ID list, and `REPORT_ERROR_LIMIT` to `templates/app/deploy/report.sh.tmpl`, and the pre-deploy save to `remote-deploy.sh.tmpl`, with tests and a line in [logging.md](../logging.md) and [env-conventions.md](../env-conventions.md); one issue to add the same report to shared-auth's deploy scripts.

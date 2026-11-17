@@ -2,7 +2,7 @@
 
 ## Change
 
-- `docs/adr/0021-error-alerts-from-logs.md`: proposed ADR. No error tracker (Sentry, GlitchTip), hosted log service (Better Stack, Grafana Cloud), or log viewer (Dozzle) for now. The daily `report.sh` counts `"level":"error"` lines from the last 24 hours, adds `errors=N` and up to 5 request IDs with status and path to the report line, and sends `fail` when N is over `REPORT_ERROR_LIMIT` (default `0`). Lists the triggers for deciding again.
+- `docs/adr/0021-error-alerts-from-logs.md`: ADR (accepted 2026-11-18). No error tracker (Sentry, GlitchTip), hosted log service (Better Stack, Grafana Cloud), or log viewer (Dozzle) for now. The daily `report.sh` counts `"level":"error"` lines from the last 24 hours, adds `errors=N` and up to 5 request IDs with status and path to the report line, and sends `fail` when N is over `REPORT_ERROR_LIMIT` (default `0`). Before a deploy recreates the api container, `remote-deploy.sh` saves its error lines so the daily count still sees them (added in review). Lists the triggers for deciding again.
 
 ## Reason
 
@@ -16,4 +16,4 @@
 
 ## Follow-up
 
-- Waiting for the user's decision on the PR. If accepted: one issue for the error count in `templates/app/deploy/report.sh.tmpl` (with tests and docs), one for the same report in shared-auth.
+- Accepted by the user on 2026-11-18. Next: one issue for the error count in `templates/app/deploy/report.sh.tmpl` (with tests and docs), one for the same report in shared-auth.
