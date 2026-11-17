@@ -172,3 +172,11 @@ test('refuses to write into a folder that is not empty', () => {
 test('the CLI explains its usage', () => {
   assert.throws(() => execFileSync(process.execPath, [path.join(root, 'scripts/scaffold.mjs')], { stdio: 'pipe' }), (e) => e.status === 2 && /Usage/.test(e.stderr));
 });
+
+test('the scaffold health test expects the error texts the managed standard/http.ts sends (#608)', () => {
+  const http = fs.readFileSync(path.join(root, 'templates/app/backend/src/standard/http.ts'), 'utf8');
+  const test = fs.readFileSync(path.join(root, 'scaffold/app/backend/test/health.test.ts'), 'utf8');
+  const expected = [...test.matchAll(/error: '([^']+)'/g)].map((m) => m[1]);
+  assert.ok(expected.length >= 3, 'the health test checks the three shared error texts');
+  for (const text of expected) assert.ok(http.includes(`'${text}'`), `standard/http.ts does not send "${text}"`);
+});
