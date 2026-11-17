@@ -25,6 +25,8 @@ This standard is based on the workout-memo structure. New projects follow it as 
 │  │  ├─ server.ts  app.ts                  # server start, app assembly and error handling
 │  │  ├─ routes/<feature>.ts  routes/shared.ts # per-feature API modules, re-export of shared helpers
 │  │  ├─ standard/http.ts                   # centrally managed: error handler, 404, ID and date helpers (#309)
+│  │  ├─ standard/audit.ts                  # centrally managed: audit log helper (#553)
+│  │  ├─ standard/tools.ts                  # centrally managed: AI tool routes for shared-ai (#559)
 │  │  ├─ openapi.ts  openapi-cli.ts         # OpenAPI document generation (docs/openapi.json)
 │  │  ├─ domain.ts                          # domain rules and validation
 │  │  ├─ migrations.ts  migrate.ts          # migration runner rules and command (docs/conventions/database.md)
@@ -55,10 +57,12 @@ All 8 apps use Express 5 + Zod. Production code is not distributed as a package;
 
 ### Structure
 
-- `createApp(pool)` in `backend/src/app.ts` assembles the app, in this order: JSON body parser → feature routes → `app.use('/api', notFound)` → `app.use(errorHandler)`. `server.ts` only opens the port.
+- `createApp(pool)` in `backend/src/app.ts` assembles the app, in this order: `app.use(requestLog)` (#552, [logging.md](logging.md)) → JSON body parser → feature routes → `app.use('/api', notFound)` → `app.use(errorHandler)`. `server.ts` only opens the port.
 - Each feature has one `backend/src/routes/<feature>.ts` module, registered by a `register<Feature>Routes(app, pool)` function.
-- The error handler (`errorHandler`), the 404 for unknown routes (`notFound`), `HttpError`, `parseId`, and `serviceDate` live in the centrally managed file `backend/src/standard/http.ts` (#309). All 8 apps receive the same file through sync, so do not edit it in an app. The scaffold re-exports these along with the `Db` type from `routes/shared.ts`.
-- This file only imports types. That lets it work regardless of the app's zod and Express versions (`ZodError` is recognized by its shape).
+- The error handler (`errorHandler`), the 404 for unknown routes (`notFound`), `HttpError`, `parseId`, `serviceDate`, and the request ID and log middleware (`requestLog`) live in the centrally managed file `backend/src/standard/http.ts` (#309). All 8 apps receive the same file through sync, so do not edit it in an app. The scaffold re-exports these along with the `Db` type from `routes/shared.ts`.
+- The audit log helper (`writeAudit`, `auditContext`) is the centrally managed file `backend/src/standard/audit.ts` (#553, [audit-log.md](audit-log.md)). The `audit_log` table is the app's own migration.
+- AI tools (`defineTool`, `registerToolRoutes`) use the centrally managed file `backend/src/standard/tools.ts` (#559, [ai-tools.md](ai-tools.md)); the app defines its tools in its own `backend/src/ai-tools.ts`.
+- Besides `node:crypto`, this file only imports types. That lets it work regardless of the app's zod and Express versions (`ZodError` is recognized by its shape).
 - Tests pass a fake `pool` to `createApp` to check routing and error format without a DB (scaffold `backend/test/health.test.ts`).
 
 ### Paths

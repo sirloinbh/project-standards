@@ -11,6 +11,7 @@ export {
   HttpError,
   notFound,
   parseId,
+  requestLog,
   sendError,
   serviceDate,
 } from '../standard/http.js';
