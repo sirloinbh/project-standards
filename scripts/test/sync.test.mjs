@@ -28,6 +28,15 @@ test('the ui components join a plan only when the project turns features.ui on (
   assert.ok(on.manifest.files['frontend/src/components/ui/select.tsx']);
 });
 
+test('the job runner joins a plan only when the project turns features.jobs on (#556)', () => {
+  const data = structuredClone(original.data);
+  const jobs = (project) =>
+    planTarget({ root, data, target: targetOf(data, project), centralSha: 'a'.repeat(40) }).files.find((f) => f.path === 'backend/src/standard/jobs.ts');
+  assert.equal(data.projects.projects.find((p) => p.name === 'study-log').features.jobs, false);
+  assert.equal(jobs('study-log'), undefined);
+  assert.equal(jobs('money-ledger')?.source, 'templates/jobs/backend/src/standard/jobs.ts');
+});
+
 test('glob patterns match whole paths with * and **', () => {
   assert.ok(globToRegExp('**/*.tf').test('main.tf'));
   assert.ok(globToRegExp('**/*.tf').test('modules/net/vpc.tf'));

@@ -689,6 +689,7 @@
     "full backend/src/standard/audit.ts",
     "full backend/src/standard/auth.ts",
     "full backend/src/standard/http.ts",
+    "full backend/src/standard/jobs.ts",
     "full backend/src/standard/tools.ts",
     "full backend/tsconfig.json",
     "full CLAUDE.md",

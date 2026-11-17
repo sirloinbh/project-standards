@@ -48,7 +48,8 @@
         "lighthouse": true,
         "msw": true,
         "knipStrict": false,
-        "darkOnly": true
+        "darkOnly": true,
+        "jobs": false
       },
       "skills": [
         "workout-foundation",
@@ -107,7 +108,8 @@
         "lighthouse": true,
         "msw": false,
         "knipStrict": false,
-        "darkOnly": false
+        "darkOnly": false,
+        "jobs": false
       },
       "skills": [
         "study-log-foundation",
@@ -163,7 +165,8 @@
         "lighthouse": true,
         "msw": false,
         "knipStrict": true,
-        "darkOnly": false
+        "darkOnly": false,
+        "jobs": false
       },
       "skills": [
         "health-log-foundation",
@@ -219,7 +222,8 @@
         "lighthouse": true,
         "msw": false,
         "knipStrict": true,
-        "darkOnly": false
+        "darkOnly": false,
+        "jobs": false
       },
       "skills": [
         "life-journal-foundation",
@@ -275,7 +279,8 @@
         "lighthouse": true,
         "msw": false,
         "knipStrict": true,
-        "darkOnly": false
+        "darkOnly": false,
+        "jobs": true
       },
       "skills": [
         "money-ledger-foundation",
@@ -331,7 +336,8 @@
         "lighthouse": true,
         "msw": false,
         "knipStrict": true,
-        "darkOnly": false
+        "darkOnly": false,
+        "jobs": false
       },
       "skills": [
         "cert-manager-foundation",
@@ -387,7 +393,8 @@
         "lighthouse": true,
         "msw": false,
         "knipStrict": false,
-        "darkOnly": false
+        "darkOnly": false,
+        "jobs": false
       },
       "skills": [
         "plan-routine-foundation",
@@ -443,7 +450,8 @@
         "lighthouse": true,
         "msw": false,
         "knipStrict": true,
-        "darkOnly": false
+        "darkOnly": false,
+        "jobs": false
       },
       "skills": [
         "dev-career-portfolio-foundation",
