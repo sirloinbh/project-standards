@@ -14,6 +14,7 @@ An npm supply-chain attack (the Shai-Hulud family) is ongoing, so dependencies a
 | react-hook-form, @hookform/resolvers | 7, 5 | workout-memo | |
 | @playwright/test, @axe-core/playwright | 1, 4 | workout-memo | Same version as the visual comparison image (`versions.json` `images.playwright`) |
 | recharts | 3 | study-log | |
+| pg-boss | 12 | money-ledger (`features.jobs`) | backend only; [ADR-0018](adr/0018-job-runner-pg-boss.md), [jobs.md](jobs.md) |
 
 Why each shared dependency's major version was chosen: tailwindcss 4, lucide-react, radix-ui, sonner, vaul, and tw-animate-css follow [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), and typescript, eslint, and prettier follow the peer range of the `@sirloinbh/*` shared packages. zod uses 4 (#386, [survey](research/zod4.md)).
 

@@ -27,6 +27,7 @@ This standard is based on the workout-memo structure. New projects follow it as 
 │  │  ├─ standard/http.ts                   # centrally managed: error handler, 404, ID and date helpers (#309)
 │  │  ├─ standard/audit.ts                  # centrally managed: audit log helper (#553)
 │  │  ├─ standard/tools.ts                  # centrally managed: AI tool routes for shared-ai (#559)
+│  │  ├─ standard/jobs.ts                   # centrally managed with features.jobs: pg-boss job runner (#556)
 │  │  ├─ openapi.ts  openapi-cli.ts         # OpenAPI document generation (docs/openapi.json)
 │  │  ├─ domain.ts                          # domain rules and validation
 │  │  ├─ migrations.ts  migrate.ts          # migration runner rules and command (docs/conventions/database.md)
@@ -62,6 +63,7 @@ All 8 apps use Express 5 + Zod. Production code is not distributed as a package;
 - The error handler (`errorHandler`), the 404 for unknown routes (`notFound`), `HttpError`, `parseId`, `serviceDate`, and the request ID and log middleware (`requestLog`) live in the centrally managed file `backend/src/standard/http.ts` (#309). All 8 apps receive the same file through sync, so do not edit it in an app. The scaffold re-exports these along with the `Db` type from `routes/shared.ts`.
 - The audit log helper (`writeAudit`, `auditContext`) is the centrally managed file `backend/src/standard/audit.ts` (#553, [audit-log.md](audit-log.md)). The `audit_log` table is the app's own migration.
 - AI tools (`defineTool`, `registerToolRoutes`) use the centrally managed file `backend/src/standard/tools.ts` (#559, [ai-tools.md](ai-tools.md)); the app defines its tools in its own `backend/src/ai-tools.ts`.
+- Background jobs (`startJobs`, `NonRetryable`, `jobsStatus`) use the centrally managed file `backend/src/standard/jobs.ts`, synced only to apps with `features.jobs` on (#556, [jobs.md](jobs.md)); the app defines its queues in its own code.
 - Besides `node:crypto`, this file only imports types. That lets it work regardless of the app's zod and Express versions (`ZodError` is recognized by its shape).
 - Tests pass a fake `pool` to `createApp` to check routing and error format without a DB (scaffold `backend/test/health.test.ts`).
 
