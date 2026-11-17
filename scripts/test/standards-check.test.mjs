@@ -266,6 +266,7 @@ test('API rules: health, error handler, 404, paths, error shape, and unvalidated
   assert.deepEqual(checkApi([{ file: 'backend/src/app.ts', text: badApp }]), [
     'backend/src: GET /api/health is missing. Every app has a health check API that verifies the DB connection.',
     'backend/src/app.ts: the error middleware (app.use(errorHandler)) is missing, so errors are not returned as { error }.',
+    'backend/src/app.ts: app.use(requestLog) is missing, so requests get no request ID or JSON log line (docs/logging.md).',
     "backend/src/app.ts: app.use('/api', notFound), which answers unknown /api paths with 404 { error }, is missing.",
     'backend/src/app.ts:4: API route /health must start with /api.',
     'backend/src/app.ts:5: In API route /api/userList, "userList" must use lowercase English and hyphens.',
@@ -278,6 +279,7 @@ test('API rules: health, error handler, 404, paths, error shape, and unvalidated
 test('API rules: the study-log style (inline error middleware, Routers mounted under /api) passes', () => {
   const text = [
     "app.get('/api/health', async (_req, res) => res.json({ ok: true }));",
+    'app.use(requestLog);',
     "app.use('/api/study-logs', studyLogRoutes(pool));",
     "app.get('/api/export/workouts.csv', exportRoute);",
     "app.post('/api/backup/' + action, restore);",
@@ -294,7 +296,7 @@ test('API rule warnings reach runCheck without failing it; tests are not scanned
     write('backend/src/app.test.ts', 'req.body.x');
   });
   assert.deepEqual(result.problems, []);
-  assert.equal(result.warnings.length, 8);
+  assert.equal(result.warnings.length, 9);
   assert.ok(!result.warnings.some((w) => w.includes('app.test.ts')));
 });
 

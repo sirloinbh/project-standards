@@ -2,10 +2,14 @@
 // Node runs it directly by stripping the types; the file imports only types, so no app packages are needed.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { errorHandler, HttpError, ID_PATTERN, MAX_ISSUES, notFound, parseId, serviceDate } from '../../templates/app/backend/src/standard/http.ts';
+import { EventEmitter } from 'node:events';
+import { errorHandler, HttpError, ID_PATTERN, MAX_ISSUES, notFound, parseId, requestLog, serviceDate } from '../../templates/app/backend/src/standard/http.ts';
 
 function fakeResponse() {
-  const res = { statusCode: 0, body: undefined };
+  const res = Object.assign(new EventEmitter(), { statusCode: 0, body: undefined, locals: {}, headers: {} });
+  res.setHeader = (name, value) => {
+    res.headers[name.toLowerCase()] = value;
+  };
   res.status = (code) => {
     res.statusCode = code;
     return res;
@@ -68,7 +72,10 @@ test('anything else is a 500 whose internal message reaches only the log', () =>
   const result = answer(new Error('connect ECONNREFUSED 127.0.0.1:5432'));
   assert.deepEqual(result.body, { error: 'Server error' });
   assert.equal(result.status, 500);
-  assert.deepEqual(result.logged.map((l) => JSON.parse(l)), [{ event: 'request_error', message: 'connect ECONNREFUSED 127.0.0.1:5432' }]);
+  const [line, ...rest] = result.logged.map((l) => JSON.parse(l));
+  assert.equal(rest.length, 0);
+  assert.match(line.time, /^\d{4}-\d{2}-\d{2}T/);
+  assert.deepEqual({ ...line, time: undefined }, { time: undefined, level: 'error', event: 'request_error', message: 'connect ECONNREFUSED 127.0.0.1:5432' });
   assert.equal(answer('a thrown string').status, 500);
   assert.equal(answer(null).status, 500);
 });
@@ -93,4 +100,64 @@ test('the service date is the Asia/Seoul calendar date', () => {
   // 2026-10-27 15:30 UTC is already 2026-10-28 00:30 in Seoul.
   assert.equal(serviceDate(new Date('2026-10-27T15:30:00Z')), '2026-10-28');
   assert.equal(serviceDate(new Date('2026-10-27T14:59:59Z')), '2026-10-27');
+});
+
+// requestLog (#552): the request ID header and one JSON line per request.
+function logRequest({ headers = {}, method = 'GET', url = '/api/workouts?from=2026-11-01', status = 200 } = {}) {
+  const req = { method, originalUrl: url, get: (name) => headers[name.toLowerCase()] };
+  const res = fakeResponse();
+  const lines = { log: [], error: [] };
+  const original = { log: console.log, error: console.error };
+  console.log = (line) => lines.log.push(line);
+  console.error = (line) => lines.error.push(line);
+  try {
+    let called = false;
+    requestLog(req, res, () => {
+      called = true;
+    });
+    assert.ok(called, 'requestLog calls next');
+    res.statusCode = status;
+    res.emit('finish');
+  } finally {
+    Object.assign(console, original);
+  }
+  return { res, lines };
+}
+
+test('requestLog creates a request ID, returns it in the header and logs one JSON line without the query', () => {
+  const { res, lines } = logRequest();
+  const id = res.headers['x-request-id'];
+  assert.match(id, /^[0-9a-f-]{36}$/);
+  assert.equal(res.locals.requestId, id);
+  assert.equal(lines.error.length, 0);
+  assert.equal(lines.log.length, 1);
+  const line = JSON.parse(lines.log[0]);
+  assert.deepEqual(Object.keys(line), ['time', 'level', 'requestId', 'method', 'path', 'status', 'ms']);
+  assert.deepEqual([line.level, line.requestId, line.method, line.path, line.status], ['info', id, 'GET', '/api/workouts', 200]);
+  assert.ok(Number.isInteger(line.ms) && line.ms >= 0);
+});
+
+test('requestLog keeps a valid incoming X-Request-Id and replaces one that is not an ID', () => {
+  assert.equal(logRequest({ headers: { 'x-request-id': 'abc123.def-4_5' } }).res.headers['x-request-id'], 'abc123.def-4_5');
+  for (const bad of ['two words', 'x'.repeat(129), '{"level":"error"}']) {
+    assert.notEqual(logRequest({ headers: { 'x-request-id': bad } }).res.headers['x-request-id'], bad);
+  }
+});
+
+test('requestLog logs 4xx as warn and 5xx as error, and errorHandler logs the same request ID', () => {
+  assert.equal(JSON.parse(logRequest({ status: 404 }).lines.log[0]).level, 'warn');
+  const failed = logRequest({ status: 500 });
+  assert.equal(failed.lines.log.length, 0);
+  assert.equal(JSON.parse(failed.lines.error[0]).level, 'error');
+  const res = fakeResponse();
+  res.locals.requestId = 'req-1';
+  const original = console.error;
+  const logged = [];
+  console.error = (line) => logged.push(line);
+  try {
+    errorHandler(new Error('boom'), {}, res, () => {});
+  } finally {
+    console.error = original;
+  }
+  assert.equal(JSON.parse(logged[0]).requestId, 'req-1');
 });
