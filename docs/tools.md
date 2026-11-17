@@ -311,6 +311,8 @@ claude mcp add --scope user playwright -- cmd /c npx -y @playwright/mcp@0.0.84 -
 claude mcp list
 ```
 
+   In Git Bash (including the `!` prompt in Claude Code on Windows), Git Bash rewrites `/c` into the path `C:/` and the saved command breaks (`cmd C:/ npx ...`). Prefix each `claude mcp add` with `MSYS_NO_PATHCONV=1`, and check that the output says `command: cmd /c npx ...`. To fix a broken entry, run `claude mcp remove --scope user <name>` and add it again.
+
 3. Start a new Claude Code session and run `/mcp`; both servers should show as connected. Paste that result on #563.
 
 On macOS or Linux, drop `cmd /c`. The equivalent `.mcp.json` entry (only if a repo ever needs a project-scoped copy) is:
