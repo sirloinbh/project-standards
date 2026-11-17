@@ -29,8 +29,8 @@
 
 - `node --test scripts/test/backend-jobs.test.mjs`: 24 pass. `node --test scripts/test/sync.test.mjs`: 13 pass.
 - `jobs.ts` in a money-ledger checkout with `pg-boss@12.38.0` installed: `tsc -p tsconfig.check.json` passes with `startJobs(new PgBoss(jobBossOptions(url)), [queue])` and `jobsStatus(jobs.boss)`, so a real `PgBoss` fits the `JobBoss` type.
-- Real pg-boss 12.38.0 on a throwaway Postgres 17.11: retry then dead-letter (3 runs), `NonRetryable` dead-lettered after 1 run, keys per policy (`standard` and `singleton` accept a duplicate; `short`, `stately`, `exclusive` return null), Asia/Seoul schedules, a status view without the input, and `stop()` passed. Restart and schedule removal failed on the first draft and were fixed; the rerun on the final file is in the PR.
-- ESLint, Prettier and `tsc` with the money-ledger config: see the PR.
+- Real pg-boss 12.38.0 on a throwaway Postgres 17.11: retry then dead-letter (3 runs), `NonRetryable` dead-lettered after 1 run, keys per policy (`standard` and `singleton` accept a duplicate; `short`, `stately`, `exclusive` return null), Asia/Seoul schedules, a status view without the input, and `stop()` passed. Restart and schedule removal failed on the first draft and were fixed. Rerun on the final file: all pass, plus three restarts in a row, `standard` with a key throws, dead-letter entries show the error and attempts (3 and 1), no `__pgboss__` queue in the status view, and paging past 1000 jobs returns the newest 10.
+- ESLint, Prettier and `tsc --noEmit` with the money-ledger config: pass.
 - `npm run check`: see the PR.
 
 ## Follow-up
