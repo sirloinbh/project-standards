@@ -117,7 +117,7 @@ function logRequest({ headers = {}, method = 'GET', url = '/api/workouts?from=20
     });
     assert.ok(called, 'requestLog calls next');
     res.statusCode = status;
-    res.emit('finish');
+    res.emit('close');
   } finally {
     Object.assign(console, original);
   }

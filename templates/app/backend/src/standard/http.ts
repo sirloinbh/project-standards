@@ -58,7 +58,8 @@ export function requestLog(req: Request, res: Response, next: NextFunction) {
   const started = performance.now();
   res.locals.requestId = requestId;
   res.setHeader('X-Request-Id', requestId);
-  res.on('finish', () => {
+  // 'close' also fires when the client aborts, where 'finish' would not.
+  res.on('close', () => {
     const status = res.statusCode;
     const line = JSON.stringify({
       time: new Date().toISOString(),
