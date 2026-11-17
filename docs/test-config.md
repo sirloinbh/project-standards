@@ -11,7 +11,7 @@ These are workout-memo's test configs made into centrally managed files (#33). T
 - `features.e2e` also turns on the e2e job in CI (`reusable-app-ci.yml`).
 - If `features.e2eVisual` is also on, CI runs e2e in the container for `images.playwright` in `versions.json` (pinned by digest) with `E2E_VISUAL=1` and also compares screenshots (#203). On failure it uploads the `playwright-report` and `visual-baselines` artifacts, which hold baseline image candidates. This container has no `psql`, so a `db:migrate` runner must exist. Match the image version to the app's `@playwright/test` version. Currently only workout-memo has it on.
 - Both files are in the central section of `.prettierignore`, because formatting them in an app would fail the hash check (#154).
-- Currently only workout-memo has both flags on. A new project made by the scaffold is registered with both flags on from the start. The scaffold's `package.json` includes the dependencies below and the e2e starter files.
+- All 8 apps have `features.e2e` on since #569 (only workout-memo also has `features.e2eVisual`; the other 7 have the smoke test `e2e/smoke.spec.ts`). A new project made by the scaffold is registered with both flags on from the start. The scaffold's `package.json` includes the dependencies below and the e2e starter files.
 
 ## What the templates expect
 
@@ -61,8 +61,8 @@ These are the versions installed in workout-memo's `package-lock.json` (2026-10-
 
 ## Accessibility and performance scores (Lighthouse CI, #280)
 
-Apps with the registry `features.lighthouse` on (currently workout-memo) receive `lighthouserc.json`. The common CI `verify` job measures `frontend/dist`, built by `npm run check`, with Lighthouse CI (`@lhci/cli`) and writes the scores to the job summary. Scores below the thresholds (accessibility 0.9, best practices 0.9, performance 0.8) only produce a warning. The report is kept for 7 days in the `lighthouse-report` artifact. The detailed decision is in the [change record](changes/280-lighthouse.md).
+Apps with the registry `features.lighthouse` on (all 8 apps since #568) receive `lighthouserc.json`. The common CI `verify` job measures `frontend/dist`, built by `npm run check`, with Lighthouse CI (`@lhci/cli`) and writes the scores to the job summary. Scores below the thresholds (accessibility 0.9, best practices 0.9, performance 0.8) only produce a warning. The report is kept for 7 days in the `lighthouse-report` artifact. The detailed decision is in the [change record](changes/280-lighthouse.md).
 
 ## Screen tests without a backend (MSW contract mock, #281)
 
-Apps with the registry `features.msw` on (currently workout-memo) receive `frontend/src/test/contract-api.ts`. When a test file calls `setupContractApi()`, MSW answers every API in `docs/openapi.json`, and a request not in the contract fails the test. Data is supplied per test with `contractHandlers({ 'GET /api/…': … })`. If the contract has no success response schema, the body is empty, so list screens give a default such as `setupContractApi({ emptyBody: [] })`. Details are in the [change record](changes/281-msw.md).
+Apps with the registry `features.msw` on (all 8 apps since #568) receive `frontend/src/test/contract-api.ts`. When a test file calls `setupContractApi()`, MSW answers every API in `docs/openapi.json`, and a request not in the contract fails the test. Data is supplied per test with `contractHandlers({ 'GET /api/…': … })`. If the contract has no success response schema, the body is empty, so list screens give a default such as `setupContractApi({ emptyBody: [] })`. Details are in the [change record](changes/281-msw.md).

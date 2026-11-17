@@ -24,7 +24,7 @@ test('lighthouserc measures the built frontend and every assertion is a warning'
 // #568: apps join this list when @lhci/cli is installed in them and their sync PR is ready.
 test('only apps with @lhci/cli installed turn it on, and the feature maps to the template folder', () => {
   const { projects } = JSON.parse(read('registry/projects.json'));
-  assert.deepEqual(projects.filter((p) => p.features.lighthouse).map((p) => p.name), ['workout-memo', 'study-log']);
+  assert.deepEqual(projects.filter((p) => p.features.lighthouse).map((p) => p.name), ['workout-memo', 'study-log', 'health-log', 'life-journal', 'money-ledger', 'cert-manager', 'plan-routine', 'dev-career-portfolio']);
   const sync = JSON.parse(read('sync.config.json'));
   assert.equal(sync.profiles.app.featureTemplates.lighthouse, 'lighthouse');
 });
