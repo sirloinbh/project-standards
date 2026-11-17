@@ -37,7 +37,7 @@ Facts checked on 2026-11-17 from the official sites, GitHub, and the npm registr
 | Retries | Yes: `retryLimit`, `retryDelay`, exponential backoff with jitter, dead-letter queue with redrive | Yes: exponential backoff, 25 attempts by default | Yes | Yes | Yes |
 | Scheduling | Cron and RRULE (`schedule()`), delayed jobs | Crontab with backfill | Yes | Yes | Yes |
 | Duplicate protection | `singletonKey` plus queue policies `singleton`, `short`, `stately`, `exclusive`, `key_strict_fifo` | `job_key` | Yes | Idempotency keys | Idempotency keys |
-| Status view | `@pg-boss/dashboard` (MIT, React and Hono, a separate small server), or SQL on the `pgboss` tables | None in the open-source package (Worker Pro is paid) | Web dashboard | Web dashboard | Web dashboard |
+| Status view | `@pg-boss/dashboard` (MIT, React and Hono, a separate small server), or SQL on the `pgboss` tables | None built in | Web dashboard | Web dashboard | Web dashboard |
 | Latency | Polling, optional `LISTEN/NOTIFY` | `LISTEN/NOTIFY`, a few ms | Low | Low | Low |
 | License | MIT | MIT | MIT | SSPL, Apache 2.0 after a delay | Apache 2.0 |
 | Version | 12.38.2 (2026-11-10); 12.38.0 (2026-10-13) passes the 14-day rule today. Node 22.12+, PostgreSQL 13+ | 0.18.0 (2026-09-08); Node 22.18+ | | | |
