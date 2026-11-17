@@ -7,7 +7,7 @@
 ## Reason
 
 - Since #552 errors are searchable but nothing alerts on them. The expected volume is a few errors a day.
-- Hosted options send stack traces or every log line with personal data to a third party; GlitchTip needs 256 to 512 MiB of the roughly 900 MiB left on the 2 GB server; Dozzle gives no alert and needs the Docker socket with several high-severity CVEs in 2026. The existing report and healthchecks.io channel close the gap at no memory or money cost.
+- Hosted options send stack traces or every log line with personal data to a third party; GlitchTip needs 256 to 512 MiB of the roughly 900 MiB left on the 2 GB server; Dozzle gives no alert and needs the Docker socket with several CVEs in 2026, some rated high. The existing report and healthchecks.io channel close the gap at no memory or money cost.
 
 ## Verification
 
