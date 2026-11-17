@@ -128,7 +128,7 @@ The firewall is open only to allowed IPs, so an outside monitoring service canno
 
 - Install: `sudo bash /opt/{{project.name}}/deploy/install-backup.sh` (backup, restore check, and health timers). You do not need to run it again if you add the URLs to `.env` later.
 - Manual check: `bash /opt/{{project.name}}/deploy/notify.sh health` (the URL is not printed)
-- Daily report (#285, 04:00): one line, `memory=..% disk=..% deployed=<commit> containers: <container> <memory>`, is left in the report check's log. If server memory usage exceeds `REPORT_MEMORY_PERCENT` (default 85) or disk usage exceeds `REPORT_DISK_PERCENT` (default 90), it is sent as a failure ping and an email arrives. To see only the current values, run `bash /opt/{{project.name}}/deploy/report.sh line`.
+- Daily report (#285, 04:00): one line, `memory=..% disk=..% deployed=<commit> errors=<N> [<requestId> <status> <path>, ...] containers: <container> <memory>`, is left in the report check's log. If server memory usage exceeds `REPORT_MEMORY_PERCENT` (default 85), disk usage exceeds `REPORT_DISK_PERCENT` (default 90), or the API error count exceeds `REPORT_ERROR_LIMIT` (default 0, #636), it is sent as a failure ping and an email arrives. See [logging.md](../logging.md#daily-error-alert-636) for the error part. To see only the current values, run `bash /opt/{{project.name}}/deploy/report.sh line`.
 - The ping body (dump name, failure reason) is left in the check's log on healthchecks.io. Do not put secret values in it.
 
 ## 4-2. API rate limiting

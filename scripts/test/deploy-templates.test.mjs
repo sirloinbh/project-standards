@@ -486,7 +486,7 @@ test('autodeploy signals every decision and the health timer runs every 5 minute
 });
 
 // Runs the rendered report.sh with fake free, df and docker and a recording deploy/notify.sh (#285).
-function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, failed = null } = {}) {
+function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, failed = null, logs = '', saved = null } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'report-'));
   const bin = path.join(dir, 'bin');
   const app = path.join(dir, 'app');
@@ -496,38 +496,112 @@ function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, failed = nu
   // 2000 MB total; "available" is total minus the used amount the test asks for.
   tool('free', ['echo "               total        used        free      shared  buff/cache   available"', `echo "Mem:            2000         700         300          10        1000        ${2000 - usedMb}"`]);
   tool('df', ['echo "Filesystem     1024-blocks    Used Available Capacity Mounted on"', `echo "/dev/root         40000000 1600000  2400000      ${diskPercent}% /"`]);
-  tool('docker', ['case "$1 $2" in', '  "compose ps") echo id1; echo id2 ;;', '  "stats --no-stream") echo "study-log-api-1 120.5MiB / 1.9GiB"; echo "study-log-db-1 45MiB / 1.9GiB" ;;', 'esac']);
+  tool('docker', ['case "$1 $2" in', '  "compose ps") echo id1; echo id2 ;;', '  "compose logs") cat "$FAKE_LOG.logs" 2> /dev/null ;;', '  "stats --no-stream") echo "study-log-api-1 120.5MiB / 1.9GiB"; echo "study-log-db-1 45MiB / 1.9GiB" ;;', 'esac']);
   fs.writeFileSync(path.join(app, 'deploy/notify.sh'), 'printf "%s|" "$@" >> "$FAKE_LOG.notify"; echo >> "$FAKE_LOG.notify"\n');
   fs.writeFileSync(path.join(app, '.env'), env);
   fs.writeFileSync(path.join(app, '.deployed'), 'abc123def456');
   if (failed) fs.writeFileSync(path.join(app, '.autodeploy-failed'), failed);
+  if (saved !== null) fs.writeFileSync(path.join(app, '.errors-before-deploy.log'), saved);
   const script = rendered['study-log']['deploy/report.sh'].replace('cd /opt/study-log', `cd '${posix(app)}'`).replace(/^#!.*\n/, '');
   const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
   const log = path.join(dir, 'log');
+  fs.writeFileSync(log + '.logs', logs);
   const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'report.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log) } });
   const notify = fs.existsSync(log + '.notify') ? fs.readFileSync(log + '.notify', 'utf8') : '';
+  const savedFile = path.join(app, '.errors-before-deploy.log');
+  const savedAfter = fs.existsSync(savedFile) ? fs.readFileSync(savedFile, 'utf8') : null;
   fs.rmSync(dir, { recursive: true, force: true });
-  return { status: r.status, stdout: r.stdout, stderr: r.stderr, notify };
+  return { status: r.status, stdout: r.stdout, stderr: r.stderr, notify, savedAfter };
 }
 
 test('the daily report is one line with memory, disk, deployed commit and container memory', { skip: !has('bash') && 'bash not found' }, () => {
   const r = reportRun(['line']);
   assert.equal(r.status, 0, r.stderr);
-  assert.equal(r.stdout, 'memory=45% disk=41% deployed=abc123def456 containers: study-log-api-1 120.5MiB, study-log-db-1 45MiB\n');
+  assert.equal(r.stdout, 'memory=45% disk=41% deployed=abc123def456 errors=0 containers: study-log-api-1 120.5MiB, study-log-db-1 45MiB\n');
   assert.equal(r.notify, '', 'line only prints');
   const failed = reportRun(['line'], { failed: 'fff000' });
-  assert.match(failed.stdout, /deployed=abc123def456 autodeploy-failed=fff000 containers:/);
+  assert.match(failed.stdout, /deployed=abc123def456 autodeploy-failed=fff000 errors=0 containers:/);
 });
 
 test('the report sends ok, and fail over the memory or disk threshold', { skip: !has('bash') && 'bash not found' }, () => {
   const ok = reportRun([]);
   assert.equal(ok.status, 0, ok.stderr);
-  assert.equal(ok.notify, 'ping|report|ok|memory=45% disk=41% deployed=abc123def456 containers: study-log-api-1 120.5MiB, study-log-db-1 45MiB|\n');
+  assert.equal(ok.notify, 'ping|report|ok|memory=45% disk=41% deployed=abc123def456 errors=0 containers: study-log-api-1 120.5MiB, study-log-db-1 45MiB|\n');
   assert.match(reportRun([], { usedMb: 1800 }).notify, /^ping\|report\|fail\|memory=90%/);
   assert.match(reportRun([], { diskPercent: 95 }).notify, /^ping\|report\|fail\|/);
   assert.match(reportRun([], { usedMb: 1800, env: 'REPORT_MEMORY_PERCENT=95\n' }).notify, /^ping\|report\|ok\|/, 'the threshold comes from .env');
   for (const [name, files] of Object.entries(rendered)) {
     assert.match(files['deploy/report.timer'], /^OnCalendar=\*-\*-\* 04:00:00 Asia\/Seoul$/m, name);
     assert.match(files['deploy/install-backup.sh'], /^for unit in backup restore-check health report; do$/m, name);
+  }
+});
+
+const errLine = (id, status, path) => JSON.stringify({ time: '2026-11-18T01:00:00.000Z', level: 'error', requestId: id, method: 'GET', path, status, ms: 5 });
+const handlerLine = (id, message) => JSON.stringify({ time: '2026-11-18T01:00:00.000Z', level: 'error', event: 'request_error', requestId: id, message });
+const infoLine = JSON.stringify({ time: '2026-11-18T01:00:00.000Z', level: 'info', requestId: 'okid', method: 'GET', path: '/api/health', status: 200, ms: 1 });
+
+test('the report counts error log lines, lists request IDs without messages, and fails over REPORT_ERROR_LIMIT', { skip: !has('bash') && 'bash not found' }, () => {
+  const none = reportRun([], { logs: infoLine + '\n' });
+  assert.match(none.notify, /^ping\|report\|ok\|memory=45% disk=41% deployed=abc123def456 errors=0 containers:/);
+  assert.doesNotMatch(none.notify, /\[/);
+
+  const one = [handlerLine('req-1', 'connect ECONNREFUSED secret-host'), errLine('req-1', 500, '/api/workouts'), infoLine].join('\n') + '\n';
+  const failing = reportRun([], { logs: one });
+  assert.match(failing.notify, /^ping\|report\|fail\|.* errors=2 \[req-1 500 \/api\/workouts\] containers:/, 'any error fails with the default limit 0');
+  assert.doesNotMatch(failing.notify, /ECONNREFUSED|secret-host/, 'the message never leaves the server');
+  assert.match(reportRun(['line'], { logs: one }).stdout, / errors=2 \[req-1 500 \/api\/workouts\] containers:/);
+
+  assert.match(reportRun([], { logs: one, env: 'REPORT_ERROR_LIMIT=2\n' }).notify, /^ping\|report\|ok\|.* errors=2 /, 'at the limit is ok');
+  assert.match(reportRun([], { logs: one, env: 'REPORT_ERROR_LIMIT=1\n' }).notify, /^ping\|report\|fail\|/, 'over the limit fails');
+  assert.match(reportRun([], { logs: one, env: 'REPORT_ERROR_LIMIT=abc\n' }).notify, /^ping\|report\|fail\|/, 'a bad limit falls back to 0');
+
+  const many = Array.from({ length: 8 }, (_, i) => errLine('id' + i, 500, '/api/x' + i)).join('\n') + '\n';
+  const capped = reportRun([], { logs: many, env: 'REPORT_ERROR_LIMIT=10\n' });
+  assert.match(capped.notify, / errors=8 \[id0 500 \/api\/x0, id1 500 \/api\/x1, id2 500 \/api\/x2, id3 500 \/api\/x3, id4 500 \/api\/x4\] containers:/);
+  assert.doesNotMatch(capped.notify, /id5/);
+});
+
+test('the report counts the errors saved before a deploy and empties the file', { skip: !has('bash') && 'bash not found' }, () => {
+  const saved = errLine('old-1', 502, '/api/old') + '\n';
+  const r = reportRun([], { saved, logs: errLine('new-1', 500, '/api/new') + '\n' });
+  assert.match(r.notify, /^ping\|report\|fail\|.* errors=2 \[old-1 502 \/api\/old, new-1 500 \/api\/new\] containers:/);
+  assert.equal(r.savedAfter, '', 'the saved lines are counted once');
+  const lineOnly = reportRun(['line'], { saved });
+  assert.match(lineOnly.stdout, / errors=1 /);
+  assert.equal(lineOnly.savedAfter, saved, 'line does not empty the file');
+  assert.equal(reportRun([]).savedAfter, null, 'no file is created when there is none');
+});
+
+test('remote-deploy saves the api error lines before replacing the container and never fails without one', { skip: !has('bash') && 'bash not found' }, () => {
+  const text = rendered['study-log']['deploy/remote-deploy.sh'];
+  const fn = text.match(/^save_api_errors\(\) \{[\s\S]*?^\}$/m)[0];
+  assert.equal((text.match(/^ {4}save_api_errors$/gm) ?? []).length, 1, 'the deploy path saves before up -d');
+  assert.match(text, /load_ssm_env\n {2}save_api_errors\n {2}IMAGE_TAG="\$1" docker compose up -d --wait db/, 'the start path (rollback) saves before up -d');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'save-errors-'));
+  const bin = path.join(dir, 'bin');
+  fs.mkdirSync(bin);
+  const posix = (p) => p.split(path.sep).join('/');
+  const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+  const logsFile = path.join(dir, 'logs.txt');
+  fs.writeFileSync(logsFile, [infoLine, errLine('r1', 500, '/api/a')].join('\n') + '\n');
+  const docker = (running, exit = 0) => fs.writeFileSync(path.join(bin, 'docker'), ['#!/bin/bash', 'case "$1 $2" in', `  "compose ps") ${running ? 'echo id1' : 'true'} ;;`, `  "compose logs") cat '${posix(logsFile)}'; exit ${exit} ;;`, 'esac', ''].join('\n'), { mode: 0o755 });
+  const run = () => spawnSync('bash', ['-c', `set -euo pipefail; export PATH="${pathVar}"; ${fn}\nsave_api_errors; echo done`], { cwd: dir, encoding: 'utf8' });
+  const file = path.join(dir, '.errors-before-deploy.log');
+  try {
+    docker(false);
+    const none = run();
+    assert.equal(none.status, 0, none.stderr);
+    assert.equal(fs.existsSync(file), false, 'no running container, nothing saved');
+    docker(true);
+    assert.equal(run().status, 0);
+    assert.equal(fs.readFileSync(file, 'utf8'), errLine('r1', 500, '/api/a') + '\n', 'only error lines are saved');
+    assert.equal(run().status, 0);
+    assert.equal(fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).length, 2, 'later deploys append');
+    docker(true, 1);
+    const failing = run();
+    assert.equal(failing.status, 0, 'a docker failure does not fail the deploy');
+    assert.match(failing.stdout, /done/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
   }
 });

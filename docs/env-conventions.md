@@ -42,6 +42,16 @@ Use the following tags on the single line right above a key.
 - Values that go into the frontend build (the `VITE_` prefix) must not be secret. They are exposed to the browser as is.
 - When adding a new key, fix `.env.example`, the code that uses it, and the deploy runbook (the server `.env` key list) in the same PR.
 
+## Server-only keys: report thresholds (#636)
+
+These keys are read only by `deploy/report.sh` from the server `.env`. They are not in `.env.example` and are not passed to containers. Each has a default, so none is required.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `REPORT_MEMORY_PERCENT` | `85` | The daily report fails when server memory use is over this percent |
+| `REPORT_DISK_PERCENT` | `90` | The daily report fails when disk use is over this percent |
+| `REPORT_ERROR_LIMIT` | `0` | The daily report fails when the API `"level":"error"` lines of the last 24 hours (plus those saved before a deploy) are more than this number. A value that is not a whole number counts as `0`. See [logging.md](logging.md#daily-error-alert-636) |
+
 ## Committed secret check (#259)
 
 CI runs `secret-scan` every time to check the files being committed for tokens and keys. All repos are public, so a value that was pushed once is treated as already exposed even if it is deleted.
