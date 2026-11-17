@@ -30,7 +30,7 @@ test('GET /api/health answers ok when the database responds', async () => {
   assert.deepEqual(res, { status: 200, body: { status: 'ok' } });
 });
 
-test('GET /api/health reports a Korean error when the database is down', async () => {
+test('GET /api/health reports an English error when the database is down', async () => {
   const res = await get(
     fakePool(async () => {
       throw new Error('connect ECONNREFUSED');
@@ -38,7 +38,7 @@ test('GET /api/health reports a Korean error when the database is down', async (
     '/api/health',
   );
   assert.equal(res.status, 500);
-  assert.deepEqual(res.body, { error: '서버 오류가 발생했습니다' });
+  assert.deepEqual(res.body, { error: 'Server error' });
 });
 
 test('an unknown /api path answers 404 in the shared error shape', async () => {
@@ -46,7 +46,7 @@ test('an unknown /api path answers 404 in the shared error shape', async () => {
     fakePool(async () => ({ rows: [] })),
     '/api/missing',
   );
-  assert.deepEqual(res, { status: 404, body: { error: '요청한 API를 찾을 수 없습니다' } });
+  assert.deepEqual(res, { status: 404, body: { error: 'API not found' } });
 });
 
 test('a malformed JSON body answers 400 in the shared error shape', async () => {
@@ -58,6 +58,6 @@ test('a malformed JSON body answers 400 in the shared error shape', async () => 
   );
   assert.deepEqual(res, {
     status: 400,
-    body: { error: '요청 본문의 JSON 형식이 올바르지 않습니다' },
+    body: { error: 'Request body is not valid JSON' },
   });
 });
