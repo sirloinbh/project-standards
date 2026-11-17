@@ -33,6 +33,10 @@ test('the manifest makes every app installable with its registry name', () => {
     const manifest = JSON.parse(render(project.name)['frontend/public/manifest.webmanifest']);
     assert.equal(manifest.name, project.displayName);
     assert.equal(manifest.short_name, project.title);
+    // A short user-facing sentence, not the internal summary (#594).
+    assert.equal(manifest.description, project.tagline);
+    assert.doesNotMatch(manifest.description, /(me|login|exposure)/i);
+    assert.ok(manifest.description.length <= 120, project.name);
     assert.equal(manifest.display, 'standalone');
     assert.equal(manifest.start_url, '/');
     const sizes = manifest.icons.map((i) => `${i.sizes}:${i.purpose}`);

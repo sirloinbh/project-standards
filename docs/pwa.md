@@ -6,7 +6,7 @@ The default setup that lets the 8 apps be installed on a phone's home screen and
 
 | File (app repo) | Managed by | Content |
 |---|---|---|
-| `frontend/public/manifest.webmanifest` | Central (fully managed) | The name is the registry `displayName` and the short name is `title`. `display: standalone`, start URL `/`, light background color `#ffffff` (ADR-0008). Apps with `features.darkOnly` use the dark background `#0a0a0a` (ADR-0011) |
+| `frontend/public/manifest.webmanifest` | Central (fully managed) | The name is the registry `displayName`, the short name is `title`, and the description is `tagline`, one user-facing sentence (not the internal `summary`, #594). `display: standalone`, start URL `/`, light background color `#ffffff` (ADR-0008). Apps with `features.darkOnly` use the dark background `#0a0a0a` (ADR-0011) |
 | `frontend/public/sw.js` | Central (fully managed) | Service worker. See the cache rules below |
 | `frontend/public/offline.html` | Central (fully managed) | Offline notice screen. Light and dark modes. Apps with `features.darkOnly` are dark regardless of the system setting (ADR-0011, #363) |
 | `frontend/nginx.conf` | Central (fully managed) | Cache headers |

@@ -9,6 +9,7 @@
       "displayName": "FORM · My Workout Log",
       "domain": "운동",
       "summary": "A personal service for logging my own workouts and checking training volume and progressive overload goals by period. There is one user (me) and no login. Before any public exposure, design private access or authentication first.",
+      "tagline": "Log your workouts and track training volume and progressive overload over time.",
       "public": true,
       "repos": {
         "umbrella": "workout-memo",
@@ -66,6 +67,7 @@
       "displayName": "Study Log",
       "domain": "공부",
       "summary": "A personal service for recording what and how long I study and looking back on how my learning goes. There is one user (me) and no login. Before any public exposure, design private access or authentication first.",
+      "tagline": "Record what you study and for how long, and look back on your progress.",
       "public": false,
       "repos": {
         "umbrella": "study-log",
@@ -122,6 +124,7 @@
       "displayName": "Diet, Sleep and Health Log",
       "domain": "건강",
       "summary": "A personal service for recording diet, sleep, and health by date and seeing how they change. There is one user (me) and no login. Before any public exposure, design private access or authentication first.",
+      "tagline": "Record your diet, sleep, and health by date and see how they change.",
       "public": false,
       "repos": {
         "umbrella": "health-log",
@@ -177,6 +180,7 @@
       "displayName": "Reviews & Diary",
       "domain": "일기",
       "summary": "A personal service for recording book and film reviews, a diary, and experiences such as plays and concerts. There is one user (me) and no login. Before any public exposure, design private access or authentication first.",
+      "tagline": "Keep book and film reviews, a diary, and notes on plays and concerts.",
       "public": false,
       "repos": {
         "umbrella": "life-journal",
@@ -232,6 +236,7 @@
       "displayName": "Ledger, Assets, Mock Trading",
       "domain": "재무",
       "summary": "A personal service for recording income, spending, and an asset portfolio to see the flow of money, and for practicing investment decisions with mock trading. There is one user (me) and no login. Before any public exposure, design private access or authentication first.",
+      "tagline": "Track income, spending, and assets, and practice investing with mock trades.",
       "public": false,
       "repos": {
         "umbrella": "money-ledger",
@@ -287,6 +292,7 @@
       "displayName": "Cert Manager",
       "domain": "자격증",
       "summary": "A personal service for managing certifications, exam dates, and study records, and separately for recording and reviewing English study. There is one user (me) and no login. Before any public exposure, design private access or authentication first.",
+      "tagline": "Manage certifications, exam dates, and study records, and review your English study.",
       "public": false,
       "repos": {
         "umbrella": "cert-manager",
@@ -342,6 +348,7 @@
       "displayName": "Plan · Practice · Routine · Feedback",
       "domain": "루틴",
       "summary": "A personal service for making plans, recording practice and routines, and improving them through feedback. There is one user (me) and no login. Before any public exposure, design private access or authentication first.",
+      "tagline": "Make plans, record practice and routines, and improve them with feedback.",
       "public": false,
       "repos": {
         "umbrella": "plan-routine",
@@ -397,6 +404,7 @@
       "displayName": "Dev Career Portfolio",
       "domain": "커리어",
       "summary": "A personal portfolio service for organizing my development career, projects, and technical growth. There is one user (me) and no login. Before any public exposure, design private access or authentication first.",
+      "tagline": "Organize your development career, projects, and technical growth.",
       "public": false,
       "repos": {
         "umbrella": "dev-career-portfolio",
