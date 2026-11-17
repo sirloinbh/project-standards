@@ -14,7 +14,7 @@ Central sync checks that the target repo is `sirloinbh/<repos.umbrella>` (`scrip
 
 1. In the app repo, decide the new name, display name, description, and DB name, and record them in an issue. Make sure the repo name and DB name do not collide with other apps in the registry.
 2. In this repo, open a PR that changes the name values. In the PR body's "Check before merging", write that step 3 is done, and do not merge before step 3 is finished.
-   - `registry/projects.json`: `name`, `title`, `displayName`, `domain`, `summary`, `repos`, `db`, `skills`
+   - `registry/projects.json`: `name`, `title`, `displayName`, `domain`, `summary`, `tagline`, `repos`, `db`, `skills`
    - `sync.config.json`: `repo`, `project`
    - Generated docs (`npm run docs`), the sync snapshot (`UPDATE_SNAPSHOT=1 npm test`)
    - Tests that contain the name and docs that state current values (the `docs/design.md` table, `docs/tools.md`, `docs/github-app.md`, `docs/user-steps.md`, `docs/costs.md`)

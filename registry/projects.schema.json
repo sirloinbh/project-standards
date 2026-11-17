@@ -66,7 +66,7 @@
     },
     "project": {
       "type": "object",
-      "required": ["slot", "status", "name", "title", "displayName", "domain", "summary", "repos", "public", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
+      "required": ["slot", "status", "name", "title", "displayName", "domain", "summary", "tagline", "repos", "public", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
       "additionalProperties": false,
       "properties": {
         "slot": { "type": "integer", "minimum": 1, "maximum": 99, "description": "Never reassigned, even after retirement" },
@@ -76,6 +76,7 @@
         "displayName": { "type": "string", "minLength": 1, "description": "App display name used in the screen header, tab title, and PWA name. Apps are told apart only by this name, so it must not overlap (ADR-0008)" },
         "domain": { "type": "string", "minLength": 1, "description": "Description of the service area (e.g. exercise)" },
         "summary": { "type": "string", "minLength": 10, "description": "Service description used in the first paragraph of AGENTS.md" },
+        "tagline": { "type": "string", "minLength": 10, "description": "One user-facing sentence (at most 120 characters) about what the app does: the PWA manifest description shown in install dialogs and app stores. No internal notes such as users, login, or exposure rules (#594)" },
         "public": { "type": "boolean", "description": "The umbrella repo is public. A public repo cannot call reusable workflows in the private central repo, so the shared CI is expanded inline in ci.yml (#209)" },
         "repos": {
           "type": "object",
