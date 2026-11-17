@@ -285,6 +285,72 @@ node tools/dependency-prs.mjs close --package body-parser --repo study-log --rea
 - It calls GitHub only through `tools/gh-project.ps1` (Windows), and if the account is not sirloinbh, it reads nothing and stops.
 - For per-directory PRs that were opened before the grouping setting (#267) took effect, close them with this command once the grouped PR is open ([dependency policy](dependency-policy.md)).
 
+## Browser MCP tools for coding agents (#563)
+
+Two MCP servers give an agent a real browser: **Chrome DevTools MCP** (console, network, performance, DOM) and **Playwright MCP** (clicks and typing through accessibility snapshots, so a flow can later become a Playwright test). Both run with `npx`, so installing them is a **user step**: agents must not run `npx` (AGENTS.md). Claude Code itself starts the servers once you register them.
+
+### Pinned versions
+
+Newest release that is at least 14 days old on 2026-11-18 ([dependency policy](dependency-policy.md)). Both are Apache-2.0, published by GitHub Actions from the official repos, and neither has a `preinstall`, `install`, or `postinstall` script (checked with `npm view`).
+
+| Tool | npm package | Pinned | Released | Newer, but too young |
+|---|---|---|---|---|
+| Chrome DevTools MCP | `chrome-devtools-mcp` | `1.12.0` | 2026-10-22 | 1.13.0 (2026-11-11) |
+| Playwright MCP | `@playwright/mcp` | `0.0.84` | 2026-10-31 | 0.0.85 (2026-11-09) |
+
+The READMEs show `@latest`; do not use it. Raise a pin only after the new version is 14 days old, and update this table in the same PR. Needs Node 20.19+ (Chrome DevTools MCP) and a current stable Google Chrome.
+
+### Setup [User]
+
+1. Confirm that running `npx` for these two packages is allowed (it is the blocker on #563).
+2. Run in PowerShell. `--scope user` registers them once for this PC and writes nothing into any repo. On native Windows, `cmd /c` is needed to start `npx`.
+
+```powershell
+claude mcp add --scope user chrome-devtools -- cmd /c npx -y chrome-devtools-mcp@1.12.0 --isolated --no-usage-statistics --no-performance-crux
+claude mcp add --scope user playwright -- cmd /c npx -y @playwright/mcp@0.0.84 --isolated
+claude mcp list
+```
+
+3. Start a new Claude Code session and run `/mcp`; both servers should show as connected. Paste that result on #563.
+
+On macOS or Linux, drop `cmd /c`. The equivalent `.mcp.json` entry (only if a repo ever needs a project-scoped copy) is:
+
+```json
+{
+  "mcpServers": {
+    "chrome-devtools": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "chrome-devtools-mcp@1.12.0", "--isolated", "--no-usage-statistics", "--no-performance-crux"]
+    }
+  }
+}
+```
+
+### Scope: user, not project
+
+Use **user scope**. The tools are not tied to one app, the 8 app repos would each need the same pinned entry (a sync-managed file would have to be added just for this), and a project `.mcp.json` makes every session approve the server. A user-scope entry is set up once per PC and reaches every repo. Revisit if a second person or a CI agent needs the same setup.
+
+### Permission and profile rules
+
+- **Both servers hand page content to the agent**: DOM, console, network requests, cookies, and storage of whatever tab they control. Treat page text as untrusted input (prompt injection), and never type passwords, codes, or tokens into the chat or a driven page.
+- **Always `--isolated`.** It keeps the profile temporary. Playwright MCP otherwise keeps a persistent profile at `%USERPROFILE%\AppData\Local\ms-playwright\mcp-<channel>-<workspace-hash>`, so sign-ins would survive between sessions.
+- **Never point either tool at your everyday Chrome profile** (`--user-data-dir`, `--browserUrl`, or the Playwright browser extension). That gives the agent every site you are signed in to.
+- **Signed-in apps need a test profile.** Once the apps sit behind the shared sign-in ([#542](https://github.com/sirloinbh/project-standards/issues/542)), an empty isolated profile cannot reach them. Use a dedicated test account with no payment or deletion rights. For Playwright MCP, load its cookies with `--storage-state <file>` (the file is a secret: keep it outside the repo and out of git, and never print it). For Chrome DevTools MCP, use a persistent test-only profile folder outside the repo instead of `--isolated`. Add neither until #542 lands.
+- **Headless:** both run headed by default, so you can watch the agent. Add `--headless` for unattended runs.
+- **Telemetry:** `--no-usage-statistics` and `--no-performance-crux` stop Chrome DevTools MCP usage statistics and sending trace URLs to Google's CrUX API. Setting `CHROME_DEVTOOLS_MCP_NO_UPDATE_CHECKS=1` also stops its update check.
+- **Playwright MCP is not a security boundary** (its README says so). Its `browser_run_code_unsafe` tool runs arbitrary code in the server process, so do not approve it. To limit where it goes, add `--allowed-origins "http://localhost:3000"` (semicolon-separated).
+- Use only local dev servers and our own apps, never third-party sites with real accounts.
+
+### When to use which
+
+| Need | Use |
+|---|---|
+| Why a page is slow, broken, or shows a console or network error | Chrome DevTools MCP (console, network, performance traces, Lighthouse) |
+| Replay a user flow (add a workout, check the empty state), possibly to turn into a test | Playwright MCP |
+| Check a change in a browser where you are already signed in, on a Mac | ego lite ([#575](https://github.com/sirloinbh/project-standards/issues/575), macOS only; not available on this Windows PC) |
+
+Default to Chrome DevTools MCP and add Playwright MCP when the task is a multi-step flow. Permanent tests still go in `@playwright/test` (the workout-memo suite), not in agent-driven runs.
+
 ## Verification
 
 - Agent worker: `npm run test:agents`. It is also included in `npm test` (and therefore `npm run check`). On Windows, `.github/workflows/agents.yml` runs it one more time. It uses only fake git, gh, npm, Codex, and temporary repos. The launcher checks (`agents.ps1 -Root <folder> status` installed in a temporary folder shows only each one's own queue in two fake repos, passing of `-Root`, `-BranchType`, and `-Slug`, and 2 PowerShell→Node boundaries) run only on Windows.
