@@ -578,15 +578,15 @@ test('the report counts the errors saved before a deploy and empties the file', 
 
 test('the report records its send time and the next window starts there, so a saved line is not counted twice (#644)', { skip: !has('bash') && 'bash not found' }, () => {
   const first = reportRun([]);
-  assert.match(first.logArgs, /--since 24h api/, 'first run without the file uses 24 hours');
+  assert.match(first.logArgs, /--since 24h --until \S+ api/, 'first run without the file uses 24 hours');
   assert.match(first.lastSentAfter ?? '', /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\dZ\n$/, 'the send time is recorded');
   const stamp = '2026-11-17T19:00:00Z';
   const next = reportRun([], { lastSent: stamp + '\n' });
-  assert.match(next.logArgs, /--since 2026-11-17T19:00:00Z api/, 'the window starts at the last send');
+  assert.match(next.logArgs, /--since 2026-11-17T19:00:00Z --until \S+ api/, 'the window starts at the last send');
   assert.notEqual(next.lastSentAfter, stamp + '\n', 'the time moves forward after a send');
-  assert.match(reportRun([], { lastSent: 'garbage' }).logArgs, /--since 24h api/, 'a bad file falls back to 24 hours');
+  assert.match(reportRun([], { lastSent: 'garbage' }).logArgs, /--since 24h --until \S+ api/, 'a bad file falls back to 24 hours');
   const lineOnly = reportRun(['line'], { lastSent: stamp + '\n' });
-  assert.match(lineOnly.logArgs, /--since 2026-11-17T19:00:00Z api/, 'line uses the same window');
+  assert.match(lineOnly.logArgs, /--since 2026-11-17T19:00:00Z --until \S+ api/, 'line uses the same window');
   assert.equal(lineOnly.lastSentAfter, stamp + '\n', 'line does not record a send');
 });
 

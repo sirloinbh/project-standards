@@ -43,7 +43,7 @@ fi
 started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 error_lines() {
-  { cat .errors-before-deploy.log 2> /dev/null || true; docker compose logs --no-log-prefix --since "$since" api 2> /dev/null || true; } |
+  { cat .errors-before-deploy.log 2> /dev/null || true; docker compose logs --no-log-prefix --since "$since" --until "$started" api 2> /dev/null || true; } |
     { grep -F '"level":"error"' || true; }
 }
 # "<requestId> <status> <path>" for the first 5 request IDs; "-" for a field a line does not have.
