@@ -26,6 +26,8 @@ These are the shadcn/ui base components all 8 apps use in the same form (#123, [
 | `dropdown-menu.tsx` | `DropdownMenu`, `DropdownMenuTrigger`, `DropdownMenuContent`, `DropdownMenuItem`, `DropdownMenuCheckboxItem`, `DropdownMenuRadioGroup`, `DropdownMenuRadioItem`, `DropdownMenuLabel`, `DropdownMenuSeparator`, `DropdownMenuGroup` | Button menu |
 | `../lib/utils.ts` | `cn` | Merges class names (shadcn/ui convention) |
 
+Why this is distributed by sync and not by a shadcn registry: [ADR-0020](adr/0020-shared-ui-stays-on-sync.md).
+
 A `*.test.tsx` (Vitest, Testing Library) for each component is synced along with it and runs in the app's `npm test`.
 
 ## Loading screens
