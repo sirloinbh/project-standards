@@ -32,7 +32,7 @@ Answering questions, giving recommendations, and read-only investigation do not 
 
 ## Verification commands
 
-This works with Node built-in modules only, with no external npm packages. Do not run `npm install`.
+This works with Node built-in modules only, with no external npm packages. Do not run `npm install` in this repo (it has no dependencies); in app repos agents may run `npm install --ignore-scripts` (#629).
 
 | Command | When |
 |---|---|
@@ -53,7 +53,7 @@ These live in `.claude/rules/`. Claude Code loads each one when it works on matc
 
 - Do not make remote changes with the default `gh` (the work account). Use the wrapper in "Accounts and security" below.
 - Do not push directly to downstream repos. Follow each repo's issue and PR procedure for downstream changes.
-- Do not install or remove npm packages or run `npx`. The only exception is when the user explicitly reconfirms; the conditions are in [docs/dependency-policy.md](docs/dependency-policy.md) and [docs/agent-guardrails.md](docs/agent-guardrails.md).
+- Do not remove or update npm packages or run `npx`. Adding a package with `npm install --ignore-scripts --save-exact` is allowed in app repos since #629 (user decision 2026-11-18), following the dependency policy; for anything else the exception is when the user explicitly reconfirms; the conditions are in [docs/dependency-policy.md](docs/dependency-policy.md) and [docs/agent-guardrails.md](docs/agent-guardrails.md).
 - Do not commit `.env` values, tokens, GitHub App private keys, Terraform state, or backups, and do not record them in docs, PRs, or logs.
 - Do not raise `maxRollout`, push package tags, or do user steps on the user's behalf.
 - Do not overwrite user changes. Stage only the files you need, by name.

@@ -11,11 +11,11 @@ const read = (file) => fs.readFileSync(path.join(root, file), 'utf8').replace(/\
 const TEMPLATE = 'templates/common/.claude/settings.json.tmpl';
 const RULES = 'templates/common/.codex/rules/package-installs.rules';
 const GIT_RULES = 'templates/common/.codex/rules/git-branch.rules';
-const REQUIRED = ['npm install', 'npm i', 'npm in', 'npm ins', 'npm inst', 'npm insta', 'npm instal', 'npm isnt', 'npm isnta', 'npm isntal', 'npm isntall', 'npm udpate', 'npm link', 'npm ln', 'npm add', 'npm update', 'npm uninstall', 'npm remove', 'npm rm', 'npm exec', 'npx', 'pnpm', 'yarn', 'bun', 'corepack',
+const REQUIRED = ['npm udpate', 'npm link', 'npm ln', 'npm update', 'npm uninstall', 'npm remove', 'npm rm', 'npm exec', 'npx', 'pnpm', 'yarn', 'bun', 'corepack',
   // npm 11 aliases added in #178 (lib/utils/cmd-list.js).
   'npm u', 'npm clean-install-test', 'npm sit', 'npm rb', 'npm ddp', 'npm unlink', 'npm innit'];
 // npm commands that install, remove, or run packages, as the hook resolves them (`audit` only with `fix`).
-const NPM_BLOCKED = new Set(['install', 'install-test', 'install-ci-test', 'update', 'uninstall', 'exec', 'init', 'rebuild', 'dedupe', 'link']);
+const NPM_BLOCKED = new Set(['install-test', 'install-ci-test', 'update', 'uninstall', 'exec', 'init', 'rebuild', 'dedupe', 'link']);
 // Every prefix of a word, each `-x` also written as camelCase `X`: the forms npm resolves (#178).
 const prefixForms = (word) => {
   const camel = (w) => {
