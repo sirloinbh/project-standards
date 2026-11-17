@@ -8,6 +8,8 @@ All 8 apps use the same screen skeleton and menu (#124). The only things that di
 |---|---|
 | `frontend/src/components/layout/app-shell.tsx` | `AppShell`: top bar, main menu (LNB), body (`<main id="main">`), footer, skip-to-content link |
 | `frontend/src/components/layout/theme-toggle.tsx` | Display mode menu (system setting, light, dark). `AppShell` does not render it in `darkOnly` apps |
+| `frontend/src/components/layout/app-switcher.tsx` | `AppSwitcher`: top bar menu that opens each of the 8 apps (#561). Hidden when the list has fewer than two apps |
+| `frontend/src/lib/apps.ts` | The app list (`APPS`) and this app's name (`CURRENT_APP`), rendered at sync time from `registry/projects.json` and the root domain in `registry/platform.json` |
 | `frontend/src/lib/theme.ts` | Read, apply, and save the mode (`theme` in `localStorage`). In `darkOnly` apps, reading always returns `dark` |
 | `frontend/src/lib/theme-config.ts` | The `DARK_ONLY` value rendered from the registry's `features.darkOnly` ([ADR-0011](adr/0011-dark-only-option.md)) |
 | `frontend/public/theme-init.js` | A script that applies the saved mode before the first paint. `darkOnly` apps apply `dark` regardless of the saved value |
@@ -25,7 +27,7 @@ All 8 apps use the same screen skeleton and menu (#124). The only things that di
 
 - **No bottom tabs.** The number of menu items differs per app, so they cannot be unified into bottom tabs (usually 3–5), while the Sheet menu works the same way regardless of the count. Frequently used actions are placed as buttons inside the page.
 - **Notch safe area:** The top bar is offset by `env(safe-area-inset-top)`, the left and right by `safe-area-inset-left/right`, and the footer and Sheet/Drawer by `safe-area-inset-bottom` only. This takes effect only when `viewport-fit=cover` is in `index.html`.
-- The top bar holds only the app name (a link to the home screen), app-specific actions (`actions`), and the display mode menu. Each page writes its own page title (`h1`).
+- The top bar holds only the app name (a link to the home screen), app-specific actions (`actions`), the app switcher, and the display mode menu. The switcher is a dropdown of links (`https://<subdomain>.<rootDomain>/`) that marks the current app; the sign-in account and sign-out stay in `actions` (`AccountActions`), so there is no separate user menu yet. Each page writes its own page title (`h1`).
 
 ## What was decided and why
 
