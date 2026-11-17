@@ -2,7 +2,7 @@
 
 ## Change
 
-- `docs/adr/0018-job-runner-pg-boss.md`: proposed ADR. Apps use `pg-boss` in their own Postgres, run inside the existing api process (no worker container by default), with rules for idempotency, retries, schedules, payloads, and logs, a small status page, a shared package, and money-ledger as the pilot.
+- `docs/adr/0018-job-runner-pg-boss.md`: ADR (accepted 2026-11-18). Apps use `pg-boss` in their own Postgres, run inside the existing api process (no worker container by default), with rules for idempotency, retries, schedules, payloads, and logs, a small status page, a shared package, and money-ledger as the pilot.
 
 ## Reason
 
@@ -17,4 +17,4 @@
 
 ## Follow-up
 
-- Waiting for the user's decision. After acceptance: set the ADR status, update #556 to match (in-process by default instead of a `worker` service per app), and close #555.
+- Accepted by the user on 2026-11-18. Next: update #556 to match (in-process by default instead of a `worker` service per app), and close #555.

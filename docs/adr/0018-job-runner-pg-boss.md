@@ -1,6 +1,6 @@
 # 0018. App background jobs: pg-boss in each app's own Postgres, run inside the api process
 
-- Status: Proposed (issue #555; waiting for the user's decision)
+- Status: Accepted (issue #555; user decision, 2026-11-18)
 - Date: 2026-11-17
 - Builds on: [ADR-0009](0009-multi-app-single-lightsail.md) (one Lightsail server, one compose project per app with its own Postgres, server work as systemd timers), [ADR-0017](0017-ai-service-mcp-and-shell.md) (`shared-ai` adds one more service to the same server)
 
@@ -50,7 +50,7 @@ Notes on the dropped options:
 - **Hatchet**: a good fit for many workers and heavy fan-out, but it adds a shared engine and its own database for a load of a few hundred jobs a day, and every app would depend on it being up.
 - **Graphile Worker**: as small as pg-boss and faster to pick up jobs, but it has no free status view and fewer duplicate-protection policies. It is the fallback if pg-boss stops being maintained.
 
-## Decision (proposed)
+## Decision
 
 ### Runner
 
