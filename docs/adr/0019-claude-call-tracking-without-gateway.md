@@ -1,6 +1,6 @@
 # 0019. Track Claude calls inside shared-ai and the Console; no LLM gateway or tracing service for now
 
-- Status: Proposed (issue #560; waiting for the user's decision)
+- Status: Accepted (issue #560; user decision, 2026-11-18)
 - Date: 2026-11-17
 - Builds on: [ADR-0010](0010-claude-api-key-ssm.md) and [ADR-0014](0014-app-secrets-ssm-paths.md) (one Claude key in SSM, path rules), [ADR-0017](0017-ai-service-mcp-and-shell.md) (`shared-ai` makes the AI shell's Claude calls and records tokens per conversation)
 
@@ -40,7 +40,7 @@
 
 (C) and (D) do not fit on the server. (E) works on paper, but it sends personal data to another company for features (prompt versions, evaluations) that two callers do not need yet. (A) alone cannot answer "which conversation or tool loop spent the tokens", and ADR-0017 already asks `shared-ai` to keep that record.
 
-## Decision (proposed)
+## Decision
 
 (B): no LLM gateway and no tracing service now. Each caller records its own calls, and the Console stays the source of truth for cost and the spending limit.
 

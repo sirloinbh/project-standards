@@ -2,7 +2,7 @@
 
 ## Change
 
-- `docs/adr/0019-claude-call-tracking-without-gateway.md`: proposed ADR. No LLM gateway (LiteLLM) and no tracing service (Langfuse) for now. `shared-ai` records one `ai_usage` row per Claude request (tokens, model, latency, tool calls; no text) and stops at a monthly token limit; study-log logs `usage` per call; `shared-ai` gets its own key at `/sirloinbh/shared-ai/anthropic-api-key` so the Console splits usage by key. Lists the triggers for deciding again.
+- `docs/adr/0019-claude-call-tracking-without-gateway.md`: ADR (accepted 2026-11-18). No LLM gateway (LiteLLM) and no tracing service (Langfuse) for now. `shared-ai` records one `ai_usage` row per Claude request (tokens, model, latency, tool calls; no text) and stops at a monthly token limit; study-log logs `usage` per call; `shared-ai` gets its own key at `/sirloinbh/shared-ai/anthropic-api-key` so the Console splits usage by key. Lists the triggers for deciding again.
 
 ## Reason
 
@@ -15,4 +15,4 @@
 
 ## Follow-up
 
-- Waiting for the user's decision on the PR. If accepted: add the `ai_usage` table, budget guard, and key path to #611 and #612, and open a study-log issue for the usage log line.
+- Accepted by the user on 2026-11-18. Next: add the `ai_usage` table, budget guard, and key path to #611 and #612, and open a study-log issue for the usage log line.
