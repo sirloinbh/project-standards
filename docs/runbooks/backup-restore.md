@@ -8,6 +8,7 @@
 | DB dump | Daily 03:30 (`{{project.db.name}}-backup.timer`) | Server `/var/backups/{{project.db.name}}/{{project.db.name}}-<date>.sql.gz` and a row-count file `.counts` | 14 days |
 | Pre-deploy DB dump | Every deploy | Same folder, name ends in `-predeploy` | 14 days |
 | Off-server copy | Every dump | S3 `s3://<bucket>/{{project.name}}/` (when the server `.env` has a bucket) | 30 days (bucket lifecycle) |
+| `audit_log` rows ([audit-log.md](../audit-log.md)) | Deleted by the daily DB dump, after the dump | App DB | 365 days in the DB, then 14 more in the dumps |
 | Restore check | Every Sunday 04:30 (`{{project.db.name}}-restore-check.timer`) | Restores the latest dump into a temporary DB and compares row counts | Log only |
 | Local DB backup | When needed | PC `backups/` (excluded from git) | Managed by the user |
 
