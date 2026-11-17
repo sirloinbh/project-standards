@@ -36,3 +36,4 @@
 ## Follow-up
 
 - money-ledger pilot (this issue's last task): after the sync PR brings `jobs.ts`, an app PR installs pg-boss and replaces `backend/src/prices/scheduler.ts`.
+- Pilot done in sirloinbh/money-ledger#172 (issue money-ledger#171): queue `daily-prices` (`singleton`, `0 12-18 * * *`) replaces the timer and advisory lock. Two lessons went into `docs/jobs.md`: a `createApp` factory with a `/api` catch-all takes the status handler as an option, and a catch-up job is sent without a key so it shares the schedule's singleton slot.

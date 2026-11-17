@@ -42,6 +42,14 @@ process.on('SIGTERM', () => {
 });
 ```
 
+If the app builds Express in a factory (`createApp(pool, options)`) that adds the sign-in and a `/api` catch-all, a route added in `server.ts` afterwards is never reached. Pass the handler in as an option instead and mount it in the factory right after `app.use('/api', auth)` (money-ledger: `createApp(pool, { auth, jobsStatus: jobsStatus(jobs.boss) })`).
+
+To catch up on a run missed while the server was off, send one job right after `startJobs` **without a key**, and let the handler skip it when nothing is due. On a `singleton` queue the key decides what counts as "the same" run: the cron's jobs have no key, so a keyed catch-up job could run beside a scheduled one.
+
+```ts
+await jobs.send('daily-prices', {}); // no key: shares the schedule's singleton slot
+```
+
 Queue a job from a route with an idempotency key and the request ID, so the job's log lines join the request's. A `key` only works on a queue whose policy enforces it (below); `send-receipt` here has `policy: 'exclusive'`:
 
 ```ts
