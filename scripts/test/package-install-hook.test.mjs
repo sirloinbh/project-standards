@@ -12,19 +12,14 @@ const HOOK = 'templates/common/.claude/hooks/block-package-installs.mjs';
 const read = (file) => fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 
 const BLOCKED = {
+  // #629: an install may not turn install scripts on either.
+  'npm install --no-ignore-scripts x': 'npm ci with install scripts',
+  'npm i x --ignore-scripts=false': 'npm ci with install scripts',
+  'npm_config_ignore_scripts=false npm install x': 'npm ci with install scripts',
   // The cases the prefix deny rules miss (#162 completion criteria).
-  'npm --silent install': 'npm install',
-  'npm --silent install --help': 'npm install',
-  'sh -c "npm i x"': 'npm install',
   "bash -lc 'npm ci --ignore-scripts=false'": 'npm ci with install scripts',
-  '"C:\\Program Files\\nodejs\\npm.cmd" install': 'npm install',
   '& "C:\\Program Files\\nodejs\\npm.cmd" ci --no-ignore-scripts': 'npm ci with install scripts',
-  'C:\\nodejs\\NPM.CMD i react': 'npm install',
-  '/c/Program\\ Files/Volta/npm install': 'npm install',
   // Options with values, aliases and abbreviations npm accepts.
-  'npm --prefix frontend install': 'npm install',
-  'npm -w app install': 'npm install',
-  'npm --loglevel=silent add react': 'npm install',
   'npm u': 'npm update',
   'npm upd': 'npm update',
   'npm ic --ignore-scripts false': 'npm ci with install scripts',
@@ -50,19 +45,12 @@ const BLOCKED = {
   '${env:npm_config_ignore_scripts}="false"; npm ci': 'npm ci with install scripts',
   'npm ci --NO-ignore-scripts': 'npm ci with install scripts',
   'npm ci ---ignore-scripts=false': 'npm ci with install scripts',
-  'env FOO-BAR=1 npm i': 'npm install',
-  'npm ci && npm i x': 'npm install',
   'sh -c "npm ci; npm rebuild"': 'npm rebuild',
   // `--` before the command only ends the options (#381).
-  'npm -- install': 'npm install',
-  'npm -- i x': 'npm install',
-  'npm --silent -- add react': 'npm install',
   'npm --prefix frontend -- uninstall x': 'npm uninstall',
   'npm -- exec foo': 'npm exec',
   'npm -- audit fix': 'npm audit fix',
   'npm -- ci --ignore-scripts=false': 'npm ci with install scripts',
-  'node npm-cli.js -- install': 'npm install',
-  'sh -c "npm -- install"': 'npm install',
   'npm ci --allow-scripts=esbuild': 'npm ci with install scripts',
   'npm --no-ignore-scripts ci': 'npm ci with install scripts',
   'npm ci --dangerously-allow-all-scripts': 'npm ci with install scripts',
@@ -74,33 +62,52 @@ const BLOCKED = {
   'npm create vite': 'npm init',
   'npm audit fix': 'npm audit fix',
   // Chains, wrappers and nested shells.
-  'npm run check && npm i x': 'npm install',
-  'echo $(npm i x)': 'npm install',
   'FOO=1 timeout 5 npx --version': 'npx',
-  'env -i PATH=/bin npm i': 'npm install',
-  'env -S "npm i"': 'npm install',
-  'sudo -u root npm install -g x': 'npm install',
   'nohup yarn &': 'yarn',
   'echo install | xargs npm': 'xargs npm',
-  'cmd /c "npm.cmd install"': 'npm install',
-  'pwsh -NoProfile -ExecutionPolicy Bypass -Command "npm i"': 'npm install',
-  'powershell.exe -c npm i': 'npm install',
-  [`pwsh -EncodedCommand ${Buffer.from('npm install', 'utf16le').toString('base64')}`]: 'npm install',
-  'Invoke-Expression "npm i x"': 'npm install',
-  "iex 'npm i'": 'npm install',
-  'eval "npm i"': 'npm install',
-  'Start-Process npm -ArgumentList "install","x" -Wait': 'npm install',
   'Start-Process -FilePath npm.cmd -ArgumentList "update"': 'npm update',
-  'Get-ChildItem | ForEach-Object { npm i $_.Name }': 'npm install',
-  'node C:/nodejs/node_modules/npm/bin/npm-cli.js i': 'npm install',
-  'volta run npm install': 'npm install',
   'pnpm add x': 'pnpm',
   'bunx x': 'bunx',
   'corepack enable': 'corepack',
-  'cd frontend\nnpm i': 'npm install',
 };
 
 const ALLOWED = [
+  // #629: `npm install` and its aliases are allowed like `npm ci` (install scripts stay off). These used to be blocked.
+  'npm --silent install',
+  'npm --silent install --help',
+  'sh -c "npm i x"',
+  '"C:\\Program Files\\nodejs\\npm.cmd" install',
+  'C:\\nodejs\\NPM.CMD i react',
+  '/c/Program\\ Files/Volta/npm install',
+  'npm --prefix frontend install',
+  'npm -w app install',
+  'npm --loglevel=silent add react',
+  'env FOO-BAR=1 npm i',
+  'npm ci && npm i x',
+  'npm -- install',
+  'npm -- i x',
+  'npm --silent -- add react',
+  'node npm-cli.js -- install',
+  'sh -c "npm -- install"',
+  'npm run check && npm i x',
+  'echo $(npm i x)',
+  'env -i PATH=/bin npm i',
+  'env -S "npm i"',
+  'sudo -u root npm install -g x',
+  'cmd /c "npm.cmd install"',
+  'pwsh -NoProfile -ExecutionPolicy Bypass -Command "npm i"',
+  'powershell.exe -c npm i',
+  `pwsh -EncodedCommand ${Buffer.from('npm install', 'utf16le').toString('base64')}`,
+  'Invoke-Expression "npm i x"',
+  "iex 'npm i'",
+  'eval "npm i"',
+  'Start-Process npm -ArgumentList "install","x" -Wait',
+  'Get-ChildItem | ForEach-Object { npm i $_.Name }',
+  'node C:/nodejs/node_modules/npm/bin/npm-cli.js i',
+  'volta run npm install',
+  'cd frontend\nnpm i',
+  'npm install --ignore-scripts --save-exact -D x@1.0.0',
+  'npm install --package-lock-only',
   // #375: installs exactly what the lockfile pins, with install scripts off.
   'npm ci',
   'npm ci --ignore-scripts',
@@ -176,10 +183,11 @@ test('read-only npm commands and text that only mentions installs are allowed', 
 test('the hook blocks with exit code 2 and lets other commands run', () => {
   const run = (input) => spawnSync(process.execPath, [path.join(root, HOOK)], { input, encoding: 'utf8' });
   const event = (tool_name, command) => JSON.stringify({ hook_event_name: 'PreToolUse', tool_name, tool_input: { command } });
-  const blocked = run(event('Bash', 'npm --silent install'));
+  const blocked = run(event('Bash', 'npm --silent update'));
   assert.equal(blocked.status, 2);
-  assert.match(blocked.stderr, /npm install/);
-  assert.equal(run(event('PowerShell', 'sh -c "npm i x"')).status, 2);
+  assert.match(blocked.stderr, /npm update/);
+  assert.equal(run(event('PowerShell', 'sh -c "npm up x"')).status, 2);
+  assert.equal(run(event('Bash', 'npm --silent install x --ignore-scripts')).status, 0, '#629: install is allowed');
   assert.equal(run(event('Bash', 'npm run check')).status, 0);
   assert.equal(run(event('PowerShell', 'npm ls')).status, 0);
   assert.equal(run(JSON.stringify({ tool_name: 'Read', tool_input: { file_path: 'x' } })).status, 0);
@@ -230,9 +238,9 @@ test('the Codex hook command blocks installs from the repository root and from a
       : spawnSync(process.env.SHELL || '/bin/sh', ['-lc', command], { cwd, env, input, encoding: 'utf8' });
   };
   for (const cwd of [root, path.join(root, 'scripts', 'test')]) {
-    const blocked = run(cwd, 'npm --silent install');
+    const blocked = run(cwd, 'npm --silent update');
     assert.equal(blocked.status, 2, blocked.stderr);
-    assert.match(blocked.stderr, /npm install/);
+    assert.match(blocked.stderr, /npm update/);
     assert.equal(run(cwd, '& "C:\\Program Files\\nodejs\\npm.cmd" update').status, 2);
     assert.equal(run(cwd, 'npm ci').status, 0);
     const allowed = run(cwd, 'npm ls');
@@ -248,7 +256,7 @@ test('both guard hooks still block when started through a junction or symlink (#
     fs.symlinkSync(path.join(root, 'templates/common/.claude/hooks'), link, process.platform === 'win32' ? 'junction' : 'dir');
     const run = (file, command) =>
       spawnSync(process.execPath, [path.join(link, file)], { input: JSON.stringify({ tool_name: 'Bash', tool_input: { command } }), encoding: 'utf8' });
-    const install = run('block-package-installs.mjs', 'npm install left-pad');
+    const install = run('block-package-installs.mjs', 'npm update left-pad');
     assert.equal(install.status, 2, install.stderr);
     const push = run('block-forbidden-commands.mjs', 'git push --force origin main');
     assert.equal(push.status, 2, push.stderr);

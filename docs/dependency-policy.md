@@ -21,7 +21,7 @@ Why each shared dependency's major version was chosen: tailwindcss 4, lucide-rea
 
 - Write every dependency in `package.json` as an exact version (no `^` or `~`). `save-exact=true` in `.npmrc` makes new installs do this. Existing range versions are pinned to the installed version at the first sync (#63).
 - Always install with `--ignore-scripts`. `ignore-scripts=true` in `.npmrc` enforces this.
-- Agents (Claude Code, Codex) can run only `npm ci`, which installs exactly what the lockfile says, and other install commands are blocked by settings ([Blocking package installs by agents](agent-guardrails.md), #375). Approved installs that add a new package or change a version are run by the user directly.
+- Agents (Claude Code, Codex) can run `npm ci` (#375) and `npm install --ignore-scripts --save-exact` (#629, user decision 2026-11-18). Update, uninstall, exec, and npx are blocked by settings ([Blocking package installs by agents](agent-guardrails.md)). The procedure below still applies to every new package: the agent runs the checks itself and records them, and the user approval step is replaced by the issue record unless the issue marks it as user confirmation.
 
 ## Procedure for bringing in a new external package or tool
 
@@ -33,8 +33,8 @@ Why each shared dependency's major version was chosen: tailwindcss 4, lucide-rea
    - No install scripts (`preinstall`, `install`, `postinstall`, `prepare`), or if there are, the reason is confirmed
    - Publisher and repository match the official project
 4. If needed, pre-verify with socket.dev, Snyk Advisor, or deps.dev.
-5. Leave the investigation result in the issue as a table and get **user approval**. Do not run `npm install`, `npx`, or `pnpm/yarn/bun install` without approval.
-6. Install with `npm install --ignore-scripts <package>@<version>` and write the lockfile changes and the `ioc-scan` result in the PR.
+5. Leave the investigation result in the issue as a table. A package outside what the user already approved needs **user approval** (a comment on the issue). Never run `npx` or `pnpm/yarn/bun install`.
+6. Install with `npm install --ignore-scripts --save-exact <package>@<version>` and write the lockfile changes and the `ioc-scan` result in the PR.
 7. In an app repo, align the `frontend/` and `backend/` lockfiles to the root lockfile with `npm run lockfiles:sync` (see [Sub-lockfiles](#sub-lockfiles-frontend-backend) below).
 
 Exception: own packages (`@sirloinbh/*`) are verified by provenance checks instead of the 14-day rule ([ADR-0004](adr/0004-own-packages-provenance-instead-of-14-days.md)). External peerDependencies of own packages follow the procedure above as is.

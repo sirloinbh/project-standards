@@ -1,6 +1,6 @@
 # Blocking package installs by agents
 
-Because of npm supply-chain attacks (the Shai-Hulud family), agents do not install, remove, or run packages, except for `npm ci` (#375), which installs exactly what the lockfile says ([dependency policy](dependency-policy.md)). This rule is enforced by tool settings, not only by a sentence in AGENTS.md (#16, #162, #178, #180). The files below are synced to the 9 repos as centrally managed files, and the central repo has the same files.
+Because of npm supply-chain attacks (the Shai-Hulud family), agents do not remove, update, or run packages (`npx`, `npm exec`), except for `npm ci` (#375), which installs exactly what the lockfile says, and `npm install` (#629, user decision 2026-11-18), which adds a package or changes a version with install scripts off ([dependency policy](dependency-policy.md)). This rule is enforced by tool settings, not only by a sentence in AGENTS.md (#16, #162, #178, #180). The files below are synced to the 9 repos as centrally managed files, and the central repo has the same files.
 
 | Tool | File | Behavior |
 |---|---|---|
@@ -133,7 +133,7 @@ Claude Code reads `CLAUDE.md` at session start, but it does not follow markdown 
 - If npm changes a command or alias, fix together the hook's `NPM_COMMANDS` and `NPM_ALIASES`, the deny list, and the two lists in the Codex rules (aliases, and abbreviations and camelCase). `scripts/test/agent-guardrails.test.mjs` reports missing abbreviation and camelCase forms.
 - If you change which commands the hook blocks or allows, add examples to the lists in `scripts/test/package-install-hook.test.mjs`.
 - Claude Code settings needed only by one repo go in `.claude/settings.local.json` (not committed). `.claude/settings.json` and `.claude/hooks/` are centrally managed files, so editing them makes standards-check fail.
-- Installs that add a new package or change a version need user approval, and the user runs `npm install --ignore-scripts <package>@<version>` directly in a terminal.
+- Installs that add a new package or change a version follow [dependency-policy.md](dependency-policy.md) (issue, exact version, 14 days, no install scripts, record in the PR). Since #629 the agent runs `npm install --ignore-scripts --save-exact <package>@<version>` itself; the hook, deny list, and Codex rules no longer block the `install` family (`install`, `i`, `add`, and the typo aliases). An install that turns install scripts on is still blocked. `update`, `uninstall`, `exec`, `init`, `rebuild`, `dedupe`, `link`, `npx`, and the other runners stay blocked.
 
 ## Sources
 
