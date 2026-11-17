@@ -4,7 +4,7 @@
 $ErrorActionPreference = 'Stop'
 $repos = @{ frontend='{{project.repos.frontend}}'; backend='{{project.repos.backend}}'; database='{{project.repos.db}}' }
 foreach ($part in $repos.Keys) {
-    & git remote get-url $part 2>$null | Out-Null
+    & git remote get-url $part | Out-Null
     if ($LASTEXITCODE -ne 0) {
         throw "Remote '$part' is missing. Add it with: git remote add $part https://github.com/sirloinbh/$($repos[$part]).git"
     }
@@ -18,6 +18,6 @@ foreach ($part in $repos.Keys) {
         if ($LASTEXITCODE -ne 0) { throw "Push failed: $part" }
     }
     finally {
-        & git branch --delete --force $branch 2>$null | Out-Null
+        & git branch --delete --force $branch | Out-Null
     }
 }
