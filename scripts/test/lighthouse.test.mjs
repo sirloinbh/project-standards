@@ -21,9 +21,10 @@ test('lighthouserc measures the built frontend and every assertion is a warning'
   assert.equal(ci.upload.target, 'filesystem');
 });
 
-test('only workout-memo turns the trial on, and the feature maps to the template folder', () => {
+// #568: apps join this list when @lhci/cli is installed in them and their sync PR is ready.
+test('only apps with @lhci/cli installed turn it on, and the feature maps to the template folder', () => {
   const { projects } = JSON.parse(read('registry/projects.json'));
-  assert.deepEqual(projects.filter((p) => p.features.lighthouse).map((p) => p.name), ['workout-memo']);
+  assert.deepEqual(projects.filter((p) => p.features.lighthouse).map((p) => p.name), ['workout-memo', 'study-log']);
   const sync = JSON.parse(read('sync.config.json'));
   assert.equal(sync.profiles.app.featureTemplates.lighthouse, 'lighthouse');
 });

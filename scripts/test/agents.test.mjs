@@ -107,7 +107,9 @@ test('CI callers pin the central workflow to the synced commit and pass registry
   const ci = (project) => apps.find((r) => r.target.project === project).files['.github/workflows/ci.yml'].content;
   assert.match(ci('workout-memo'), /uses: sirloinbh\/project-standards\/\.github\/workflows\/reusable-app-ci\.yml@abcdef1234567\n/);
   assert.match(ci('workout-memo'), /db-name: 'workout_test'\n {6}e2e: true\n/);
-  assert.match(ci('study-log'), /db-name: 'study_test'\n {6}e2e: false\n/);
+  // The e2e flag follows the registry (#569 turns it on app by app), so this checks the value is passed through.
+  const studyE2e = data.projects.projects.find((p) => p.name === 'study-log').features.e2e;
+  assert.match(ci('study-log'), new RegExp(`db-name: 'study_test'\n {6}e2e: ${studyE2e}\n`));
   assert.match(ci('study-log'), /postgres-image: 'postgres:17-alpine'/);
   const infra = rendered.find((r) => r.target.profile === 'infra').files['.github/workflows/ci.yml'].content;
   assert.match(infra, /reusable-infra-ci\.yml@abcdef1234567\n/);
