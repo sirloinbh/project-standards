@@ -1,0 +1,185 @@
+// Tests the managed backend file templates/app/backend/src/standard/tools.ts (#559): the signed call token, the scope
+// check, the audit row of every call, and the transaction of a write tool. Node strips the types; a resolve hook maps
+// the template's `./audit.js` import to audit.ts, as tsc's output would.
+import assert from 'node:assert/strict';
+import { generateKeyPairSync, sign } from 'node:crypto';
+import { registerHooks } from 'node:module';
+import test from 'node:test';
+
+registerHooks({
+  resolve(specifier, context, next) {
+    if (specifier.startsWith('./') && specifier.endsWith('.js') && context.parentURL?.includes('/templates/app/backend/src/')) {
+      return next(specifier.replace(/\.js$/, '.ts'), context);
+    }
+    return next(specifier, context);
+  },
+});
+const { defineTool, describeTool, MAX_TOKEN_SECONDS, registerToolRoutes, verifyCallToken } = await import(
+  '../../templates/app/backend/src/standard/tools.ts'
+);
+
+const { publicKey, privateKey } = generateKeyPairSync('ed25519');
+const publicPem = publicKey.export({ type: 'spki', format: 'pem' });
+const other = generateKeyPairSync('ed25519').privateKey;
+
+const b64 = (value) => Buffer.from(JSON.stringify(value)).toString('base64url');
+function token(claims = {}, { key = privateKey, alg = 'EdDSA' } = {}) {
+  const now = Math.floor(Date.now() / 1000);
+  const body = `${b64({ alg, typ: 'JWT' })}.${b64({ iss: 'shared-ai', aud: 'demo', sub: 'owner-1', client: 'ai-shell', scope: 'demo:read demo:write', iat: now, exp: now + 60, ...claims })}`;
+  return `${body}.${sign(null, Buffer.from(body), key).toString('base64url')}`;
+}
+
+// A Standard Schema like Zod 4's, without Zod.
+const schema = (check) => ({
+  '~standard': {
+    validate: (value) => (check(value) ? { value } : { issues: [{ message: 'Enter a title' }] }),
+    jsonSchema: { input: () => ({ type: 'object', properties: { title: { type: 'string' } } }) },
+  },
+});
+
+function fakePool() {
+  const log = [];
+  const client = {
+    query: async (text, values) => {
+      log.push({ on: 'client', text, values });
+      if (/INSERT INTO items/.test(text) && values[0] === 'boom') throw new Error('insert failed');
+      return { rows: [{ id: 9 }] };
+    },
+    release: () => log.push({ on: 'client', text: 'release' }),
+  };
+  return {
+    log,
+    query: async (text, values) => {
+      log.push({ on: 'pool', text, values });
+      return { rows: [{ id: 1, title: 'a' }] };
+    },
+    connect: async () => client,
+  };
+}
+
+const tools = [
+  defineTool({
+    name: 'list_items',
+    description: 'List items',
+    input: schema(() => true),
+    access: 'read',
+    action: 'read',
+    entity: 'item',
+    run: async (_input, { db }) => ({ result: (await db.query('SELECT * FROM items')).rows }),
+  }),
+  defineTool({
+    name: 'add_item',
+    description: 'Add an item',
+    input: schema((v) => typeof v?.title === 'string'),
+    access: 'write',
+    action: 'create',
+    entity: 'item',
+    run: async (input, { db }) => {
+      const { rows } = await db.query('INSERT INTO items(title) VALUES($1) RETURNING id', [input.title]);
+      return { result: { id: rows[0].id }, entityId: rows[0].id, after: { title: input.title } };
+    },
+  }),
+];
+
+function setup(publicKeyPem = publicPem) {
+  const routes = {};
+  const app = { get: (path, h) => (routes[`GET ${path}`] = h), post: (path, h) => (routes[`POST ${path}`] = h) };
+  const pool = fakePool();
+  registerToolRoutes(app, { app: 'demo', tools, pool, publicKey: publicKeyPem });
+  const call = async (route, { auth, name, body } = {}) => {
+    const req = { params: { name }, body, get: (h) => (h.toLowerCase() === 'authorization' ? auth : undefined) };
+    const res = { statusCode: 200, body: undefined, locals: { requestId: 'req-7' } };
+    res.status = (code) => ((res.statusCode = code), res);
+    res.json = (value) => ((res.body = value), res);
+    let passed;
+    await routes[route](req, res, (err) => (passed = err));
+    return { status: res.statusCode, body: res.body, passed };
+  };
+  return { routes, pool, call };
+}
+const audits = (pool) => pool.log.filter((q) => /INSERT INTO audit_log/.test(q.text ?? ''));
+
+test('without the public key no routes are registered', () => {
+  assert.deepEqual(setup('').routes, {});
+});
+
+test('the tool list needs a valid token and describes scopes, schemas and hints', async () => {
+  const { call } = setup();
+  assert.equal((await call('GET /internal/tools')).status, 401);
+  const listed = await call('GET /internal/tools', { auth: `Bearer ${token()}` });
+  assert.equal(listed.status, 200);
+  assert.deepEqual(listed.body.tools.map((t) => [t.name, t.scope, t.annotations.readOnlyHint]), [
+    ['list_items', 'demo:read', true],
+    ['add_item', 'demo:write', false],
+  ]);
+  assert.deepEqual(describeTool(tools[0], 'demo').inputSchema, { type: 'object', properties: { title: { type: 'string' } } });
+});
+
+test('a missing, badly signed, wrong-audience, expired or too-long token is a 401', async () => {
+  const { call, pool } = setup();
+  const now = Math.floor(Date.now() / 1000);
+  for (const auth of [
+    undefined,
+    'Bearer nope',
+    `Bearer ${token({}, { key: other })}`,
+    `Bearer ${token({}, { alg: 'none' })}`,
+    `Bearer ${token({ aud: 'other-app' })}`,
+    `Bearer ${token({ iss: 'someone' })}`,
+    `Bearer ${token({ iat: now - 400, exp: now - 100 })}`,
+    `Bearer ${token({ exp: now + MAX_TOKEN_SECONDS + 60 })}`,
+    `Bearer ${token({ sub: '' })}`,
+  ]) {
+    assert.equal((await call('POST /internal/tools/:name', { auth, name: 'list_items', body: {} })).status, 401, auth);
+  }
+  assert.equal(audits(pool).length, 0, 'an unauthenticated call writes no row');
+});
+
+test('a call without the scope is a 403 with a denied audit row', async () => {
+  const { call, pool } = setup();
+  const result = await call('POST /internal/tools/:name', { auth: `Bearer ${token({ scope: 'demo:read' })}`, name: 'add_item', body: { title: 'x' } });
+  assert.equal(result.status, 403);
+  const [row] = audits(pool);
+  assert.deepEqual(row.values.slice(0, 8), ['ai-tool', 'owner-1', 'ai-shell', 'add_item', 'create', 'item', null, 'denied']);
+  assert.equal(row.values[10], 'req-7');
+});
+
+test('a read tool answers and writes a read row; an unknown tool is a 404', async () => {
+  const { call, pool } = setup();
+  const result = await call('POST /internal/tools/:name', { auth: `Bearer ${token({ scope: 'demo:read' })}`, name: 'list_items', body: {} });
+  assert.deepEqual([result.status, result.body], [200, { result: [{ id: 1, title: 'a' }] }]);
+  assert.deepEqual(audits(pool).map((q) => [q.on, q.values[4], q.values[7]]), [['pool', 'read', 'ok']]);
+  assert.equal((await call('POST /internal/tools/:name', { auth: `Bearer ${token()}`, name: 'drop_all', body: {} })).status, 404);
+});
+
+test('a write tool runs in one transaction with its audit row', async () => {
+  const { call, pool } = setup();
+  const result = await call('POST /internal/tools/:name', { auth: `Bearer ${token()}`, name: 'add_item', body: { title: 'Squat' } });
+  assert.deepEqual([result.status, result.body], [200, { result: { id: 9 } }]);
+  assert.deepEqual(
+    pool.log.map((q) => `${q.on}:${q.text.split(/[ (]/)[0]}`),
+    ['client:BEGIN', 'client:INSERT', 'client:INSERT', 'client:COMMIT', 'client:release'],
+  );
+  assert.deepEqual(audits(pool)[0].values.slice(4, 10), ['create', 'item', '9', 'ok', null, '{"title":"Squat"}']);
+});
+
+test('invalid input is a 400 and a failing write rolls back, each with an error row', async () => {
+  const { call, pool } = setup();
+  const invalid = await call('POST /internal/tools/:name', { auth: `Bearer ${token()}`, name: 'add_item', body: { title: 3 } });
+  assert.deepEqual([invalid.status, invalid.body], [400, { error: 'Enter a title' }]);
+  const failed = await call('POST /internal/tools/:name', { auth: `Bearer ${token()}`, name: 'add_item', body: { title: 'boom' } });
+  assert.match(failed.passed.message, /insert failed/);
+  assert.ok(pool.log.some((q) => q.text === 'ROLLBACK'));
+  assert.deepEqual(audits(pool).map((q) => [q.on, q.values[7]]), [['pool', 'error'], ['pool', 'error']]);
+});
+
+test('verifyCallToken returns the caller and its scopes', () => {
+  assert.deepEqual(verifyCallToken(token(), publicKey, 'demo'), { owner: 'owner-1', client: 'ai-shell', scopes: ['demo:read', 'demo:write'] });
+});
+
+test('tool names must be <verb>_<noun> and unique', () => {
+  const app = { get() {}, post() {} };
+  const bad = (name) => () => registerToolRoutes(app, { app: 'demo', tools: [{ ...tools[0], name }], pool: fakePool(), publicKey: publicPem });
+  assert.throws(bad('ListItems'), /Invalid or repeated tool name/);
+  assert.throws(bad('list'), /Invalid or repeated tool name/);
+  assert.throws(() => registerToolRoutes(app, { app: 'demo', tools: [tools[0], tools[0]], pool: fakePool(), publicKey: publicPem }), /repeated/);
+});

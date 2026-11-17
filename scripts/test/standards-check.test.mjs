@@ -280,6 +280,7 @@ test('API rules: the study-log style (inline error middleware, Routers mounted u
   const text = [
     "app.get('/api/health', async (_req, res) => res.json({ ok: true }));",
     'app.use(requestLog);',
+    "app.post('/internal/tools/:name', callTool);",
     "app.use('/api/study-logs', studyLogRoutes(pool));",
     "app.get('/api/export/workouts.csv', exportRoute);",
     "app.post('/api/backup/' + action, restore);",
