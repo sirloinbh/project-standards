@@ -12,7 +12,7 @@ Every app changes the PostgreSQL schema only through `database/migrations/NNN_<d
 
 ## 2. File writing rules
 
-- **Write it to be safe to run again.** Use `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, and `INSERT … ON CONFLICT`. This is because, on an empty volume, Docker initialization (`/docker-entrypoint-initdb.d`) first runs all files without recording them, and then the runner applies the same files again and records them.
+- **Write it to be safe to run again.** Use `CREATE TABLE IF NOT EXISTS`, `ADD COLUMN IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`, and `INSERT … ON CONFLICT`. This is because a DB set up before the runner existed has no history, so the runner applies the same files again and records them, and CI applies the files once with `psql` before the runner (section 5). Do not mount `database/migrations` into `/docker-entrypoint-initdb.d`: that would add one more unrecorded run on every new volume, and `standards-check` fails compose files that do it (#695).
 - **One file is one transaction.** The runner wraps each file in `BEGIN` and `COMMIT`. Do not use statements that cannot run inside a transaction (`CREATE INDEX CONCURRENTLY`, `VACUUM`, and so on). Do not write `BEGIN` or `COMMIT` in the file yourself.
 - **Do not use psql-only commands.** The runner sends SQL through the `pg` driver. psql meta commands such as `\i`, `\set`, and `:'variable'` do not work.
 - **Save as UTF-8.** Line endings (CRLF or LF) and the UTF-8 BOM do not affect the checksum.
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 |---|---|---|
 | Local | `npm run db:migrate` | From the umbrella repo root. Uses `DATABASE_URL` from `.env` |
 | Local check | `npm run db:migrate -- --status` | Prints only the applied and pending lists and errors. Does not change the DB |
-| First run on an empty volume | Docker initialization → `npm run db:migrate` | compose mounts `database/migrations` to `/docker-entrypoint-initdb.d` |
+| First run on an empty volume | `docker compose up -d db`, then `npm run db:migrate` | Docker applies nothing; the runner applies every file and records it |
 | Shared CI | Section 5 below | The verify and e2e jobs of `reusable-app-ci.yml` |
 | Production deploy | The deploy script applies after the dump | [Deploy runbook](../runbooks/deploy.md) section 3, step 4 |
 
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 
 The verify job and e2e job in `.github/workflows/reusable-app-ci.yml` prepare the test DB with the same script.
 
-1. Apply `database/migrations/*.sql` once in file name order with `psql -v ON_ERROR_STOP=1`. This is the same behavior as Docker initialization on an empty volume.
+1. Apply `database/migrations/*.sql` once in file name order with `psql -v ON_ERROR_STOP=1`. This builds the test DB from scratch, the way an empty volume gets it.
 2. If the root `package.json` has a `db:migrate` script, run the runner. It re-applies the files already applied in step 1 and records them, so it also confirms that running again is safe.
 3. If there is no `db:migrate`, apply once more with psql and leave a warning (`::warning`). This is so CI does not break for apps that have not adopted the runner yet (compatible with the earlier behavior).
 
