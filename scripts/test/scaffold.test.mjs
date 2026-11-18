@@ -55,7 +55,7 @@ test('renders without leftover template variables (GitHub ${{ }} expressions sta
 test('includes the standard tree, operations docs, managed files and the manifest', () => {
   for (const file of [
     'AGENTS.project.md', 'README.md', 'compose.yaml', '.env.example', 'playwright.config.ts', 'shared/contract.ts',
-    'frontend/src/app.tsx', 'frontend/src/lib/utils.ts', 'backend/src/routes/health.ts', 'backend/src/migrate.ts', 'backend/src/migrations.ts', 'backend/test/migrations.test.ts',
+    'frontend/src/app.tsx', 'frontend/src/lib/utils.ts', 'backend/src/routes/health.ts', 'backend/src/migrate.ts', 'backend/src/standard/migrate.ts', 'backend/src/standard/migrations.ts', 'backend/src/standard/db.ts',
     'database/migrations/001_init.sql', 'e2e/overview.spec.ts', ...Object.values(RUNBOOKS), ...CONTRACT_COPIES,
     'AGENTS.md', '.npmrc', '.gitignore', '.github/workflows/ci.yml', 'frontend/Dockerfile', '.standards/check.mjs', '.standards/manifest.json',
   ]) assert.ok(byPath.has(file), file);
@@ -114,9 +114,9 @@ test('a new app serves its AI tools to shared-ai on the shared-ai network (ADR-0
 });
 
 test('the migration runner keeps the history table and lock key documented in docs/conventions/database.md', () => {
-  const runner = byPath.get('backend/src/migrations.ts');
+  const runner = byPath.get('backend/src/standard/migrations.ts') + byPath.get('backend/src/standard/migrate.ts');
   const doc = fs.readFileSync(path.join(root, 'docs/conventions/database.md'), 'utf8');
-  for (const token of ['schema_migrations', 'name text PRIMARY KEY', 'checksum text NOT NULL', 'applied_at timestamptz NOT NULL', '581_003', '^(\\d{3})_[a-z0-9_]+\\.sql$']) {
+  for (const token of ['schema_migrations', 'name text PRIMARY KEY', 'checksum text NOT NULL', 'applied_at timestamptz NOT NULL', '581_000', '^(\\d{3})_[a-z0-9_]+\\.sql$']) {
     assert.ok(runner.includes(token), `runner: ${token}`);
     assert.ok(doc.includes(token), `doc: ${token}`);
   }
