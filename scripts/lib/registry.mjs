@@ -128,7 +128,7 @@ export function checkAll({ data, schemas }, { today = new Date().toISOString().s
 
   const { profiles, targets } = data.sync;
   const active = new Set(projects.filter((p) => p.status === 'active').map((p) => p.name));
-  duplicates(targets.map((t) => [t.repo, `rollout ${t.rollout}`]), 'sync target', errors);
+  duplicates(targets.map((t) => [t.repo, t.profile]), 'sync target', errors);
   duplicates(targets.filter((t) => t.project).map((t) => [t.project, t.repo]), 'sync project', errors);
   for (const t of targets) {
     if (!profiles[t.profile]) errors.push(`sync target ${t.repo}: unknown profile "${t.profile}"`);

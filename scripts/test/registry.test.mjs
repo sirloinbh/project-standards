@@ -178,7 +178,7 @@ test('warns about expired allowed differences', () => {
 
 test('sync targets must match registry projects and profiles', () => {
   const { errors } = fixture((d) => {
-    d.sync.targets.push({ repo: 'sirloinbh/unknown-app', profile: 'app', project: 'unknown-app', rollout: 2 });
+    d.sync.targets.push({ repo: 'sirloinbh/unknown-app', profile: 'app', project: 'unknown-app' });
     d.sync.targets.find((t) => t.profile === 'infra').project = 'workout-memo';
     d.sync.targets.find((t) => t.project === 'study-log').repo = 'sirloinbh/study-log-frontend';
   });

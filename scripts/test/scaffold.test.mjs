@@ -34,7 +34,7 @@ function withSlot99() {
     skills: [],
     allowedDifferences: [],
   });
-  data.sync.targets.push({ repo: 'sirloinbh/sample-app', profile: 'app', project: 'sample-app', rollout: 99 });
+  data.sync.targets.push({ repo: 'sirloinbh/sample-app', profile: 'app', project: 'sample-app' });
   return { data, schemas: loaded.schemas };
 }
 
