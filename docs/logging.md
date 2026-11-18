@@ -9,7 +9,7 @@ Every app API writes one JSON line per request and gives each request an ID (#55
 | nginx | `frontend/nginx.conf` (managed) | Keeps the caller's `X-Request-Id`, else uses nginx's random `$request_id`, and passes it to the API |
 | API | `requestLog` in `backend/src/standard/http.ts` (managed) | Keeps an incoming ID that matches `^[\w.-]{1,128}$` (anything else is replaced, so a client cannot write arbitrary text into the log), else creates a UUID. Sets it on `res.locals.requestId` and in the `X-Request-Id` response header, and logs one line when the response ends |
 | Errors | `errorHandler` in the same file | The line for an unexpected 500 carries the same `requestId` |
-| App | `backend/src/app.ts` (app-owned) | `app.use(requestLog)` before the sign-in and every route. The standards check warns when it is missing |
+| App | `backend/src/app.ts` (app-owned) | `app.use(requestLog)` before the sign-in and every route (only the health check may come first). The standards check warns when it is missing or comes after a route (#658) |
 
 ## Format
 

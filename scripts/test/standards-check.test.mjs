@@ -291,6 +291,13 @@ test('API rules: the study-log style (inline error middleware, Routers mounted u
   assert.deepEqual(checkApi([{ file: 'backend/src/app.ts', text }]), []);
 });
 
+test('API rules: requestLog mounted after a route is warned, mounted first passes', () => {
+  const body = (order) => ["app.get('/api/health', h);", ...order, 'app.use(errorHandler);', "app.use('/api', notFound);"].join('\n');
+  const late = checkApi([{ file: 'backend/src/app.ts', text: body(["app.use('/api/items', items);", 'app.use(requestLog);']) }]);
+  assert.deepEqual(late, ['backend/src/app.ts:2: app.use(requestLog) must be mounted before the routes, or they get no request ID or JSON log line (docs/logging.md).']);
+  assert.deepEqual(checkApi([{ file: 'backend/src/app.ts', text: body(['app.use(requestLog);', "app.use('/api/items', items);"]) }]), []);
+});
+
 test('API rule warnings reach runCheck without failing it; tests are not scanned', () => {
   const result = check(({ write }) => {
     write('backend/src/app.ts', badApp);
