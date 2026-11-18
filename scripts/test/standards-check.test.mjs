@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll, serviceHost } from '../lib/registry.mjs';
-import { checkApi, checkFileNames, checkZodArrays, formatReport, runCheck } from '../standards-check.mjs';
+import { checkApi, checkComposeDeploy, checkFileNames, checkZodArrays, formatReport, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -20,7 +20,7 @@ const host = serviceHost(project, data.platform);
 
 // Files that carry registry values, written the way study-log writes them today.
 const appFiles = {
-  'compose.yaml': `services:\n  db:\n    ports: ['127.0.0.1:${ports.db}:5432']\n  api:\n    build: { context: ./backend, secrets: [npm_token] }\n    environment:\n      PORT: ${ports.api}\n  web:\n    build:\n      context: ./frontend\n      secrets:\n        - npm_token\n    ports: ['127.0.0.1:${ports.web}:80']\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`,
+  'compose.yaml': `services:\n  db:\n    ports: ['127.0.0.1:${ports.db}:5432']\n  api:\n    build: { context: ./backend, secrets: [npm_token] }\n    image: ${db.name}-backend:\${IMAGE_TAG:-local}\n    environment:\n      PORT: ${ports.api}\n  web:\n    build:\n      context: ./frontend\n      secrets:\n        - npm_token\n    image: ${db.name}-frontend:\${IMAGE_TAG:-local}\n    ports: ['\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80']\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`,
   'frontend/vite.config.ts': `export default { server: { port: ${ports.vite}, strictPort: true, proxy: { '/api': 'http://127.0.0.1:${ports.api}' } } };\n`,
   'backend/src/server.ts': `const port = Number(process.env.PORT ?? ${ports.api});\n`,
   '.env.example': `POSTGRES_DB=${db.name}\nDATABASE_URL=postgres://u:p@localhost:${ports.db}/${db.name}\nPORT=${ports.api}\n`,
@@ -40,7 +40,7 @@ function makeRepo(edit = () => {}) {
   const lint = { '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] };
   const tsconfig = { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] };
   const shared = data.versions.dependencies;
-  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write', knip: 'knip' }, devDependencies: { ...shared.root.devDependencies, ...lint } }));
+  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'db:migrate': 'npm run db:migrate -w backend --', 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write', knip: 'knip' }, devDependencies: { ...shared.root.devDependencies, ...lint } }));
   const tokens = { '@sirloinbh/design-tokens': v['@sirloinbh/design-tokens'] };
   const auth = { '@sirloinbh/auth-client': v['@sirloinbh/auth-client'] };
   write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, dependencies: { ...shared.frontend.dependencies, ...tokens, ...auth }, devDependencies: { ...shared.frontend.devDependencies, ...tsconfig } }));
@@ -128,7 +128,7 @@ test('shared packages must have the expected version, no install scripts, and no
 test('ports and DB names that differ from the registry fail per file', () => {
   const result = check(({ write, read }) => {
     write('frontend/vite.config.ts', read('frontend/vite.config.ts').replace(String(ports.vite), '5172'));
-    write('compose.yaml', read('compose.yaml').replace(`${ports.web}:80`, '8092:80'));
+    write('compose.yaml', read('compose.yaml').replace(`${ports.web}}:80`, '8092}:80'));
     write('.env.example', read('.env.example').replace(`POSTGRES_DB=${db.name}`, 'POSTGRES_DB=other'));
   });
   assert.deepEqual(result.problems.map((p) => `${p.path}: ${p.message}`), [
@@ -153,7 +153,7 @@ test('an nginx server_name that differs from the registry subdomain fails (#254)
 });
 
 test('the compose form ${WEB_PORT:-8101}:80 is understood', () => {
-  const result = check(({ write }) => write('compose.yaml', `ports: ['\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80']\nports: ['127.0.0.1:\${DB_PORT:-${ports.db}}:5432']\nPORT: ${ports.api}\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`));
+  const result = check(({ write }) => write('compose.yaml', `image: ${db.name}-backend:\${IMAGE_TAG}\nimage: ${db.name}-frontend:\${IMAGE_TAG}\nports: ['\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80']\nports: ['127.0.0.1:\${DB_PORT:-${ports.db}}:5432']\nPORT: ${ports.api}\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`));
   assert.deepEqual(result.problems, []);
 });
 
@@ -330,4 +330,21 @@ test('@ssm= tags must name a shared or own-app parameter on an empty secret key 
     'SSM key|PLAIN_KEY: a key read from SSM must have an empty example value',
     'SSM key|OLD_KEY: /sirloinbh/anthropic-api-key is not /sirloinbh/shared/<name> or /sirloinbh/study-log/<name> (lowercase letters, digits, hyphens)',
   ]);
+});
+
+test('compose deploy contract: image tags, WEB_BIND/WEB_PORT, no initdb mount, $$ healthcheck, root db:migrate (#695)', () => {
+  const edit = (from, to) => ({ write, read }) => write('compose.yaml', read('compose.yaml').replace(from, to));
+  const messages = (result) => result.problems.filter((p) => p.group === 'deploy contract').map((p) => p.message);
+  assert.deepEqual(messages(check()), []);
+  assert.match(messages(check(edit(`image: ${db.name}-backend:\${IMAGE_TAG:-local}`, `image: ${db.name}-backend:latest`))).join('\n'), /backend:\$\{IMAGE_TAG\} is missing/);
+  assert.match(messages(check(edit(`'\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80'`, `'127.0.0.1:${ports.web}:80'`))).join('\n'), /WEB_BIND/);
+  assert.match(messages(check(edit('  db:\n', '  db:\n    volumes: [./database/migrations:/docker-entrypoint-initdb.d:ro]\n'))).join('\n'), /initdb/);
+  assert.match(messages(check(edit('  db:\n', "  db:\n    healthcheck: { test: ['CMD-SHELL', 'pg_isready -U $POSTGRES_USER'] }\n"))).join('\n'), /\$\$POSTGRES_USER/);
+  const noMigrate = check(({ write }) => write('package.json', JSON.stringify({ name: 'study-log', packageManager: 'npm@11.19.0', engines: { node: '24.21.0', npm: '11.19.0' }, scripts: { 'standards:check': 'node .standards/check.mjs' } })));
+  assert.ok(messages(noMigrate).some((m) => m.includes('db:migrate')));
+});
+
+test('checkComposeDeploy accepts the ${VAR:-default} forms', () => {
+  const ok = "image: x-backend:${IMAGE_TAG}\nimage: x-frontend:${IMAGE_TAG:-local}\nports: ['${WEB_BIND}:${WEB_PORT}:80']\n";
+  assert.deepEqual(checkComposeDeploy(ok, { dbName: 'x', scripts: { 'db:migrate': 'x' } }), []);
 });
