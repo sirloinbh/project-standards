@@ -96,7 +96,8 @@ test('a new app starts behind the shared sign-in (#550): middleware, gate, compo
   // The managed files the scaffold imports arrive with the sync (templates/), so they are in the rendered tree.
   for (const file of ['backend/src/standard/auth.ts', 'frontend/src/sign-in.tsx', 'frontend/src/auth-origin.ts', 'backend/test/sign-in.test.ts']) assert.ok(byPath.has(file), file);
   assert.match(byPath.get('backend/src/app.ts'), /if \(options\.auth\) app\.use\('\/api', options\.auth\);\n\s+app\.get\('\/api\/me', meHandler\);/);
-  assert.match(byPath.get('backend/src/server.ts'), /createApp\(pool, \{ auth: sharedAuth\(\) \}\)/);
+  // #667: without the sign-in (explicit local mode only) the API listens on 127.0.0.1.
+  assert.match(byPath.get('backend/src/server.ts'), /const auth = sharedAuth\(\);\nconst server = createApp\(pool, \{ auth \}\)\.listen\(port, auth \? '0\.0\.0\.0' : '127\.0\.0\.1'/);
   assert.match(byPath.get('frontend/src/app.tsx'), /<SignInGate>[\s\S]*<AppShell [^>]*actions=\{<AccountActions \/>\}/);
   const compose = byPath.get('compose.yaml');
   assert.match(compose, /AUTH_INTERNAL_URL: \$\{AUTH_INTERNAL_URL:-http:\/\/shared-auth-api:3110\}\n/);
