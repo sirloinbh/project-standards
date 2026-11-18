@@ -5,6 +5,7 @@ import { types } from 'pg';
 
 import { registerHealthRoutes } from './routes/health.js';
 import { errorHandler, notFound, requestLog } from './routes/shared.js';
+import { apiRateLimit } from './standard/rate-limit.js';
 
 // DATE columns stay `YYYY-MM-DD` strings instead of being shifted through JS Date.
 types.setTypeParser(1082, (value) => value);
@@ -16,10 +17,13 @@ export function createApp(pool: Pool, options: { auth?: express.RequestHandler }
   app.disable('x-powered-by');
   // First, so every request, a 401 from the sign-in included, gets a request ID and one log line (#552).
   app.use(requestLog);
+  // Middleware order (#678): request log, rate limit, body parser, sign-in, routes, notFound, errorHandler.
+  // The limit counts each client IP (trust proxy 1 + X-Forwarded-For from nginx), so it sits before any work.
+  apiRateLimit(app);
+  app.use(express.json({ limit: '256kb' }));
   // The shared sign-in (ADR-0015) guards every /api route except /api/health, before any route registers.
   if (options.auth) app.use('/api', options.auth);
   app.get('/api/me', meHandler);
-  app.use(express.json({ limit: '256kb' }));
   registerHealthRoutes(app, pool);
   app.use('/api', notFound);
   app.use(errorHandler);
