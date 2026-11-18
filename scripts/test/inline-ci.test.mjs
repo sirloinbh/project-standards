@@ -46,10 +46,10 @@ test('callerInputs reads quoted strings and booleans from the with: block', () =
   assert.deepEqual(callerInputs(caller), { 'node-version': '24.21.0', e2e: true });
 });
 
-test('inlineReusable fills inputs, applies defaults, and runs on push and pull_request', () => {
+test('inlineReusable fills inputs, applies defaults, and runs once per commit (main pushes and pull requests, #699)', () => {
   const out = inlineReusable(reusable, { 'node-version': '24.21.0', e2e: true });
   assert.match(out, /^# A public repo cannot call/);
-  assert.match(out, /\nname: ci\n\non: \[push, pull_request\]\n\npermissions:/);
+  assert.match(out, /\nname: ci\n\n# One run per commit[^\n]*\non:\n {2}push:\n {4}branches: \[main\]\n {2}pull_request:\n\npermissions:/);
   assert.match(out, /if: true && !false\n/);
   assert.match(out, /node-version: 24\.21\.0\n/);
   assert.doesNotMatch(out, /inputs\.|workflow_call|how it is called/);
@@ -65,7 +65,7 @@ test('a public app gets the reusable workflow inlined; a private app keeps calli
   assert.equal(pub.source, REUSABLE_APP_CI);
   assert.match(pub.content, /^# Managed file\. Edit it in sirloinbh\/project-standards \.github\/workflows\/\n/);
   assert.doesNotMatch(pub.content, /uses: sirloinbh\/project-standards|inputs\./);
-  assert.match(pub.content, /e2e-visual:\n    if: true && true\n/);
+  assert.match(pub.content, /e2e-visual:\n {4}needs: changes\n {4}if: \$\{\{ !cancelled\(\) && true && true && needs\.changes\.outputs\.docs_only != 'true' \}\}\n/);
   assert.match(pub.content, /image: mcr\.microsoft\.com\/playwright:v1\.63\.0-noble@sha256:/);
   assert.match(pub.content, /POSTGRES_DB: 'workout_test'/);
   const priv = ciOf(plan('study-log'));

@@ -54,7 +54,8 @@ export function inlineReusable(reusable, given) {
   };
   // The reusable workflow's own leading comments describe how it is called, so they are dropped.
   const rest = before.filter((l) => !l.startsWith('#')).map((l) => (/^name:/.test(l) ? 'name: ci' : l));
-  const body = [...rest, 'on: [push, pull_request]', '', ...after]
+  // Same triggers as the caller template: one run per commit (#699).
+  const body = [...rest, '# One run per commit: a pull request is tested through pull_request only; push runs on main (#699).', 'on:', '  push:', '    branches: [main]', '  pull_request:', '', ...after]
     .join('\n')
     // A whole ${{ inputs.x }} expression becomes the plain value...
     .replace(/\$\{\{\s*inputs\.([\w-]+)\s*\}\}/g, (_, name) => String(value(name)))
