@@ -1,6 +1,6 @@
 # DB migration rules
 
-Every app changes the PostgreSQL schema only through `database/migrations/NNN_<description>.sql` files and applies them with the same runner (`npm run db:migrate`). The runner was built on workout-memo `backend/src/migrations.ts`, and new projects get it from the scaffold (`scaffold/app/backend/src/migrations.ts`, `migrate.ts`) (#27).
+Every app changes the PostgreSQL schema only through `database/migrations/NNN_<description>.sql` files and applies them with the same runner (`npm run db:migrate`). The runner was built on workout-memo `backend/src/migrations.ts`, and it is a managed file in every app (`backend/src/standard/migrations.ts` and `migrate.ts`, #677), and new projects get a one-line `backend/src/migrate.ts` entry from the scaffold (#27).
 
 ## 1. File numbering rules
 
@@ -32,12 +32,15 @@ CREATE TABLE IF NOT EXISTS schema_migrations (
 ```
 
 - Applying one file and inserting its record row are committed in one transaction. On failure, only that file is rolled back and the runner stops. Files applied earlier stay recorded.
-- The runner takes an advisory lock (fixed key `581_003`, same as workout-memo). Even if CI and a local command run at the same time, they apply one at a time.
+- The runner takes an advisory lock (key `581_000` plus the app's registry slot, so no two apps share one). Even if CI and a local command run at the same time, they apply one at a time.
 - In the following cases, it fails without applying anything.
   - A recorded file is missing.
   - A recorded file's checksum differs (the content changed).
   - There is a new file with a number lower than the last recorded file.
   - The name format is wrong or a number is duplicated.
+  - A file cannot run inside the runner's transaction (it uses `CONCURRENTLY`, `VACUUM`, `CREATE DATABASE`, `ALTER SYSTEM`, or its own `BEGIN`/`COMMIT`). Apply such a statement by hand and keep it out of `database/migrations`, or split it into its own step in the deploy runbook.
+  - `--status` is the only option; any other flag exits with code 2 without touching the database.
+- A UTF-8 BOM is removed from the SQL before it is sent to PostgreSQL, as well as from the checksum.
 - The first run on a DB without the records table (a DB previously applied with psql) applies everything again from 001 and records it. That is why the "safe to run again" rule in section 2 is needed.
 
 ## 4. How to run
@@ -80,11 +83,11 @@ The rules and the records table are the same as workout-memo's. So even if the w
 | Records table | `schema_migrations(name, checksum, applied_at)` | Same |
 | Checksum | SHA-256 after normalizing line endings and BOM | Same |
 | Order check | A new file before the last recorded file fails | Same |
-| Lock | advisory lock fixed key `581_003` | Same |
+| Lock | advisory lock fixed key `581_003` | `581_000` plus the registry slot (a parameter of `migrate()`) |
 | Transaction | `BEGIN` and `COMMIT` per file, only that file is `ROLLBACK`ed on failure | Same |
 | DB connection | Creates a `pg` `Pool` and borrows one connection | A single `pg` `Client`. It uses only one connection, so no pool is needed |
-| Connection type | `PoolClient` | `ClientBase` (the common type of `Client` and `PoolClient`). It can also be passed to workout-memo code as is |
-| Unit test | `backend/test/migrations.test.ts`. Checks that the repo has 9 or more files and that the Korean seed in 001 is read | The same rules test. For repo files, it only checks that they start with 001 (a new project has one file) |
+| Connection type | `PoolClient` | `Pick<Client, 'query'>` (one connection; a Pool would run the lock, BEGIN and COMMIT on different connections) |
+| Unit test | `backend/test/migrations.test.ts`. Checks that the repo has 9 or more files and that the Korean seed in 001 is read | `scripts/test/backend-migrations.test.mjs` in project-standards tests the managed runner; apps do not copy a test |
 | CI | `npm run db:migrate` once. e2e runs the same command inside the Playwright container | Apply once with psql, then `db:migrate` (section 5). It also confirms that running again is safe |
 | Docs | `database/README.md` has accumulated per-file apply instructions (including the psql procedure from before the runner) | `database/README.md` has only general rules. Per-file descriptions go in the comment at the top of the SQL file |
 
@@ -94,7 +97,7 @@ The other 7 apps have no runner, and each repo's CI applies all files with a `ps
 
 Proceed through each app repo's issue and PR. Do not push directly to app repos from the center.
 
-1. Copy the scaffold's `backend/src/migrations.ts`, `backend/src/migrate.ts`, and `backend/test/migrations.test.ts`.
+1. Let the sync PR bring `backend/src/standard/migrations.ts` and `migrate.ts`, delete the app's own `backend/src/migrations.ts` and its test, and make `backend/src/migrate.ts` the one-line entry `import './standard/migrate.js';` (the deploy runs `node dist/migrate.js`).
 2. Add `"db:migrate": "tsx --env-file-if-exists=../.env src/migrate.ts"` to `backend/package.json` and `"db:migrate": "npm run db:migrate -w backend --"` to the root `package.json`. `pg` and `tsx` are already dependencies, so no new packages are needed.
 3. On the local DB, view the pending list with `npm run db:migrate -- --status` and record the baseline with `npm run db:migrate`.
 4. For the production DB, the deploy script records it with the same command after making a dump.
