@@ -8,18 +8,11 @@ param(
     [string]$UserHome
 )
 $ErrorActionPreference = 'Stop'
-$repositoryRoot = Split-Path $PSScriptRoot -Parent
-# Target name (relative to Destination) -> source file. The agent worker (#166) needs its
-# launcher, its modules, the project registry (allowed repositories) and versions.json (Node version).
+# Target name (relative to Destination) -> source file.
 $files = [ordered]@{}
-foreach ($name in @('gh-project.ps1', 'project-terminal.ps1', 'open-vscode-account-b.cmd', 'set-credential-helper.ps1', 'agents.ps1')) {
+foreach ($name in @('gh-project.ps1', 'project-terminal.ps1', 'open-vscode-account-b.cmd', 'set-credential-helper.ps1')) {
     $files[$name] = Join-Path $PSScriptRoot $name
 }
-foreach ($module in Get-ChildItem -LiteralPath (Join-Path $PSScriptRoot 'agents') -Filter '*.mjs' -File | Sort-Object Name) {
-    $files["agents\$($module.Name)"] = $module.FullName
-}
-$files['registry\projects.json'] = Join-Path $repositoryRoot 'registry\projects.json'
-$files['versions.json'] = Join-Path $repositoryRoot 'versions.json'
 
 $stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 foreach ($name in $files.Keys) {
@@ -91,5 +84,3 @@ Write-Output ''
 Write-Output "Tools are in $Destination"
 Write-Output 'Next: point each repository at the new wrapper (docs/tools.md step 2):'
 Write-Output "  powershell -NoProfile -ExecutionPolicy Bypass -File `"$Destination\set-credential-helper.ps1`" -Repository <repo folder> [...]"
-Write-Output 'Agent worker (docs/tools.md):'
-Write-Output "  powershell -NoProfile -ExecutionPolicy Bypass -File `"$Destination\agents.ps1`" -Root <repo folder> doctor"
