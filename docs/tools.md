@@ -7,11 +7,10 @@ Tools for using a company account and a personal account (`sirloinbh`) side by s
 | `gh-project.ps1` | Runs `gh` only with the personal config (`%USERPROFILE%\.config\gh-personal`) and the `sirloinbh` account. It clears inherited tokens and restores the caller's environment when it finishes. It also works as a Git credential helper |
 | `project-terminal.ps1` | Initializes the VS Code terminal. It leaves the default `gh` on the company config and creates the `ghp` function (personal account). It sets a personal `CODEX_HOME`. `ghp` calls `gh-project.ps1` in the same folder, so the install location does not matter |
 | `open-vscode-account-b.cmd` | The personal VS Code launcher. When opened with `--project <folder>`, it opens with the company gh config, token removal, personal Codex, and the personal VS Code data folder. For other folders it leaves the existing environment as is |
-| `install.ps1` | Installs the files above, `set-credential-helper.ps1`, and the agent worker (`agents.ps1`, `agents/*.mjs`, `registry/projects.json`, `versions.json`) into `%LOCALAPPDATA%\sirloinbh-tools`. It backs up changed files as `.bak-<time>` and does not touch the old location (`%LOCALAPPDATA%\gh-workout-memo`) |
+| `install.ps1` | Installs the files above and `set-credential-helper.ps1` into `%LOCALAPPDATA%\sirloinbh-tools`. It backs up changed files as `.bak-<time>` and does not touch the old location (`%LOCALAPPDATA%\gh-workout-memo`) |
 | `global-instructions/git-branches.md` | The source of the branch rules that go into each PC's global instructions. `install.ps1` replaces only the matching section of whichever of `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, and `%LOCALAPPDATA%\Codex-Account-B\AGENTS.md` exist, and backs them up. It also moves the Fork rule memory (`fork-branch-management.md`) aside as `.bak-<time>`. If you give only `-Destination`, this step is skipped (#365) |
 | `check-git-permissions.mjs` | Uses a short session to check whether Claude Code on this PC decides to run, ask for approval, or block each git branch command. It denies every approval request, so those commands are not executed. It runs only on a clean main and uses a little model quota (#365) |
 | `set-credential-helper.ps1` | Changes the credential helper in each repo's `.git/config` to the specified `gh-project.ps1`. It does not change the global Git config |
-| `agents.ps1`, `agents/` | The launcher and worker of the local agent worker. See [Local agent worker](#local-agent-worker-toolsagents) below |
 
 ## Migration steps [User] (#21)
 
@@ -51,110 +50,11 @@ The parent folder where you cloned the repos differs by PC (for example, `%USERP
   powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh-tools\set-credential-helper.ps1" -Repository ($repos -join ',') -ToolsDir "$env:LOCALAPPDATA\gh-workout-memo"
   ```
   `$repos` is the same as in step 2 of the migration steps. To roll back just one repo, write it like `-Repository "$base\study-log"`.
-- **A wrongly installed file:** Restore the `*.bak-<time>` files in `%LOCALAPPDATA%\sirloinbh-tools` to their original names. Worker files are backed up under `agents\`, and the registry under `registry\`.
-- **Agent worker back to the workout-memo copy:** Stop the installed worker with `agents.ps1 -Root <repo> stop` and use `scripts\agents.ps1` inside the repo (until it is deleted in #167). The queue (`.local/agent-workflow/`) is in the same place, so it carries on as is.
-- **Remove the agent worker:** After stopping the worker, delete `agents.ps1`, `agents\`, `registry\`, and `versions.json` in the install folder. The repo's `.local/agent-workflow/` is uncommitted working state, so delete it separately when you no longer need it.
+- **A wrongly installed file:** Restore the `*.bak-<time>` files in `%LOCALAPPDATA%\sirloinbh-tools` to their original names.
 
-## Local agent worker (tools/agents)
+## Local agent worker (archived)
 
-A local worker that takes one issue and carries it through writing tests → implementation → independent review → host check → PR → CI check. It was moved from workout-memo `scripts/agents/` (#165). It is not copied into downstream repos; one copy installed on the PC handles several repos (#166). The workout-memo switchover happens in #167.
-
-### Install [User]
-
-The `install.ps1` in step 1 of the [migration steps](#migration-steps-user-21) installs the worker as well.
-
-```text
-%LOCALAPPDATA%\sirloinbh-tools\
-  agents.ps1              launcher
-  agents\*.mjs            worker
-  registry\projects.json  list of repos the worker can be used with
-  versions.json           for Node version comparison
-```
-
-When `tools/agents/` or the registry changes, run `install.ps1` again after `git pull`. It backs up and overwrites only the changed files. Worker files deleted from the source remain in the install folder, so delete them yourself.
-
-### Running
-
-```powershell
-$agents = "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1"
-powershell -NoProfile -ExecutionPolicy Bypass -File $agents -Root <repo folder> doctor
-powershell -NoProfile -ExecutionPolicy Bypass -File $agents -Root <repo folder> enqueue -Issue 42 -Slug csv-export
-powershell -NoProfile -ExecutionPolicy Bypass -File $agents -Root <repo folder> start
-powershell -NoProfile -ExecutionPolicy Bypass -File $agents -Root <repo folder> status
-powershell -NoProfile -ExecutionPolicy Bypass -File $agents -Root <repo folder> stop
-```
-
-| Command | What it does |
-|---|---|
-| `status` (default) | Shows that repo's queue and worker state as JSON |
-| `doctor` | Checks the account, repo registration, `.agents.json`, Codex, and npm |
-| `start` | If `doctor` passes, starts the worker in a hidden window. The log is `<repo>\.local\agent-workflow\worker.*.log` |
-| `stop` | Asks the worker to stop after the current step finishes |
-| `smoke -Role <role>` | Checks the connection with a small read-only model request |
-| `enqueue -Issue <number>` | Puts the issue in the queue and creates a worktree. Options: `-TaskKind`, `-ReviewRole`, `-TestComplexity`, `-RequireDatabase`, `-RequireBrowser`, `-BranchType feat\|fix\|docs\|chore`, `-Slug` |
-| `configure -Issue <number>` | Changes the routing options of a waiting or stopped task |
-| `diagnose`, `retry`, `accept-requirements`, `cancel`, `handoff-tests` | Run for the task given by `-Issue <number>` |
-
-- **Target repo:** `-Root` (the current folder if omitted). If it is not the top level of a Git repo, it creates nothing and stops. The queue, locks, worktrees, and logs live in that repo's `.local/agent-workflow/`, so repos do not get mixed, and you can start a separate worker per repo.
-- **Node:** If the target repo has `.local\node-v<node in versions.json>-win-x64\node.exe`, it uses that; otherwise it uses `node.exe` on the PATH. If the version differs from `versions.json`, it only warns (on standard error) and continues.
-- **Codex:** If `CODEX_HOME` is empty, it uses `%LOCALAPPDATA%\Codex-Account-B`, the same as `project-terminal.ps1`.
-- **Without the launcher:** `node <tools folder>\agents\cli.mjs --root <repo folder> <command>` works the same way (`enqueue 42 --slug csv-export`, `work --once`, and so on). When developing in this repo, use `node tools\agents\cli.mjs ...`.
-- **Repo name:** Read from the `origin` URL. Only repos owned by `sirloinbh` and listed in `repos` of `registry/projects.json` are allowed. The registry is looked up at `../../registry/` relative to `tools/agents/` (this repo) or `../registry/` (the installed copy).
-- **Branch and change record:** The std-git-writing format `<type>/<issue-number>-<english-summary>` and `docs/changes/<issue-number>-<english-summary>.md`. Choose `type` with `--branch-type feat|fix|docs|chore`. If you do not give one, it is `docs` when `--task-kind documentation`, and `feat` otherwise. Use `fix` for bug fixes and `chore` for settings, cleanup, and migrations (user decision, 2026-10-22). Give the English summary with `--slug`; if there is none, it uses the first 5 English words of the title, and if there are none, `agent-task`. Tasks registered before #165 keep their stored branch and `docs/changes/<number>-agent-task.md` as they are.
-- **GitHub calls:** On Windows, it uses `gh-project.ps1` in the install folder (`tools/agents/../gh-project.ps1`).
-- **Per-PC settings:** `codexExecutable`, `npmCli`, and `browserExecutable` in `<repo>/.local/agent-workflow/config.json`. Not committed.
-
-### Repo settings file `.agents.json`
-
-Commit it at the root of a repo that uses the worker. If it is missing, everything uses defaults. If there is an unknown key or a malformed value, the worker stops without running any command.
-
-| Key | Default | Meaning |
-|---|---|---|
-| `checkScript` | `"check"` | The name of the npm script to run as the host check (`npm run <name>`). Shell commands are not accepted |
-| `database.tables` | none | The tables and columns the DB precheck verifies, `{ "<table>": ["<column>", ...] }`. If absent, the schema precheck is skipped. A task that needs a DB still requires a dedicated `TEST_DATABASE_URL` in that case |
-| `browser.checkArgs` | none | Arguments for the browser verification command. The executable is the per-PC `browserExecutable`. If absent, it uses `browserCheckArgs` in the per-PC `config.json` as before |
-| `autoMerge` | `true` | After CI passes, the worker merges the PR. If `false`, it changes the PR to ready and leaves the merge to a person |
-
-**Auto-merge is on by default (user decision, 2026-10-22), and since 2026-11-15 it is on for every repo (#591).** The user decided that agents merge their own PRs in all sirloinbh repos after the review loop, including app repos where a merge to main is a production deploy. Use `"autoMerge": false` in `.agents.json` only for a repo where the user records a new decision to confirm merges himself.
-
-#### Auto-merge per repo
-
-Keep the default `true` (user decisions 2026-10-23, #184, and 2026-11-15, #591: all repos). The rule "ask the user first about downstream repo PRs" in the central `AGENTS.md` applies to interactive agents, and PRs opened by the worker follow this table. The app `AGENTS.md` files state the same exception.
-
-| Repo | `autoMerge` | Reason |
-|---|---|---|
-| `workout-memo` | `true` (default, not written in the file) | The user allowed auto-merge in #128 |
-| `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio` | `true` (default) | The user allowed auto-merge for all repos on 2026-11-15 (#591), also where a merge to main is a production deploy. A repo whose `.agents.json` still says `false` is listed in the tracking issue and is changed there |
-| `project-standards`, `shared-aws-infrastructure`, `shared-auth`, `shared-ai` | Not applicable | They are not in the registry `repos`, so the worker does not run. The agent merges them after the review loop |
-
-- **If the file is missing, it auto-merges.** So for a repo that records `false`, include `.agents.json` (at least `{"autoMerge": false}`) in the PR that introduces the worker, and before introducing it, check `autoMerge false` in the `doctor` output of `agents.ps1 -Root <repo> doctor`.
-- **Do not distribute it by sync.** `.agents.json` holds values that differ per repo, such as `checkScript` and `database.tables`, and the sync's JSON field management (`fields`) does not create a missing file, so it cannot solve the "no file means auto-merge" problem. The source of truth for per-repo values is this table, not the registry.
-- To change a value in the table, record the user's decision in an issue and fix this table and that repo's `.agents.json` together.
-
-**Example for a repo without a DB precheck.** It only renames the check script and turns off auto-merge because a merge to main is a deploy. If everything is the default, you do not need to create the file.
-
-```json
-{
-  "checkScript": "verify",
-  "autoMerge": false
-}
-```
-
-**Example for a repo with a DB precheck (workout-memo).** It specifies only the tables and uses the default for auto-merge.
-
-```json
-{
-  "database": {
-    "tables": {
-      "brands": ["id", "name"],
-      "machines": ["id", "brand_id", "name", "base_weight", "notes"],
-      "workouts": ["id", "date", "title", "notes", "created_at"],
-      "sets": ["id", "workout_id", "exercise", "machine_id", "weight", "reps", "position", "notes"],
-      "goals": ["id", "exercise", "target_weight", "target_reps", "start_date", "deadline"]
-    }
-  }
-}
-```
+The Codex-based local agent worker that lived in `tools/agents/` was archived in #708. The code, its tests, and the launcher are on the branch `archive/tools-agents` (the last `main` commit that had them). Interactive Claude Code sessions do the review-and-merge loop now (AGENTS.md).
 
 ## App keys in SSM (tools/app-secrets.mjs)
 
@@ -355,13 +255,12 @@ Default to Chrome DevTools MCP and add Playwright MCP when the task is a multi-s
 
 ## Verification
 
-- Agent worker: `npm run test:agents`. It is also included in `npm test` (and therefore `npm run check`). On Windows, `.github/workflows/agents.yml` runs it one more time. It uses only fake git, gh, npm, Codex, and temporary repos. The launcher checks (`agents.ps1 -Root <folder> status` installed in a temporary folder shows only each one's own queue in two fake repos, passing of `-Root`, `-BranchType`, and `-Slug`, and 2 PowerShell→Node boundaries) run only on Windows.
 - Repo batch commands: `node --test scripts/test/repos.test.mjs`. It uses only temporary git repos.
 - Label unification: `node --test scripts/test/labels.test.mjs`. It uses only a fake gh (`LABELS_GH`) and checks that deletion happens only after all additions are finished.
 - Issue board: `node --test scripts/test/project-board.test.mjs`. It uses only a fake gh (`BOARD_GH`) and checks that `plan` writes nothing, the ids `sync` sends, the confirmation, and the stop when Priority is missing.
 - Dependency PR command: `node --test scripts/test/dependency-prs.test.mjs`. It uses only a fake gh (`DEPENDENCY_PRS_GH`) and checks the confirmation before closing and that it does not merge.
 - Shared Claude API key: `node --test scripts/test/app-secrets.test.mjs`. It uses only a fake AWS CLI (`APP_SECRETS_AWS`) and checks that the value appears neither in output nor in arguments.
-- Account tools: `node --test scripts/test/tools.test.mjs` (Windows-only checks are skipped on other OSes). The install check also verifies that the worker, registry, and `versions.json` are installed and that changed worker files are backed up. It uses only a fake `gh` and `code`, a temporary user folder, and synthetic tokens, and does not touch real credentials, the installed copy, or VS Code.
+- Account tools: `node --test scripts/test/tools.test.mjs` (Windows-only checks are skipped on other OSes). The install check verifies that the tools are installed and that changed files are backed up. It uses only a fake `gh` and `code`, a temporary user folder, and synthetic tokens, and does not touch real credentials, the installed copy, or VS Code.
 
 ## Claude Code plugin for repos outside sync (#515)
 

@@ -71,6 +71,7 @@ External dependencies that the 8 apps and the scaffold use at the same version, 
 | `vite` | 6.4.5 | `frontend/package.json` | devDependencies |
 | `vitest` | 5.0.3 | `frontend/package.json` | devDependencies |
 | `express` | 5.3.0 | `backend/package.json` | dependencies |
+| `express-rate-limit` | 8.7.2 | `backend/package.json` | dependencies |
 | `pg` | 8.23.1 | `backend/package.json` | dependencies |
 | `zod` | 4.6.7 | `backend/package.json` | dependencies |
 | `@types/express` | 5.0.6 | `backend/package.json` | devDependencies |

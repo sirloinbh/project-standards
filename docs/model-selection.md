@@ -44,7 +44,7 @@ On this PC the settings live outside the repo (user-level files). This repo does
 
 To revert, change `model` in `Explore.md` to `sonnet` or delete the file.
 
-The Claude Code settings above are separate from the local agent worker (`tools/agents`, [docs/tools.md](tools.md#local-agent-worker-toolsagents)). The worker does not run Claude. It routes by role in `tools/agents/models.mjs` to Codex models, and passes them to the CLI as `--model` with `model_reasoning_effort`. Change that file to change the worker's routing; nothing in this guide affects it.
+The Claude Code settings above are separate from the Codex-based local agent worker, which was archived in #708 (branch `archive/tools-agents`).
 
 Checked on 2026-11-14 (#440): a live session lists Explore with exactly the tool set of the user-defined file, so the file loads. Orca runs Claude Code with its own config folder (`%APPDATA%\orca\claude-profiles\<id>\home`) and copies keys from `~/.claude/settings.json` into its `settings.json`. That folder also has its own `agents/Explore.md`. When you change a user-level setting, check both places.
 
