@@ -13,7 +13,7 @@ Rule documents: [Tech stack](docs/stack.md) · [Dependency policy](docs/dependen
 
 ## Current status
 
-This repo is in the operating phase. All 8 apps, the infrastructure repo, and the shared service repos (`shared-auth`, `shared-ai`) are sync targets (`maxRollout` 3 in `sync.config.json`), and a sync PR opens in each sub-repo when a change is merged to central main. Check sub-repo status in the daily-updated [compliance status](docs/compliance.md). Work order follows the GitHub issue priority labels and the [std-backlog](templates/common/skills/std-backlog/SKILL.md) rules.
+This repo is in the operating phase. All 8 apps, the infrastructure repo, and the shared service repos (`shared-auth`, `shared-ai`) are sync targets (listed in `sync.config.json`; a target is paused with `enabled: false`), and a sync PR opens in each sub-repo when a change is merged to central main. Check sub-repo status in the daily-updated [compliance status](docs/compliance.md). Work order follows the GitHub issue priority labels and the [std-backlog](templates/common/skills/std-backlog/SKILL.md) rules.
 
 ## Getting started
 
@@ -60,7 +60,7 @@ To preview the result merged with local clones, run something like `node scripts
    | Files copied to sub-repos | `templates/common/` or `templates/app/` (`.tmpl` is stripped on rendering) |
    | Tool versions, external Actions | `versions.json` |
    | Per-project values such as ports and DB names | `registry/projects.json` |
-   | Sync targets and rollout stage | `sync.config.json` |
+   | Sync targets | `sync.config.json` |
 
 3. If the list of files sub-repos receive changes, update the snapshot with `UPDATE_SNAPSHOT=1 npm test` and review that change in the PR as well.
 4. For a major decision, add an ADR under `docs/adr/`.

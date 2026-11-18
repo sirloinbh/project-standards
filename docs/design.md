@@ -1,6 +1,6 @@
 # project-standards Design
 
-- Status: draft (issue #1). Once this document is merged, the skeleton work starts as separate issues.
+- Status: implemented and in operation. This is the original design; later changes are in `docs/adr/` and `docs/changes/`. The rollout stages in this document (`maxRollout`, `rollout`) were removed in #701; a sync target is now paused with `enabled: false`.
 - Source of requirements: [bootstrap-prompt.md](bootstrap-prompt.md)
 - Decision records: [docs/adr/](adr/)
 
@@ -206,7 +206,7 @@ central main push
   └─ sync.yml (concurrency: sync, no cancellation)
       ├─ confirm central tests and registry-check pass
       ├─ App JWT → installation token per target repo
-      └─ for each repo in sync.config targets with rollout ≤ maxRollout:
+      └─ for each repo in sync.config targets that is not `enabled: false`:
           ├─ render profile templates (inject registry, platform, versions)
           ├─ skip registry allowedDifferences paths
           ├─ verify own-package provenance (4.3)
@@ -220,14 +220,13 @@ central main push
 
 - Commits are created through the GitHub API (Git Data API). Because the runner does not clone the downstream repo, no hooks or scripts of the downstream repo run.
 - The only sync target is the umbrella repo. Managed files inside subtree paths, such as `frontend/.npmrc`, reach each deployment repo when the user runs the existing subtree push procedure.
-- The initial value of `maxRollout` is 0. No real PR is opened without user approval.
+- A target with `enabled: false` gets no PR. (The original design had a `maxRollout` stage counter; it was removed in #701 once every target was synced.)
 
 ### 5.4 sync.config schema and initial values
 
 ```jsonc
 {
   "$schema": "./sync.config.schema.json",
-  "maxRollout": 0,
   "profiles": {
     "app": {
       "templates": ["common", "app"],
@@ -242,20 +241,20 @@ central main push
     }
   },
   "targets": [
-    { "repo": "sirloinbh/workout-memo",              "profile": "app",   "project": "workout-memo",         "rollout": 1 },
-    { "repo": "sirloinbh/study-log",                 "profile": "app",   "project": "study-log",            "rollout": 2 },
-    { "repo": "sirloinbh/health-log",                "profile": "app",   "project": "health-log",           "rollout": 2 },
-    { "repo": "sirloinbh/life-journal",              "profile": "app",   "project": "life-journal",         "rollout": 2 },
-    { "repo": "sirloinbh/money-ledger",              "profile": "app",   "project": "money-ledger",         "rollout": 2 },
-    { "repo": "sirloinbh/cert-manager",              "profile": "app",   "project": "cert-manager",         "rollout": 2 },
-    { "repo": "sirloinbh/plan-routine",              "profile": "app",   "project": "plan-routine",         "rollout": 2 },
-    { "repo": "sirloinbh/dev-career-portfolio",      "profile": "app",   "project": "dev-career-portfolio", "rollout": 2 },
-    { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null,                   "rollout": 3 }
+    { "repo": "sirloinbh/workout-memo",              "profile": "app",   "project": "workout-memo" },
+    { "repo": "sirloinbh/study-log",                 "profile": "app",   "project": "study-log" },
+    { "repo": "sirloinbh/health-log",                "profile": "app",   "project": "health-log" },
+    { "repo": "sirloinbh/life-journal",              "profile": "app",   "project": "life-journal" },
+    { "repo": "sirloinbh/money-ledger",              "profile": "app",   "project": "money-ledger" },
+    { "repo": "sirloinbh/cert-manager",              "profile": "app",   "project": "cert-manager" },
+    { "repo": "sirloinbh/plan-routine",              "profile": "app",   "project": "plan-routine" },
+    { "repo": "sirloinbh/dev-career-portfolio",      "profile": "app",   "project": "dev-career-portfolio" },
+    { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null }
   ]
 }
 ```
 
-Schema rules: `repo` starts with the `sirloinbh/` prefix and has no duplicates. For the `app` profile, `project` must exist in the registry, and for the `infra` profile `project` is `null`. `rollout` is an integer of 1 or more.
+Schema rules: `repo` starts with the `sirloinbh/` prefix and has no duplicates. For the `app` profile, `project` must exist in the registry, and for the `infra` profile `project` is `null`. `enabled` is an optional boolean; `false` pauses the target.
 
 ## 6. Project fixed-value registry
 

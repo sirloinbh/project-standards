@@ -12,7 +12,7 @@ paths:
 
 # Sync and deploy (project-standards)
 
-- **Sync:** when the central main is merged, `sync.yml` opens or updates a sync PR (`chore/standards-sync-*`) in every repo with `rollout ≤ maxRollout`. It is skipped when the GitHub App variable (`SYNC_APP_ID`) is missing. `maxRollout` is raised only after user approval.
+- **Sync:** when the central main is merged, `sync.yml` opens or updates a sync PR (`chore/standards-sync-*`) in every target of `sync.config.json` that is not `enabled: false`. It is skipped when the GitHub App variable (`SYNC_APP_ID`) is missing. Pausing or enabling a target needs user approval.
 - **Shared packages:** released only by pushing a tag (`<package>/v<version>`, `publish.yml`). The tag push is a user step. After a release, the agent opens the PR that raises the package version in `versions.json`.
 - **Compliance:** `compliance.yml` collects downstream repo status every day and opens a PR that updates `docs/compliance.md` and `docs/env-matrix.md`. It is skipped without the App variable.
 - **App deploy:** for apps deployed on the server (now workout-memo), merging main is a production deploy (pull-based autodeploy on the server). The other 7 apps are not on the server yet. On the first deploy, the server's `/opt/<app>/.env` needs `NODE_AUTH_TOKEN` (read:packages) so the Docker build can fetch shared packages. The agent merges downstream sync PRs after review and green CI (#591).

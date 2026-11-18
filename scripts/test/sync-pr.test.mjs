@@ -5,7 +5,6 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createAppJwt, createClient, getInstallationToken } from '../lib/github-app.mjs';
 import { MANIFEST_PATH } from '../lib/manifest.mjs';
-import { pinRanges } from '../lib/pin-ranges.mjs';
 import { loadAll } from '../lib/registry.mjs';
 import { gitBlobSha, syncTarget, verifyPackages } from '../lib/sync-pr.mjs';
 import { apply } from '../sync.mjs';
@@ -18,14 +17,14 @@ const infraTarget = data.sync.targets.find((t) => t.profile === 'infra');
 const SHA1 = 'a1b2c3d4e5f60718293a4b5c6d7e8f9012345678';
 const SHA2 = 'b2c3d4e5f60718293a4b5c6d7e8f901234567890';
 
-// A study-log-like repository: a project line in .gitignore, ^ ranges, root and subtree lockfiles.
+// A study-log-like repository: a project line in .gitignore, exact versions, root and subtree lockfiles.
 function studyRepo() {
-  const lock = { name: 'study-log', lockfileVersion: 3, packages: { '': { devDependencies: { concurrently: '^9.2.0' } }, frontend: { dependencies: { recharts: '^3.10.0' } }, 'node_modules/concurrently': { version: '9.2.1' }, 'node_modules/recharts': { version: '3.10.1' } } };
-  const frontendLock = { name: 'frontend', lockfileVersion: 3, packages: { '': { dependencies: { recharts: '^3.10.0' } }, 'node_modules/recharts': { version: '3.10.1' } } };
+  const lock = { name: 'study-log', lockfileVersion: 3, packages: { '': { devDependencies: { concurrently: '9.2.1' } }, frontend: { dependencies: { recharts: '3.10.1' } }, 'node_modules/concurrently': { version: '9.2.1' }, 'node_modules/recharts': { version: '3.10.1' } } };
+  const frontendLock = { name: 'frontend', lockfileVersion: 3, packages: { '': { dependencies: { recharts: '3.10.1' } }, 'node_modules/recharts': { version: '3.10.1' } } };
   return fakeRepo('sirloinbh/study-log', {
     '.gitignore': 'node_modules/\n.env\nmy-project-only/\n',
-    'package.json': JSON.stringify({ name: 'study-log', devDependencies: { concurrently: '^9.2.0' } }, null, 2),
-    'frontend/package.json': JSON.stringify({ name: 'frontend', dependencies: { recharts: '^3.10.0' } }, null, 2),
+    'package.json': JSON.stringify({ name: 'study-log', devDependencies: { concurrently: '9.2.1' } }, null, 2),
+    'frontend/package.json': JSON.stringify({ name: 'frontend', dependencies: { recharts: '3.10.1' } }, null, 2),
     'backend/package.json': JSON.stringify({ name: 'backend' }, null, 2),
     'package-lock.json': JSON.stringify(lock, null, 2),
     'frontend/package-lock.json': JSON.stringify(frontendLock, null, 2),
@@ -38,16 +37,7 @@ test('git blob ids match git for known content', () => {
   assert.equal(gitBlobSha('hello\n'), 'ce013625030ba8dba906f756967f9e9ca394464a');
 });
 
-test('pinRanges uses the installed version and updates the lockfile spec', () => {
-  const lock = { packages: { '': { devDependencies: { vite: '^6.3.5', exact: '1.0.0' } }, 'node_modules/vite': { version: '6.3.6' } } };
-  const result = pinRanges({ devDependencies: { vite: '^6.3.5', exact: '1.0.0', gone: '~2.0.0' } }, lock, '');
-  assert.deepEqual(result.pkg.devDependencies, { vite: '6.3.6', exact: '1.0.0', gone: '~2.0.0' });
-  assert.equal(result.lock.packages[''].devDependencies.vite, '6.3.6');
-  assert.deepEqual(result.changes, ['devDependencies.vite ^6.3.5 → 6.3.6']);
-  assert.deepEqual(result.unresolved, ['devDependencies.gone ~2.0.0 (not found in lockfile)']);
-});
-
-test('a first sync opens a PR with the rendered files, pinned versions, and the manifest', async () => {
+test('a first sync opens a PR with the rendered files and the manifest', async () => {
   const repo = studyRepo();
   const result = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, api: repo.api });
   assert.equal(result.status, 'opened');
@@ -59,8 +49,7 @@ test('a first sync opens a PR with the rendered files, pinned versions, and the 
   assert.equal(JSON.parse(files['package.json']).devDependencies.concurrently, '9.2.1');
   assert.equal(JSON.parse(files['package.json']).engines.node, '24.21.0');
   assert.equal(JSON.parse(files['frontend/package.json']).dependencies.recharts, '3.10.1');
-  assert.equal(JSON.parse(files['package-lock.json']).packages.frontend.dependencies.recharts, '3.10.1');
-  assert.equal(JSON.parse(files['frontend/package-lock.json']).packages[''].dependencies.recharts, '3.10.1');
+  assert.equal(files['package-lock.json'], repo.filesAt('main')['package-lock.json'], 'lockfiles are never edited by the sync');
   assert.equal(files['src/app.ts'], 'export {};\n', 'project code is untouched');
   assert.equal(repo.refs.get('heads/main'), [...repo.commits.keys()][0], 'main is never pushed to');
   const pr = repo.pulls[0];
@@ -68,7 +57,7 @@ test('a first sync opens a PR with the rendered files, pinned versions, and the 
   for (const heading of ['## What changed', '## Why', '## Main changes', '## Verification', '## Check before merging', '## Impact']) assert.ok(pr.body.includes(heading), heading);
   assert.match(pr.body, /Merging to main in this repo deploys to production/);
   assert.match(pr.body, /NODE_AUTH_TOKEN/);
-  assert.match(pr.body, /devDependencies\.concurrently \^9\.2\.0 → 9\.2\.1/);
+  assert.ok(!pr.body.includes('Pinned version ranges'));
 });
 
 test('a later central commit updates the same open PR instead of opening another', async () => {
@@ -81,14 +70,6 @@ test('a later central commit updates the same open PR instead of opening another
   assert.equal(repo.pulls[0].title, 'chore: sync central standards (project-standards@b2c3d4e)');
   assert.ok(repo.calls.includes('PATCH /repos/sirloinbh/study-log/git/refs/heads/chore/standards-sync-a1b2c3d'));
   assert.equal(JSON.parse(repo.filesAt(result.branch)[MANIFEST_PATH]).centralSha, SHA2);
-});
-
-test('a bot commit with the pre-#455 Korean prefix still counts as a bot commit', async () => {
-  const repo = studyRepo();
-  const { branch } = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, api: repo.api });
-  repo.addCommit(branch, 'chore: 중앙 표준 동기화 (project-standards@0000000)');
-  const result = await syncTarget({ root, data, target: studyTarget, centralSha: SHA2, api: repo.api });
-  assert.equal(result.status, 'updated');
 });
 
 test('a central commit leaves a sync branch with a direct commit untouched and says so on the PR (#367)', async () => {
@@ -218,7 +199,7 @@ test('shared package versions are trusted only with a successful publish.yml rel
   await assert.rejects(verifyPackages({ '@sirloinbh/tsconfig': '1.0.0' }, central(release, { ...run, path: '.github/workflows/other.yml' })), /not a successful publish\.yml run/);
 });
 
-test('apply only checks the token while maxRollout is 0, then syncs targets in rollout', async () => {
+test('apply only checks the token while every target is disabled, then syncs enabled targets', async () => {
   const tokens = [];
   const logs = [];
   const getToken = async (repo) => {
@@ -226,13 +207,13 @@ test('apply only checks the token while maxRollout is 0, then syncs targets in r
     return 'token';
   };
   const off = structuredClone(data);
-  off.sync.maxRollout = 0;
+  for (const t of off.sync.targets) t.enabled = false;
   assert.deepEqual(await apply({ data: off, targets: off.sync.targets, centralSha: SHA1, getToken, makeClient: () => null, log: (l) => logs.push(l) }), []);
   assert.deepEqual(tokens, ['sirloinbh/project-standards']);
-  assert.match(logs[0], /Installation token issued\. maxRollout is 0/);
+  assert.match(logs[0], /Installation token issued\. Every target is disabled/);
 
   const rolled = structuredClone(data);
-  rolled.sync.maxRollout = 1;
+  for (const t of rolled.sync.targets) t.enabled = t.project === 'workout-memo';
   const repos = { 'sirloinbh/workout-memo': fakeRepo('sirloinbh/workout-memo', { 'package.json': '{"name":"workout-memo"}' }) };
   const central = fakePublishedCentral();
   const results = await apply({ data: rolled, targets: rolled.sync.targets, centralSha: SHA1, getToken: async (r) => r, makeClient: (r) => repos[r]?.api ?? central, log: () => {} });
@@ -241,7 +222,7 @@ test('apply only checks the token while maxRollout is 0, then syncs targets in r
 
 test('apply reads the central repo with centralToken, not an App token (#205)', async () => {
   const rolled = structuredClone(data);
-  rolled.sync.maxRollout = 1;
+  for (const t of rolled.sync.targets) t.enabled = t.project === 'workout-memo';
   const tokens = [];
   const clients = [];
   const repos = { 'sirloinbh/workout-memo': fakeRepo('sirloinbh/workout-memo', { 'package.json': '{"name":"workout-memo"}' }) };

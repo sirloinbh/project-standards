@@ -42,7 +42,7 @@ The parent folder where you cloned the repos differs by PC (for example, `%USERP
    call "%LOCALAPPDATA%\sirloinbh-tools\open-vscode-account-b.cmd" --project "%USERPROFILE%\Documents\GitHub\study-log"
    ```
 5. **VS Code terminal:** The sync changes each repo's `.vscode/settings.json` to the new location (`sirloinbh-tools\project-terminal.ps1`). Until then, the existing settings that use the old location keep working. That is why steps 1–3 must be done before the first sync (#97).
-6. **Cleanup:** Only after you confirm that every repo works with the new location, delete the old folder `%LOCALAPPDATA%\gh-workout-memo`. The `hosts.yml` and `config.yml` in that folder are the old gh settings, so check that you no longer use them before deleting.
+6. **Cleanup:** Delete the old folder `%LOCALAPPDATA%\gh-workout-memo` once you no longer need it (a user step). The `hosts.yml` and `config.yml` in that folder are the old gh settings, so check that you no longer use them before deleting.
 
 ## Rolling back
 

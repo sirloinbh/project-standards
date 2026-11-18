@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll, serviceHost } from '../lib/registry.mjs';
-import { checkApi, checkFileNames, checkZodArrays, formatReport, runCheck } from '../standards-check.mjs';
+import { checkApi, checkFileNames, checkZodArrays, formatReport, rangeVersions, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -296,6 +296,15 @@ test('API rules: requestLog mounted after a route is warned, mounted first passe
   const late = checkApi([{ file: 'backend/src/app.ts', text: body(["app.use('/api/items', items);", 'app.use(requestLog);']) }]);
   assert.deepEqual(late, ['backend/src/app.ts:2: app.use(requestLog) must be mounted before the routes, or they get no request ID or JSON log line (docs/logging.md).']);
   assert.deepEqual(checkApi([{ file: 'backend/src/app.ts', text: body(['app.use(requestLog);', "app.use('/api/items', items);"]) }]), []);
+});
+
+test('^ and ~ dependency versions fail the check; exact versions pass (#701)', () => {
+  assert.deepEqual(rangeVersions({ dependencies: { a: '1.0.0', b: '^2.0.0' }, devDependencies: { c: '~3.1.0' }, optionalDependencies: { d: '4.0.0' } }), ['dependencies.b ^2.0.0', 'devDependencies.c ~3.1.0']);
+  const result = check(({ write, read }) => {
+    const pkg = JSON.parse(read('package.json'));
+    write('package.json', JSON.stringify({ ...pkg, devDependencies: { ...pkg.devDependencies, concurrently: '^9.2.0' } }));
+  });
+  assert.deepEqual(result.problems.filter((p) => p.group === 'version range').map((p) => p.message), ['devDependencies.concurrently ^9.2.0 must be an exact version']);
 });
 
 test('API rule warnings reach runCheck without failing it; tests are not scanned', () => {

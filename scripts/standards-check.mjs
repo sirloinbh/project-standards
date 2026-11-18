@@ -226,6 +226,12 @@ function checkLockfiles(read, problems) {
   }
 }
 
+/** Names of dependencies whose version is a ^ or ~ range; every app version must be exact (#701). */
+export function rangeVersions(pkg) {
+  return ['dependencies', 'devDependencies', 'optionalDependencies'].flatMap((section) =>
+    Object.entries(pkg[section] ?? {}).filter(([, v]) => /^[\^~]/.test(v)).map(([name, v]) => `${section}.${name} ${v}`));
+}
+
 /** Returns { problems: [{ group, path, message }], warnings: [string], manifest }. */
 export function runCheck(root) {
   const read = (rel) => {
@@ -244,6 +250,10 @@ export function runCheck(root) {
   checkPackages(manifest.packages, read, problems);
   if (manifest.registry) checkRegistry(manifest.registry, read, problems, warnings);
   checkLockfiles(read, problems);
+  for (const file of ['package.json', 'frontend/package.json', 'backend/package.json']) {
+    const text = read(file);
+    for (const range of text === null ? [] : rangeVersions(JSON.parse(text))) problems.push({ group: 'version range', path: file, message: `${range} must be an exact version` });
+  }
   // @ssm= tags name the SSM parameter the deploy script reads for a key (ADR-0014).
   const envExample = read('.env.example');
   if (envExample !== null && manifest.project) {

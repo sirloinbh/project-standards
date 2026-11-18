@@ -22,7 +22,7 @@ These are the steps an agent cannot do for you (secrets, remote account settings
 | 15 | Clean up merged local branches | 5 min | — | Not done (added 2026-10-28) |
 | 16 | Apply the git CLI branch rules on the other work PC | 5 min | #361 | `OneDrive\문서\github` PC done (2026-10-31). `Documents\GitHub` PC not done |
 
-**The recommended order for what remains is 1 → 3 → 4.** 2 is done. Once 1–4 are finished, you can start the first sync (#97: workout-memo, `maxRollout` 1). 0, 5, and 7 can be done at any time, in any order. Do 8 right after 1.
+**The recommended order for what remains is 1 → 3 → 4.** 2 is done. Once 1–4 are finished, you can start the first sync (#97: workout-memo). 0, 5, and 7 can be done at any time, in any order. Do 8 right after 1.
 
 When you finish a step, tell me something like "#21 done". What the agent does next:
 
@@ -133,7 +133,7 @@ In project-standards → Settings → Actions → General → Access, choose "Ac
 
 ### 3-5. Verify
 
-Go to project-standards → Actions → sync → Run workflow, or run `ghp workflow run sync.yml -R sirloinbh/project-standards`. It succeeded if the log shows "설치 토큰 발급 확인. maxRollout 0이라 동기화할 대상이 없습니다." (log message: installation token issued; with `maxRollout` 0 there is nothing to sync). Right now `maxRollout` is 0, so no PR is opened in any repo. If it fails, check for a typo in the App ID, whether the whole private key went in, and the installation scope.
+Go to project-standards → Actions → sync → Run workflow, or run `ghp workflow run sync.yml -R sirloinbh/project-standards`. It succeeded if the log shows "Installation token issued. Every target is disabled, so there is nothing to sync." when every target has `enabled: false`; otherwise it opens or updates the sync PRs. If it fails, check for a typo in the App ID, whether the whole private key went in, and the installation scope.
 
 ## 4. First publish of the shared packages and access permissions (#88)
 
