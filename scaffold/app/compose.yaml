@@ -28,7 +28,13 @@ services:
       TZ: Asia/Seoul
       # The shared sign-in (sirloinbh/shared-auth) checks each /api session on its network.
       AUTH_INTERNAL_URL: ${AUTH_INTERNAL_URL:-http://shared-auth-api:3110}
-    networks: [default, shared-auth]
+      # shared-ai's public key; /internal/tools is served only when it is set (docs/ai-tools.md).
+      AI_TOOLS_PUBLIC_KEY: ${AI_TOOLS_PUBLIC_KEY:-}
+    networks:
+      default: {}
+      shared-auth: {}
+      # shared-ai reads this app's tools at http://{{project.name}}-api:{{project.ports.api}}/internal/tools (ADR-0017).
+      shared-ai: { aliases: [{{project.name}}-api] }
     depends_on:
       db: { condition: service_healthy }
     restart: unless-stopped
@@ -49,4 +55,8 @@ volumes:
 # Created by the shared-auth compose project. Locally, run shared-auth first, or once: docker network create shared-auth
 networks:
   shared-auth:
+    external: true
+  # Created by deploy/remote-deploy.sh or the shared-ai deploy when missing. Locally, once: docker network create shared-ai
+  shared-ai:
+    name: shared-ai
     external: true

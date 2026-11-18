@@ -594,7 +594,7 @@ test('remote-deploy saves the api error lines before replacing the container and
   const text = rendered['study-log']['deploy/remote-deploy.sh'];
   const fn = text.match(/^save_api_errors\(\) \{[\s\S]*?^\}$/m)[0];
   assert.equal((text.match(/^ {4}save_api_errors$/gm) ?? []).length, 1, 'the deploy path saves before up -d');
-  assert.match(text, /load_ssm_env\n {2}save_api_errors\n {2}IMAGE_TAG="\$1" docker compose up -d --wait db/, 'the start path (rollback) saves before up -d');
+  assert.match(text, /load_ssm_env\n {2}save_api_errors\n {2}ensure_networks\n {2}IMAGE_TAG="\$1" docker compose up -d --wait db/, 'the start path (rollback) saves before up -d');
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'save-errors-'));
   const bin = path.join(dir, 'bin');
   fs.mkdirSync(bin);
@@ -625,6 +625,37 @@ test('remote-deploy saves the api error lines before replacing the container and
     const failing = run();
     assert.equal(failing.status, 0, 'a docker failure does not fail the deploy');
     assert.match(failing.stdout, /done/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('remote-deploy creates the shared-ai network before compose uses it, only when compose.yaml joins it (#611)', { skip: !has('bash') && 'bash not found' }, () => {
+  const text = rendered['study-log']['deploy/remote-deploy.sh'];
+  const fn = text.match(/^ensure_networks\(\) \{[\s\S]*?^\}$/m)[0];
+  assert.match(text, /save_api_errors\n {2}ensure_networks\n {2}IMAGE_TAG="\$1" docker compose up -d --wait db/, 'the start path (rollback) creates it before up');
+  assert.match(text, /ensure_networks\n {4}IMAGE_TAG="\$tag" docker compose up -d --wait db/, 'the deploy path creates it before up and the migration run');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'networks-'));
+  const bin = path.join(dir, 'bin');
+  fs.mkdirSync(bin);
+  const posix = (p) => p.split(path.sep).join('/');
+  const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+  const calls = path.join(dir, 'calls.txt');
+  const docker = (exists) => fs.writeFileSync(path.join(bin, 'docker'), ['#!/bin/bash', `echo "$@" >> '${posix(calls)}'`, `[ "$2" = inspect ] && exit ${exists ? 0 : 1}`, 'exit 0', ''].join('\n'), { mode: 0o755 });
+  const run = () => spawnSync('bash', ['-c', `set -euo pipefail; export PATH="${pathVar}"; ${fn}\nensure_networks; echo done`], { cwd: dir, encoding: 'utf8' });
+  const logged = () => (fs.existsSync(calls) ? fs.readFileSync(calls, 'utf8').trim().split('\n') : []);
+  try {
+    docker(false);
+    fs.writeFileSync(path.join(dir, 'compose.yaml'), 'networks:\n  shared-auth:\n    external: true\n');
+    assert.equal(run().status, 0);
+    assert.deepEqual(logged(), [], 'an app that has not joined shared-ai makes no docker call');
+    fs.writeFileSync(path.join(dir, 'compose.yaml'), 'networks:\n  shared-ai:\n    name: shared-ai\n    external: true\n');
+    assert.equal(run().status, 0);
+    assert.deepEqual(logged(), ['network inspect shared-ai', 'network create shared-ai']);
+    fs.rmSync(calls);
+    docker(true);
+    assert.equal(run().status, 0);
+    assert.deepEqual(logged(), ['network inspect shared-ai'], 'an existing network is kept');
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

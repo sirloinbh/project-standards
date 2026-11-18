@@ -99,9 +99,18 @@ test('a new app starts behind the shared sign-in (#550): middleware, gate, compo
   assert.match(byPath.get('backend/src/server.ts'), /createApp\(pool, \{ auth: sharedAuth\(\) \}\)/);
   assert.match(byPath.get('frontend/src/app.tsx'), /<SignInGate>[\s\S]*<AppShell [^>]*actions=\{<AccountActions \/>\}/);
   const compose = byPath.get('compose.yaml');
-  assert.match(compose, /AUTH_INTERNAL_URL: \$\{AUTH_INTERNAL_URL:-http:\/\/shared-auth-api:3110\}\n\s+networks: \[default, shared-auth\]/);
+  assert.match(compose, /AUTH_INTERNAL_URL: \$\{AUTH_INTERNAL_URL:-http:\/\/shared-auth-api:3110\}\n/);
+  assert.match(compose, /^ {6}shared-auth: \{\}$/m);
   assert.match(compose, /^networks:\n {2}shared-auth:\n {4}external: true$/m);
   assert.match(byPath.get('.env.example'), /^AUTH_INTERNAL_URL=$/m);
+});
+
+test('a new app serves its AI tools to shared-ai on the shared-ai network (ADR-0017, #611)', () => {
+  const compose = byPath.get('compose.yaml');
+  assert.match(compose, /AI_TOOLS_PUBLIC_KEY: \$\{AI_TOOLS_PUBLIC_KEY:-\}/);
+  assert.match(compose, /^ {6}shared-ai: \{ aliases: \[[a-z-]+-api\] \}$/m);
+  assert.match(compose, /^ {2}shared-ai:\n {4}name: shared-ai\n {4}external: true$/m);
+  assert.match(byPath.get('.env.example'), /@ssm=\/sirloinbh\/shared\/ai-tools-public-key\nAI_TOOLS_PUBLIC_KEY=$/m);
 });
 
 test('the migration runner keeps the history table and lock key documented in docs/conventions/database.md', () => {
