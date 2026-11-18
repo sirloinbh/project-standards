@@ -25,7 +25,7 @@ Reviewing PRs follows the [std-code-review](../templates/common/skills/std-code-
 |---|---|---|
 | project-standards | The agent (merge commit after CI passes) | User decision (2026-10-22, #128). The work is docs, text, and scripts |
 | The 8 app repos | The agent, after the review loop and green CI | User decision (2026-11-15, #591). Merging to main is a production deploy; the user chose auto-merge there too |
-| shared-auth | The agent, after the review loop and green CI | User decision (2026-11-15, #591). Merging is not applying: a server deploy still needs the user |
+| shared-auth, shared-ai | The agent, after the review loop and green CI | User decision (2026-11-15, #591). Merging is not applying: a server deploy still needs the user |
 | shared-aws-infrastructure | The agent, after the review loop and green CI | User decision (2026-11-15, #591). Merging is not applying: `terraform apply` still needs the user |
 
 - The review loop is [std-code-review](../templates/common/skills/std-code-review/SKILL.md) section 8: 1 or 2 rounds (more only while blocking findings remain), fixes on the same branch, a new issue for big problems outside the PR, then `pr merge --merge` and the local cleanup ([ADR-0016](adr/0016-agent-reviews-and-merges-own-prs.md)).

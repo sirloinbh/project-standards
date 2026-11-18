@@ -1,6 +1,6 @@
 # Server reverse proxy and HTTPS
 
-One nginx on the Lightsail server takes 443 for all 8 apps and the shared sign-in (`auth`, registry `sharedServices`, [ADR-0015](adr/0015-shared-sign-in.md)) and forwards each subdomain to that app's web port on `127.0.0.1`. One Let's Encrypt wildcard certificate (`*.<root domain>`) covers every app, and certbot renews it through Route 53 DNS validation, so port 80 never has to be open to everyone ([ADR-0012](adr/0012-shared-domain-subdomains.md), #251).
+One nginx on the Lightsail server takes 443 for all 8 apps and the shared services (registry `sharedServices`: the sign-in `auth`, [ADR-0015](adr/0015-shared-sign-in.md), and the AI service `ai`, [ADR-0017](adr/0017-ai-service-mcp-and-shell.md)) and forwards each subdomain to that app's web port on `127.0.0.1`. One Let's Encrypt wildcard certificate (`*.<root domain>`) covers every app, and certbot renews it through Route 53 DNS validation, so port 80 never has to be open to everyone ([ADR-0012](adr/0012-shared-domain-subdomains.md), #251).
 
 The config is generated from the registry, so nothing is edited by hand on the server. Each app publishes its web container only on `127.0.0.1:<ports.web>`, and its own nginx answers to its subdomain and takes the client IP from `X-Forwarded-For` (#254).
 

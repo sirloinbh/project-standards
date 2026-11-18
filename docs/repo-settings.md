@@ -1,6 +1,6 @@
 # Repo Settings Baseline
 
-The GitHub settings baseline for the 10 downstream repos (#22). The "repo settings" column and section of the compliance report (`docs/compliance.md`, daily) are the result of comparing against this baseline. It is checked with the sync App's Administration, Secrets, and Variables **read** permissions, and it does not change any settings ([ADR-0002](adr/0002-github-app-for-sync.md)).
+The GitHub settings baseline for the 11 downstream repos (#22). The "repo settings" column and section of the compliance report (`docs/compliance.md`, daily) are the result of comparing against this baseline. It is checked with the sync App's Administration, Secrets, and Variables **read** permissions, and it does not change any settings ([ADR-0002](adr/0002-github-app-for-sync.md)).
 
 ## Baseline
 
