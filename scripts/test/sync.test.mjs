@@ -68,10 +68,10 @@ test('a plan includes the manifest with central SHA, packages, and the registry 
   assert.deepEqual(manifest.registry.ports, original.data.projects.projects.find((p) => p.name === 'study-log').ports);
   // design-tokens (#126) and auth-client (#551) joined once all 8 apps installed them; the check requires every listed package installed.
   assert.deepEqual(Object.keys(manifest.packages), ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig', '@sirloinbh/design-tokens', '@sirloinbh/auth-client']);
-  assert.equal(plan.inRollout, true, 'study-log is rollout 2, opened with maxRollout 2 (#113)');
+  assert.equal(plan.enabled, true, 'study-log is synced');
   const infra = original.data.sync.targets.find((t) => t.profile === 'infra');
   const infraPlan = planTarget({ root, data: original.data, target: infra, centralSha: 'abc1234' });
-  assert.equal(infraPlan.inRollout, true, 'infra is rollout 3, opened with maxRollout 3 (#115)');
+  assert.equal(infraPlan.enabled, true, 'infra is synced');
   assert.deepEqual(infraPlan.files.filter((f) => /\.(tf|tfvars|sh)$|\.tfvars\.|\.terraform\.lock\.hcl$/.test(f.path)), [], 'infra sync never writes Terraform or shell files');
   assert.deepEqual(plan.fieldsPending, ['backend/package.json', 'frontend/package.json', 'package.json']);
 });

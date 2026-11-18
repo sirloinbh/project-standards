@@ -41,7 +41,7 @@ export function applyFields(text, fields) {
 
 /**
  * Plans one target. readExisting(path) returns the target repository's current text or null.
- * Returns { target, inRollout, files: [{ path, mode, source, content }], skipped: [{ path, reason }], fieldsPending: [path], manifest }.
+ * Returns { target, enabled, files: [{ path, mode, source, content }], skipped: [{ path, reason }], fieldsPending: [path], manifest }.
  */
 export function planTarget({ root, data, target, centralSha, workflowSha = centralSha, readExisting = () => null }) {
   const profile = data.sync.profiles[target.profile];
@@ -83,5 +83,5 @@ export function planTarget({ root, data, target, centralSha, workflowSha = centr
   }
   files.push({ path: MANIFEST_PATH, mode: 'generated', source: 'scripts/sync.mjs', content: `${JSON.stringify(manifest, null, 2)}\n` });
 
-  return { target, inRollout: target.rollout <= data.sync.maxRollout, files, skipped, fieldsPending, manifest };
+  return { target, enabled: target.enabled !== false, files, skipped, fieldsPending, manifest };
 }

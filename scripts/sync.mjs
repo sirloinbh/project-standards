@@ -6,7 +6,7 @@
 // --labels-from <repo-name>=<file> reads a target's labels exported with
 // `label list --json name,color,description --limit 200` and adds the planned label changes to plan.json.
 //   node scripts/sync.mjs --apply
-// --apply (sync workflow only) opens or updates sync PRs for targets within maxRollout and creates or
+// --apply (sync workflow only) opens or updates sync PRs for enabled targets and creates or
 // updates their issue labels (templates/common/labels.json), using the GitHub App credentials in
 // SYNC_APP_ID and SYNC_APP_PRIVATE_KEY.
 import { execFileSync } from 'node:child_process';
@@ -74,8 +74,7 @@ export function dryRun({ data, targets, local, labelsFrom = {}, out, centralSha,
     summary.push({
       repo: target.repo,
       profile: target.profile,
-      rollout: target.rollout,
-      inRollout: plan.inRollout,
+      enabled: plan.enabled,
       localCheckout: Boolean(local[name]),
       files: plan.files.map((f) => ({ path: f.path, mode: f.mode, source: f.source })),
       skipped: plan.skipped,
@@ -83,28 +82,28 @@ export function dryRun({ data, targets, local, labelsFrom = {}, out, centralSha,
       labels: labelSummary(labels, labelsFrom[name]),
     });
   }
-  const overview = { centralSha, maxRollout: data.sync.maxRollout, labels: labels.map((l) => l.name), targets: summary };
+  const overview = { centralSha, labels: labels.map((l) => l.name), targets: summary };
   fs.writeFileSync(path.join(out, 'plan.json'), `${JSON.stringify(overview, null, 2)}\n`);
   return summary;
 }
 
 /**
- * Opens or updates sync PRs for targets within maxRollout. `getToken(repo)` returns an installation
- * token. With no target in rollout it only checks that a token can be issued (docs/github-app.md step 5).
+ * Opens or updates sync PRs for targets that are not `enabled: false`. `getToken(repo)` returns an installation
+ * token. With no enabled target it only checks that a token can be issued (docs/github-app.md step 5).
  * Each target's issue labels are then created or updated; a label failure is reported in `labelsError`.
  * `centralToken` reads the central repo's releases and publish runs. The workflow passes its own
  * GITHUB_TOKEN (actions: read) because the App has no Actions permission (#205).
  */
 export async function apply({ data, targets, centralSha, workflowSha = centralSha, getToken, makeClient, centralToken, labels = loadLabels(root), log = console.log }) {
-  const inRollout = targets.filter((t) => t.rollout <= data.sync.maxRollout);
-  if (!inRollout.length) {
+  const enabled = targets.filter((t) => t.enabled !== false);
+  if (!enabled.length) {
     await getToken('sirloinbh/project-standards');
-    log(`Installation token issued. maxRollout is ${data.sync.maxRollout}, so there is nothing to sync.`);
+    log(`Installation token issued. Every target is disabled, so there is nothing to sync.`);
     return [];
   }
   const centralApi = makeClient(centralToken ?? (await getToken('sirloinbh/project-standards')));
   const results = [];
-  for (const target of inRollout) {
+  for (const target of enabled) {
     let api;
     try {
       api = makeClient(await getToken(target.repo));
@@ -167,7 +166,7 @@ if (isMain && process.argv.includes('--apply')) {
       if (!targets.some((t) => t.repo.split('/')[1] === name)) throw new Error(`--labels-from: unknown target ${name}`);
     }
     for (const t of dryRun({ data, targets, local: args.local, labelsFrom: args.labelsFrom, out: path.resolve(args.out), centralSha, workflowSha: args.sha ? args.sha : lastWorkflowCommit(centralSha) })) {
-      const note = [t.inRollout ? 'in rollout' : `waiting (rollout ${t.rollout})`, t.skipped.length && `skipped ${t.skipped.length}`, t.fieldsPending.length && `fields not merged ${t.fieldsPending.length}`, t.labels && describeLabelPlan(t.labels)].filter(Boolean).join(', ');
+      const note = [t.enabled ? 'enabled' : 'disabled', t.skipped.length && `skipped ${t.skipped.length}`, t.fieldsPending.length && `fields not merged ${t.fieldsPending.length}`, t.labels && describeLabelPlan(t.labels)].filter(Boolean).join(', ');
       console.log(`${t.repo}: ${t.files.length} file(s) — ${note}`);
     }
     console.log(`Result: ${path.resolve(args.out)}`);

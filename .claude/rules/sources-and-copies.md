@@ -23,6 +23,6 @@ Edit the source, never the copy.
 | Agent blocking settings and hooks | `templates/common/.claude/`, `templates/common/.codex/` | This repo's `.claude/settings.json`, `.claude/hooks/`, `.codex/` |
 | Tool versions, external Actions, shared app dependency versions | `versions.json` | `docs/versions.md` (generated), managed fields of app `package.json` |
 | Project values such as ports and DB names | `registry/projects.json` | `docs/projects.md` (generated) |
-| Sync targets and rollout stages | `sync.config.json` | — |
+| Sync targets | `sync.config.json` | — |
 
 The sync script updates only downstream repos. Run `npm run self` to write this repo's own copies of the skills, hooks, Codex files, and GitHub templates from the source; `npm run check` fails (`self:check`) when a copy differs. This repo's own `.claude/rules/` is not synced.
