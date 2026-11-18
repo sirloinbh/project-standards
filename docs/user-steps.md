@@ -209,8 +209,6 @@ Do this right after finishing 1. If you have several work PCs, do it on each PC.
 
 ```powershell
 claude --version    # must be 2.1.295 or later (update if lower)
-Test-Path "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1"    # True
-powershell -NoProfile -ExecutionPolicy Bypass -File "$env:LOCALAPPDATA\sirloinbh-tools\agents.ps1" -Root <project-standards folder> status
 ```
 
 Then, in a newly started Claude Code session, check that `npm --silent install --help` is blocked and `npm ls` runs. If Claude Code is older than 2.1.295, the command runs as-is when the blocking hook fails. Leave the result (PC name, version) as a comment on #183.

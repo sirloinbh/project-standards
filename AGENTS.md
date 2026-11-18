@@ -26,7 +26,6 @@ This repository is the central repo for `sirloinbh`'s personal app portfolio (8 
    - Merging an app repo to main can be a production deploy; the user chose auto-merge there too. Merging is not applying: `terraform apply` and other real AWS or production changes still need the user's OK.
    - Still ask the user first for: `[직접]` (user does it directly) and `needs-user` issues, package installs outside the pre-approved scope, and decisions the issue marks as "user confirmation".
    - If the PR body lists an item to confirm before merging, do not merge; ask the user.
-   - Exception: PRs that an agent worker (`tools/agents`) opens in a downstream repo follow `autoMerge` in that repo's `.agents.json` (default `true`; per-repo values are in the table in [docs/tools.md](docs/tools.md#auto-merge-per-repo)). For a repo marked `false` in the table, include `.agents.json` in the PR that introduces the worker (#184).
 
 Answering questions, giving recommendations, and read-only investigation do not create an issue or a branch.
 
@@ -37,7 +36,6 @@ This works with Node built-in modules only, with no external npm packages. Do no
 | Command | When |
 |---|---|
 | `npm run check` | Before every commit and PR. Tests, registry conflicts, whether generated docs and design tokens are current, package rules, workflow checks |
-| `npm run test:agents` | When you changed `tools/agents/` (includes the Windows path check) |
 | `UPDATE_SNAPSHOT=1 npm test` | When the list of files downstream repos receive changed. Review the snapshot change in the PR |
 | `npm run docs`, `npm run tokens` | To regenerate the generated docs after changing the registry or tokens |
 | `npm run sync:preview` | To preview the files downstream repos will receive in `.local/sync-preview/` |

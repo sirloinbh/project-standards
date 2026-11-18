@@ -162,8 +162,7 @@ packages/<pkg> change PR (with version and CHANGELOG) → user merges
 | Project specific | `AGENTS.project.md`, `skills/<proj>-*`, app code, `compose.yaml` (build secret settings are checked), `docs/changes/` | Not checked |
 | Downstream lockfiles | `frontend/package-lock.json`, `backend/package-lock.json` | Fails if installed versions differ from the root `package-lock.json` ([dependency policy](dependency-policy.md#sub-lockfiles-frontend-backend)) |
 | Scaffold only | `scaffold/app/**` | Warning only for existing repos (`directory-rules`) |
-| Central tools | `tools/**` (account tools, local agent worker `tools/agents/`) | Not copied to downstream repos. Install once on the PC and run against a specified target repo (#19, #165) |
-| Repo agent config | `.agents.json` (only repos that use the agent worker) | Not checked. The worker validates the format when it runs ([tools.md](tools.md#local-agent-worker-toolsagents)) |
+| Central tools | `tools/**` (account tools; the local agent worker `tools/agents/` was archived in #708) | Not copied to downstream repos. Install once on the PC and run against a specified target repo (#19, #165) |
 
 The Docker files, which were identical across the 8 apps except for ports, moved to Option B fully managed (#6). The values injected into templates are as follows.
 
