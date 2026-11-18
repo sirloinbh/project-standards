@@ -43,7 +43,34 @@ registerToolRoutes(app, { app: 'workout-memo', tools, pool, publicKey: options.t
 | `POST /internal/tools/<name>` | `{ result }`; 401 bad or missing token, 403 missing scope, 404 unknown tool, 400 invalid input |
 
 - The routes are registered only when `AI_TOOLS_PUBLIC_KEY` (shared-ai's Ed25519 public key, PEM; `\n` escapes are accepted in `.env`) is set. Without it `/internal/tools` is the app's JSON 404.
-- `/internal` is outside `/api`: nginx forwards only `/api`, so the proxy never reaches the tools, and the shared sign-in session is not used. `shared-ai` calls the API container directly on the private Docker network `shared-ai` (#611 adds the network).
+- `/internal` is outside `/api`: nginx forwards only `/api`, so the proxy never reaches the tools, and the shared sign-in session is not used. `shared-ai` calls the API container directly on the private Docker network `shared-ai` at `http://<app>-api:<registry api port>`.
+
+### Joining the shared-ai network (#611)
+
+The app's own `compose.yaml` (new apps get it from the scaffold):
+
+```yaml
+  api:
+    environment:
+      AI_TOOLS_PUBLIC_KEY: ${AI_TOOLS_PUBLIC_KEY:-}
+    networks:
+      default: {}
+      shared-auth: {}
+      shared-ai: { aliases: [<app>-api] }
+networks:
+  shared-ai:
+    name: shared-ai
+    external: true
+```
+
+and in `.env.example`, so the deploy reads the key from SSM:
+
+```bash
+# @desc shared-ai's Ed25519 public key (PEM, one line with \n escapes) ... @secret @used=backend,compose @ssm=/sirloinbh/shared/ai-tools-public-key
+AI_TOOLS_PUBLIC_KEY=
+```
+
+The network is external everywhere. `deploy/remote-deploy.sh` (managed) creates it when `compose.yaml` uses it and it is missing, and so does the shared-ai deploy, so an app and shared-ai can deploy in either order. Locally, create it once: `docker network create shared-ai`. The key pair is made once with `backend/scripts/signing-key.mjs` in sirloinbh/shared-ai (its README); the private half stays in shared-ai.
 
 ## The call token
 
