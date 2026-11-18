@@ -10,5 +10,5 @@ test('shows the server status from /api/health', async () => {
   );
   render(<App />);
   expect(screen.getByRole('heading', { name: '개요' })).toBeInTheDocument();
-  expect(await screen.findByText('서버 정상')).toBeInTheDocument();
+  expect(await screen.findByText('Server connected')).toBeInTheDocument();
 });
