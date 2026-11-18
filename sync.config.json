@@ -32,6 +32,7 @@
     { "repo": "sirloinbh/plan-routine", "profile": "app", "project": "plan-routine", "rollout": 2 },
     { "repo": "sirloinbh/dev-career-portfolio", "profile": "app", "project": "dev-career-portfolio", "rollout": 2 },
     { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null, "rollout": 3 },
-    { "repo": "sirloinbh/shared-auth", "profile": "service", "project": null, "rollout": 3 }
+    { "repo": "sirloinbh/shared-auth", "profile": "service", "project": null, "rollout": 3 },
+    { "repo": "sirloinbh/shared-ai", "profile": "service", "project": null, "rollout": 3 }
   ]
 }

@@ -134,11 +134,17 @@ test('shared-auth holds slot 10 as a shared service at the reserved subdomain au
   assert.equal(original.data.projects.projects.length, 8, 'not counted as an app');
 });
 
+// ADR-0017: the AI service holds slot 11 and the subdomain ai.
+test('shared-ai holds slot 11 as a shared service at the subdomain ai', () => {
+  const service = original.data.projects.sharedServices.find((s) => s.name === 'shared-ai');
+  assert.deepEqual([service.slot, service.repo, service.subdomain, service.ports], [11, 'shared-ai', 'ai', { web: 8111, api: 3111, db: 15411 }]);
+});
+
 test('shared services share slots, ports, and subdomains with apps, and need one port', () => {
   const { errors } = fixture((d) => {
     d.projects.sharedServices.push(
       { slot: 2, name: 'other-service', repo: 'other-service', subdomain: 'study-log', summary: 'a test service', ports: { web: 8102 } },
-      { slot: 11, name: 'empty-service', repo: 'empty-service', subdomain: 'auth', summary: 'a test service', ports: {} },
+      { slot: 12, name: 'empty-service', repo: 'empty-service', subdomain: 'auth', summary: 'a test service', ports: {} },
     );
   });
   assert.ok(errors.some((e) => e.startsWith('slot "2" is used by study-log, other-service')), errors.join('\n'));

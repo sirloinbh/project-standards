@@ -216,5 +216,6 @@ test('parameters may belong to the shared space, an active app, or a shared serv
   assert.equal(parameterProblem('/sirloinbh/shared/anthropic-api-key'), null);
   assert.equal(parameterProblem('/sirloinbh/workout-memo/some-key'), null);
   assert.equal(parameterProblem('/sirloinbh/shared-auth/github-client-id'), null);
+  assert.equal(parameterProblem('/sirloinbh/shared-ai/anthropic-api-key'), null);
   assert.equal(parameterProblem('/sirloinbh/not-an-app/key'), 'not-an-app is not an active app or shared service in registry/projects.json');
 });

@@ -122,9 +122,9 @@ test('a template that would write a protected path fails', () => {
   assert.throws(() => planTarget({ root, data: copy.data, target: targetOf(copy.data, 'study-log'), centralSha: 'x' }), /would write protected path/);
 });
 
-// What each of the 10 repositories receives. When templates change on purpose, update the snapshot:
+// What each of the 11 repositories receives. When templates change on purpose, update the snapshot:
 //   UPDATE_SNAPSHOT=1 npm test
-test('the file list for all 9 targets matches the reviewed snapshot', () => {
+test('the file list for all 11 targets matches the reviewed snapshot', () => {
   const actual = Object.fromEntries(
     original.data.sync.targets.map((target) => {
       const { manifest } = planTarget({ root, data: original.data, target, centralSha: 'snapshot' });
@@ -141,11 +141,12 @@ test('the dry-run CLI writes every target and plan.json', () => {
     const run = spawnSync(process.execPath, [path.join(root, 'scripts/sync.mjs'), '--dry-run', '--out', out, '--sha', 'cli0001'], { encoding: 'utf8' });
     assert.equal(run.status, 0, run.stderr);
     const plan = JSON.parse(fs.readFileSync(path.join(out, 'plan.json'), 'utf8'));
-    assert.equal(plan.targets.length, 10);
+    assert.equal(plan.targets.length, 11);
     assert.ok(fs.existsSync(path.join(out, 'study-log', 'AGENTS.md')));
     assert.ok(fs.existsSync(path.join(out, 'shared-aws-infrastructure', MANIFEST_PATH)));
     assert.ok(!fs.existsSync(path.join(out, 'shared-aws-infrastructure', 'AGENTS.md')));
     assert.ok(fs.existsSync(path.join(out, 'shared-auth', 'AGENTS.md')), 'the service profile ships AGENTS.md');
+    assert.ok(fs.existsSync(path.join(out, 'shared-ai', 'AGENTS.md')), 'shared-ai gets the service profile too');
     const rejected = spawnSync(process.execPath, [path.join(root, 'scripts/sync.mjs'), '--out', out], { encoding: 'utf8' });
     assert.equal(rejected.status, 1);
     assert.match(rejected.stderr, /use --dry-run --out <folder> to preview, or --apply in the sync workflow/);

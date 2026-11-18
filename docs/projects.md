@@ -43,6 +43,7 @@ Not apps: services every app uses (ADR-0015). They hold a slot, and may use a re
 | Slot | Service | Repository | Address | Ports | Summary |
 |---|---|---|---|---|---|
 | 10 | shared-auth | shared-auth | auth.daysofme.com | web 8110, api 3110, db 15410 | Shared sign-in for all apps (GitHub and Google, owner only) and the OAuth server for AI tools and MCP clients (ADR-0015). |
+| 11 | shared-ai | shared-ai | ai.daysofme.com | web 8111, api 3111, db 15411 | One AI service for all apps: the tool hub over each app's /internal/tools, the integrated MCP server, and the AI shell's Claude calls (ADR-0017, ADR-0019). |
 
 Port formula: base value + slot. web 8100, api 3100, e2e api 3200, vite 5200, e2e web 5300, db 15400. Reserved ports (do not assign): 3000, 4173, 5173, 5432, 8080. Basis: [ADR-0006](adr/0006-port-slot-allocation.md)
 

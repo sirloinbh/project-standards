@@ -8,11 +8,11 @@ This is the procedure for the GitHub App `project-standards-sync`, which opens t
 |---|---|
 | App name | `project-standards-sync` |
 | Owner | Personal account `sirloinbh` |
-| Installation scope | Only the 11 repos below (do not choose All repositories) |
+| Installation scope | Only the 12 repos below (do not choose All repositories) |
 | Private key storage | Central repo Actions secret `SYNC_APP_PRIVATE_KEY` |
 | App ID storage | Central repo Actions variable `SYNC_APP_ID` |
 
-Repos to install on: `project-standards`, `workout-memo`, `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio`, `shared-aws-infrastructure`, `shared-auth`
+Repos to install on: `project-standards`, `workout-memo`, `study-log`, `health-log`, `life-journal`, `money-ledger`, `cert-manager`, `plan-routine`, `dev-career-portfolio`, `shared-aws-infrastructure`, `shared-auth`, `shared-ai`
 
 ### Repository permissions
 
@@ -56,7 +56,7 @@ Do not grant the Actions permission. When the sync checks the publish record of 
 ## 3. Install [User]
 
 1. App settings page → Install App → **Install** next to `sirloinbh`.
-2. Choose **Only select repositories** and select the 10 repos above.
+2. Choose **Only select repositories** and select the 12 repos above.
 3. When you create a new project repo, add that repo here (see "Adding a new project" in the README).
 
 ## 4. Allow downstream repos to use the central CI [User]

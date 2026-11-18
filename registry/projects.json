@@ -484,6 +484,18 @@
         "api": 3110,
         "db": 15410
       }
+    },
+    {
+      "slot": 11,
+      "name": "shared-ai",
+      "repo": "shared-ai",
+      "subdomain": "ai",
+      "summary": "One AI service for all apps: the tool hub over each app's /internal/tools, the integrated MCP server, and the AI shell's Claude calls (ADR-0017, ADR-0019).",
+      "ports": {
+        "web": 8111,
+        "api": 3111,
+        "db": 15411
+      }
     }
   ]
 }

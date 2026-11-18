@@ -23,7 +23,7 @@ test('every active app gets a server block for its subdomain and registry web po
     assert.match(block, /listen 443 ssl;/);
     assert.match(block, /Strict-Transport-Security/);
   }
-  assert.equal(proxyApps(data, domain).length, 9);
+  assert.equal(proxyApps(data, domain).length, 10);
 });
 
 test('the shared sign-in gets auth.<domain> on its registry web port (ADR-0015)', () => {
@@ -32,6 +32,14 @@ test('the shared sign-in gets auth.<domain> on its registry web port (ADR-0015)'
   assert.match(block, /proxy_pass http:\/\/127\.0\.0\.1:8110;/);
   const redirect = conf.split('\n\n').find((b) => b.includes('return 301'));
   assert.ok(redirect.includes(`auth.${domain}`), 'HTTP redirects auth too');
+});
+
+test('the AI service gets ai.<domain> on its registry web port (ADR-0017)', () => {
+  const block = conf.split(/\n\n(?=# )/).find((b) => b.includes(`server_name ai.${domain};`));
+  assert.ok(block, 'ai block');
+  assert.match(block, /proxy_pass http:\/\/127\.0\.0\.1:8111;/);
+  const redirect = conf.split('\n\n').find((b) => b.includes('return 301'));
+  assert.ok(redirect.includes(`ai.${domain}`), 'HTTP redirects ai too');
 });
 
 test('HTTP redirects only app names, and unknown names get nothing', () => {
