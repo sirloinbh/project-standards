@@ -25,4 +25,4 @@ Edit the source, never the copy.
 | Project values such as ports and DB names | `registry/projects.json` | `docs/projects.md` (generated) |
 | Sync targets and rollout stages | `sync.config.json` | — |
 
-The sync script updates only downstream repos. Copy this repo's copies from the source in the same PR. This repo's own `.claude/rules/` is not synced.
+The sync script updates only downstream repos. Run `npm run self` to write this repo's own copies of the skills, hooks, Codex files, and GitHub templates from the source; `npm run check` fails (`self:check`) when a copy differs. This repo's own `.claude/rules/` is not synced.
