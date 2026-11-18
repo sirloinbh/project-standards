@@ -76,6 +76,24 @@ export function checkComposeSecrets(text) {
   return problems;
 }
 
+// The deploy script (templates/app/deploy/remote-deploy.sh.tmpl) tags images by commit to roll back, reads
+// the web port from WEB_BIND/WEB_PORT, and runs migrations with the root db:migrate. Local DBs apply
+// migrations through the same runner, so compose must not also mount them into initdb (#695).
+export function checkComposeDeploy(text, { dbName = null, scripts = {} } = {}) {
+  const problems = [];
+  const name = dbName ?? '[a-z0-9_-]+';
+  for (const part of ['backend', 'frontend']) {
+    if (!new RegExp(`^\\s*image:\\s*['"]?${name}-${part}:\\$\\{IMAGE_TAG(:-[^}]*)?\\}`, 'm').test(text)) {
+      problems.push(`image ${dbName ?? '<db>'}-${part}:\${IMAGE_TAG} is missing, so the deploy script cannot roll back to the previous image`);
+    }
+  }
+  if (!/\$\{WEB_BIND(:-[^}]*)?\}:\$\{WEB_PORT(:-[^}]*)?\}:80\b/.test(text)) problems.push('the web port must be published as ${WEB_BIND}:${WEB_PORT}:80, which the deploy script sets in .env');
+  if (/docker-entrypoint-initdb\.d/.test(text)) problems.push('database/migrations must not be mounted into docker-entrypoint-initdb.d; the migration runner applies and records them');
+  if (/(?<!\$)\$POSTGRES_(USER|DB)\b/.test(text)) problems.push('the healthcheck must write $$POSTGRES_USER and $$POSTGRES_DB so the container, not compose, expands them');
+  if (!scripts['db:migrate']) problems.push('package.json has no root db:migrate script, which the deploy and CI run');
+  return problems;
+}
+
 // API rules from docs/directory-rules.md "API". Warnings only: the apps grew different layouts
 // (routes/ modules or Routers in src/), so these look for the rules, not for one file layout.
 // sources: [{ file: 'backend/src/…', text }] without tests. Returns warning strings.
@@ -256,6 +274,15 @@ export function runCheck(root) {
   const compose = read('compose.yaml');
   if (compose !== null && (manifest.files['frontend/Dockerfile'] || manifest.files['backend/Dockerfile'])) {
     for (const message of checkComposeSecrets(compose)) problems.push({ group: 'build secret', path: 'compose.yaml', message });
+  }
+  if (compose !== null && manifest.profile === 'app') {
+    let scripts = {};
+    try {
+      scripts = JSON.parse(read('package.json') ?? '{}').scripts ?? {};
+    } catch {
+      // an unreadable package.json is reported by the managed file check
+    }
+    for (const message of checkComposeDeploy(compose, { dbName: manifest.registry?.db?.name ?? null, scripts })) problems.push({ group: 'deploy contract', path: 'compose.yaml', message });
   }
   return { problems, warnings, manifest };
 }
