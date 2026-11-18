@@ -9,7 +9,7 @@ import { loadAll, serviceHost } from './lib/registry.mjs';
 const UNSET = 'TBD';
 
 export function renderProjects({ projects, platform, sync }) {
-  const rollout = new Map(sync.targets.map((t) => [t.project, t.rollout]));
+  const synced = new Map(sync.targets.map((t) => [t.project, t.enabled === false ? 'paused' : 'yes']));
   const lines = [
     '# Project overview',
     '',
@@ -17,13 +17,13 @@ export function renderProjects({ projects, platform, sync }) {
     '',
     '## Projects',
     '',
-    '| Slot | Project | Name | Display name | Domain | Status | DB / test DB | Service address | AWS prefix | Rollout stage |',
+    '| Slot | Project | Name | Display name | Domain | Status | DB / test DB | Service address | AWS prefix | Synced |',
     '|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const p of [...projects.projects].sort((a, b) => a.slot - b.slot)) {
     const host = serviceHost(p, platform) ?? UNSET;
     lines.push(
-      `| ${String(p.slot).padStart(2, '0')} | ${p.name} | ${p.title} | ${p.displayName} | ${p.domain} | ${p.status} | ${p.db.name} / ${p.db.testName} | ${host} | ${p.aws.prefix ?? UNSET} | ${rollout.get(p.name) ?? '-'} |`,
+      `| ${String(p.slot).padStart(2, '0')} | ${p.name} | ${p.title} | ${p.displayName} | ${p.domain} | ${p.status} | ${p.db.name} / ${p.db.testName} | ${host} | ${p.aws.prefix ?? UNSET} | ${synced.get(p.name) ?? '-'} |`,
     );
   }
   lines.push('', '## Ports', '', '| Project | web | api | e2e api | vite | e2e web | db |', '|---|---|---|---|---|---|---|');

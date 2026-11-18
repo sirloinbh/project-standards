@@ -109,7 +109,7 @@ A sentence in AGENTS.md holds only while the agent remembers it, and permission 
 | `pr merge --delete-branch` (`-d`) through `gh` or the wrapper | Hook |
 | Editing the `.claude/skills/` copies with Edit, Write, or NotebookEdit | Hook. Shell copies (`cp`, `npm run skills:sync`) stay allowed because that is how copies are made |
 | `git reset --hard`, `git clean`, `git stash`, `git rebase`, `git branch -D`, `git switch -f` | Not blocked. The user decided on 2026-11-08 (#418) that they run without asking, so they are in `permissions.allow` (see "Why destructive git commands run without asking") |
-| Pushing directly to downstream or subtree repos (`scripts/push-repositories.ps1`), merging downstream PRs, raising `maxRollout`, doing user steps, writing secrets into docs, PRs, or logs, overwriting user changes | Sentence in AGENTS.md: legitimate uses look the same as the forbidden ones, so a hook cannot tell them apart |
+| Pushing directly to downstream or subtree repos (`scripts/push-repositories.ps1`), merging downstream PRs, pausing or enabling a sync target, doing user steps, writing secrets into docs, PRs, or logs, overwriting user changes | Sentence in AGENTS.md: legitimate uses look the same as the forbidden ones, so a hook cannot tell them apart |
 
 - The hook runs before the permission check. A fresh `claude -p` session that explicitly allowed `git add .env` and `git push origin main` with `--allowedTools` was still blocked by the hook, and nothing was staged (2026-11-11). Claude Code runs `PreToolUse` hooks in every permission mode, `bypassPermissions` included (hooks docs).
 - Read-only checks: a bare `git push` asks git for the current branch (`git symbolic-ref`). Nothing else touches the repository.

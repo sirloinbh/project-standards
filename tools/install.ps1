@@ -1,5 +1,5 @@
 # Installs the personal account tools into one folder shared by every sirloinbh project.
-# It never deletes or changes the previous location (%LOCALAPPDATA%\gh-workout-memo).
+# It never deletes or changes an old %LOCALAPPDATA%\gh-workout-memo folder; deleting it is a user step.
 # It also updates this PC's global agent instructions, which live outside every repository (#365).
 # A custom -Destination without -UserHome leaves them alone, so a test install never edits the real ones.
 # Usage: powershell -NoProfile -ExecutionPolicy Bypass -File tools\install.ps1 [-Destination <folder>] [-UserHome <folder>]

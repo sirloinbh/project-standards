@@ -68,10 +68,10 @@ Because the central repo is private, downstream repos need the following setting
 
 ## 5. Verify operation
 
-1. **[User]** Central repo Actions tab → the `sync` workflow → **Run workflow** (manual run). If `maxRollout` in `sync.config.json` is 0, no PR is opened, and it only issues a token and computes the plan.
+1. **[User]** Central repo Actions tab → the `sync` workflow → **Run workflow** (manual run). If every target in `sync.config.json` has `enabled: false`, no PR is opened, and it only issues a token and computes the plan.
 2. In the run log, check that the "설치 토큰 발급" step (the "issue installation token" step) succeeded. The token value must not appear in the log.
 3. If it fails, check the following: a typo in the App ID, whether the entire `.pem` went into the secret, whether the App is installed on that repo, and whether it matches the permission table.
-4. If there are targets within `maxRollout`, a `라벨 생성 n, 갱신 n, 그대로 n` line (log line: labels created n, updated n, unchanged n) appears for each repo. If it is `라벨 실패 — ... 403` (label failure), the Issues permission is missing or has not been approved (Accept) yet. Even then, the sync PR is opened, and the workflow ends as failed.
+4. If there are enabled targets, a `라벨 생성 n, 갱신 n, 그대로 n` line (log line: labels created n, updated n, unchanged n) appears for each repo. If it is `라벨 실패 — ... 403` (label failure), the Issues permission is missing or has not been approved (Accept) yet. Even then, the sync PR is opened, and the workflow ends as failed.
 
 To preview label changes, export the target repo's labels and pass them to the dry run. The result appears in `labels` of `plan.json` and in the console lines.
 
