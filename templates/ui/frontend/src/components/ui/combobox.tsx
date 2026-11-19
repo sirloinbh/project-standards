@@ -55,6 +55,8 @@ function Combobox({
   const shown = open ? flat : [];
   const expanded = shown.length > 0;
   const empty = open && !expanded && emptyMessage !== undefined && value.trim() !== '';
+  // The list can shrink while it is open (new options, more typing), leaving `active` past its end.
+  const activeIndex = active < shown.length ? active : -1;
   const optionId = (i: number) => `${listId}-${i}`;
 
   // Esc closes the open list only. A dialog around the field listens for Esc on the document
@@ -72,7 +74,8 @@ function Combobox({
     return () => window.removeEventListener('keydown', close, { capture: true });
   }, [expanded]);
 
-  const pick = (option: string) => {
+  const pick = (option: string | undefined) => {
+    if (option === undefined) return;
     onValueChange(option);
     setOpen(false);
     setActive(-1);
@@ -80,7 +83,7 @@ function Combobox({
   const move = (step: number) => {
     if (!flat.length) return;
     setOpen(true);
-    setActive((current) => (!open || current < 0 ? (step > 0 ? 0 : flat.length - 1) : (current + step + flat.length) % flat.length));
+    setActive(() => (!open || activeIndex < 0 ? (step > 0 ? 0 : flat.length - 1) : (activeIndex + step + flat.length) % flat.length));
   };
 
   let index = 0;
@@ -93,9 +96,9 @@ function Combobox({
         key={`${i}-${option}`}
         id={optionId(i)}
         role="option"
-        aria-selected={i === active}
+        aria-selected={i === activeIndex}
         data-slot="combobox-option"
-        className={cn('flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm pointer-coarse:min-h-11', i === active && 'bg-accent text-accent-foreground')}
+        className={cn('flex cursor-pointer items-center rounded-sm px-2 py-1.5 text-sm pointer-coarse:min-h-11', i === activeIndex && 'bg-accent text-accent-foreground')}
         onMouseEnter={() => setActive(i)}
         onClick={(event) => {
           // Inside a <label> the click would be passed on to the field and reopen the list.
@@ -124,7 +127,7 @@ function Combobox({
         aria-autocomplete="list"
         aria-expanded={expanded}
         aria-controls={listId}
-        aria-activedescendant={expanded && active >= 0 ? optionId(active) : undefined}
+        aria-activedescendant={expanded && activeIndex >= 0 ? optionId(activeIndex) : undefined}
         value={value}
         onChange={(event) => {
           onChange?.(event);
@@ -142,10 +145,10 @@ function Combobox({
           } else if (event.key === 'ArrowUp') {
             event.preventDefault();
             move(-1);
-          } else if (event.key === 'Enter' && expanded && active >= 0) {
+          } else if (event.key === 'Enter' && expanded && activeIndex >= 0) {
             // Picking an option must not submit the form.
             event.preventDefault();
-            pick(shown[active]);
+            pick(shown[activeIndex]);
           }
         }}
         onBlur={(event) => {
