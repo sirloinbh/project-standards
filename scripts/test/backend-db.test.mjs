@@ -61,3 +61,29 @@ test('withTransaction rolls back when COMMIT fails', async () => {
   await assert.rejects(withTransaction(pool, async () => 1), /COMMIT failed/);
   assert.deepEqual(pool.log, ['BEGIN', 'COMMIT', 'ROLLBACK', 'release:false']);
 });
+
+const { INT8_OID, setInt8Parser } = await import('../../templates/app/backend/src/standard/db.ts');
+
+function parser() {
+  const set = [];
+  setInt8Parser({ setTypeParser: (oid, fn) => set.push([oid, fn]) });
+  assert.equal(set.length, 1);
+  assert.equal(set[0][0], INT8_OID);
+  assert.equal(INT8_OID, 20);
+  return set[0][1];
+}
+
+test('setInt8Parser returns a number for a safe value and keeps the sign (#778)', () => {
+  const parse = parser();
+  assert.equal(parse('42'), 42);
+  assert.equal(parse('-7'), -7);
+  assert.equal(parse('9007199254740991'), Number.MAX_SAFE_INTEGER);
+  assert.equal(parse('-9007199254740991'), Number.MIN_SAFE_INTEGER);
+});
+
+test('setInt8Parser throws above 2^53 instead of rounding (#778)', () => {
+  const parse = parser();
+  assert.throws(() => parse('9007199254740992'), /outside the safe integer range/);
+  assert.throws(() => parse('9223372036854775807'), /9223372036854775807/);
+  assert.throws(() => parse('-9007199254740992'), /outside the safe integer range/);
+});

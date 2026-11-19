@@ -5,8 +5,11 @@ import { types } from 'pg';
 
 import { registerHealthRoutes } from './routes/health.js';
 import { errorHandler, notFound, requestLog } from './routes/shared.js';
+import { setInt8Parser } from './standard/db.js';
 import { apiRateLimit } from './standard/rate-limit.js';
 
+// BIGINT ids come back as numbers, and a value above 2^53 throws (ADR-0025, docs/conventions/pg-ids-and-rows.md).
+setInt8Parser(types);
 // DATE columns stay `YYYY-MM-DD` strings instead of being shifted through JS Date.
 types.setTypeParser(1082, (value) => value);
 
