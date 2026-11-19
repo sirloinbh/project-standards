@@ -32,12 +32,13 @@ export function appsList(data) {
 // What the shared deploy files read as project.deploy (#696). Apps and services differ only in these values:
 // unit is the systemd unit prefix (an app's DB name, a service's own name, as already installed on the server),
 // units are the timers install-backup.sh installs, images are pruned after a deploy, and migrate says whether
-// remote-deploy.sh runs the migrations as a step (apps) or the image starts them itself (services).
+// remote-deploy.sh runs the migrations as a step (apps) or the image starts them itself (services). pull is `on` when the
+// server pulls the images CI pushed instead of building them (ADR-0023, #755); off for everyone until the quota is confirmed (#756).
 function deployVars(project, kind) {
   if (kind === 'service') {
-    return { unit: project.name, units: 'backup restore-check', images: `${project.name}-backend`, migrate: 'image' };
+    return { unit: project.name, pull: 'off', registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check', images: `${project.name}-backend`, migrate: 'image' };
   }
-  return { unit: project.db.name, units: 'backup restore-check health report', images: `${project.db.name}-backend ${project.db.name}-frontend`, migrate: 'step' };
+  return { unit: project.db.name, pull: 'off', registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check health report', images: `${project.db.name}-backend ${project.db.name}-frontend`, migrate: 'step' };
 }
 
 /** The project a target renders as: an app from the registry, or a shared service (shared-auth, shared-ai) with the same fields the deploy files read. */

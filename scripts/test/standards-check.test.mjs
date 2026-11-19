@@ -18,10 +18,10 @@ const project = data.projects.projects.find((p) => p.name === 'study-log');
 const { ports, db } = project;
 const host = serviceHost(project, data.platform);
 
-// Files that carry registry values, written the way study-log writes them today.
+// Files that carry registry values, written the way study-log writes them today. (frontend/vite.config.ts is a managed
+// template with the ports filled in since #680, so the rendered one is used.)
 const appFiles = {
   'compose.yaml': `services:\n  db:\n    ports: ['127.0.0.1:${ports.db}:5432']\n  api:\n    build: { context: ./backend, secrets: [npm_token] }\n    image: ${db.name}-backend:\${IMAGE_TAG:-local}\n    environment:\n      PORT: ${ports.api}\n  web:\n    build:\n      context: ./frontend\n      secrets:\n        - npm_token\n    image: ${db.name}-frontend:\${IMAGE_TAG:-local}\n    ports: ['\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80']\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`,
-  'frontend/vite.config.ts': `export default { server: { port: ${ports.vite}, strictPort: true, proxy: { '/api': 'http://127.0.0.1:${ports.api}' } } };\n`,
   'backend/src/server.ts': `const port = Number(process.env.PORT ?? ${ports.api});\n`,
   '.env.example': `POSTGRES_DB=${db.name}\nDATABASE_URL=postgres://u:p@localhost:${ports.db}/${db.name}\nPORT=${ports.api}\n`,
 };
@@ -131,7 +131,8 @@ test('ports and DB names that differ from the registry fail per file', () => {
     write('compose.yaml', read('compose.yaml').replace(`${ports.web}}:80`, '8092}:80'));
     write('.env.example', read('.env.example').replace(`POSTGRES_DB=${db.name}`, 'POSTGRES_DB=other'));
   });
-  assert.deepEqual(result.problems.map((p) => `${p.path}: ${p.message}`), [
+  // The edited vite.config.ts is also a changed managed file (#680); this test is about the registry values.
+  assert.deepEqual(result.problems.filter((p) => p.group !== 'managed file').map((p) => `${p.path}: ${p.message}`), [
     `compose.yaml: web port is 8092. The registry value is ${ports.web}`,
     `frontend/vite.config.ts: Vite port is 5172. The registry value is ${ports.vite}`,
     '.env.example: DB name is other. The registry value is study',
@@ -166,7 +167,8 @@ test('playwright config must use the registry e2e ports', () => {
 
 test('warns when a pattern disappears or strictPort is missing', () => {
   const result = check(({ write }) => write('frontend/vite.config.ts', 'export default {};\n'));
-  assert.deepEqual(result.problems, []);
+  // The file is managed since #680, so replacing it is also a managed-file problem; the pattern warnings still show.
+  assert.deepEqual(paths(result), ['managed file|frontend/vite.config.ts']);
   assert.equal(result.warnings.length, 3);
   assert.ok(result.warnings.some((w) => w.includes('strictPort')));
 });

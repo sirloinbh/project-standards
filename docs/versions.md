@@ -70,6 +70,7 @@ External dependencies that the 8 apps and the scaffold use at the same version, 
 | `@testing-library/react` | 16.3.3 | `frontend/package.json` | devDependencies |
 | `@types/react` | 19.3.0 | `frontend/package.json` | devDependencies |
 | `@types/react-dom` | 19.3.0 | `frontend/package.json` | devDependencies |
+| `@vitejs/plugin-react` | 5.2.0 | `frontend/package.json` | devDependencies |
 | `jsdom` | 30.1.2 | `frontend/package.json` | devDependencies |
 | `tailwindcss` | 4.3.3 | `frontend/package.json` | devDependencies |
 | `typescript` | 5.9.3 | `frontend/package.json` | devDependencies |

@@ -1,6 +1,6 @@
 # Audit log
 
-Each app records who created, changed, or deleted what in its own `audit_log` table (#553), so the owner can see what a user or an AI tool did and undo it. AI tools write their rows through the shared `defineTool` wrapper (ADR-0017, #559); routes write theirs with the helper below.
+Each app records who created, changed, or deleted what in its own `audit_log` table (#553), so the owner can see what an AI tool did. Every AI tool call writes a row through the shared `defineTool` wrapper (ADR-0017, #559). A route is not required to write one ([ADR-0024](adr/0024-audit-ai-tool-calls-only.md)); an app may use the helper below for a route when the history is worth it (workout-memo does for workouts). There is no undo or history feature: the owner reads the log with the query under "Reading it".
 
 ## Table
 
