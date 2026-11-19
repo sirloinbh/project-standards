@@ -1,6 +1,6 @@
 # 696: design for rendering the service deploy files from the shared deploy templates
 
-Status: proposal. No template, script, or registry change in this PR. Issue #696 stays open; the implementation PR follows after the choices in "Open choices" are made.
+Status: decided on 2026-11-19 (user decisions relayed by the coordinator); see "Decisions". No template, script, or registry change in this PR. The implementation follows in a separate PR under issue #696; the shared backend skeleton (step 5) is a follow-up under #663 and is not part of it.
 
 ## Problem
 
@@ -60,7 +60,15 @@ The renderer has no conditionals, but the app script already branches at run tim
 - A mistake in the shared script affects the sign-in service for all 8 apps. The change reaches the services only through the two sync PRs, which are reviewed one at a time, `shared-ai` first (it is called by the apps, not needed to sign in).
 - A deploy that moves the web port variable (`WEB_BIND`/`WEB_PORT`) must keep the published port unchanged: both services already publish `${WEB_BIND:-127.0.0.1}:${WEB_PORT:-81xx}`.
 
-## Open choices
+## Decisions (2026-11-19)
+
+1. **One script**: option 1. One `remote-deploy.sh` for apps and services, with run-time branches.
+2. **Services get only `ssm-get.sh`** from the app-only deploy files. They get no `health.*` or `report.*` until their logs follow ADR-0021.
+3. **`@required` applies to apps too**, with the same meaning everywhere.
+4. **Shared backend skeleton (step 5)**: not edited here. `templates/app/backend/` belongs to lane-2, so it is a follow-up issue under #663. Until then the services keep their own `Dockerfile`, `.npmrc` and `tsconfig.json`, and step 6 keeps those three in `neverTouch`.
+5. **Server rollback test**: stays a user step (rollout step 4).
+
+## Open choices (as proposed, now decided above)
 
 1. **One script or two.** Option 1 (recommended): one `remote-deploy.sh` with run-time branches, as above. Option 2: a separate `templates/service/deploy/deploy.sh.tmpl` that copies the rollback, pruning and lock code from the app script. Option 2 is simpler to review but repeats the code that caused the drift.
 2. **Do the services get `health.*`, `report.*` and `ssm-get.sh`?** Recommended: `ssm-get.sh` yes (it replaces the inline reader), `health.*` and `report.*` no until the service logs follow ADR-0021.
