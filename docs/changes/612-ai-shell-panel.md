@@ -23,6 +23,7 @@ ADR-0017 puts an AI shell in every web app: a chat panel opened from the top bar
   - `{"type":"limit","message":"..."}` (monthly budget reached, ADR-0019)
   - `{"type":"error","message":"..."}`
   - `{"type":"done","conversationId":"..."}`
+- The stream stays open while a call waits for confirmation; the `tool_result`, the rest of the answer and `done` arrive on the same stream after the owner answers. The panel does not accept a new message until `done`.
 - `POST /api/chat/confirm`: body `{ conversationId, callId, approve }`, answer 204. A call with `readOnly: false` is not run until it is approved; a refused call yields a `tool_result` with `ok: false`.
 - Errors before the stream starts are JSON `{ error: '<message>' }` with a non-2xx status.
 
@@ -30,7 +31,7 @@ ADR-0017 puts an AI shell in every web app: a chat panel opened from the top bar
 
 - **The panel sits in `AppShell`.** All 8 apps already use it, so sync delivers the button without any app change. It is hidden where `aiOrigin` is null (local development, IP, foreign hosts), so existing app tests and dev runs do not change.
 - **The server keeps the history.** The client sends one message per turn, so a long chat does not grow the request.
-- **Confirmation is by a separate endpoint**, so the stream can end while the owner decides, and a refused call is recorded by the server.
+- **Confirmation is by a separate endpoint** and the stream stays open meanwhile, so the model loop continues on the same stream and a refused call is recorded by the server.
 - **No Markdown rendering** in the first version: answers are plain text, which avoids a new dependency.
 
 ## Checks
