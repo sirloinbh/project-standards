@@ -1,6 +1,6 @@
 # Environment variables at a glance
 
-<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: 2026-11-16 23:40 UTC -->
+<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: 2026-11-19 22:37 UTC -->
 
 Rules: [env-conventions.md](env-conventions.md)
 
@@ -13,6 +13,7 @@ Rules: [env-conventions.md](env-conventions.md)
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  |  | central |
 | `PORT` | (no description) |  |  | `3101` |  |  | central |
+| `AI_TOOLS_PUBLIC_KEY` | (no description) |  | yes | (secret) |  | `/sirloinbh/shared/ai-tools-public-key` | central |
 
 ## sirloinbh/study-log
 
@@ -67,6 +68,7 @@ Rules: [env-conventions.md](env-conventions.md)
 | `KOREAEXIM_API_KEY` | Korea Eximbank exchange rate API auth key (KRW/USD) |  | yes | (secret) | backend | `/sirloinbh/money-ledger/koreaexim-api-key` | central |
 | `PRICE_SOURCE` | (no description) |  |  |  |  |  | central |
 | `PRICE_JOBS` | (no description) |  |  |  |  |  | central |
+| `JOBS_MODE` | (no description) |  |  |  |  |  | central |
 
 ## sirloinbh/cert-manager
 
