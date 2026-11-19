@@ -78,7 +78,7 @@ function ignoredBy(patterns, file) {
 test('every managed file Prettier would format is in .prettierignore, so npm run format keeps the hashes (#154)', () => {
   const patterns = withoutHeader(byPath['.prettierignore'].content).split('\n').filter((l) => l && !l.startsWith('#'));
   // Include the feature folders (ui #123, e2e and vitest #33), which apps get once the feature is on.
-  const withUi = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app', 'ui', 'e2e', 'vitest', 'lighthouse', 'msw'], vars });
+  const withUi = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app', 'ui', 'e2e', 'vitest', 'lighthouse', 'msw', 'query'], vars });
   const formatted = withUi.filter((f) => f.mode === 'full' && /\.(md|json|ya?ml|[cm]?js|tsx?|css|html)$/.test(f.path));
   assert.ok(formatted.length > 20);
   assert.deepEqual(formatted.map((f) => f.path).filter((p) => !ignoredBy(patterns, p)), []);
