@@ -135,3 +135,47 @@ test('@required decides whether an unreadable SSM key stops the deploy', { skip:
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('the wrapper updates to origin/main unless it gets --no-pull', () => {
+  for (const [name, files] of Object.entries(rendered)) {
+    const script = files['deploy/deploy.sh'];
+    assert.match(script, new RegExp(`/opt/${name}`), name);
+    assert.match(script, /if \[ "\$\{1:-\}" != "--no-pull" \]; then\n {2}git fetch -q origin\n {2}git merge -q --ff-only origin\/main\nfi\nexec bash deploy\/remote-deploy\.sh deploy "\$\(git rev-parse HEAD\)"/, name);
+  }
+});
+
+test('the wrapper pulls then deploys the new commit, and skips the pull with --no-pull', { skip: !has('bash') && !has('git') && 'bash or git not found' }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wrapper-'));
+  const posix = (p) => p.split(path.sep).join('/');
+  const git = (cwd, ...args) => {
+    const r = spawnSync('git', ['-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { cwd, encoding: 'utf8' });
+    assert.equal(r.status, 0, r.stderr);
+    return r.stdout.trim();
+  };
+  try {
+    const origin = path.join(dir, 'origin');
+    const clone = path.join(dir, 'clone');
+    fs.mkdirSync(origin);
+    git(origin, 'init', '-q', '-b', 'main');
+    fs.mkdirSync(path.join(origin, 'deploy'));
+    fs.writeFileSync(path.join(origin, 'deploy/deploy.sh'), rendered['shared-ai']['deploy/deploy.sh']);
+    fs.writeFileSync(path.join(origin, 'deploy/remote-deploy.sh'), '#!/bin/bash\necho "$@" >> "$FAKE_LOG"\n');
+    git(origin, 'add', '-A');
+    git(origin, 'commit', '-q', '-m', 'one');
+    git(dir, 'clone', '-q', posix(origin), posix(clone));
+    fs.writeFileSync(path.join(origin, 'file.txt'), 'two');
+    git(origin, 'add', '-A');
+    git(origin, 'commit', '-q', '-m', 'two');
+    const first = git(clone, 'rev-parse', 'HEAD');
+    const second = git(origin, 'rev-parse', 'HEAD');
+    const run = (...args) => spawnSync('bash', ['deploy/deploy.sh', ...args], { cwd: clone, encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(path.join(dir, 'log')) } });
+    const noPull = run('--no-pull');
+    assert.equal(noPull.status, 0, noPull.stderr);
+    assert.equal(fs.readFileSync(path.join(dir, 'log'), 'utf8').trim(), `deploy ${first}`);
+    const pull = run();
+    assert.equal(pull.status, 0, pull.stderr);
+    assert.equal(fs.readFileSync(path.join(dir, 'log'), 'utf8').trim().split('\n').pop(), `deploy ${second}`);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

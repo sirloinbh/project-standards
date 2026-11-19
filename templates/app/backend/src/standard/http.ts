@@ -32,7 +32,11 @@ export function sendError(res: Response, status: number, error: string, fields?:
 // Up to 15 digits: every such id is exact as a JS number, even for BIGINT columns.
 export const ID_PATTERN = /^[1-9]\d{0,14}$/;
 
-/** A path id as a number, or a 400 HttpError naming what the id is for: `parseId(req.params.id, 'textbook')`. */
+/**
+ * A path id as a number, or a 400 HttpError naming what the id is for: `parseId(req.params.id, 'textbook')`. Ids are
+ * numbers on the wire; setInt8Parser in db.ts makes pg return BIGINT ids as numbers too (ADR-0025,
+ * docs/conventions/pg-ids-and-rows.md).
+ */
 export function parseId(value: unknown, label: string): number {
   if (typeof value !== 'string' || !ID_PATTERN.test(value)) {
     throw new HttpError(400, `Invalid ${label} ID`);

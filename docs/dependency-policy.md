@@ -10,7 +10,7 @@ An npm supply-chain attack (the Shai-Hulud family) is ongoing, so dependencies a
 
 | Package | Major | Apps that use it | Notes |
 |---|---|---|---|
-| @tanstack/react-query | 5 | workout-memo | |
+| @tanstack/react-query | 5 | all 8 apps (workout-memo now; the other 7 as their adoption issues land) | [ADR-0027](adr/0027-react-query-for-data-loading.md); version in `versions.json` `optionalDependencies` |
 | react-hook-form, @hookform/resolvers | 7, 5 | workout-memo | |
 | @playwright/test, @axe-core/playwright, @lhci/cli, concurrently | 1, 4, 0, 9 | all 8 apps | Pinned in `versions.json` `dependencies.root`. `@playwright/test` must equal the visual comparison image version (`images.playwright`); `registry:check` fails otherwise |
 | @testing-library/user-event | 14 | workout-memo, dev-career-portfolio | In `versions.json` `optionalDependencies`: applied only where the app already has it |
