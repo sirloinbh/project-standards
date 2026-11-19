@@ -80,12 +80,16 @@ The network is external everywhere. `deploy/remote-deploy.sh` (managed) creates 
 |---|---|
 | header `alg` | `EdDSA` |
 | `iss`, `aud` | `shared-ai`, and the app name |
-| `iat`, `exp` | not in the future, not expired (30 s clock skew), and valid for at most 300 s |
+| `iat`, `exp` | not in the future, not expired (30 s clock skew), and valid for at most 120 s (shared-ai signs 60 s) |
 | `sub` | the owner (shared sign-in user ID), recorded as `actor_id` |
 | `client` | `ai-shell`, the MCP client ID, or `stdio`, recorded as `client` |
 | `scope` | space-separated, e.g. `workout-memo:read workout-memo:write` |
+| `tool` | the tool this token is for (`@list` for `GET /internal/tools`); a token for another route is a 401 |
+| `jti` | a unique ID; the app remembers it until the token expires, so a second use of the same token is a 401 |
 
-The client's own token never reaches the app (no token passthrough).
+The client's own token never reaches the app (no token passthrough). A token is valid for one call (#670): a captured token cannot be replayed or used for another tool. The `jti` set is in memory per API process, which is enough because tokens live at most 120 s and shared-ai calls one API container per app.
+
+**Deploy order for #670.** (1) Apps get the verifier that accepts tokens with or without `tool` and `jti` (it enforces both when present); (2) shared-ai deploys the signer that adds them; (3) each app sets `requireBinding: true` in `registerToolRoutes`, so a token without the claims is refused.
 
 ## Audit rows
 
