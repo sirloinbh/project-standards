@@ -43,7 +43,7 @@ aws s3 cp s3://<bucket>/{{project.name}}/<file> ./backups/ --profile {{project.d
 ## Copying to a PC
 
 ```powershell
-scp -i ~/.ssh/{{project.name}}-lightsail ubuntu@<static_ip>:/var/backups/{{project.db.name}}/<file> ./backups/
+scp -i ~/.ssh/{{project.name}}-lightsail "ubuntu@$(server-ip):/var/backups/{{project.db.name}}/<file>" ./backups/
 ```
 
 ## Restore check (into a separate DB)

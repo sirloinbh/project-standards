@@ -10,7 +10,7 @@ param(
 $ErrorActionPreference = 'Stop'
 # Target name (relative to Destination) -> source file.
 $files = [ordered]@{}
-foreach ($name in @('gh-project.ps1', 'project-terminal.ps1', 'open-vscode-account-b.cmd', 'set-credential-helper.ps1')) {
+foreach ($name in @('gh-project.ps1', 'project-terminal.ps1', 'open-vscode-account-b.cmd', 'set-credential-helper.ps1', 'server-ip.ps1', 'server-ssh.ps1')) {
     $files[$name] = Join-Path $PSScriptRoot $name
 }
 

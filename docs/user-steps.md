@@ -170,7 +170,7 @@ In your GitHub profile → Packages, for each of the 4 packages, go to Package s
    - Scope: `read:packages` only
 2. Set it on the server.
    ```powershell
-   ssh -i ~/.ssh/workout-memo-lightsail ubuntu@<static_ip>
+   server-ssh
    sudo nano /opt/workout-memo/.env    # add NODE_AUTH_TOKEN=<the issued token> at the bottom and save
    ```
 3. Write the expiry date in your calendar. Keep the token only in the server `.env`.
