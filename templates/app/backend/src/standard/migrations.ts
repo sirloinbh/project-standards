@@ -39,7 +39,7 @@ function code(sql: string) {
 
 const noTransaction: [RegExp, string][] = [
   [/\bCONCURRENTLY\b/i, 'CONCURRENTLY'],
-  [/^\s*(BEGIN|COMMIT|ROLLBACK|END|START\s+TRANSACTION)\b/im, 'its own transaction control (BEGIN, COMMIT or ROLLBACK)'],
+  [/^\s*(BEGIN|COMMIT|ROLLBACK|START\s+TRANSACTION)\b/im, 'its own transaction control (BEGIN, COMMIT or ROLLBACK)'],
   [/^\s*VACUUM\b/im, 'VACUUM'],
   [/\b(CREATE|DROP)\s+(DATABASE|TABLESPACE)\b/i, 'CREATE or DROP DATABASE or TABLESPACE'],
   [/\bALTER\s+SYSTEM\b/i, 'ALTER SYSTEM'],

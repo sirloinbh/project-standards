@@ -107,3 +107,29 @@ test('app CI applies migrations with psql first, then the shared runner, in both
   assert.match(script, /::warning title=DB migration::/, 'apps without the runner still pass, with a warning');
   assert.doesNotMatch(text, /^\s+- run: npm run db:migrate$/m, 'no unconditional runner call');
 });
+
+test('app CI runs once per commit and skips the slow jobs for docs-only pull requests (#699)', () => {
+  const read = (rel) => fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
+  // Triggers: main pushes and pull requests, not every push to every branch (a pull request branch ran twice).
+  const caller = read('templates/app/.github/workflows/ci.yml.tmpl');
+  assert.match(caller, /\non:\n {2}push:\n {4}branches: \[main\]\n {2}pull_request:\n/);
+  assert.doesNotMatch(caller, /on: \[push, pull_request\]/);
+
+  const text = read('.github/workflows/reusable-app-ci.yml');
+  const job = (name) => new RegExp(`\n  ${name}:\n((?:    .*\n|\n)+)`).exec(text)?.[1] ?? '';
+  // The changes job decides from the pull request's own diff; only pull_request events can be docs-only.
+  const changes = job('changes');
+  assert.match(changes, /fetch-depth: 2/);
+  assert.match(changes, /\[ "\$EVENT" = pull_request \]/);
+  assert.match(changes, /git diff --name-only HEAD\^1 HEAD/);
+  assert.match(changes, /grep -qvE '\^docs\/\|\\.md\$'/);
+  // The slow jobs wait for it and are skipped (which counts as passed for a required check) when only docs changed.
+  // !cancelled() keeps them running if the changes job itself failed, so a failure cannot become a pass.
+  for (const name of ['e2e', 'e2e-visual', 'docker-build']) {
+    const body = job(name);
+    assert.match(body, /needs: changes\n/, `${name} needs changes`);
+    assert.match(body, /if: \$\{\{ !cancelled\(\) && .*needs\.changes\.outputs\.docs_only != 'true' \}\}/, `${name} is skipped for docs-only changes`);
+  }
+  // verify holds the format check, the standards check, and the docs tests, so it always runs.
+  assert.doesNotMatch(job('verify'), /docs_only|needs:/);
+});
