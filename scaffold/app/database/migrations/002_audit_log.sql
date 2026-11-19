@@ -1,4 +1,4 @@
--- Audit log (#553, docs/audit-log.md in project-standards): one row for each change a user or an AI tool makes.
+-- Audit log (#553, docs/audit-log.md in project-standards): one row for each AI tool call (ADR-0024); a route may write one too.
 -- backend/src/standard/audit.ts writes it; the nightly backup deletes rows older than a year.
 CREATE TABLE IF NOT EXISTS audit_log (
   id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
