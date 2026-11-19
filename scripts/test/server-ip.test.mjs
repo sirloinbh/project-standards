@@ -88,7 +88,8 @@ test('install copies the shims and adds the tools folder to the user PATH once (
     assert.equal(first.status, 0, first.stderr);
     assert.match(first.stdout, /updated {4}user PATH/);
     assert.equal(readFileSync(pathFile, 'utf8'), `${before};${join(dest, 'bin')}`);
-    for (const name of ['bin/server-ip.cmd', 'bin/server-ssh.cmd']) assert.ok(readFileSync(join(dest, name), 'utf8').includes('-ExecutionPolicy Bypass'), name);
+    assert.ok(readFileSync(join(dest, 'bin/server-ip.cmd'), 'utf8').includes('-ExecutionPolicy Bypass'));
+    assert.ok(readFileSync(join(dest, 'bin/server-ssh.cmd'), 'utf8').includes('ssh -i'));
     const second = install();
     assert.match(second.stdout, /unchanged {2}user PATH/);
     assert.equal(readFileSync(pathFile, 'utf8'), `${before};${join(dest, 'bin')}`);
@@ -109,6 +110,23 @@ test('install removes the tools folder itself from the user PATH, so PowerShell 
     const r = spawnSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', tool('install.ps1'), '-Destination', dest, '-UserPathFile', pathFile], { encoding: 'utf8', timeout });
     assert.equal(r.status, 0, r.stderr);
     assert.equal(readFileSync(pathFile, 'utf8'), ['C:' + sep + 'Other', join(dest, 'bin')].join(';'));
+  } finally {
+    f.cleanup();
+  }
+});
+
+test('server-ssh.cmd starts ssh itself and hands a command with && to it in one piece (#804)', { skip: !windows }, () => {
+  const f = fixture({ awsOut: '203.0.113.7' });
+  try {
+    const remote = 'sudo cp /tmp/a /opt/b && rm /tmp/a && cd /opt && sudo bash c.sh reload';
+    const line = `"${tool('bin/server-ssh.cmd')}" "${remote}"`;
+    const env = { ...process.env, PATH: join(f.dir, 'bin') + delimiter + process.env.PATH, AWS_OUT: '203.0.113.7', AWS_EXIT: '0', SIRLOINBH_AWS_PROFILE: 'p' };
+    const r = spawnSync('cmd', ['/d', '/s', '/c', `"${line}"`], { encoding: 'utf8', env, timeout, windowsVerbatimArguments: true });
+    assert.equal(r.status, 0, r.stderr);
+    const recorded = readFileSync(join(f.dir, 'ssh-args.txt'), 'utf8').trim();
+    assert.ok(recorded.endsWith(`ubuntu@203.0.113.7 "${remote}"`), recorded);
+    // The command reached ssh itself: no PowerShell sits between the shim and ssh.
+    assert.doesNotMatch(readFileSync(tool('bin/server-ssh.cmd'), 'utf8'), /^(?!rem).*powershell/im);
   } finally {
     f.cleanup();
   }
