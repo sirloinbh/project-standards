@@ -65,7 +65,8 @@ test('readMigrations rejects a file that cannot run in a transaction and names i
   }
 });
 
-test('the transaction check ignores keywords in comments and strings', () => {
+test('the transaction check ignores keywords in comments and strings, and a CASE expression ending a line (#734)', () => {
+  assert.equal(transactionProblem('ALTER TABLE t ADD CHECK (\n  CASE WHEN a THEN b\n  END\n);'), undefined);
   assert.equal(transactionProblem("-- CREATE INDEX CONCURRENTLY\nINSERT INTO t VALUES ('BEGIN; VACUUM');"), undefined);
   assert.equal(transactionProblem('/* VACUUM */ SELECT $f$ COMMIT; $f$;'), undefined);
   assert.equal(transactionProblem('CREATE TABLE a (begin_at date);'), undefined);

@@ -2,7 +2,7 @@
 // Apps run the same cases with Vitest (templates/ui/frontend/src/lib/api.test.ts); Node strips the types here.
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { RequestError, requestForm, requestJson } from '../../templates/ui/frontend/src/lib/api.ts';
+import { onUnauthorized, RequestError, requestForm, requestJson } from '../../templates/ui/frontend/src/lib/api.ts';
 
 async function withFetch(fake, run) {
   const original = globalThis.fetch;
@@ -70,4 +70,32 @@ test('requestForm sends the form without a content type, and headers are passed 
   assert.equal(calls[0][1].headers, undefined);
   await withFetch(fake, () => requestJson('/api/items', { headers: { 'x-trace': '1' } }));
   assert.deepEqual(calls[1][1].headers, { 'x-trace': '1' });
+});
+
+test('a 401 calls the unauthorized handler (#669) and still rejects with the server message', async () => {
+  let calls = 0;
+  const off = onUnauthorized(() => calls++);
+  try {
+    await assert.rejects(withFetch(reply(401, { error: 'Sign in' }), () => requestJson('/api/items')), (e) => e.status === 401 && e.message === 'Sign in');
+    await assert.rejects(withFetch(reply(401), () => requestForm('/api/upload', new FormData())), RequestError);
+    assert.equal(calls, 2);
+    await withFetch(reply(200, {}), () => requestJson('/api/items'));
+    await assert.rejects(withFetch(reply(403, { error: 'No' }), () => requestJson('/api/items')));
+    assert.equal(calls, 2);
+  } finally {
+    off();
+  }
+  await assert.rejects(withFetch(reply(401), () => requestJson('/api/items')));
+  assert.equal(calls, 2, 'removed handler is not called');
+});
+
+test('the removal function of an older handler leaves a newer handler in place', async () => {
+  let first = 0;
+  let second = 0;
+  const offFirst = onUnauthorized(() => first++);
+  const offSecond = onUnauthorized(() => second++);
+  offFirst();
+  await assert.rejects(withFetch(reply(401), () => requestJson('/api/items')));
+  assert.deepEqual([first, second], [0, 1]);
+  offSecond();
 });
