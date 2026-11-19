@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
-import { auditContext, AUDIT_RETENTION_DAYS, writeAudit } from '../../templates/app/backend/src/standard/audit.ts';
+import { auditContext, AUDIT_RETENTION_DAYS, AUDIT_VALUE_LIMIT, auditValue, writeAudit } from '../../templates/app/backend/src/standard/audit.ts';
 
 const root = new URL('../../', import.meta.url);
 const migration = readFileSync(new URL('scaffold/app/database/migrations/002_audit_log.sql', root), 'utf8');
@@ -62,4 +62,41 @@ test('the migration CHECK lists match the helper types, and the backup prunes af
   assert.match(migration, /action IN \('read', 'create', 'update', 'delete'\)/);
   assert.match(migration, /result IN \('ok', 'denied', 'error'\)/);
   assert.ok(backup.includes(`make_interval(days => ${AUDIT_RETENTION_DAYS})`));
+});
+
+test('a large value is stored as a valid truncated JSON summary (#675)', async () => {
+  const big = { note: 'x'.repeat(5000) };
+  const text = auditValue(big);
+  const stored = JSON.parse(text);
+  assert.equal(stored.truncated, true);
+  assert.equal(stored.length, JSON.stringify(big).length);
+  assert.equal(stored.preview.length, AUDIT_VALUE_LIMIT);
+  assert.equal(stored.preview, JSON.stringify(big).slice(0, AUDIT_VALUE_LIMIT));
+  const db = fakeDb();
+  await writeAudit(db, { actor: { type: 'user', id: 'u1' }, action: 'update', entity: 'note', before: big, after: { ok: 1 } });
+  assert.equal(JSON.parse(db.calls[0].values[8]).truncated, true);
+  assert.equal(db.calls[0].values[9], '{"ok":1}');
+});
+
+test('a value at the limit is kept whole, and a cut never splits a surrogate pair', () => {
+  const exact = 'y'.repeat(AUDIT_VALUE_LIMIT - 2);
+  assert.equal(auditValue(exact), JSON.stringify(exact));
+  const emoji = `${'z'.repeat(AUDIT_VALUE_LIMIT - 2)}😀tail`;
+  const stored = JSON.parse(auditValue(emoji));
+  assert.equal(stored.truncated, true);
+  assert.doesNotMatch(stored.preview, /[\ud800-\udbff]$/);
+  assert.doesNotThrow(() => JSON.parse(JSON.stringify(stored)));
+});
+
+test('omit drops the listed keys at any depth, before and after the size check', async () => {
+  assert.equal(auditValue({ title: 'a', body: 'secret', nested: [{ body: 'more', id: 1 }] }, ['body']), '{"title":"a","nested":[{"id":1}]}');
+  assert.equal(auditValue({ body: 'x'.repeat(5000), id: 3 }, ['body']), '{"id":3}');
+  const db = fakeDb();
+  await writeAudit(db, { actor: { type: 'user', id: 'u1' }, action: 'update', entity: 'note', before: { body: 'old', id: 1 }, after: { body: 'new', id: 1 }, omit: ['body'] });
+  assert.deepEqual(db.calls[0].values.slice(8, 10), ['{"id":1}', '{"id":1}']);
+});
+
+test('undefined and a function stay null', () => {
+  assert.equal(auditValue(undefined), null);
+  assert.equal(auditValue(() => 1), null);
 });

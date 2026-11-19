@@ -15,7 +15,7 @@ The app adds it as its next migration, `database/migrations/NNN_audit_log.sql`, 
 | `action` | `read`, `create`, `update`, or `delete`. Reads are recorded for AI tool calls only |
 | `entity`, `entity_id` | The kind of record in singular snake_case (`workout`) and its ID as text |
 | `result` | `ok`, `denied` (missing scope), or `error` |
-| `before`, `after` | `jsonb` summaries of the record: the fields that changed, not whole rows with long text |
+| `before`, `after` | `jsonb` summaries of the record: the fields that changed, not whole rows with long text. A value whose JSON is longer than 2,048 characters (`AUDIT_VALUE_LIMIT`) is stored as `{ "truncated": true, "length": <characters>, "preview": "<the start>" }`. Pass `omit: ['body', 'note']` to `writeAudit` to drop those keys at any depth before the value is stored |
 | `request_id` | The request ID from the log line ([logging.md](logging.md)) |
 
 ## Writing a row
