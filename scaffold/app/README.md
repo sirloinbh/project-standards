@@ -37,7 +37,7 @@ Open http://localhost:{{project.ports.web}} . Data is stored in the `{{project.d
 
 ## Repo layout
 
-The umbrella repo `{{project.repos.umbrella}}` is the source, and `frontend/`, `backend/`, and `database/` go out as subtrees to `{{project.repos.frontend}}`, `{{project.repos.backend}}`, and `{{project.repos.db}}` (`scripts/push-repositories.ps1`). The script pushes only to the sub-repos; the umbrella `main` changes only through PRs.
+The repo `{{project.repos.umbrella}}` is the only source and the only deploy repository (ADR-0022); `main` changes only through PRs.
 
 ## Docs
 

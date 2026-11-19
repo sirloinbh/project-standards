@@ -35,7 +35,6 @@ export function renderBody({ target, centralSha, changes, deletions, keptRemoved
   if (app) confirm.push('- [ ] Merging to main in this repo deploys to production. I checked that now is a good time to deploy');
   if (changes.some((c) => c.path.endsWith('package.json'))) confirm.push('- [ ] I checked the `package.json` and lockfile changes. If a new `@sirloinbh/*` package was added, regenerate the lockfile with `npm install --ignore-scripts` and commit it to this branch (needs user approval)');
   if (changes.some((c) => c.path.endsWith('.npmrc'))) confirm.push('- [ ] Because of the `${NODE_AUTH_TOKEN}` line in `.npmrc`, npm commands fail without this environment variable. I set it locally and on the server (a token with `read:packages`, or empty if no packages are used)');
-  if (changes.some((c) => /^(frontend|backend|database)\//.test(c.path))) confirm.push('- [ ] Files under `frontend/`, `backend/`, or `database/` changed. After merging, run `scripts/push-repositories.ps1` to update the subtree deploy repos');
   if (changed('AGENTS.md')) confirm.push('- [ ] I checked that this project\'s own rules did not disappear from `AGENTS.md`. Move them to `AGENTS.project.md` if needed');
   if (keptRemoved.length) confirm.push(...keptRemoved.map((p) => `- [ ] \`${p}\` is no longer managed centrally but was modified in this repo, so it was not deleted. Delete it yourself if it is not needed`));
   if (!confirm.length) confirm.push('- None');
