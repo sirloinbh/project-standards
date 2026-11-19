@@ -146,5 +146,10 @@ export function checkAll({ data, schemas }, { today = new Date().toISOString().s
     }
   }
 
+  // The visual-comparison image and the test library must be the same Playwright release (#704).
+  const playwrightTag = /playwright:v(\d+\.\d+\.\d+)/.exec(data.versions.images?.playwright ?? '')?.[1];
+  const playwrightLib = data.versions.dependencies?.root?.devDependencies?.['@playwright/test'];
+  if (playwrightLib && playwrightLib !== playwrightTag) errors.push(`versions.json: @playwright/test is ${playwrightLib} but images.playwright is ${playwrightTag ?? 'not a vX.Y.Z tag'}; they must match`);
+
   return { errors, warnings };
 }

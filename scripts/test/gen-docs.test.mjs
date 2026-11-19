@@ -54,6 +54,7 @@ test('docs/versions.md lists every shared app dependency with its file and secti
   const vite = data.versions.dependencies.frontend.devDependencies.vite;
   assert.ok(text.split('\n').includes(`| \`vite\` | ${vite} | \`frontend/package.json\` | devDependencies |`));
   assert.match(text, /\| Image playwright \| `mcr\.microsoft\.com\/playwright:v[\d.]+-noble` \(digest pinned\) \|/);
-  const count = Object.values(data.versions.dependencies).flatMap((s) => Object.values(s).flatMap(Object.keys)).length;
+  const count = [data.versions.dependencies, data.versions.optionalDependencies].flatMap((d) => Object.values(d).flatMap((s) => Object.values(s).flatMap(Object.keys))).length;
+  assert.match(text, /## Optional app dependencies[\s\S]*`@testing-library\/user-event`/);
   assert.equal(text.split('\n').filter((l) => /\| `[^`]+` \| [\d.]+ \| `[a-z/]*package\.json` \|/.test(l)).length, count);
 });

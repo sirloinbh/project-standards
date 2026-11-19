@@ -46,7 +46,7 @@ test('a first sync opens a PR with the rendered files and the manifest', async (
   assert.ok(files['AGENTS.md'].includes('# Study Log Project Instructions'));
   assert.equal(JSON.parse(files[MANIFEST_PATH]).centralSha, SHA1);
   assert.match(files['.gitignore'], /# --- project ---\nmy-project-only\/\n$/, 'project-only lines move below the marker');
-  assert.equal(JSON.parse(files['package.json']).devDependencies.concurrently, '9.2.1');
+  assert.equal(JSON.parse(files['package.json']).devDependencies.concurrently, data.versions.dependencies.root.devDependencies.concurrently, 'a common dependency is set to the central pin (#704)');
   assert.equal(JSON.parse(files['package.json']).engines.node, '24.21.0');
   assert.equal(JSON.parse(files['frontend/package.json']).dependencies.recharts, '3.10.1');
   assert.equal(files['package-lock.json'], repo.filesAt('main')['package-lock.json'], 'lockfiles are never edited by the sync');

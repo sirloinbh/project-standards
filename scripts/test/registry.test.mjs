@@ -201,6 +201,13 @@ test('profile packages must be listed in versions.json', () => {
   assert.ok(errors.includes('profile app: package @sirloinbh/tsconfig is missing from versions.json'));
 });
 
+test('@playwright/test must be the version of the Playwright image (#704)', () => {
+  const bad = fixture((d) => {
+    d.versions.dependencies.root.devDependencies['@playwright/test'] = '1.0.0';
+  });
+  assert.match(bad.errors.join('\n'), /@playwright\/test is 1\.0\.0 but images\.playwright is 1\.\d+\.\d+/);
+});
+
 test('external actions must be pinned to a commit SHA', () => {
   const { errors } = fixture((d) => {
     d.versions.actions.checkout.sha = 'v4';
