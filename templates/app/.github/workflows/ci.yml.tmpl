@@ -1,7 +1,11 @@
 # Calls the central shared CI (reusable-app-ci) pinned to the central commit that was synced. Values come from the central registry and versions.json.
 name: ci
 
-on: [push, pull_request]
+# One run per commit: a pull request is tested through pull_request only; push runs on main (#699).
+on:
+  push:
+    branches: [main]
+  pull_request:
 
 permissions:
   contents: read

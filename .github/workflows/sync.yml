@@ -1,4 +1,4 @@
-# When central main changes, opens or updates a sync PR for each downstream repo at or below maxRollout.
+# When central main changes, opens or updates a sync PR for each target in sync.config.json that is not paused (`enabled: false`).
 # Skipped before the GitHub App (project-standards-sync) exists (no vars.SYNC_APP_ID) (docs/github-app.md).
 name: sync
 

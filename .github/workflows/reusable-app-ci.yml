@@ -48,6 +48,28 @@ env:
   E2E_DATABASE_URL: postgres://app:test@localhost:5432/${{ inputs.db-name }}
 
 jobs:
+  # A pull request that changes only docs/** or *.md skips the slow e2e and docker-build jobs (#699). verify still runs: it holds the
+  # format check, the central standards check, and the docs tests. A skipped job counts as passed for a required check, so branch
+  # protection is not left waiting. Pushes to main always run everything.
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      docs_only: ${{ steps.docs.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with: { fetch-depth: 2 }
+      - id: docs
+        env:
+          EVENT: ${{ github.event_name }}
+        run: |
+          docs_only=false
+          if [ "$EVENT" = pull_request ]; then
+            # The checkout is the merge commit of the pull request; its first parent is the base.
+            files=$(git diff --name-only HEAD^1 HEAD)
+            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qvE '^docs/|\.md$'; then docs_only=true; fi
+          fi
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+
   verify:
     runs-on: ubuntu-24.04
     services:
@@ -125,7 +147,9 @@ jobs:
           for f in deploy/*.sh; do bash -n "$f" || exit 1; done
 
   e2e:
-    if: inputs.e2e && !inputs.e2e-visual
+    needs: changes
+    # !cancelled() keeps the job running when the changes job failed, so a failure there cannot turn into a skipped (passing) check.
+    if: ${{ !cancelled() && inputs.e2e && !inputs.e2e-visual && needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
     services:
       postgres:
@@ -165,7 +189,8 @@ jobs:
 
   # Screenshot comparison: compare against baseline images only in a container with fixed fonts and Chromium.
   e2e-visual:
-    if: inputs.e2e && inputs.e2e-visual
+    needs: changes
+    if: ${{ !cancelled() && inputs.e2e && inputs.e2e-visual && needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
     container:
       image: ${{ inputs.playwright-image }}
@@ -211,6 +236,8 @@ jobs:
         with: { name: visual-baselines, path: e2e/__screenshots__, retention-days: 7 }
 
   docker-build:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
