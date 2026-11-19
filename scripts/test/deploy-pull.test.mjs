@@ -88,12 +88,18 @@ const renderFiles = (registryData, target) => {
   return Object.fromEntries(renderProfile({ root, profile: target.profile, folders, vars: buildVars(registryData, target, { centralSha: 'abcdef1234567' }) }).map((f) => [f.path, f.content]));
 };
 
-test('every app and service renders push and pull off until the registry says otherwise', () => {
+test('push and pull follow the registry switches and are off for a project that has none', () => {
+  const entries = [...data.projects.projects, ...(data.projects.sharedServices ?? [])];
   for (const target of data.sync.targets.filter((t) => t.profile === 'app' || t.profile === 'service')) {
+    const entry = entries.find((e) => (target.project ? e.name === target.project : e.repo === target.repo.split('/').pop()));
     const files = renderFiles(data, target);
-    assert.match(files['.github/workflows/ci.yml'], /^ {6}push-images: false$/m, target.repo);
-    assert.match(files['deploy/remote-deploy.sh'], /if \[ "off" = on \] && pull_images/, target.repo);
+    assert.match(files['.github/workflows/ci.yml'], new RegExp(`^ {6}push-images: ${entry.ghcr?.push === true}$`, 'm'), target.repo);
+    assert.match(files['deploy/remote-deploy.sh'], new RegExp(String.raw`if \[ "${entry.ghcr?.pull === true ? 'on' : 'off'}" = on \] && pull_images`), target.repo);
   }
+  // Moving one project at a time (#757): until the user says otherwise only shared-ai pushes, and nothing pulls.
+  const pushing = entries.filter((e) => e.ghcr?.push).map((e) => e.name);
+  assert.deepEqual(pushing, ['shared-ai']);
+  assert.deepEqual(entries.filter((e) => e.ghcr?.pull), []);
 });
 
 test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pull on for that project only', () => {
