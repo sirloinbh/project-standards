@@ -15,7 +15,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const { data } = loadAll(root);
 const appTargets = data.sync.targets.filter((t) => t.profile === 'app');
 const render = (target) => {
-  const files = renderProfile({ root, profile: 'app', folders: ['common', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
+  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
   return Object.fromEntries(files.filter((f) => f.path.startsWith('deploy/')).map((f) => [f.path, f.content]));
 };
 const rendered = Object.fromEntries(appTargets.map((t) => [t.project, render(t)]));
@@ -63,7 +63,7 @@ test('workout-memo renders to the names its running server already uses', () => 
   assert.match(files['deploy/remote-deploy.sh'], /bash deploy\/backup\.sh dump predeploy \|\| \[ \$\? -eq 3 \]/);
   assert.match(files['deploy/backup.sh'], /^dir=\/var\/backups\/\$db$/m);
   assert.match(files['deploy/backup.sh'], /^db=workout$/m);
-  assert.match(files['deploy/install-backup.sh'], /rm "\/etc\/cron\.d\/\$db-backup"/);
+  assert.match(files['deploy/install-backup.sh'], /rm "\/etc\/cron\.d\/\$prefix-backup"/);
   assert.match(files['deploy/remote-deploy.sh'], /for image in workout-backend workout-frontend; do/);
   assert.match(files['deploy/remote-deploy.sh'], /^web_port=\$\{web_port:-8101\}$/m);
   assert.match(files['deploy/autodeploy.service'], /cp \/opt\/workout-memo\/deploy\/autodeploy\.sh \/tmp\/workout-autodeploy\.sh/);
@@ -162,8 +162,8 @@ function backupRun(args, { env = '', shared = null, restored = 'public.a|2\npubl
   tool('docker', [
     'echo "$*" >> "$FAKE_LOG.docker"',
     'case "$1 $2" in',
-    '  "compose exec") if [[ "$*" == *pg_dump* ]]; then echo "-- dump"; elif [ -n "$FAIL_COUNTS" ]; then exit 1; else printf "public.a|2\\npublic.b|5\\n"; fi ;;',
-    '  "compose ps") echo cid ;;',
+    '  "exec cid") if [[ "$*" == *pg_dump* ]]; then echo "-- dump"; elif [ -n "$FAIL_COUNTS" ]; then exit 1; else printf "public.a|2\\npublic.b|5\\n"; fi ;;',
+    '  "ps -q") echo cid ;;',
     '  "inspect --format") echo postgres:17 ;;',
     '  "exec -i") cat > /dev/null ;;',
     '  "exec "*) if [[ "$*" == *pg_isready* ]]; then exit 0; fi; printf "%b" "$RESTORED" ;;',
@@ -180,7 +180,10 @@ function backupRun(args, { env = '', shared = null, restored = 'public.a|2\npubl
   const log = path.join(dir, 'log');
   // Git Bash on Windows takes a POSIX PATH; prepend the fake tools.
   const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
-  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script.replace(/^#!.*\n/, '')}`, 'backup.sh', ...args], {
+  // The script goes in a file: a long command line with many quotes is mangled by Windows argument quoting.
+  const scriptFile = path.join(dir, 'backup.sh');
+  fs.writeFileSync(scriptFile, `export PATH="${pathVar}"\n${script.replace(/^#!.*\n/, '')}`);
+  const r = spawnSync('bash', [posix(scriptFile), ...args], {
     encoding: 'utf8',
     env: { ...process.env, FAKE_LOG: posix(log), RESTORED: restored, FAIL_COUNTS: failCounts ? '1' : '', STANDARDS_ENV_FILE: posix(sharedFile) },
   });
@@ -481,7 +484,7 @@ test('autodeploy signals every decision and the health timer runs every 5 minute
     for (const s of ['signal ok "up to date at $sha"', 'signal fail "$sha failed before', 'signal ok "waiting for CI of $sha"', 'signal fail "CI failed for $sha"', 'signal ok "deployed $sha"', 'signal fail "deploy of $sha failed"']) assert.ok(auto.includes(s), `${name}: ${s}`);
     assert.match(files['deploy/health.timer'], /^OnUnitActiveSec=5min$/m, name);
     assert.ok(files['deploy/health.service'].includes(`/tmp/${project(name).db.name}-notify.sh health`), name);
-    assert.match(files['deploy/install-backup.sh'], /^for unit in backup restore-check health report; do$/m, name);
+    assert.match(files['deploy/install-backup.sh'], /^units="backup restore-check health report"$/m, name);
   }
 });
 
@@ -536,7 +539,7 @@ test('the report sends ok, and fail over the memory or disk threshold', { skip: 
   assert.match(reportRun([], { usedMb: 1800, env: 'REPORT_MEMORY_PERCENT=95\n' }).notify, /^ping\|report\|ok\|/, 'the threshold comes from .env');
   for (const [name, files] of Object.entries(rendered)) {
     assert.match(files['deploy/report.timer'], /^OnCalendar=\*-\*-\* 04:00:00 Asia\/Seoul$/m, name);
-    assert.match(files['deploy/install-backup.sh'], /^for unit in backup restore-check health report; do$/m, name);
+    assert.match(files['deploy/install-backup.sh'], /^units="backup restore-check health report"$/m, name);
   }
 });
 
