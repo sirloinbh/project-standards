@@ -47,6 +47,7 @@
         "devcontainer": true,
         "lighthouse": true,
         "msw": true,
+        "query": true,
         "knipStrict": false,
         "darkOnly": true,
         "jobs": false
@@ -107,6 +108,7 @@
         "devcontainer": false,
         "lighthouse": true,
         "msw": false,
+        "query": false,
         "knipStrict": false,
         "darkOnly": false,
         "jobs": false
@@ -164,6 +166,7 @@
         "devcontainer": false,
         "lighthouse": true,
         "msw": false,
+        "query": false,
         "knipStrict": true,
         "darkOnly": false,
         "jobs": false
@@ -221,6 +224,7 @@
         "devcontainer": false,
         "lighthouse": true,
         "msw": false,
+        "query": false,
         "knipStrict": true,
         "darkOnly": false,
         "jobs": false
@@ -278,6 +282,7 @@
         "devcontainer": false,
         "lighthouse": true,
         "msw": false,
+        "query": false,
         "knipStrict": true,
         "darkOnly": false,
         "jobs": true
@@ -335,6 +340,7 @@
         "devcontainer": false,
         "lighthouse": true,
         "msw": false,
+        "query": false,
         "knipStrict": true,
         "darkOnly": false,
         "jobs": false
@@ -392,6 +398,7 @@
         "devcontainer": false,
         "lighthouse": true,
         "msw": false,
+        "query": false,
         "knipStrict": false,
         "darkOnly": false,
         "jobs": false
@@ -449,6 +456,7 @@
         "devcontainer": false,
         "lighthouse": true,
         "msw": false,
+        "query": false,
         "knipStrict": true,
         "darkOnly": false,
         "jobs": false
