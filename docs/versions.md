@@ -92,4 +92,5 @@ Used by only some apps. The sync writes the version below only into an app whose
 
 | Package | Version | File | Section |
 |---|---|---|---|
+| `@tanstack/react-query` | 5.104.1 | `frontend/package.json` | dependencies |
 | `@testing-library/user-event` | 14.6.8 | `frontend/package.json` | devDependencies |
