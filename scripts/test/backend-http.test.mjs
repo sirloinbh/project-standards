@@ -46,8 +46,38 @@ test('malformed and oversized JSON bodies are client errors, not a logged 500', 
 
 test('zod 3 and zod 4 validation errors become 400 with the issue messages', () => {
   const zod = Object.assign(new Error('[...]'), { name: 'ZodError', issues: [{ message: 'Enter a name' }, { message: 'Invalid date format' }] });
-  assert.deepEqual(answer(zod).body, { error: 'Enter a name, Invalid date format' });
+  assert.equal(answer(zod).body.error, 'Enter a name, Invalid date format');
   assert.equal(answer(zod).status, 400);
+});
+
+test('a validation answer also lists the invalid fields by path, and `error` is unchanged (#674)', () => {
+  const zod = Object.assign(new Error('[...]'), {
+    name: 'ZodError',
+    issues: [
+      { message: 'Enter a name', path: ['name'] },
+      { message: 'Enter a number', path: ['items', 0, 'count'] },
+      { message: 'Invalid input', path: [] },
+      { message: 'No path given' },
+    ],
+  });
+  assert.deepEqual(answer(zod).body, {
+    error: 'Enter a name, Enter a number, Invalid input, No path given',
+    fields: [
+      { path: 'name', message: 'Enter a name' },
+      { path: 'items.0.count', message: 'Enter a number' },
+      { path: '', message: 'Invalid input' },
+      { path: '', message: 'No path given' },
+    ],
+  });
+  // Other errors keep the one-key body.
+  assert.deepEqual(answer(new HttpError(404, 'Not found')).body, { error: 'Not found' });
+});
+
+test('fields hold at most MAX_ISSUES entries (#326, #674)', () => {
+  const issues = Array.from({ length: 50000 }, (_, i) => ({ message: `Bad ${i}`, path: [i] }));
+  const { body } = answer(Object.assign(new Error('[...]'), { name: 'ZodError', issues }));
+  assert.equal(body.fields.length, MAX_ISSUES);
+  assert.deepEqual(body.fields[0], { path: '0', message: 'Bad 0' });
 });
 
 test('a huge invalid array answers with the first 10 messages and a count, not every issue (#326)', () => {
