@@ -157,6 +157,29 @@ test('a second start updates existing queues without the fixed policy', async ()
   assert.equal('policy' in update[2], false);
 });
 
+test('start fails with a clear error when an existing queue has another policy (#681)', async () => {
+  const boss = fakeBoss();
+  await startJobs(boss, [{ name: 'prices', handler: async () => {} }], { log: quiet().log });
+  await assert.rejects(
+    startJobs(boss, [{ name: 'prices', policy: 'singleton', handler: async () => {} }], { log: quiet().log }),
+    /Queue "prices" already exists with policy "standard", but the code asks for "singleton".*new name/,
+  );
+  // The same policy is fine, and nothing was updated by the failed start.
+  await startJobs(boss, [{ name: 'prices', handler: async () => {} }], { log: quiet().log });
+});
+
+test('408, 425 and 429 are retried like a 5xx, not dead-lettered (#681)', async () => {
+  for (const status of [408, 425, 429]) {
+    const boss = fakeBoss();
+    const { lines, log } = quiet();
+    const jobs = await startJobs(boss, [{ name: 'upstream', retryLimit: 1, handler: async () => { throw Object.assign(new Error('slow down'), { status }); } }], { log });
+    await jobs.send('upstream', { id: 1 });
+    await boss.drainAll();
+    assert.deepEqual(lines.map((l) => l.result), ['retry', 'failed'], String(status));
+    assert.equal(boss.jobs.filter((j) => j.name === DEAD_LETTER_QUEUE).length, 1, String(status));
+  }
+});
+
 test('a failing job is retried until its retry limit, then copied to the dead-letter queue', async () => {
   const boss = fakeBoss();
   const { lines, log } = quiet();

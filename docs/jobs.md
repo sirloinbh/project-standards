@@ -77,7 +77,7 @@ Handlers still have to be safe to run twice: a job can run again after a crash o
 | Connection | `jobBossOptions(url)`: the app's database, schema `pgboss`, pool `max` 2, so pg-boss does not compete with the app's `pg` pool |
 | Queues | `startJobs` creates the `dead-letter` queue, then each queue (or updates its options if it exists; a policy is fixed once created) |
 | Retries | Default `retryLimit` 3, `retryDelay` 30 s with exponential backoff and jitter. A job that runs out of retries is copied to `dead-letter` |
-| Non-retryable errors | Throw `NonRetryable` (or an error with a 4xx `status` such as `HttpError`, or a zod error): the job goes to `dead-letter` at once, without retries. Uses pg-boss `perJobResults` with the `deadletter` status |
+| Non-retryable errors | Throw `NonRetryable` (or an error with a 4xx `status` such as `HttpError` except 408, 425 and 429, which are retried because they say "try again later", or a zod error): the job goes to `dead-letter` at once, without retries. Uses pg-boss `perJobResults` with the `deadletter` status |
 | Idempotency | `send(..., { key })` sets pg-boss `singletonKey`, enforced per the queue policy (above) |
 | Payloads | Stored as `{ input, requestId }`. Only IDs and small inputs: over 4096 bytes is refused. No secrets, tokens, or health details, because payloads are stored in the DB |
 | Schedules | `schedule` (cron) runs in `Asia/Seoul`. A schedule removed from the code is unscheduled at the next start |
