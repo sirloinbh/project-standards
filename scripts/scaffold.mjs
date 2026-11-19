@@ -1,6 +1,6 @@
 // Renders a new app repository for a project that is already in the registry and sync.config.json:
 // the project-owned starting files (scaffold/app), the operations docs (docs/runbooks), the contract
-// copies, and the centrally managed files exactly as the first sync would write them.
+// copies (only when features.contract is on: ADR-0026), and the centrally managed files exactly as the first sync would write them.
 // Usage: node scripts/scaffold.mjs <project> --out <new or empty folder>
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -53,16 +53,18 @@ export function renderScaffold({ root: centralRoot = root, data, project, centra
   if (!target) throw new Error(`${project}: no app target in sync.config.json. Add the project to the registry and sync.config.json first (docs/design.md 6.6).`);
   const vars = { ...buildVars(data, target, { centralSha, workflowSha }), packages: packageVars(centralRoot) };
 
+  const withContract = Boolean(data.projects.projects.find((p) => p.name === project)?.features?.contract);
   const own = new Map();
   const scaffoldDir = path.join(centralRoot, 'scaffold/app');
   for (const rel of walk(scaffoldDir)) {
+    if (rel === 'shared/contract.ts' && !withContract) continue; // opt-in (ADR-0026)
     const out = rel.endsWith(TEMPLATE_SUFFIX) ? rel.slice(0, -TEMPLATE_SUFFIX.length) : rel;
     own.set(out, renderText(fs.readFileSync(path.join(scaffoldDir, rel), 'utf8').replace(/\r\n/g, '\n'), vars, `scaffold/app/${rel}`));
   }
   for (const [file, out] of Object.entries(RUNBOOKS)) {
     own.set(out, renderText(fs.readFileSync(path.join(centralRoot, 'docs/runbooks', file), 'utf8').replace(/\r\n/g, '\n'), vars, `docs/runbooks/${file}`));
   }
-  for (const copy of CONTRACT_COPIES) own.set(copy, own.get('shared/contract.ts'));
+  if (withContract) for (const copy of CONTRACT_COPIES) own.set(copy, own.get('shared/contract.ts'));
   // Placeholder icons for the web app manifest (Buffers; docs/pwa.md).
   for (const icon of renderIcons()) own.set(`frontend/public/${icon.path}`, icon.content);
 

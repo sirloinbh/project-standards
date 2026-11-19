@@ -161,7 +161,7 @@ The basis for the rules is workout-memo. The scaffold adds the parts the other 7
 
 ## Shared contract (shared/contract.ts)
 
-- `shared/contract.ts` is the single source of input schemas.
+- `shared/contract.ts` is the single source of input schemas. It is opt-in (`features.contract`, ADR-0026): an app without it has no contract files, and `contract:check` passes with a note.
 - `npm run contract:sync` copies it to `backend/src/contract.ts` and `frontend/src/contract.ts`. This is so each area can build on its own in the subtree repos and the Docker build.
 - Do not edit the copies directly. `contract:check` in `npm run check` fails on any mismatch.
 
