@@ -15,9 +15,22 @@ on:
         description: Folder that holds the Node project (package.json, Dockerfile)
         type: string
         default: backend
+      push-images:
+        description: On pushes to main, build the image once and push it to GHCR (ADR-0023, #757). Off until the private package quota is confirmed (#756)
+        type: boolean
+        default: false
+      image-prefix:
+        description: Image path without the part name, for example ghcr.io/sirloinbh/shared-auth; the image is pushed as <image-prefix>-backend
+        type: string
+        default: ''
+      image-keep:
+        description: How many image versions to keep in GHCR
+        type: number
+        default: 5
 
 permissions:
   contents: read
+  packages: read
 
 env:
   # inputs are never put into the run shell directly, only used as environment variables (prevents script injection).
@@ -63,3 +76,43 @@ jobs:
       - run: docker build "$WORKDIR"
         env:
           WORKDIR: ${{ inputs.working-directory }}
+
+  # Builds the image that production will run and pushes it to GHCR, tagged with the commit (ADR-0023, #757). Only on a push to
+  # main, only when the service turns it on, and only after docker-build passed. packages: write is granted to this job alone.
+  # A failed retention step never fails the run: the image is pushed, old ones are just not removed yet.
+  image-push:
+    needs: [docker-build]
+    if: ${{ !cancelled() && needs.docker-build.result == 'success' && inputs.push-images && github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE_PREFIX: ${{ inputs.image-prefix }}
+      IMAGE_KEEP: ${{ inputs.image-keep }}
+      WORKDIR: ${{ inputs.working-directory }}
+      OWNER: ${{ github.repository_owner }}
+      SOURCE: ${{ github.server_url }}/${{ github.repository }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Build and push
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          case "$IMAGE_PREFIX" in ghcr.io/"$OWNER"/?*) ;; *) echo "image-prefix must start with ghcr.io/$OWNER/" >&2; exit 1 ;; esac
+          tag=${GITHUB_SHA:0:12}
+          printf '%s' "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build --label "org.opencontainers.image.source=$SOURCE" --label "org.opencontainers.image.revision=$GITHUB_SHA" -t "$IMAGE_PREFIX-backend:$tag" "$WORKDIR"
+          docker push "$IMAGE_PREFIX-backend:$tag"
+      - name: Keep only the newest versions
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          name=${IMAGE_PREFIX#ghcr.io/"$OWNER"/}-backend
+          # Newest first; everything after the first IMAGE_KEEP versions is deleted.
+          gh api --paginate "/users/$OWNER/packages/container/$name/versions" --jq '.[] | [.created_at, .id] | @tsv' |
+            sort -r | tail -n +"$((IMAGE_KEEP + 1))" | cut -f2 |
+            while read -r id; do gh api -X DELETE "/users/$OWNER/packages/container/$name/versions/$id"; done

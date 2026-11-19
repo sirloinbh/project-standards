@@ -5,6 +5,8 @@ on: [push, pull_request]
 
 permissions:
   contents: read
+  # write is the most the image-push job of the reusable workflow may use; every other job gets read (ADR-0023, #757).
+  packages: write
 
 jobs:
   ci:
@@ -12,3 +14,5 @@ jobs:
     with:
       node-version: '{{versions.node}}'
       npm-version: '{{versions.npm}}'
+      push-images: false
+      image-prefix: 'ghcr.io/sirloinbh/{{project.name}}'
