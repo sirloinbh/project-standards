@@ -30,7 +30,10 @@ This standard is based on the workout-memo structure. New projects follow it as 
 │  │  ├─ standard/jobs.ts                   # centrally managed with features.jobs: pg-boss job runner (#556)
 │  │  ├─ openapi.ts  openapi-cli.ts         # OpenAPI document generation (docs/openapi.json)
 │  │  ├─ domain.ts                          # domain rules and validation
-│  │  ├─ migrations.ts  migrate.ts          # migration runner rules and command (docs/conventions/database.md)
+│  │  ├─ standard/db.ts                     # centrally managed: createPool and withTransaction (#676)
+│  │  ├─ standard/migrations.ts  standard/migrate.ts # centrally managed: migration runner and command (#677, docs/conventions/database.md)
+│  │  ├─ standard/rate-limit.ts             # centrally managed: API rate limit keyed by the client IP (#678)
+│  │  ├─ migrate.ts                         # one-line entry: imports standard/migrate.js
 │  │  └─ contract.ts                        # copy of shared/contract.ts
 │  └─ test/
 ├─ database/                                # subtree → <project>-db

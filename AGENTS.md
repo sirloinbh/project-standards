@@ -5,9 +5,9 @@ This repository is the central repo for `sirloinbh`'s personal app portfolio (8 
 ## Current phase: operation
 
 - The design source is [docs/design.md](docs/design.md) and [docs/adr/](docs/adr/). The requirements source is [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md).
-- The "12. Phased rollout plan" in design.md is done (#116). `maxRollout` in `sync.config.json` is `3`, so all 8 apps, the infrastructure repo, and the shared service repos (`shared-auth`, `shared-ai`, `service` profile) are sync targets.
+- The "12. Phased rollout plan" in design.md is done (#116). `sync.config.json` lists the targets (none has `enabled: false`), so all 8 apps, the infrastructure repo, and the shared service repos (`shared-auth`, `shared-ai`, `service` profile) are sync targets.
 - Order for changing a standard from now on: fix the source in this repo → `npm run check` → merge the PR in this repo (agent) → `sync.yml` opens or updates the sync PRs in the downstream repos → the agent reviews each sync PR, records it on the issue, and merges it once CI is green (#591).
-- When you must add a commit directly to a sync PR (for example when a shared package grows and the lockfile needs an update), do not start the commit message with `chore: sync central standards (project-standards@` (or the pre-#455 `chore: 중앙 표준 동기화 (project-standards@`). The sync bot does not overwrite a branch that has such a commit; it reports it with a PR comment and a workflow warning (#114, #367). While that PR is open, central changes are not applied, so run the `sync` workflow after merging it.
+- When you must add a commit directly to a sync PR (for example when a shared package grows and the lockfile needs an update), do not start the commit message with `chore: sync central standards (project-standards@`. The sync bot does not overwrite a branch that has such a commit; it reports it with a PR comment and a workflow warning (#114, #367). While that PR is open, central changes are not applied, so run the `sync` workflow after merging it.
 - The agent merges the daily compliance report PR (`chore/compliance-report`). Register each new `✗` item as an issue in the affected repo or in this repo.
 
 ## Work procedure
@@ -26,7 +26,6 @@ This repository is the central repo for `sirloinbh`'s personal app portfolio (8 
    - Merging an app repo to main can be a production deploy; the user chose auto-merge there too. Merging is not applying: `terraform apply` and other real AWS or production changes still need the user's OK.
    - Still ask the user first for: `[직접]` (user does it directly) and `needs-user` issues, package installs outside the pre-approved scope, and decisions the issue marks as "user confirmation".
    - If the PR body lists an item to confirm before merging, do not merge; ask the user.
-   - Exception: PRs that an agent worker (`tools/agents`) opens in a downstream repo follow `autoMerge` in that repo's `.agents.json` (default `true`; per-repo values are in the table in [docs/tools.md](docs/tools.md#auto-merge-per-repo)). For a repo marked `false` in the table, include `.agents.json` in the PR that introduces the worker (#184).
 
 Answering questions, giving recommendations, and read-only investigation do not create an issue or a branch.
 
@@ -37,7 +36,6 @@ This works with Node built-in modules only, with no external npm packages. Do no
 | Command | When |
 |---|---|
 | `npm run check` | Before every commit and PR. Tests, registry conflicts, whether generated docs and design tokens are current, package rules, workflow checks |
-| `npm run test:agents` | When you changed `tools/agents/` (includes the Windows path check) |
 | `UPDATE_SNAPSHOT=1 npm test` | When the list of files downstream repos receive changed. Review the snapshot change in the PR |
 | `npm run docs`, `npm run tokens` | To regenerate the generated docs after changing the registry or tokens |
 | `npm run sync:preview` | To preview the files downstream repos will receive in `.local/sync-preview/` |
@@ -55,7 +53,7 @@ These live in `.claude/rules/`. Claude Code loads each one when it works on matc
 - Do not push directly to downstream repos. Follow each repo's issue and PR procedure for downstream changes.
 - Do not remove or update npm packages or run `npx`. Adding a package with `npm install --ignore-scripts --save-exact` is allowed in app repos since #629 (user decision 2026-11-18), following the dependency policy; for anything else the exception is when the user explicitly reconfirms; the conditions are in [docs/dependency-policy.md](docs/dependency-policy.md) and [docs/agent-guardrails.md](docs/agent-guardrails.md).
 - Do not commit `.env` values, tokens, GitHub App private keys, Terraform state, or backups, and do not record them in docs, PRs, or logs.
-- Do not raise `maxRollout`, push package tags, or do user steps on the user's behalf.
+- Do not pause or enable a sync target (`enabled` in `sync.config.json`), push package tags, or do user steps on the user's behalf.
 - Do not overwrite user changes. Stage only the files you need, by name.
 
 ## Accounts and security

@@ -1,6 +1,6 @@
 # project-standards Design
 
-- Status: draft (issue #1). Once this document is merged, the skeleton work starts as separate issues.
+- Status: implemented and in operation. This is the original design; later changes are in `docs/adr/` and `docs/changes/`. The rollout stages in this document (`maxRollout`, `rollout`) were removed in #701; a sync target is now paused with `enabled: false`.
 - Source of requirements: [bootstrap-prompt.md](bootstrap-prompt.md)
 - Decision records: [docs/adr/](adr/)
 
@@ -162,8 +162,7 @@ packages/<pkg> change PR (with version and CHANGELOG) → user merges
 | Project specific | `AGENTS.project.md`, `skills/<proj>-*`, app code, `compose.yaml` (build secret settings are checked), `docs/changes/` | Not checked |
 | Downstream lockfiles | `frontend/package-lock.json`, `backend/package-lock.json` | Fails if installed versions differ from the root `package-lock.json` ([dependency policy](dependency-policy.md#sub-lockfiles-frontend-backend)) |
 | Scaffold only | `scaffold/app/**` | Warning only for existing repos (`directory-rules`) |
-| Central tools | `tools/**` (account tools, local agent worker `tools/agents/`) | Not copied to downstream repos. Install once on the PC and run against a specified target repo (#19, #165) |
-| Repo agent config | `.agents.json` (only repos that use the agent worker) | Not checked. The worker validates the format when it runs ([tools.md](tools.md#local-agent-worker-toolsagents)) |
+| Central tools | `tools/**` (account tools; the local agent worker `tools/agents/` was archived in #708) | Not copied to downstream repos. Install once on the PC and run against a specified target repo (#19, #165) |
 
 The Docker files, which were identical across the 8 apps except for ports, moved to Option B fully managed (#6). The values injected into templates are as follows.
 
@@ -206,7 +205,7 @@ central main push
   └─ sync.yml (concurrency: sync, no cancellation)
       ├─ confirm central tests and registry-check pass
       ├─ App JWT → installation token per target repo
-      └─ for each repo in sync.config targets with rollout ≤ maxRollout:
+      └─ for each repo in sync.config targets that is not `enabled: false`:
           ├─ render profile templates (inject registry, platform, versions)
           ├─ skip registry allowedDifferences paths
           ├─ verify own-package provenance (4.3)
@@ -220,14 +219,13 @@ central main push
 
 - Commits are created through the GitHub API (Git Data API). Because the runner does not clone the downstream repo, no hooks or scripts of the downstream repo run.
 - The only sync target is the umbrella repo. Managed files inside subtree paths, such as `frontend/.npmrc`, reach each deployment repo when the user runs the existing subtree push procedure.
-- The initial value of `maxRollout` is 0. No real PR is opened without user approval.
+- A target with `enabled: false` gets no PR. (The original design had a `maxRollout` stage counter; it was removed in #701 once every target was synced.)
 
 ### 5.4 sync.config schema and initial values
 
 ```jsonc
 {
   "$schema": "./sync.config.schema.json",
-  "maxRollout": 0,
   "profiles": {
     "app": {
       "templates": ["common", "app"],
@@ -242,20 +240,20 @@ central main push
     }
   },
   "targets": [
-    { "repo": "sirloinbh/workout-memo",              "profile": "app",   "project": "workout-memo",         "rollout": 1 },
-    { "repo": "sirloinbh/study-log",                 "profile": "app",   "project": "study-log",            "rollout": 2 },
-    { "repo": "sirloinbh/health-log",                "profile": "app",   "project": "health-log",           "rollout": 2 },
-    { "repo": "sirloinbh/life-journal",              "profile": "app",   "project": "life-journal",         "rollout": 2 },
-    { "repo": "sirloinbh/money-ledger",              "profile": "app",   "project": "money-ledger",         "rollout": 2 },
-    { "repo": "sirloinbh/cert-manager",              "profile": "app",   "project": "cert-manager",         "rollout": 2 },
-    { "repo": "sirloinbh/plan-routine",              "profile": "app",   "project": "plan-routine",         "rollout": 2 },
-    { "repo": "sirloinbh/dev-career-portfolio",      "profile": "app",   "project": "dev-career-portfolio", "rollout": 2 },
-    { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null,                   "rollout": 3 }
+    { "repo": "sirloinbh/workout-memo",              "profile": "app",   "project": "workout-memo" },
+    { "repo": "sirloinbh/study-log",                 "profile": "app",   "project": "study-log" },
+    { "repo": "sirloinbh/health-log",                "profile": "app",   "project": "health-log" },
+    { "repo": "sirloinbh/life-journal",              "profile": "app",   "project": "life-journal" },
+    { "repo": "sirloinbh/money-ledger",              "profile": "app",   "project": "money-ledger" },
+    { "repo": "sirloinbh/cert-manager",              "profile": "app",   "project": "cert-manager" },
+    { "repo": "sirloinbh/plan-routine",              "profile": "app",   "project": "plan-routine" },
+    { "repo": "sirloinbh/dev-career-portfolio",      "profile": "app",   "project": "dev-career-portfolio" },
+    { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null }
   ]
 }
 ```
 
-Schema rules: `repo` starts with the `sirloinbh/` prefix and has no duplicates. For the `app` profile, `project` must exist in the registry, and for the `infra` profile `project` is `null`. `rollout` is an integer of 1 or more.
+Schema rules: `repo` starts with the `sirloinbh/` prefix and has no duplicates. For the `app` profile, `project` must exist in the registry, and for the `infra` profile `project` is `null`. `enabled` is an optional boolean; `false` pauses the target.
 
 ## 6. Project fixed-value registry
 

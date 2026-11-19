@@ -3,7 +3,6 @@
 import crypto from 'node:crypto';
 import { mapLimit } from './github-app.mjs';
 import { checkEntry, MANIFEST_PATH } from './manifest.mjs';
-import { pinRanges } from './pin-ranges.mjs';
 import { planTarget } from './sync-plan.mjs';
 import { loadIndex } from './templates.mjs';
 
@@ -11,9 +10,7 @@ export const BRANCH_PREFIX = 'chore/standards-sync-';
 const CENTRAL = 'sirloinbh/project-standards';
 // Every commit the sync creates starts with this; any other commit on the branch was added by a person.
 const COMMIT_PREFIX = 'chore: sync central standards (project-standards@';
-// Bot commits made before #455 used this prefix. They still count as bot commits, not direct ones.
-const OLD_COMMIT_PREFIX = 'chore: 중앙 표준 동기화 (project-standards@';
-const isBotCommit = (message) => message.startsWith(COMMIT_PREFIX) || message.startsWith(OLD_COMMIT_PREFIX);
+const isBotCommit = (message) => message.startsWith(COMMIT_PREFIX);
 
 const renderKeptComment = (centralSha, count) => [
   `Central standards commit \`${centralSha.slice(0, 7)}\` was not applied to this PR, so that the ${count} commit(s) added directly to this PR are not lost.`,
@@ -28,52 +25,7 @@ export const gitBlobSha = (text) => {
   return crypto.createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${body.length}\0`), body])).digest('hex');
 };
 
-/** package.json files and the lockfiles that record their specs: [pkgPath, [[lockPath, workspaceKey]...]]. */
-const PACKAGE_FILES = [
-  ['package.json', [['package-lock.json', '']]],
-  ['frontend/package.json', [['package-lock.json', 'frontend'], ['frontend/package-lock.json', '']]],
-  ['backend/package.json', [['package-lock.json', 'backend'], ['backend/package-lock.json', '']]],
-];
-
-// Pins ^/~ ranges in the planned package.json files and keeps every lockfile's specs in sync.
-function pinPackageFiles(files, read) {
-  const byPath = new Map(files.map((f) => [f.path, f]));
-  const notes = [];
-  const lockEdits = new Map();
-  const lockOf = (p) => {
-    if (!lockEdits.has(p)) {
-      const text = read(p);
-      lockEdits.set(p, text === null ? null : JSON.parse(text));
-    }
-    return lockEdits.get(p);
-  };
-  for (const [pkgPath, locks] of PACKAGE_FILES) {
-    const planned = byPath.get(pkgPath);
-    if (!planned?.content || !locks.length || !lockOf(locks[0][0])) continue;
-    const [primary, ...others] = locks;
-    const result = pinRanges(JSON.parse(planned.content), lockOf(primary[0]), primary[1]);
-    if (!result.changes.length && !result.unresolved.length) continue;
-    planned.content = `${JSON.stringify(result.pkg, null, 2)}\n`;
-    lockEdits.set(primary[0], result.lock);
-    for (const [lockPath, key] of others) {
-      const lock = lockOf(lockPath);
-      if (!lock) continue;
-      for (const change of result.changes) {
-        const [, section, name, version] = /^(\w+)\.(.+) \S+ → (\S+)$/.exec(change);
-        const installed = lock.packages?.[`node_modules/${name}`]?.version;
-        if (installed === version && lock.packages?.[key]?.[section]?.[name] !== undefined) lock.packages[key][section][name] = version;
-        else if (installed !== version) result.unresolved.push(`${lockPath}: ${name} is installed as ${installed ?? 'missing'}, not ${version} — regenerate this lockfile`);
-      }
-    }
-    notes.push(...result.changes.map((c) => `${pkgPath}: ${c}`), ...result.unresolved.map((u) => `Needs checking — ${u}`));
-  }
-  const lockFiles = [...lockEdits]
-    .filter(([, lock]) => lock)
-    .map(([path, lock]) => ({ path, mode: 'lockfile', source: 'scripts/lib/pin-ranges.mjs', content: `${JSON.stringify(lock, null, 2)}\n` }));
-  return { lockFiles, notes };
-}
-
-export function renderBody({ target, centralSha, changes, deletions, keptRemoved, pinNotes, packageNotes }) {
+export function renderBody({ target, centralSha, changes, deletions, keptRemoved, packageNotes }) {
   const short = centralSha.slice(0, 7);
   const app = target.profile === 'app';
   const changed = (p) => changes.some((c) => c.path === p);
@@ -81,7 +33,7 @@ export function renderBody({ target, centralSha, changes, deletions, keptRemoved
   rows.push(...deletions.map((p) => `| \`${p}\` | removed | no longer managed centrally |`));
   const confirm = [];
   if (app) confirm.push('- [ ] Merging to main in this repo deploys to production. I checked that now is a good time to deploy');
-  if (changes.some((c) => c.mode === 'lockfile' || c.path.endsWith('package.json'))) confirm.push('- [ ] I checked the `package.json` and lockfile changes. If a new `@sirloinbh/*` package was added, regenerate the lockfile with `npm install --ignore-scripts` and commit it to this branch (needs user approval)');
+  if (changes.some((c) => c.path.endsWith('package.json'))) confirm.push('- [ ] I checked the `package.json` and lockfile changes. If a new `@sirloinbh/*` package was added, regenerate the lockfile with `npm install --ignore-scripts` and commit it to this branch (needs user approval)');
   if (changes.some((c) => c.path.endsWith('.npmrc'))) confirm.push('- [ ] Because of the `${NODE_AUTH_TOKEN}` line in `.npmrc`, npm commands fail without this environment variable. I set it locally and on the server (a token with `read:packages`, or empty if no packages are used)');
   if (changes.some((c) => /^(frontend|backend|database)\//.test(c.path))) confirm.push('- [ ] Files under `frontend/`, `backend/`, or `database/` changed. After merging, run `scripts/push-repositories.ps1` to update the subtree deploy repos');
   if (changed('AGENTS.md')) confirm.push('- [ ] I checked that this project\'s own rules did not disappear from `AGENTS.md`. Move them to `AGENTS.project.md` if needed');
@@ -101,7 +53,6 @@ export function renderBody({ target, centralSha, changes, deletions, keptRemoved
     '| File | Change | Central source |',
     '|---|---|---|',
     ...rows,
-    ...(pinNotes.length ? ['', 'Pinned version ranges (to the installed versions, per the lockfile):', ...pinNotes.map((n) => `- ${n}`)] : []),
     ...(packageNotes.length ? ['', 'Shared package provenance check (ADR-0004):', ...packageNotes.map((n) => `- ${n}`)] : []),
     '',
     '## Verification',
@@ -141,16 +92,14 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
   };
   // planTarget reads synchronously, so download what it may need first.
   const index = loadIndex(root);
-  const needed = [...index.section, ...Object.keys(index.fields[target.profile] ?? {}), MANIFEST_PATH, ...PACKAGE_FILES.flatMap(([, locks]) => locks.map(([p]) => p))];
+  const needed = [...index.section, ...Object.keys(index.fields[target.profile] ?? {}), MANIFEST_PATH];
   await mapLimit(needed, fetchText);
   const read = (p) => cache.get(p) ?? null;
 
   const plan = planTarget({ root, data, target, centralSha, workflowSha, readExisting: read });
   const packageNotes = centralApi ? await verifyPackages(plan.manifest.packages, centralApi) : [];
-  const { lockFiles, notes: pinNotes } = target.profile === 'app' ? pinPackageFiles(plan.files, read) : { lockFiles: [], notes: [] };
-  const all = [...plan.files, ...lockFiles];
 
-  const changes = all
+  const changes = plan.files
     .filter((f) => f.content !== undefined && gitBlobSha(f.content) !== blobs.get(f.path))
     .map((f) => ({ path: f.path, mode: f.mode, source: f.source, content: f.content, isNew: !blobs.has(f.path) }));
 
@@ -205,7 +154,7 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
     await api('POST', `${repoPath}/git/refs`, { ref: `refs/heads/${branch}`, sha: commit.sha });
   }
   const title = `${COMMIT_PREFIX}${short})`;
-  const body = renderBody({ target, centralSha, changes: meaningful, deletions, keptRemoved, pinNotes, packageNotes });
+  const body = renderBody({ target, centralSha, changes: meaningful, deletions, keptRemoved, packageNotes });
   const pr = existing
     ? await api('PATCH', `${repoPath}/pulls/${existing.number}`, { title, body })
     : await api('POST', `${repoPath}/pulls`, { title, head: branch, base: repo.default_branch, body });
