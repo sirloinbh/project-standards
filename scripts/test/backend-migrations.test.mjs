@@ -139,3 +139,11 @@ test('migrate reports an unlock failure after success', async () => {
   const unlockFails = fakeDb((sql) => (sql.includes('pg_advisory_unlock') ? new Error('unlock failed') : undefined));
   await assert.rejects(migrate(unlockFails.db, [file('001_a.sql')], 1), /unlock failed/);
 });
+
+test('the managed files contain no irregular whitespace, which the apps lint rejects (#739)', async () => {
+  const { readFile } = await import('node:fs/promises');
+  for (const name of ['migrations.ts', 'migrate.ts.tmpl']) {
+    const text = await readFile(new URL(`../../templates/app/backend/src/standard/${name}`, import.meta.url), 'utf8');
+    assert.doesNotMatch(text, /[\u00a0\u1680\u2000-\u200b\u2028\u2029\u202f\u205f\u3000\ufeff]/, name);
+  }
+});
