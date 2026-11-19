@@ -19,7 +19,7 @@ const filePattern = /^(\d{3})_[a-z0-9_]+\.sql$/;
 
 /** Removes a UTF-8 BOM. Editors add one on Windows, and PostgreSQL would read it as part of the first statement. */
 function stripBom(sql: string) {
-  return sql.replace(/^﻿/, '');
+  return sql.replace(/^\uFEFF/, '');
 }
 
 // Line endings and a UTF-8 BOM depend on the checkout, not on the migration's meaning.
