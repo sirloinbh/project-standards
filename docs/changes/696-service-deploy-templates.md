@@ -34,6 +34,12 @@ Implements the design in [696-service-deploy-templates-design.md](696-service-de
 2. In each sync PR, add `deploy/bootstrap-env.sh` (the hand `.env` creation) as a separate commit that does not start with `chore: sync central standards (project-standards@`, and delete nothing else by hand.
 3. The server rollback test (a deploy whose health check fails) is a user step; record the result in #696.
 
+### Rollout result (2026-11-19)
+
+- **shared-ai (canary):** installed first from the runbook in the shared-ai README ("Server deploy"). First deploy `a83a85fe44a4`, then sync PR #13 (the pulling wrapper) deployed by autodeploy at 21:36 KST as `b8ecc53c163e`: `.deployed` equals HEAD, api recreated, db healthy, public `/api/health` ok.
+- **shared-auth:** sync PR #16 plus `deploy/bootstrap-env.sh` (commit 0707003) merged 12:23Z (21:23 KST); autodeploy deployed `dec1d9d7cac7` at 21:28 KST on its own. The first silent runs were the CI-pending wait (no journal line, see #808). Sign-in stayed up throughout: `auth.daysofme.com/api/health` 200 and an app's `/api/me` 401 when signed out on every sample.
+- **Not done:** the server rollback test (step 3 above) is still a user step.
+
 ## Tests
 
 `npm run check` (the full check), including the sync snapshot.
