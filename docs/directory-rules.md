@@ -28,7 +28,8 @@ This standard is based on the workout-memo structure. New projects follow it as 
 │  │  ├─ standard/audit.ts                  # centrally managed: audit log helper (#553)
 │  │  ├─ standard/tools.ts                  # centrally managed: AI tool routes for shared-ai (#559)
 │  │  ├─ standard/jobs.ts                   # centrally managed with features.jobs: pg-boss job runner (#556)
-│  │  ├─ openapi.ts  openapi-cli.ts         # OpenAPI document generation (docs/openapi.json)
+│  │  ├─ standard/openapi.ts  standard/openapi-cli.ts # centrally managed: OpenAPI builder on z.toJSONSchema and its command (#679)
+│  │  ├─ openapi.ts  openapi-cli.ts         # the app's operation table (exports `document`) and a one-line CLI entry (docs/openapi.json)
 │  │  ├─ domain.ts                          # domain rules and validation
 │  │  ├─ standard/db.ts                     # centrally managed: createPool and withTransaction (#676)
 │  │  ├─ standard/migrations.ts  standard/migrate.ts # centrally managed: migration runner and command (#677, docs/conventions/database.md)
@@ -166,6 +167,6 @@ The basis for the rules is workout-memo. The scaffold adds the parts the other 7
 ## OpenAPI
 
 - When you change API routes, update `operations` in `backend/src/openapi.ts` (a `summary`, request schema, and status codes per path) and regenerate `docs/openapi.json` with `npm run openapi`.
-- Request schemas are converted from the server's Zod schemas. All error responses point to `components.schemas.Error` (`{ error }`).
-- Tests fail if the registered routes differ from `operations` or the generated file is stale (scaffold and workout-memo `backend/test/openapi.test.ts`).
+- Request schemas are converted from the server's Zod schemas with `z.toJSONSchema()` (managed `standard/openapi.ts`). All error responses point to `components.schemas.Error` (`{ error }`). Guarded routes also document the shared sign-in (`security`) and the default 401, 429 and, with a body, 413 answers; a route with `public: true` (only `/api/health`) does not.
+- Tests fail if the registered routes differ from `operations` or the generated file is stale (scaffold `backend/test/openapi.test.ts`; the test reads the route list in the test only, the builder does not depend on Express).
 - Leave `docs/openapi.json` exactly as `JSON.stringify` produced it, and put it in the project section of `.prettierignore`.
