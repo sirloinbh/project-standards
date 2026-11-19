@@ -17,12 +17,12 @@
 2. The server pulls the image for the commit and starts it (`docker compose pull` and `up -d`). It no longer builds. Autodeploy already waits for CI, so the image exists by then.
 3. Rollback is a tag switch: the server pulls and starts an earlier commit tag. It keeps the previous image in the local cache as today, so the one-step rollback still works when GHCR is unreachable.
 4. The server needs one `read:packages` token for `docker login ghcr.io`. The `npm_token` build secret is used in CI only. CI pushes with its own `GITHUB_TOKEN` (`packages: write` in the push job only).
-5. A retention rule removes old tags (for example keep the last 5 per image).
+5. A retention rule removes old tags: keep the last 2 per image (the current one and the previous one, which is what a rollback needs; #756).
 6. While an app has no pushed image, its deploy falls back to the local build, so each app can move on its own.
 
 ## Risks
 
-- **Unconfirmed private-package quota.** The storage and bandwidth allowance for private GHCR packages on the `sirloinbh` plan is not confirmed. A third-party source lists 500 MB of Packages storage on the Free plan, shared with Actions artifacts. 10 services with two images each can exceed that without a retention rule. The retention rule (point 5) is part of the first follow-up issue, and the quota is checked before the first app moves. If it does not cover the images, stop and revisit this ADR rather than keep going.
+- **Private-package quota (checked 2026-11-19, #756).** The `sirloinbh` account is on GitHub Free. The Free plan includes 500 MB of Packages storage and 1 GB of data transfer a month for private packages. November so far: 0.85 GB-hr of storage and 0.02 GB of transfer, billed $0 (read on the billing pages by the coordinator). Today that is far below the allowance, but only because nothing is pushed yet. A rough estimate (not measured): an app's two images are about 140 MB compressed per tag set, and a second tag adds little because the layers are shared, so 2 tags per image is about 170 MB per app. That fits about 3 apps in 500 MB, not 8 apps and 2 services (about 1.5 GB). Overage is billed per GB-month, and a Free account has a spending limit of $0 until the user sets a budget, so pushes would fail at the limit rather than cost money by surprise. Before the first app moves, the user chooses: a small Packages budget (the ~1 GB overage is cents to a dollar or two a month at GitHub's published storage price, to be confirmed on the billing page), or moving only as many apps as fit. The estimate is replaced by the real size of the first pushed images.
 - A GHCR outage blocks a deploy (the previous image keeps running).
 - Public repositories (inlined CI, #209) need the package visibility set deliberately.
 - Build time and peak memory per app are not measured, so the gain in deploy time and the possible smaller server plan are expectations, not numbers.
@@ -38,7 +38,7 @@
 - Reusable CI pushes images to GHCR on `main` with a retention rule.
 - `remote-deploy.sh` pulls instead of builds, with the local-build fallback.
 - The same for the service deploys, after #696.
-- Confirm the private-package quota (user step).
+- Confirm the private-package quota (user step, #756): the numbers are in Risks; the budget decision is open.
 
 ## Revisit when
 

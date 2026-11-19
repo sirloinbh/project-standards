@@ -45,7 +45,7 @@ on:
       image-keep:
         description: How many of the newest image versions to keep per image; older ones are deleted after a push
         type: number
-        default: 5
+        default: 2
 
 permissions:
   contents: read
