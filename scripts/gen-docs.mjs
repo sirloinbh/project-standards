@@ -172,6 +172,12 @@ export function renderVersions(v, dependencyFiles) {
       for (const [name, version] of Object.entries(deps)) rows.push([`\`${name}\``, version, `\`${dependencyFiles[part]}\``, section]);
     }
   }
+  const optional = [];
+  for (const [part, sections] of Object.entries(v.optionalDependencies ?? {})) {
+    for (const [section, deps] of Object.entries(sections)) {
+      for (const [name, version] of Object.entries(deps)) optional.push([`\`${name}\``, version, `\`${dependencyFiles[part]}\``, section]);
+    }
+  }
   return [
     '# Version source',
     '',
@@ -199,6 +205,12 @@ export function renderVersions(v, dependencyFiles) {
     'External dependencies that the 8 apps and the scaffold use at the same version, in the same file and the same section. They are managed fields of each app `package.json`, so if even one app has a different version, `standards-check` fails (#304). Dependencies used by a single app are not listed here.',
     '',
     ...table(['Package', 'Version', 'File', 'Section'], rows),
+    '',
+    '## Optional app dependencies',
+    '',
+    'Used by only some apps. The sync writes the version below only into an app whose `package.json` already lists the package, and never adds it (#704).',
+    '',
+    ...table(['Package', 'Version', 'File', 'Section'], optional),
     '',
   ].join('\n');
 }

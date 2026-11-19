@@ -66,6 +66,16 @@
         "backend": { "$ref": "#/$defs/dependencySections" }
       }
     },
+    "optionalDependencies": {
+      "type": "object",
+      "description": "Dependencies that only some apps have. The sync writes one of these only into an app whose package.json already lists it, at this exact version (#704). A name may not also be in dependencies.",
+      "additionalProperties": false,
+      "properties": {
+        "root": { "$ref": "#/$defs/dependencySections" },
+        "frontend": { "$ref": "#/$defs/dependencySections" },
+        "backend": { "$ref": "#/$defs/dependencySections" }
+      }
+    },
     "packages": {
       "type": "object",
       "description": "A안 패키지의 배포 버전. 아직 배포 전이면 null",

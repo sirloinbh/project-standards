@@ -36,6 +36,7 @@ This works with Node built-in modules only, with no external npm packages. Do no
 | Command | When |
 |---|---|
 | `npm run check` | Before every commit and PR. Tests, registry conflicts, whether generated docs and design tokens are current, package rules, workflow checks |
+| `npm run check:docs` | Docs-only changes (no change under `scripts/`, `templates/`, `packages/`, `registry/`, `versions.json`, or `sync.config.json`): a few seconds. CI still runs `npm run check` |
 | `UPDATE_SNAPSHOT=1 npm test` | When the list of files downstream repos receive changed. Review the snapshot change in the PR |
 | `npm run docs`, `npm run tokens` | To regenerate the generated docs after changing the registry or tokens |
 | `npm run sync:preview` | To preview the files downstream repos will receive in `.local/sync-preview/` |

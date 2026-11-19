@@ -21,6 +21,18 @@ const withoutHeader = (text) => text.split('\n').filter((line) => !hasHeader(lin
 const rendered = renderProfile({ root, profile: 'app', folders: ['common', 'app'], vars });
 const byPath = Object.fromEntries(rendered.map((f) => [f.path, f]));
 
+test('an optional dependency is written only into a package.json that already lists it (#704)', () => {
+  const index = loadIndex(root);
+  const versions = { ...data.versions, optionalDependencies: { frontend: { devDependencies: { '@testing-library/user-event': '14.6.8' } } } };
+  const has = { devDependencies: { '@testing-library/user-event': '14.6.7' } };
+  const key = 'devDependencies.@testing-library/user-event';
+  assert.equal(sharedDependencyFields(index, 'app', versions, (t) => (t === 'frontend/package.json' ? has : null))['frontend/package.json'][key], '14.6.8');
+  assert.equal(sharedDependencyFields(index, 'app', versions, () => null)['frontend/package.json'][key], undefined, 'an app without the package gets nothing');
+  assert.equal(sharedDependencyFields(index, 'app', versions, () => ({ dependencies: {} }))['frontend/package.json'][key], undefined);
+  const both = { ...data.versions, optionalDependencies: { frontend: { devDependencies: { vite: '6.4.5' } } } };
+  assert.throws(() => sharedDependencyFields(index, 'app', both, () => ({ devDependencies: { vite: '6.4.5' } })), /vite is in both dependencies and optionalDependencies/);
+});
+
 test('app profile renders the shared config files with .tmpl removed', () => {
   for (const p of ['.editorconfig', '.gitattributes', '.gitignore', '.prettierignore', '.nvmrc', '.node-version', '.npmrc', 'frontend/.npmrc', 'backend/.npmrc', '.github/dependabot.yml']) {
     assert.ok(byPath[p], `${p} is rendered`);
