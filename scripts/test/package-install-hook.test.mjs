@@ -19,9 +19,8 @@ const BLOCKED = {
   // The cases the prefix deny rules miss (#162 completion criteria).
   "bash -lc 'npm ci --ignore-scripts=false'": 'npm ci with install scripts',
   '& "C:\\Program Files\\nodejs\\npm.cmd" ci --no-ignore-scripts': 'npm ci with install scripts',
-  // Options with values, aliases and abbreviations npm accepts.
+  // Options with values and the aliases the hook knows.
   'npm u': 'npm update',
-  'npm upd': 'npm update',
   'npm ic --ignore-scripts false': 'npm ci with install scripts',
   // Forms npm resolves to the same setting, and the environment variables that override .npmrc.
   'npm ci --no-ignore': 'npm ci with install scripts',
@@ -57,7 +56,6 @@ const BLOCKED = {
   'npm sit': 'npm install-ci-test',
   'npm unlink x': 'npm uninstall',
   'npm rb': 'npm rebuild',
-  'npm installTest': 'npm install-test',
   'npm x cowsay': 'npm exec',
   'npm create vite': 'npm init',
   'npm audit fix': 'npm audit fix',
@@ -154,15 +152,24 @@ const ALLOWED = [
   '',
 ];
 
-test('npm commands resolve the way npm resolves them', () => {
+test('the hook resolves exact npm command words and aliases, and nothing else (#703)', () => {
   assert.equal(npmCommand('i'), 'install');
-  assert.equal(npmCommand('isntall'), 'install');
-  assert.equal(npmCommand('run'), 'run');
-  assert.equal(npmCommand('run-script'), 'run');
-  assert.equal(npmCommand('ls'), 'ls');
-  assert.equal(npmCommand('in'), 'install');
+  assert.equal(npmCommand('add'), 'install');
+  assert.equal(npmCommand('ic'), 'ci');
+  assert.equal(npmCommand('rm'), 'uninstall');
+  assert.equal(npmCommand('up'), 'update');
+  assert.equal(npmCommand('run'), undefined);
+  assert.equal(npmCommand('ls'), undefined);
   assert.equal(npmCommand('frontend'), undefined);
-  assert.equal(npmCommand('ex'), undefined, 'ambiguous prefixes do not resolve');
+  assert.equal(npmCommand('upd'), undefined, 'abbreviations are not resolved');
+  assert.equal(npmCommand('installTest'), undefined, 'camelCase names are not resolved');
+  assert.equal(npmCommand('toString'), undefined, 'inherited object keys are not commands');
+});
+
+test('the first word after the options decides, so a blocked alias after run or test does not block', () => {
+  assert.equal(findInstall('npm run x -- install'), null);
+  assert.equal(findInstall('npm test x'), null);
+  assert.equal(findInstall('npm upd'), null, 'a typo or abbreviation is not caught: the hook guards against mistakes only');
 });
 
 test('the command splitter keeps quoted text and skips here-documents and comments', () => {
