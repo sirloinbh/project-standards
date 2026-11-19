@@ -57,22 +57,22 @@ These also live outside the repo, in `~/.claude/settings.json` and the settings 
 | `autoUpdatesChannel` | `stable` | Fewer updates, so fewer restarts and prompt-cache rebuilds (#445). `latest` is the other value |
 | `crossSessionInbound` | `accept` | Messages from your other local sessions (other worktrees) are delivered without the Approve/Deny dialog (#419). The dialog appears when one session bypasses permissions and the other does not. Other values: `hold`, `refuse`. Also settable in `/config` as "Messages from your other sessions" ([docs](https://code.claude.com/docs/en/cross-session-messaging.md)) |
 
-### Permissions and the delete guard (user decision 2026-11-19, #763)
+### Permissions and the delete guard (user decisions 2026-11-19, #763)
 
 Four user-level files carry the same permission setup: `~/.claude/settings.json` and `%APPDATA%\orca\claude-profiles\<id>\home\settings.json` for each of the three Orca Claude accounts (one profile per account). Keep them in sync: a permission change must go to every one of the four, or sessions on the other accounts keep the old rules.
 
 - **`permissions.ask`** is trimmed to commands that change real infrastructure or data: `terraform apply`, `docker volume rm`, `docker system prune`, `npm uninstall`, and `aws`. `rm`, `rmdir`, `git clean`, `git branch -D`, `git rebase` and `git reset --hard` are no longer in it (they are covered by the hook below and by the git rules in the global `CLAUDE.md`). The `deny` list is unchanged.
 - **`hooks.PreToolUse`** runs `node C:/Users/kimbh/.claude/hooks/guard-deletes.mjs` for `Bash` and `PowerShell`. The script lives only in `~/.claude/hooks/` (not in this repo) and all four settings files must point to it.
 
-What `guard-deletes.mjs` does with a command:
+What `guard-deletes.mjs` does with a command (user decision 2026-11-19, second change: deletes never prompt):
 
 | Case | Decision |
 |---|---|
-| A recursive delete of a root, drive, the home folder, a shallow folder (2 levels or fewer, such as `D:/github`), or a git repo or worktree root | **Ask** |
-| A recursive delete whose target has a wildcard or an unresolved variable | **Ask** |
-| Any delete of `.git`, `.env*`, `*.tfstate*`, `*.pem`, `*.key`, `.ssh`, `.aws`, `credentials*`, `settings.json`, `CLAUDE.md`, `AGENTS.md`, `MEMORY.md`, a `.claude` folder, or a `memory` folder | **Ask** |
+| A command with a "critical" delete: a recursive delete of a root, drive, the home folder, a shallow folder (2 levels or fewer, such as `D:/github`) or a git repo or worktree root; a recursive delete with a wildcard or an unresolved variable; or any delete of `.git`, `.env*`, `*.tfstate*`, `*.pem`, `*.key`, `.ssh`, `.aws`, `credentials*`, `settings.json`, `CLAUDE.md`, `AGENTS.md`, `MEMORY.md`, a `.claude` folder or a `memory` folder (also when mixed with other commands) | **Allow** without a prompt. The reason only records "would have been critical" and why |
 | Any other delete (`rm`, `rmdir`, `unlink`, `Remove-Item`, `del`, `rd`, `git rm`) when every part of the command is a delete or a harmless helper (`cd`, `echo`, `ls`, `mkdir`, ...) | **Allow** without a prompt |
-| A command with no delete, or a delete mixed with other commands | No decision; the normal permission flow runs |
+| A command with no delete, or a non-critical delete mixed with other commands | No decision; the normal permission flow runs |
+
+The first version asked for the critical cases; the user then asked never to be asked about deletes. What still stops a delete is the `deny` list: `rm -rf /` and `rm -rf ~` are blocked there, and the hook's "allow" does not override a deny rule. Because a deleted file cannot be recovered, git history and the backups are the safety net, not a prompt.
 
 The hook is a convenience, not a security boundary: it splits the command text on `;`, `&&`, `||`, `|` and newlines and reads the targets itself.
 
