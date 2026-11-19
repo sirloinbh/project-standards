@@ -191,3 +191,46 @@ test('the scaffold health test expects the error texts the managed standard/http
   assert.ok(expected.length >= 3, 'the health test checks the three shared error texts');
   for (const text of expected) assert.ok(http.includes(`'${text}'`), `standard/http.ts does not send "${text}"`);
 });
+
+// The shared contract is opt-in (ADR-0026, #782): the scaffold writes it only when features.contract is on.
+function renderWithContract(on) {
+  const data = structuredClone(slot99.data);
+  data.projects.projects.find((p) => p.name === 'sample-app').features.contract = on;
+  return renderScaffold({ data, project: 'sample-app', centralSha: sha });
+}
+
+test('without features.contract the scaffold has no contract file or copies, and still passes standards-check', () => {
+  const off = renderWithContract(false);
+  const paths = new Set(off.map((f) => f.path));
+  for (const file of ['shared/contract.ts', ...CONTRACT_COPIES]) assert.ok(!paths.has(file), file);
+  assert.ok(paths.has('scripts/contract.mjs'), 'the check script is still managed and passes when there is no contract');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'scaffold-off-'));
+  try {
+    writeScaffold(off, dir);
+    for (const [name, version] of Object.entries(loadAll(root).data.versions.packages)) {
+      if (!version) continue;
+      fs.mkdirSync(path.join(dir, 'node_modules', name), { recursive: true });
+      fs.writeFileSync(path.join(dir, 'node_modules', name, 'package.json'), JSON.stringify({ name, version }));
+    }
+    const { problems } = runCheck(dir);
+    assert.deepEqual(problems, []);
+    const run = execFileSync(process.execPath, [path.join(dir, 'scripts/contract.mjs')], { encoding: 'utf8' });
+    assert.match(run, /does not use the shared contract/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('with features.contract the scaffold writes the contract and both copies', () => {
+  const on = new Map(renderWithContract(true).map((f) => [f.path, f.content]));
+  for (const copy of CONTRACT_COPIES) assert.equal(on.get(copy), on.get('shared/contract.ts'));
+});
+
+test('idSchema takes digits only, up to 15 like parseId, and no longer coerces "1e3", "0x10" or true (ADR-0025)', () => {
+  const text = byPath.get('shared/contract.ts');
+  assert.doesNotMatch(text, /z\.coerce/);
+  const pattern = String.raw`/^[1-9]\d{0,14}$/`;
+  assert.ok(text.includes(pattern), 'same pattern as ID_PATTERN in standard/http.ts');
+  const http = fs.readFileSync(path.join(root, 'templates/app/backend/src/standard/http.ts'), 'utf8');
+  assert.ok(http.includes(`export const ID_PATTERN = ${pattern};`));
+});
