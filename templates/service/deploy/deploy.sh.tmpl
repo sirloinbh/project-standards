@@ -1,7 +1,13 @@
 #!/bin/bash
-# Compatibility wrapper (#696): the shared service deploys now use deploy/remote-deploy.sh like the apps.
-# An autodeploy.sh copy that started before the update still calls `deploy/deploy.sh --no-pull`, so this
-# file stays for one release. It deploys the checked-out commit; the extra argument is ignored.
+# Deploys a shared service on the server: run as ubuntu in /opt/{{project.name}} (#696, #789).
+#   bash deploy/deploy.sh            update to origin/main and deploy it
+#   bash deploy/deploy.sh --no-pull  deploy the current checkout
+# The deploy itself is deploy/remote-deploy.sh, the same script the apps use. An autodeploy.sh copy that started
+# before the shared deploy files arrived still calls `deploy/deploy.sh --no-pull`, so this file stays.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+if [ "${1:-}" != "--no-pull" ]; then
+  git fetch -q origin
+  git merge -q --ff-only origin/main
+fi
 exec bash deploy/remote-deploy.sh deploy "$(git rev-parse HEAD)"
