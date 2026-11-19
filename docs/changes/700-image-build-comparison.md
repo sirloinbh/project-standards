@@ -1,6 +1,6 @@
 # 700: build images on the server, or build in CI and pull from GHCR
 
-Status: comparison for a decision by the user. No code, template, or ADR change in this PR. After the decision, the ADR (which revisits the "Image build" row of [ADR-0009](../adr/0009-multi-app-single-lightsail.md)) is written and, if option B is chosen, follow-up issues are opened (see "If B is chosen").
+Status: decided on 2026-11-19: the user chose **option B** (CI builds and pushes to GHCR, the server pulls; rollback is a tag switch). The decision is recorded in [ADR-0023](../adr/0023-build-images-in-ci-pull-from-ghcr.md), which supersedes the "Image build" row of [ADR-0009](../adr/0009-multi-app-single-lightsail.md). The private-package quota is still unconfirmed and is recorded there as a risk. No code or template change in this PR.
 
 ## Where things stand (2026-11-19)
 
