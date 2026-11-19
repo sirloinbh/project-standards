@@ -10,7 +10,9 @@ import { randomUUID } from 'node:crypto';
 
 import type { NextFunction, Request, Response } from 'express';
 
-export type ApiError = { error: string };
+/** One invalid field of a 400 validation answer: its path in the input (`items.0.name`) and the message. */
+export type FieldError = { path: string; message: string };
+export type ApiError = { error: string; fields?: FieldError[] };
 
 /** An error with the status and message to answer with, e.g. `throw new HttpError(404, 'Textbook not found')`. */
 export class HttpError extends Error {
@@ -23,8 +25,8 @@ export class HttpError extends Error {
   }
 }
 
-export function sendError(res: Response, status: number, error: string) {
-  res.status(status).json({ error } satisfies ApiError);
+export function sendError(res: Response, status: number, error: string, fields?: FieldError[]) {
+  res.status(status).json((fields ? { error, fields } : { error }) satisfies ApiError);
 }
 
 // Up to 15 digits: every such id is exact as a JS number, even for BIGINT columns.
@@ -107,12 +109,18 @@ type ErrorFields = {
 // (GHSA-mrhx-c7xc-m3w5, #326), and the client only needs the first few to fix its input.
 export const MAX_ISSUES = 10;
 
-function zodMessages(error: ErrorFields) {
+function zodIssues(error: ErrorFields) {
   if (error.name !== 'ZodError' || !Array.isArray(error.issues)) return null;
-  const issues = error.issues as { message?: unknown }[];
-  const shown = issues.slice(0, MAX_ISSUES).map((issue) => String(issue.message));
-  if (issues.length > MAX_ISSUES) shown.push(`and ${issues.length - MAX_ISSUES} more`);
-  return shown.join(', ');
+  const issues = error.issues as { message?: unknown; path?: unknown }[];
+  const shown = issues.slice(0, MAX_ISSUES);
+  const messages = shown.map((issue) => String(issue.message));
+  if (issues.length > MAX_ISSUES) messages.push(`and ${issues.length - MAX_ISSUES} more`);
+  // `fields` lets a form place each message by path (#674); `error` stays the one sentence older clients read.
+  const fields = shown.map((issue) => ({
+    path: Array.isArray(issue.path) ? issue.path.map(String).join('.') : '',
+    message: String(issue.message),
+  }));
+  return { text: messages.join(', '), fields };
 }
 
 // PostgreSQL errors (SQLSTATE) caused by what the client sent: a 400 with a short message that never repeats the
@@ -137,9 +145,9 @@ export function errorHandler(err: unknown, _req: Request, res: Response, next: N
     return;
   }
   const error = typeof err === 'object' && err !== null ? (err as ErrorFields) : {};
-  const invalid = zodMessages(error);
+  const invalid = zodIssues(error);
   if (invalid !== null) {
-    sendError(res, 400, invalid);
+    sendError(res, 400, invalid.text, invalid.fields);
     return;
   }
   // express.json() rejects malformed or oversized bodies before any route runs.
