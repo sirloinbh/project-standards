@@ -5,7 +5,7 @@ Implements the CI half of [ADR-0023](../adr/0023-build-images-in-ci-pull-from-gh
 ## What changed
 
 - **`reusable-app-ci.yml`**
-  - New inputs: `push-images` (boolean, default `false`), `image-prefix` (for example `ghcr.io/sirloinbh/workout`) and `image-keep` (number, default 5).
+  - New inputs: `push-images` (boolean, default `false`), `image-prefix` (for example `ghcr.io/sirloinbh/workout`) and `image-keep` (number, default 2 since #756: the current and the previous version).
   - New job `image-push`: runs only on a push to `main`, only when `push-images` is on, and only after `docker-build` passed. It logs in to GHCR with the run's `GITHUB_TOKEN` (stdin), builds `<prefix>-frontend` and `<prefix>-backend` from the same contexts as `docker-build` (the `npm_token` BuildKit secret as before), tags them with the first 12 characters of the commit (the tag the server deploy uses) and pushes them. The `org.opencontainers.image.source` label links each package to its repository.
   - `packages: write` is granted to this job alone. The top-level permissions stay read-only.
   - Retention: a second step lists the versions of each image through the REST API, keeps the newest `image-keep` and deletes the rest. It has `continue-on-error`, so a retention problem never fails a run.
