@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import { EventEmitter } from 'node:events';
-import { errorHandler, HttpError, ID_PATTERN, MAX_ISSUES, notFound, parseId, requestLog, serviceDate } from '../../templates/app/backend/src/standard/http.ts';
+import { createErrorHandler, errorHandler, HttpError, ID_PATTERN, MAX_ISSUES, notFound, parseId, requestLog, serviceDate } from '../../templates/app/backend/src/standard/http.ts';
 
 function fakeResponse() {
   const res = Object.assign(new EventEmitter(), { statusCode: 0, body: undefined, locals: {}, headers: {} });
@@ -21,13 +21,13 @@ function fakeResponse() {
   return res;
 }
 
-const answer = (err) => {
+const answer = (err, handler = errorHandler) => {
   const res = fakeResponse();
   const logged = [];
   const original = console.error;
   console.error = (line) => logged.push(line);
   try {
-    errorHandler(err, {}, res, () => {});
+    handler(err, {}, res, () => {});
   } finally {
     console.error = original;
   }
@@ -50,7 +50,9 @@ test('zod 3 and zod 4 validation errors become 400 with the issue messages', () 
   assert.equal(answer(zod).status, 400);
 });
 
-test('a validation answer also lists the invalid fields by path, and `error` is unchanged (#674)', () => {
+const withFields = createErrorHandler({ fields: true });
+
+test('a validation answer lists the invalid fields by path when fields are on, and `error` is unchanged (#674)', () => {
   const zod = Object.assign(new Error('[...]'), {
     name: 'ZodError',
     issues: [
@@ -60,7 +62,7 @@ test('a validation answer also lists the invalid fields by path, and `error` is 
       { message: 'No path given' },
     ],
   });
-  assert.deepEqual(answer(zod).body, {
+  assert.deepEqual(answer(zod, withFields).body, {
     error: 'Enter a name, Enter a number, Invalid input, No path given',
     fields: [
       { path: 'name', message: 'Enter a name' },
@@ -70,12 +72,17 @@ test('a validation answer also lists the invalid fields by path, and `error` is 
     ],
   });
   // Other errors keep the one-key body.
-  assert.deepEqual(answer(new HttpError(404, 'Not found')).body, { error: 'Not found' });
+  assert.deepEqual(answer(new HttpError(404, 'Not found'), withFields).body, { error: 'Not found' });
+  // The plain errorHandler and createErrorHandler() leave the body as { error } (#799).
+  const plain = { error: 'Enter a name, Enter a number, Invalid input, No path given' };
+  assert.deepEqual(answer(zod).body, plain);
+  assert.deepEqual(answer(zod, createErrorHandler()).body, plain);
+  assert.equal(createErrorHandler().length, 4, 'Express needs four parameters to treat it as an error handler');
 });
 
 test('fields hold at most MAX_ISSUES entries (#326, #674)', () => {
   const issues = Array.from({ length: 50000 }, (_, i) => ({ message: `Bad ${i}`, path: [i] }));
-  const { body } = answer(Object.assign(new Error('[...]'), { name: 'ZodError', issues }));
+  const { body } = answer(Object.assign(new Error('[...]'), { name: 'ZodError', issues }), withFields);
   assert.equal(body.fields.length, MAX_ISSUES);
   assert.deepEqual(body.fields[0], { path: '0', message: 'Bad 0' });
 });

@@ -70,7 +70,7 @@ test('the db health check asks over TCP, so the first-run temporary server is no
 test('the backend follows the API rules: app.ts, routes/, contract copy, OpenAPI document', () => {
   for (const file of ['backend/src/app.ts', 'backend/src/routes/shared.ts', 'backend/src/contract.ts', 'backend/src/openapi.ts', 'backend/src/openapi-cli.ts', 'backend/src/standard/openapi.ts', 'backend/src/standard/openapi-cli.ts', 'backend/test/openapi.test.ts', 'docs/openapi.json']) assert.ok(byPath.has(file), file);
   const app = byPath.get('backend/src/app.ts');
-  assert.match(app, /app\.use\('\/api', notFound\);\n\s+app\.use\(errorHandler\);/);
+  assert.match(app, /app\.use\('\/api', notFound\);\n\s+app\.use\(createErrorHandler\(\{ fields: true \}\)\);/);
   assert.match(byPath.get('shared/contract.ts'), /export type ApiError = \{ error: string \};/);
 
   // docs/openapi.json is what openapi.ts builds: one path per operation, the shared Error schema.

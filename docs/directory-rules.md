@@ -124,7 +124,7 @@ app.use(errorHandler);
 
 - Input (`req.body`, `req.query`, `req.params`) is validated with the Zod schema's `parse()` on the first line of the route handler. Do not read unvalidated values (`req.body.name`) directly.
 - On failure, a `ZodError` is thrown and `errorHandler` turns it into `400`. Do not use `try/catch` in every route (Express 5 passes async errors along).
-- A validation `400` has the shape `{ error: '<messages joined with ", ">', fields: [{ path: 'items.0.name', message: '...' }] }` (#674). `path` is the issue path joined with `.` (empty for the whole body), `fields` and the joined text hold at most `MAX_ISSUES` (10) issues, and `error` is unchanged for clients that read only it. In the browser, `RequestError.fields` (`lib/api.ts`) carries the same list, so a form places each message by path instead of parsing the sentence.
+- A validation `400` has the shape (when the app registers `createErrorHandler({ fields: true })` instead of `errorHandler`; the scaffold does, existing apps switch it on with the form work that uses it, and `errorHandler` alone keeps `{ error }`, #799) `{ error: '<messages joined with ", ">', fields: [{ path: 'items.0.name', message: '...' }] }` (#674). `path` is the issue path joined with `.` (empty for the whole body), `fields` and the joined text hold at most `MAX_ISSUES` (10) issues, and `error` is unchanged for clients that read only it. In the browser, `RequestError.fields` (`lib/api.ts`) carries the same list, so a form places each message by path instead of parsing the sentence.
 - Input schemas shared with the screen go in `shared/contract.ts`, and cross-field rules used only by the server go in `backend/src/domain.ts`. Screen forms use the same schemas.
 
 ### Sub-repo check warnings

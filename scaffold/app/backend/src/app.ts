@@ -4,7 +4,7 @@ import type { Pool } from 'pg';
 import { types } from 'pg';
 
 import { registerHealthRoutes } from './routes/health.js';
-import { errorHandler, notFound, requestLog } from './routes/shared.js';
+import { createErrorHandler, notFound, requestLog } from './routes/shared.js';
 import { setInt8Parser } from './standard/db.js';
 import { apiRateLimit } from './standard/rate-limit.js';
 
@@ -29,6 +29,6 @@ export function createApp(pool: Pool, options: { auth?: express.RequestHandler }
   app.get('/api/me', meHandler);
   registerHealthRoutes(app, pool);
   app.use('/api', notFound);
-  app.use(errorHandler);
+  app.use(createErrorHandler({ fields: true })); // fields: a validation 400 also lists the invalid fields by path (#674)
   return app;
 }
