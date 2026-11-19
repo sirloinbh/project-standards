@@ -48,6 +48,10 @@ External dependencies that the 8 apps and the scaffold use at the same version, 
 | `prettier` | 3.9.10 | `package.json` | devDependencies |
 | `prettier-plugin-tailwindcss` | 0.8.1 | `package.json` | devDependencies |
 | `typescript-eslint` | 8.71.2 | `package.json` | devDependencies |
+| `@playwright/test` | 1.63.0 | `package.json` | devDependencies |
+| `@axe-core/playwright` | 4.13.0 | `package.json` | devDependencies |
+| `@lhci/cli` | 0.16.0 | `package.json` | devDependencies |
+| `concurrently` | 9.2.5 | `package.json` | devDependencies |
 | `class-variance-authority` | 0.7.1 | `frontend/package.json` | dependencies |
 | `clsx` | 2.1.1 | `frontend/package.json` | dependencies |
 | `lucide-react` | 1.52.0 | `frontend/package.json` | dependencies |
@@ -59,6 +63,7 @@ External dependencies that the 8 apps and the scaffold use at the same version, 
 | `tailwind-merge` | 3.7.0 | `frontend/package.json` | dependencies |
 | `tw-animate-css` | 1.4.0 | `frontend/package.json` | dependencies |
 | `vaul` | 1.1.2 | `frontend/package.json` | dependencies |
+| `zod` | 4.6.7 | `frontend/package.json` | dependencies |
 | `@tailwindcss/vite` | 4.3.3 | `frontend/package.json` | devDependencies |
 | `@testing-library/dom` | 10.4.2 | `frontend/package.json` | devDependencies |
 | `@testing-library/jest-dom` | 7.0.1 | `frontend/package.json` | devDependencies |
@@ -79,3 +84,11 @@ External dependencies that the 8 apps and the scaffold use at the same version, 
 | `@types/pg` | 8.23.1 | `backend/package.json` | devDependencies |
 | `tsx` | 4.23.15 | `backend/package.json` | devDependencies |
 | `typescript` | 5.9.3 | `backend/package.json` | devDependencies |
+
+## Optional app dependencies
+
+Used by only some apps. The sync writes the version below only into an app whose `package.json` already lists the package, and never adds it (#704).
+
+| Package | Version | File | Section |
+|---|---|---|---|
+| `@testing-library/user-event` | 14.6.8 | `frontend/package.json` | devDependencies |
