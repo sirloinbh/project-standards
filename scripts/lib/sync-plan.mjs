@@ -71,7 +71,7 @@ export function planTarget({ root, data, target, centralSha, workflowSha = centr
   }
 
   const packages = Object.fromEntries(profile.packages.map((name) => [name, data.versions.packages[name] ?? null]));
-  const registry = project ? { ports: project.ports, db: project.db, host: serviceHost(project, data.platform) } : null;
+  const registry = target.project && project ? { ports: project.ports, db: project.db, host: serviceHost(project, data.platform) } : null;
   const manifest = buildManifest({ centralSha, profile: target.profile, project: target.project, files: kept, packages, registry });
 
   const files = [];

@@ -11,7 +11,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const { data } = loadAll(root);
 const render = (project) => {
   const target = data.sync.targets.find((t) => t.project === project);
-  const files = renderProfile({ root, profile: 'app', folders: ['common', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
+  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
   return Object.fromEntries(files.map((f) => [f.path, f.content]));
 };
 const study = render('study-log');

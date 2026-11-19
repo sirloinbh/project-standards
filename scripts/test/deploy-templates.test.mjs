@@ -29,7 +29,7 @@ test('workout-memo renders to the names its running server already uses', () => 
   assert.match(files['deploy/remote-deploy.sh'], /bash deploy\/backup\.sh dump predeploy \|\| \[ \$\? -eq 3 \]/);
   assert.match(files['deploy/backup.sh'], /^dir=\/var\/backups\/\$db$/m);
   assert.match(files['deploy/backup.sh'], /^db=workout$/m);
-  assert.match(files['deploy/install-backup.sh'], /rm "\/etc\/cron\.d\/\$db-backup"/);
+  assert.match(files['deploy/install-backup.sh'], /rm "\/etc\/cron\.d\/\$prefix-backup"/);
   assert.match(files['deploy/remote-deploy.sh'], /for image in workout-backend workout-frontend; do/);
   assert.match(files['deploy/remote-deploy.sh'], /^web_port=\$\{web_port:-8101\}$/m);
   assert.match(files['deploy/autodeploy.service'], /cp \/opt\/workout-memo\/deploy\/autodeploy\.sh \/tmp\/workout-autodeploy\.sh/);
@@ -118,7 +118,7 @@ test('autodeploy signals every decision and the health timer runs every 5 minute
     for (const s of ['signal ok "up to date at $sha"', 'signal fail "$sha failed before', 'signal ok "waiting for CI of $sha"', 'signal fail "CI failed for $sha"', 'signal ok "deployed $sha"', 'signal fail "deploy of $sha failed"']) assert.ok(auto.includes(s), `${name}: ${s}`);
     assert.match(files['deploy/health.timer'], /^OnUnitActiveSec=5min$/m, name);
     assert.ok(files['deploy/health.service'].includes(`/tmp/${project(name).db.name}-notify.sh health`), name);
-    assert.match(files['deploy/install-backup.sh'], /^for unit in backup restore-check health report; do$/m, name);
+    assert.match(files['deploy/install-backup.sh'], /^units="backup restore-check health report"$/m, name);
   }
 });
 

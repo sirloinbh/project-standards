@@ -143,8 +143,8 @@ test('shared-ai holds slot 11 as a shared service at the subdomain ai', () => {
 test('shared services share slots, ports, and subdomains with apps, and need one port', () => {
   const { errors } = fixture((d) => {
     d.projects.sharedServices.push(
-      { slot: 2, name: 'other-service', repo: 'other-service', subdomain: 'study-log', summary: 'a test service', ports: { web: 8102 } },
-      { slot: 12, name: 'empty-service', repo: 'empty-service', subdomain: 'auth', summary: 'a test service', ports: {} },
+      { slot: 2, name: 'other-service', repo: 'other-service', subdomain: 'study-log', title: 'other', db: { name: 'other' }, summary: 'a test service', ports: { web: 8102 } },
+      { slot: 12, name: 'empty-service', repo: 'empty-service', subdomain: 'auth', title: 'empty', db: { name: 'empty' }, summary: 'a test service', ports: {} },
     );
   });
   assert.ok(errors.some((e) => e.startsWith('slot "2" is used by study-log, other-service')), errors.join('\n'));
