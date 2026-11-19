@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { delimiter, join, resolve } from 'node:path';
+import { delimiter, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = resolve(fileURLToPath(import.meta.url), '../../..');
@@ -57,6 +57,58 @@ test('server-ssh connects to ubuntu at that address with the shared key and pass
     assert.equal(r.status, 0, r.stderr);
     const args = readFileSync(join(f.dir, 'ssh-args.txt'), 'utf8').trim();
     assert.match(args, /^-i .*workout-memo-lightsail ubuntu@203\.0\.113\.7 uptime$/);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test('the .cmd shims run the scripts next to them in any terminal (#798)', { skip: !windows }, () => {
+  const f = fixture({ awsOut: '203.0.113.7' });
+  try {
+    const ip = spawnSync('cmd', ['/c', tool('bin/server-ip.cmd')], { encoding: 'utf8', env: { ...process.env, PATH: join(f.dir, 'bin') + delimiter + process.env.PATH, AWS_OUT: '203.0.113.7', AWS_EXIT: '0', SIRLOINBH_AWS_PROFILE: 'p' }, timeout });
+    assert.equal(ip.status, 0, ip.stderr);
+    assert.equal(ip.stdout.trim(), '203.0.113.7');
+    const ssh = spawnSync('cmd', ['/c', tool('bin/server-ssh.cmd'), 'uptime'], { encoding: 'utf8', env: { ...process.env, PATH: join(f.dir, 'bin') + delimiter + process.env.PATH, AWS_OUT: '203.0.113.7', AWS_EXIT: '0', SIRLOINBH_AWS_PROFILE: 'p' }, timeout });
+    assert.equal(ssh.status, 0, ssh.stderr);
+    assert.match(readFileSync(join(f.dir, 'ssh-args.txt'), 'utf8'), /ubuntu@203\.0\.113\.7 uptime/);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test('install copies the shims and adds the tools folder to the user PATH once (#798)', { skip: !windows }, () => {
+  const f = fixture();
+  try {
+    const dest = join(f.dir, 'sirloinbh-tools');
+    const pathFile = join(f.dir, 'user-path.txt');
+    const before = ['C:' + sep + 'Other', 'C:' + sep + 'Tools' + sep].join(';');
+    writeFileSync(pathFile, before);
+    const install = () => spawnSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', tool('install.ps1'), '-Destination', dest, '-UserPathFile', pathFile], { encoding: 'utf8', timeout });
+    const first = install();
+    assert.equal(first.status, 0, first.stderr);
+    assert.match(first.stdout, /updated {4}user PATH/);
+    assert.equal(readFileSync(pathFile, 'utf8'), `${before};${join(dest, 'bin')}`);
+    for (const name of ['bin/server-ip.cmd', 'bin/server-ssh.cmd']) assert.ok(readFileSync(join(dest, name), 'utf8').includes('-ExecutionPolicy Bypass'), name);
+    const second = install();
+    assert.match(second.stdout, /unchanged {2}user PATH/);
+    assert.equal(readFileSync(pathFile, 'utf8'), `${before};${join(dest, 'bin')}`);
+    // Without -UserPathFile a custom destination never touches the real PATH.
+    const plain = spawnSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', tool('install.ps1'), '-Destination', dest], { encoding: 'utf8', timeout });
+    assert.doesNotMatch(plain.stdout, /user PATH/);
+  } finally {
+    f.cleanup();
+  }
+});
+
+test('install removes the tools folder itself from the user PATH, so PowerShell never picks the blocked .ps1 (#798)', { skip: !windows }, () => {
+  const f = fixture();
+  try {
+    const dest = join(f.dir, 'sirloinbh-tools');
+    const pathFile = join(f.dir, 'user-path.txt');
+    writeFileSync(pathFile, ['C:' + sep + 'Other', dest + sep].join(';'));
+    const r = spawnSync('powershell', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', tool('install.ps1'), '-Destination', dest, '-UserPathFile', pathFile], { encoding: 'utf8', timeout });
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(readFileSync(pathFile, 'utf8'), ['C:' + sep + 'Other', join(dest, 'bin')].join(';'));
   } finally {
     f.cleanup();
   }

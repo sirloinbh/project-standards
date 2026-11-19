@@ -192,7 +192,7 @@ test('install copies the tools, keeps unchanged files, and backs up replaced one
     const dest = join(f.dir, 'sirloinbh-tools');
     const first = powershell([tool('install.ps1'), '-Destination', dest], f.env);
     assert.equal(first.status, 0, first.stderr);
-    for (const name of ['gh-project.ps1', 'project-terminal.ps1', 'open-vscode-account-b.cmd', 'set-credential-helper.ps1', 'server-ip.ps1', 'server-ssh.ps1']) assert.ok(existsSync(join(dest, name)), name);
+    for (const name of ['gh-project.ps1', 'project-terminal.ps1', 'open-vscode-account-b.cmd', 'set-credential-helper.ps1', 'server-ip.ps1', 'server-ssh.ps1', 'bin/server-ip.cmd', 'bin/server-ssh.cmd']) assert.ok(existsSync(join(dest, name)), name);
     const second = powershell([tool('install.ps1'), '-Destination', dest], f.env);
     assert.match(second.stdout, /unchanged {2}gh-project\.ps1/);
     writeFileSync(join(dest, 'gh-project.ps1'), '# edited\n');
