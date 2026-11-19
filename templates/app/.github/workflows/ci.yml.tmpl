@@ -24,5 +24,5 @@ jobs:
       e2e-visual: {{project.features.e2eVisual}}
       playwright-image: '{{versions.images.playwright}}'
       knip-strict: {{project.features.knipStrict}}
-      push-images: false
+      push-images: {{project.deploy.push}}
       image-prefix: 'ghcr.io/sirloinbh/{{project.db.name}}'

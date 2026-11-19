@@ -60,7 +60,17 @@
           "properties": { "name": { "$ref": "#/$defs/slug", "description": "The database name; the deploy files keep dumps in /var/backups/<name> (#696)" } }
         },
         "summary": { "type": "string", "minLength": 5 },
-        "ports": { "$ref": "#/$defs/localTool/properties/ports" }
+        "ports": { "$ref": "#/$defs/localTool/properties/ports" },
+        "ghcr": { "$ref": "#/$defs/ghcr" }
+      }
+    },
+    "ghcr": {
+      "description": "CI-built images in GHCR (ADR-0023). Both default to false when the field is missing. Turn push on first and let one run on main finish; turn pull on after that. A pull that fails still falls back to the local build (#754, #755, #757)",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "push": { "type": "boolean", "description": "The CI pushes the images for each commit on main to ghcr.io (needs packages: write in the caller; the private package budget, #756)" },
+        "pull": { "type": "boolean", "description": "The server pulls the CI image for the commit instead of building it" }
       }
     },
     "slug": { "type": "string", "pattern": "^[a-z][a-z0-9-]*$" },
@@ -153,6 +163,7 @@
           }
         },
         "skills": { "type": "array", "uniqueItems": true, "items": { "$ref": "#/$defs/slug" }, "description": "Project-specific skills. Excluded from sync" },
+        "ghcr": { "$ref": "#/$defs/ghcr" },
         "allowedDifferences": {
           "type": "array",
           "items": {

@@ -34,11 +34,16 @@ export function appsList(data) {
 // units are the timers install-backup.sh installs, images are pruned after a deploy, and migrate says whether
 // remote-deploy.sh runs the migrations as a step (apps) or the image starts them itself (services). pull is `on` when the
 // server pulls the images CI pushed instead of building them (ADR-0023, #755); off for everyone until the quota is confirmed (#756).
+/** The registry `ghcr` switches (ADR-0023); a missing field is off. */
+function ghcrFlag(project, name) {
+  return project.ghcr?.[name] === true;
+}
+
 function deployVars(project, kind) {
   if (kind === 'service') {
-    return { unit: project.name, pull: 'off', registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check', images: `${project.name}-backend`, migrate: 'image' };
+    return { unit: project.name, pull: ghcrFlag(project, 'pull') ? 'on' : 'off', push: String(ghcrFlag(project, 'push')), registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check', images: `${project.name}-backend`, migrate: 'image' };
   }
-  return { unit: project.db.name, pull: 'off', registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check health report', images: `${project.db.name}-backend ${project.db.name}-frontend`, migrate: 'step' };
+  return { unit: project.db.name, pull: ghcrFlag(project, 'pull') ? 'on' : 'off', push: String(ghcrFlag(project, 'push')), registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check health report', images: `${project.db.name}-backend ${project.db.name}-frontend`, migrate: 'step' };
 }
 
 /** The project a target renders as: an app from the registry, or a shared service (shared-auth, shared-ai) with the same fields the deploy files read. */
