@@ -15,6 +15,7 @@ claude plugin install sirloinbh-standards@sirloinbh-standards --scope project
 - `/sirloinbh-standards:std-backlog`
 - `/sirloinbh-standards:std-code-review`
 - `/sirloinbh-standards:std-communication`
+- `/sirloinbh-standards:std-feature-overview`
 - `/sirloinbh-standards:std-git-writing`
 - `/sirloinbh-standards:std-session-notes`
 

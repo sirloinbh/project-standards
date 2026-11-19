@@ -74,7 +74,7 @@ test('the instructions loaded every session stay within the line budget', () => 
 
 test('app repositories get all shared skills, mirrored into .claude/skills', () => {
   for (const { target, files } of apps) {
-    for (const skill of ['std-implementation', 'std-testing', 'std-foundation', 'std-ux-audit', 'std-backlog', 'std-git-writing', 'std-communication', 'std-session-notes', 'std-code-review']) {
+    for (const skill of ['std-implementation', 'std-testing', 'std-foundation', 'std-ux-audit', 'std-backlog', 'std-git-writing', 'std-communication', 'std-session-notes', 'std-code-review', 'std-feature-overview']) {
       const source = files[`skills/${skill}/SKILL.md`];
       const mirror = files[`.claude/skills/${skill}/SKILL.md`];
       assert.ok(source, `${target.repo} ${skill}`);
@@ -87,7 +87,7 @@ test('skill files have a matching name, a description, and the header after the 
   for (const { target, files } of rendered) {
     for (const [file, { content }] of Object.entries(files)) {
       if (!file.endsWith('/SKILL.md')) continue;
-      const match = content.match(/^---\nname: ([^\n]+)\ndescription: ([^\n]+)\n---\n\n<!-- ([^\n]+) -->\n/);
+      const match = content.match(/^---\nname: ([^\n]+)\ndescription: ([^\n]+)\n(?:[a-z-]+: [^\n]+\n)*---\n\n<!-- ([^\n]+) -->\n/);
       assert.ok(match, `${target.repo} ${file} frontmatter and header`);
       assert.equal(match[1], path.posix.basename(path.posix.dirname(file)), `${target.repo} ${file} name`);
       assert.ok(match[2].length > 40, `${target.repo} ${file} description`);
