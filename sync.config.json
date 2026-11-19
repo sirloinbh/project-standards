@@ -2,7 +2,7 @@
   "$schema": "./sync.config.schema.json",
   "profiles": {
     "app": {
-      "templates": ["common", "app"],
+      "templates": ["common", "deploy", "app"],
       "packages": ["@sirloinbh/eslint-config", "@sirloinbh/prettier-config", "@sirloinbh/tsconfig", "@sirloinbh/design-tokens", "@sirloinbh/auth-client"],
       "ci": "reusable-app-ci.yml",
       "featureTemplates": { "ui": "ui", "e2e": "e2e", "vitest": "vitest", "devcontainer": "devcontainer", "lighthouse": "lighthouse", "msw": "msw", "jobs": "jobs" },
@@ -15,11 +15,11 @@
       "neverTouch": ["**/*.tf", "**/*.tfvars", "**/*.tfvars.*", "**/*.sh", ".terraform.lock.hcl"]
     },
     "service": {
-      "templates": ["common", "service"],
+      "templates": ["common", "deploy", "service"],
       "packages": [],
       "ci": "reusable-service-ci.yml",
       "neverTouchExcept": ["backend/src/apps.generated.ts"],
-      "neverTouch": ["backend/**", "deploy/**", "compose.yaml", "README.md", ".env.example", "AGENTS.project.md"]
+      "neverTouch": ["backend/**", "compose.yaml", "README.md", ".env.example", "AGENTS.project.md"]
     }
   },
   "targets": [

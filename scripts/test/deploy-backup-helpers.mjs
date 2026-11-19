@@ -23,8 +23,8 @@ export function backupRun(args, { env = '', shared = null, restored = 'public.a|
   tool('docker', [
     'echo "$*" >> "$FAKE_LOG.docker"',
     'case "$1 $2" in',
-    '  "compose exec") if [[ "$*" == *pg_dump* ]]; then echo "-- dump"; elif [ -n "$FAIL_COUNTS" ]; then exit 1; else printf "public.a|2\\npublic.b|5\\n"; fi ;;',
-    '  "compose ps") echo cid ;;',
+    '  "exec cid") if [[ "$*" == *pg_dump* ]]; then echo "-- dump"; elif [ -n "$FAIL_COUNTS" ]; then exit 1; else printf "public.a|2\\npublic.b|5\\n"; fi ;;',
+    '  "ps -q") echo cid ;;',
     '  "inspect --format") echo postgres:17 ;;',
     '  "exec -i") cat > /dev/null ;;',
     '  "exec "*) if [[ "$*" == *pg_isready* ]]; then exit 0; fi; printf "%b" "$RESTORED" ;;',
@@ -41,7 +41,10 @@ export function backupRun(args, { env = '', shared = null, restored = 'public.a|
   const log = path.join(dir, 'log');
   // Git Bash on Windows takes a POSIX PATH; prepend the fake tools.
   const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
-  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script.replace(/^#!.*\n/, '')}`, 'backup.sh', ...args], {
+  // The script goes in a file: a long command line with many quotes is mangled by Windows argument quoting.
+  const scriptFile = path.join(dir, 'backup.sh');
+  fs.writeFileSync(scriptFile, `export PATH="${pathVar}"\n${script.replace(/^#!.*\n/, '')}`);
+  const r = spawnSync('bash', [posix(scriptFile), ...args], {
     encoding: 'utf8',
     env: { ...process.env, FAKE_LOG: posix(log), RESTORED: restored, FAIL_COUNTS: failCounts ? '1' : '', STANDARDS_ENV_FILE: posix(sharedFile) },
   });

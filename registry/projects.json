@@ -478,6 +478,10 @@
       "name": "shared-auth",
       "repo": "shared-auth",
       "subdomain": "auth",
+      "title": "shared-auth",
+      "db": {
+        "name": "auth"
+      },
       "summary": "Shared sign-in for all apps (GitHub and Google, owner only) and the OAuth server for AI tools and MCP clients (ADR-0015).",
       "ports": {
         "web": 8110,
@@ -490,6 +494,10 @@
       "name": "shared-ai",
       "repo": "shared-ai",
       "subdomain": "ai",
+      "title": "shared-ai",
+      "db": {
+        "name": "ai"
+      },
       "summary": "One AI service for all apps: the tool hub over each app's /internal/tools, the integrated MCP server, and the AI shell's Claude calls (ADR-0017, ADR-0019).",
       "ports": {
         "web": 8111,

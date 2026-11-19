@@ -3,7 +3,7 @@
 #   sudo bash /opt/{{project.name}}/deploy/install-autodeploy.sh
 set -euo pipefail
 dir=$(cd "$(dirname "$0")" && pwd)
-unit={{project.db.name}}-autodeploy
+unit={{project.deploy.unit}}-autodeploy
 install -m 644 "$dir/autodeploy.service" "/etc/systemd/system/$unit.service"
 install -m 644 "$dir/autodeploy.timer" "/etc/systemd/system/$unit.timer"
 systemctl daemon-reload

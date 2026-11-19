@@ -9,7 +9,8 @@ on:
 
 permissions:
   contents: read
-  packages: read
+  # write is the most the image-push job of the reusable workflow may use; every other job gets read (ADR-0023, #754).
+  packages: write
 
 jobs:
   ci:
@@ -23,3 +24,5 @@ jobs:
       e2e-visual: {{project.features.e2eVisual}}
       playwright-image: '{{versions.images.playwright}}'
       knip-strict: {{project.features.knipStrict}}
+      push-images: false
+      image-prefix: 'ghcr.io/sirloinbh/{{project.db.name}}'

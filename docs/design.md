@@ -214,11 +214,11 @@ central main push
           ├─ if an open sync PR exists: rebuild its branch as downstream main + rendered result, force-push, and update the title and body with the latest SHA
           │  otherwise: create a chore/standards-sync-<first 7 chars of central SHA> branch and open a PR
           └─ PR body: central SHA and compare link, changed-files table, package CHANGELOG excerpts and Release links,
-                      checklist (lockfile update, subtree push, "merge = production deploy"), and for the infra profile a "no apply" statement
+                      checklist (lockfile update, "merge = production deploy"), and for the infra profile a "no apply" statement
 ```
 
 - Commits are created through the GitHub API (Git Data API). Because the runner does not clone the downstream repo, no hooks or scripts of the downstream repo run.
-- The only sync target is the umbrella repo. Managed files inside subtree paths, such as `frontend/.npmrc`, reach each deployment repo when the user runs the existing subtree push procedure.
+- The only sync target is the umbrella repo. There are no sub-repos to push to (ADR-0022, #728); managed files such as `frontend/.npmrc` arrive in the same sync PR.
 - A target with `enabled: false` gets no PR. (The original design had a `maxRollout` stage counter; it was removed in #701 once every target was synced.)
 
 ### 5.4 sync.config schema and initial values

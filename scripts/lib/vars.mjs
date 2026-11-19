@@ -29,14 +29,37 @@ export function appsList(data) {
     .join('\n');
 }
 
+// What the shared deploy files read as project.deploy (#696). Apps and services differ only in these values:
+// unit is the systemd unit prefix (an app's DB name, a service's own name, as already installed on the server),
+// units are the timers install-backup.sh installs, images are pruned after a deploy, and migrate says whether
+// remote-deploy.sh runs the migrations as a step (apps) or the image starts them itself (services). pull is `on` when the
+// server pulls the images CI pushed instead of building them (ADR-0023, #755); off for everyone until the quota is confirmed (#756).
+function deployVars(project, kind) {
+  if (kind === 'service') {
+    return { unit: project.name, pull: 'off', registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check', images: `${project.name}-backend`, migrate: 'image' };
+  }
+  return { unit: project.db.name, pull: 'off', registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check health report', images: `${project.db.name}-backend ${project.db.name}-frontend`, migrate: 'step' };
+}
+
+/** The project a target renders as: an app from the registry, or a shared service (shared-auth, shared-ai) with the same fields the deploy files read. */
+function targetProject(data, target) {
+  if (target.project) {
+    const app = data.projects.projects.find((p) => p.name === target.project);
+    if (!app) throw new Error(`${target.repo}: project "${target.project}" is not in the registry`);
+    return { ...app, deploy: deployVars(app, 'app') };
+  }
+  const service = (data.projects.sharedServices ?? []).find((s) => s.repo === target.repo.split('/').pop());
+  if (!service) return undefined;
+  return { ...service, repos: { umbrella: service.repo }, features: { claude: false }, deploy: deployVars(service, 'service') };
+}
+
 export function buildVars(data, target, { centralSha, workflowSha = centralSha } = {}) {
-  const project = target.project ? data.projects.projects.find((p) => p.name === target.project) : undefined;
-  if (target.project && !project) throw new Error(`${target.repo}: project "${target.project}" is not in the registry`);
+  const project = targetProject(data, target);
   return {
     project,
     versions: data.versions,
     platform: data.platform,
-    service: project ? { host: serviceHost(project, data.platform), bodyLimit: `${project.service.apiBodyMb ?? 1}m` } : undefined,
+    service: target.project ? { host: serviceHost(project, data.platform), bodyLimit: `${project.service.apiBodyMb ?? 1}m` } : undefined,
     apps: { list: appsList(data) },
     target: { repo: target.repo, profile: target.profile },
     central: centralSha ? { sha: centralSha, workflowSha } : undefined,

@@ -8,5 +8,5 @@ Type=oneshot
 User=ubuntu
 WorkingDirectory=/opt/{{project.name}}
 # Copied first: a deploy may check out a new commit while this script runs.
-ExecStart=/bin/bash -c 'cp /opt/{{project.name}}/deploy/notify.sh /tmp/{{project.db.name}}-notify.sh && exec /bin/bash /tmp/{{project.db.name}}-notify.sh health'
+ExecStart=/bin/bash -c 'cp /opt/{{project.name}}/deploy/notify.sh /tmp/{{project.deploy.unit}}-notify.sh && exec /bin/bash /tmp/{{project.deploy.unit}}-notify.sh health'
 TimeoutStartSec=2min
