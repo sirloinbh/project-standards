@@ -10,10 +10,16 @@
       "url": "/"
     }
   ],
+  "security": [
+    {
+      "session": []
+    }
+  ],
   "paths": {
     "/api/health": {
       "get": {
         "summary": "서버와 DB 연결 상태 확인",
+        "security": [],
         "responses": {
           "200": {
             "description": "성공"
@@ -40,6 +46,16 @@
           },
           "401": {
             "description": "로그인이 필요함",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "요청이 너무 많음",
             "content": {
               "application/json": {
                 "schema": {
@@ -75,6 +91,14 @@
         "required": [
           "error"
         ]
+      }
+    },
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "sirloinbh.session_token",
+        "description": "The shared sign-in session cookie (ADR-0015)."
       }
     }
   }

@@ -68,7 +68,7 @@ test('the db health check asks over TCP, so the first-run temporary server is no
 });
 
 test('the backend follows the API rules: app.ts, routes/, contract copy, OpenAPI document', () => {
-  for (const file of ['backend/src/app.ts', 'backend/src/routes/shared.ts', 'backend/src/contract.ts', 'backend/src/openapi.ts', 'backend/src/openapi-cli.ts', 'backend/test/openapi.test.ts', 'docs/openapi.json']) assert.ok(byPath.has(file), file);
+  for (const file of ['backend/src/app.ts', 'backend/src/routes/shared.ts', 'backend/src/contract.ts', 'backend/src/openapi.ts', 'backend/src/openapi-cli.ts', 'backend/src/standard/openapi.ts', 'backend/src/standard/openapi-cli.ts', 'backend/test/openapi.test.ts', 'docs/openapi.json']) assert.ok(byPath.has(file), file);
   const app = byPath.get('backend/src/app.ts');
   assert.match(app, /app\.use\('\/api', notFound\);\n\s+app\.use\(errorHandler\);/);
   assert.match(byPath.get('shared/contract.ts'), /export type ApiError = \{ error: string \};/);
