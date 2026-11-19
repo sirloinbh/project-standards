@@ -50,7 +50,7 @@ Checked on 2026-11-14 (#440): a live session lists Explore with exactly the tool
 
 ## Other user-level settings on this PC
 
-These also live outside the repo, in `~/.claude/settings.json` and the Orca profile `settings.json`.
+These also live outside the repo, in `~/.claude/settings.json` and the settings of each Orca profile.
 
 | Setting | Value | Why |
 |---|---|---|
@@ -59,10 +59,10 @@ These also live outside the repo, in `~/.claude/settings.json` and the Orca prof
 
 ### Permissions and the delete guard (user decision 2026-11-19, #763)
 
-Both `~/.claude/settings.json` and the Orca profile `settings.json` (under `%APPDATA%\orca\claude-profiles\<id>\`) carry the same permission setup. Keep them in sync: change one and copy the change to the other.
+Four user-level files carry the same permission setup: `~/.claude/settings.json` and `%APPDATA%\orca\claude-profiles\<id>\home\settings.json` for each of the three Orca Claude accounts (one profile per account). Keep them in sync: a permission change must go to every one of the four, or sessions on the other accounts keep the old rules.
 
 - **`permissions.ask`** is trimmed to commands that change real infrastructure or data: `terraform apply`, `docker volume rm`, `docker system prune`, `npm uninstall`, and `aws`. `rm`, `rmdir`, `git clean`, `git branch -D`, `git rebase` and `git reset --hard` are no longer in it (they are covered by the hook below and by the git rules in the global `CLAUDE.md`). The `deny` list is unchanged.
-- **`hooks.PreToolUse`** runs `node C:/Users/kimbh/.claude/hooks/guard-deletes.mjs` for `Bash` and `PowerShell`. The script lives only in `~/.claude/hooks/` (not in this repo) and both settings files must point to it.
+- **`hooks.PreToolUse`** runs `node C:/Users/kimbh/.claude/hooks/guard-deletes.mjs` for `Bash` and `PowerShell`. The script lives only in `~/.claude/hooks/` (not in this repo) and all four settings files must point to it.
 
 What `guard-deletes.mjs` does with a command:
 
