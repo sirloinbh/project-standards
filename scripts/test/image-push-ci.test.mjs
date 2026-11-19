@@ -57,3 +57,32 @@ test('a public app inlines the workflow with the job switched off', () => {
   assert.match(push, /IMAGE_KEEP: 5\n/);
   assert.doesNotMatch(text, /inputs\./);
 });
+
+// The shared services push a single image through the reusable service CI, off by default (#757).
+const service = read('.github/workflows/reusable-service-ci.yml');
+const serviceCaller = read('templates/service/.github/workflows/ci.yml.tmpl');
+
+test('the service CI pushes one backend image to GHCR, off by default, with write access only in that job', () => {
+  assert.match(service, /\n {6}push-images:\n(?: {8}.*\n)*? {8}type: boolean\n {8}default: false\n/);
+  assert.match(service, /\n {6}image-keep:\n(?: {8}.*\n)*? {8}type: number\n {8}default: 5\n/);
+  assert.match(serviceCaller, /^ {6}push-images: false$/m);
+  assert.match(serviceCaller, /^ {6}image-prefix: 'ghcr\.io\/sirloinbh\/\{\{project\.name\}\}'$/m);
+  assert.match(serviceCaller, /^permissions:\n {2}contents: read\n(?: {2}#.*\n)* {2}packages: write\n/m);
+  const push = job(service, 'image-push');
+  assert.match(push, /needs: \[docker-build\]\n/);
+  assert.match(push, /needs\.docker-build\.result == 'success' && inputs\.push-images && github\.event_name == 'push' && github\.ref == 'refs\/heads\/main'/);
+  assert.match(push, /\n {4}permissions:\n {6}contents: read\n {6}packages: write\n/);
+  assert.equal((service.match(/^\s+packages: write$/gm) ?? []).length, 1);
+  assert.match(service, /\npermissions:\n {2}contents: read\n {2}packages: read/);
+  assert.match(push, /tag=\$\{GITHUB_SHA:0:12\}/);
+  assert.match(push, /-t "\$IMAGE_PREFIX-backend:\$tag" "\$WORKDIR"/);
+  assert.match(push, /name: Keep only the newest versions\n {8}continue-on-error: true\n/);
+  assert.doesNotMatch(push.replace(/^ {6}[A-Z_]+: \$\{\{.*\}\}$/gm, ''), /\$\{\{ inputs\./);
+});
+
+test('the image name the service CI pushes is the one the service deploy pulls', () => {
+  // remote-deploy.sh pulls {{registry}}/{{images}}:<tag>; for a service that is ghcr.io/sirloinbh/<name>-backend.
+  const deploy = read('templates/deploy/deploy/remote-deploy.sh.tmpl');
+  assert.match(deploy, /docker pull --quiet "\{\{project\.deploy\.registry\}\}\/\$image:\$1"/);
+  assert.match(read('scripts/lib/vars.mjs'), /images: `\$\{project\.name\}-backend`/);
+});
