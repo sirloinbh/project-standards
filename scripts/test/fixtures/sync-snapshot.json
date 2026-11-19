@@ -164,7 +164,6 @@
     "full frontend/src/components/ui/switch.tsx",
     "full frontend/src/components/ui/textarea.test.tsx",
     "full frontend/src/components/ui/textarea.tsx",
-    "full frontend/src/health.test.ts",
     "full frontend/src/lib/api.test.ts",
     "full frontend/src/lib/api.ts",
     "full frontend/src/lib/apps.ts",
