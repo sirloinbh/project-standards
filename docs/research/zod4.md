@@ -41,7 +41,7 @@ I counted the APIs in app code that are removed or changed in zod 4 (excluding t
 | `._def` (OpenAPI generation) | 1 file | 0 | 0 | 0 | Internal structure changes (`_zod.def`). zod 4 provides `z.toJSONSchema()` directly |
 | Files that import `zod` | 13 | 10 | 4 | 1 each | — |
 
-- The scaffold `backend/src/openapi.ts` also reads `schema._def.typeName`. It must be rewritten when moving to the zod 4 API.
+- The scaffold `backend/src/openapi.ts` used to read `schema._def.typeName`. Since #679 the document is built by the managed `backend/src/standard/openapi.ts` with `z.toJSONSchema()` (option C below, for OpenAPI only), and the app keeps just its operation table.
 - The zod 4 package also ships the zod 3 API unchanged under the `zod/v3` path. Conversely, zod 3.25.76 also has the zod 4 API under the `zod/v4` path.
 
 ## 4. Package check
