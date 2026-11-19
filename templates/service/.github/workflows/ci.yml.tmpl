@@ -14,5 +14,5 @@ jobs:
     with:
       node-version: '{{versions.node}}'
       npm-version: '{{versions.npm}}'
-      push-images: false
+      push-images: {{project.deploy.push}}
       image-prefix: 'ghcr.io/sirloinbh/{{project.name}}'

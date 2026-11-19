@@ -7,10 +7,16 @@ Follows [ADR-0023](../adr/0023-build-images-in-ci-pull-from-ghcr.md) and [#754](
 - **Callers:** `templates/service/.github/workflows/ci.yml.tmpl` allows `packages: write` (GitHub rejects the workflow at start when a called job asks for more than the caller grants) and passes `push-images: false` and `image-prefix: 'ghcr.io/sirloinbh/{{project.name}}'`.
 - **Test:** `scripts/test/image-push-ci.test.mjs` (the service cases).
 
-## Turning it on (later, per service, after #756)
+## Turning it on, one project at a time (#757, after the Packages budget is set and #698 is in)
 
-1. Set `push-images: true` for the service (a registry flag is added when the first service moves, as for the apps) and watch the first run: the package is created private, the retention step may need a personal token (see #754).
-2. Make sure the server `.env` of that service has `NODE_AUTH_TOKEN` with `read:packages` (one token for the whole server).
-3. Switch `deployVars(…, 'service').pull` to `on` for that service only; the next deploy pulls and falls back to the build if anything is missing.
+The switches are registry fields, default off, for apps and for the shared services:
 
-#757 stays open until #756 (quota) is answered and one service has moved.
+```json
+"ghcr": { "push": true, "pull": true }
+```
+
+1. Set `push` first. The next sync PR changes that project's `ci.yml` to `push-images: true`. After it merges, let one run on `main` finish and look at the package: it is created private, the retention step keeps 2 versions (it may need a personal token, see #754).
+2. The server `.env` of that project needs `NODE_AUTH_TOKEN` with `read:packages` (one token for the whole server).
+3. Set `pull` after the first image exists. The next deploy pulls and falls back to the build if anything is missing, so a wrong order only costs a build.
+
+The first real push starts only after the coordinator confirms the budget is set and #698 is done. #757 stays open until one service has moved.

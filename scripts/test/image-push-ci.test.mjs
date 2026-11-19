@@ -15,7 +15,7 @@ const job = (text, name) => new RegExp(`\n  ${name}:\n((?:    .*\n|\n)+)`).exec(
 test('image pushing is an input that defaults to off', () => {
   assert.match(reusable, /\n {6}push-images:\n(?: {8}.*\n)*? {8}type: boolean\n {8}default: false\n/);
   assert.match(reusable, /\n {6}image-keep:\n(?: {8}.*\n)*? {8}type: number\n {8}default: 2\n/);
-  assert.match(caller, /^ {6}push-images: false$/m);
+  assert.match(caller, /^ {6}push-images: \{\{project\.deploy\.push\}\}$/m);
   assert.match(caller, /^ {6}image-prefix: 'ghcr\.io\/sirloinbh\/\{\{project\.db\.name\}\}'$/m);
 });
 
@@ -65,7 +65,7 @@ const serviceCaller = read('templates/service/.github/workflows/ci.yml.tmpl');
 test('the service CI pushes one backend image to GHCR, off by default, with write access only in that job', () => {
   assert.match(service, /\n {6}push-images:\n(?: {8}.*\n)*? {8}type: boolean\n {8}default: false\n/);
   assert.match(service, /\n {6}image-keep:\n(?: {8}.*\n)*? {8}type: number\n {8}default: 2\n/);
-  assert.match(serviceCaller, /^ {6}push-images: false$/m);
+  assert.match(serviceCaller, /^ {6}push-images: \{\{project\.deploy\.push\}\}$/m);
   assert.match(serviceCaller, /^ {6}image-prefix: 'ghcr\.io\/sirloinbh\/\{\{project\.name\}\}'$/m);
   assert.match(serviceCaller, /^permissions:\n {2}contents: read\n(?: {2}#.*\n)* {2}packages: write\n/m);
   const push = job(service, 'image-push');

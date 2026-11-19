@@ -22,7 +22,7 @@
 
 ## Risks
 
-- **Private-package quota (checked 2026-11-19, #756).** The `sirloinbh` account is on GitHub Free. The Free plan includes 500 MB of Packages storage and 1 GB of data transfer a month for private packages. November so far: 0.85 GB-hr of storage and 0.02 GB of transfer, billed $0 (read on the billing pages by the coordinator). Today that is far below the allowance, but only because nothing is pushed yet. A rough estimate (not measured): an app's two images are about 140 MB compressed per tag set, and a second tag adds little because the layers are shared, so 2 tags per image is about 170 MB per app. That fits about 3 apps in 500 MB, not 8 apps and 2 services (about 1.5 GB). Overage is billed per GB-month, and a Free account has a spending limit of $0 until the user sets a budget, so pushes would fail at the limit rather than cost money by surprise. Before the first app moves, the user chooses: a small Packages budget (the ~1 GB overage is cents to a dollar or two a month at GitHub's published storage price, to be confirmed on the billing page), or moving only as many apps as fit. The estimate is replaced by the real size of the first pushed images.
+- **Private-package quota (checked 2026-11-19, #756).** The `sirloinbh` account is on GitHub Free. The Free plan includes 500 MB of Packages storage and 1 GB of data transfer a month for private packages. November so far: 0.85 GB-hr of storage and 0.02 GB of transfer, billed $0 (read on the billing pages by the coordinator). Today that is far below the allowance, but only because nothing is pushed yet. A rough estimate (not measured): an app's two images are about 140 MB compressed per tag set, and a second tag adds little because the layers are shared, so 2 tags per image is about 170 MB per app. That fits about 3 apps in 500 MB, not 8 apps and 2 services (about 1.5 GB). Overage is billed per GB-month, and a Free account has a spending limit of $0 until the user sets a budget, so pushes would fail at the limit rather than cost money by surprise. The storage price on the billing page is $0.000336 per GB-hr, about $0.24 per GB-month, so about 1 GB over the allowance costs about $0.25 a month. **Decision (user, 2026-11-19): set a small Packages budget of about $5 a month so all apps and services can move, and keep 2 versions per image.** The first real push starts only after the budget is in place. The estimate is replaced by the real size of the first pushed images, and the budget is revisited if they are much larger.
 - A GHCR outage blocks a deploy (the previous image keeps running).
 - Public repositories (inlined CI, #209) need the package visibility set deliberately.
 - Build time and peak memory per app are not measured, so the gain in deploy time and the possible smaller server plan are expectations, not numbers.
@@ -38,7 +38,8 @@
 - Reusable CI pushes images to GHCR on `main` with a retention rule.
 - `remote-deploy.sh` pulls instead of builds, with the local-build fallback.
 - The same for the service deploys, after #696.
-- Confirm the private-package quota (user step, #756): the numbers are in Risks; the budget decision is open.
+- Confirm the private-package quota (user step, #756): done, the numbers and the budget decision are in Risks.
+- The per-project switches `ghcr.push` and `ghcr.pull` in `registry/projects.json` (default off) turn the move on one project at a time (#757).
 
 ## Revisit when
 
