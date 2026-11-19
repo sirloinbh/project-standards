@@ -8,5 +8,5 @@ User=ubuntu
 Group=docker
 WorkingDirectory=/opt/{{project.name}}
 # Copied first: a deploy may check out a new commit while this script runs.
-ExecStart=/bin/bash -c 'cp /opt/{{project.name}}/deploy/report.sh /tmp/{{project.db.name}}-report.sh && exec /bin/bash /tmp/{{project.db.name}}-report.sh'
+ExecStart=/bin/bash -c 'cp /opt/{{project.name}}/deploy/report.sh /tmp/{{project.deploy.unit}}-report.sh && exec /bin/bash /tmp/{{project.deploy.unit}}-report.sh'
 TimeoutStartSec=5min

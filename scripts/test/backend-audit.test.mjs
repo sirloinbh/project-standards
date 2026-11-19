@@ -7,7 +7,7 @@ import { auditContext, AUDIT_RETENTION_DAYS, AUDIT_VALUE_LIMIT, auditValue, writ
 
 const root = new URL('../../', import.meta.url);
 const migration = readFileSync(new URL('scaffold/app/database/migrations/002_audit_log.sql', root), 'utf8');
-const backup = readFileSync(new URL('templates/app/deploy/backup.sh.tmpl', root), 'utf8');
+const backup = readFileSync(new URL('templates/deploy/deploy/backup.sh.tmpl', root), 'utf8');
 
 function fakeDb() {
   const calls = [];

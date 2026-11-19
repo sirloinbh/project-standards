@@ -22,7 +22,7 @@ test('the report sends ok, and fail over the memory or disk threshold', { skip: 
   assert.match(reportRun([], { usedMb: 1800, env: 'REPORT_MEMORY_PERCENT=95\n' }).notify, /^ping\|report\|ok\|/, 'the threshold comes from .env');
   for (const [name, files] of Object.entries(rendered)) {
     assert.match(files['deploy/report.timer'], /^OnCalendar=\*-\*-\* 04:00:00 Asia\/Seoul$/m, name);
-    assert.match(files['deploy/install-backup.sh'], /^for unit in backup restore-check health report; do$/m, name);
+    assert.match(files['deploy/install-backup.sh'], /^units="backup restore-check health report"$/m, name);
   }
 });
 

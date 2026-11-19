@@ -11,7 +11,7 @@ export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '
 export const { data } = loadAll(root);
 export const appTargets = data.sync.targets.filter((t) => t.profile === 'app');
 const render = (target) => {
-  const files = renderProfile({ root, profile: 'app', folders: ['common', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
+  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
   return Object.fromEntries(files.filter((f) => f.path.startsWith('deploy/')).map((f) => [f.path, f.content]));
 };
 export const rendered = Object.fromEntries(appTargets.map((t) => [t.project, render(t)]));
