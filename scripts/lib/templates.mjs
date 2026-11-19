@@ -53,7 +53,7 @@ function flatten(object, prefix = '') {
 }
 
 /** versions.json dependencies as flat package.json fields per target file, for the profiles in index.dependencyFields (#304). */
-export function sharedDependencyFields(index, profile, versions) {
+export function sharedDependencyFields(index, profile, versions, readPackage = () => null) {
   const spec = index.dependencyFields;
   if (!spec?.profiles?.includes(profile)) return {};
   const out = {};
@@ -65,6 +65,19 @@ export function sharedDependencyFields(index, profile, versions) {
         // Field paths are dotted (applyFields), so a dot in a package name would split it.
         if (name.includes('.')) throw new Error(`versions.json dependencies.${part}.${section}: "${name}" contains a dot and cannot be a managed field`);
         (out[target] ??= {})[`${section}.${name}`] = version;
+      }
+    }
+  }
+  // Optional dependencies (#704) are set only where the app already lists the package, so the sync never adds one.
+  for (const [part, sections] of Object.entries(versions?.optionalDependencies ?? {})) {
+    const target = spec.files?.[part];
+    if (!target) throw new Error(`versions.json optionalDependencies.${part} has no file in templates/index.json dependencyFields.files`);
+    const pkg = readPackage(target);
+    for (const [section, deps] of Object.entries(sections)) {
+      for (const [name, version] of Object.entries(deps)) {
+        if (name.includes('.')) throw new Error(`versions.json optionalDependencies.${part}.${section}: "${name}" contains a dot and cannot be a managed field`);
+        if (out[target]?.[`${section}.${name}`] !== undefined) throw new Error(`versions.json: ${name} is in both dependencies and optionalDependencies (${part}.${section})`);
+        if (pkg?.[section]?.[name] !== undefined) (out[target] ??= {})[`${section}.${name}`] = version;
       }
     }
   }
@@ -101,7 +114,15 @@ export function renderProfile({ root, profile, folders, vars, readExisting = () 
       files.push({ ...f, path: copy });
     }
   }
-  const shared = sharedDependencyFields(index, profile, vars.versions);
+  const readPackage = (target) => {
+    const text = readExisting(target);
+    try {
+      return text ? JSON.parse(text) : null;
+    } catch {
+      return null;
+    }
+  };
+  const shared = sharedDependencyFields(index, profile, vars.versions, readPackage);
   for (const target of new Set([...Object.keys(index.fields[profile] ?? {}), ...Object.keys(shared)])) {
     if (files.some((f) => f.path === target)) throw new Error(`${target} is both a template file and a fields entry`);
     const own = flatten(renderFields(index.fields[profile]?.[target] ?? {}, vars, `templates/index.json ${target}`));
