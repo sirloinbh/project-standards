@@ -22,18 +22,18 @@ export class RequestError extends Error {
 
 export const DEFAULT_TIMEOUT_MS = 30_000;
 
-export interface RequestOptions {
+export type RequestOptions = {
   method?: string;
   headers?: Record<string, string>;
   /** Aborting rejects with a RequestError of kind `abort`. */
   signal?: AbortSignal;
   /** Milliseconds before the request is cancelled (kind `timeout`). Default 30 s; 0 disables it. */
   timeoutMs?: number;
-}
+};
 
-export interface JsonRequestOptions extends RequestOptions {
+export type JsonRequestOptions = RequestOptions & {
   body?: unknown;
-}
+};
 
 let unauthorizedHandler: (() => void) | undefined;
 
