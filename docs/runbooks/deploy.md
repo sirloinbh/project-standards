@@ -64,7 +64,7 @@ cd infrastructure
 terraform init
 terraform plan -out=deploy.tfplan     # check the list of resources to create and the account
 terraform apply deploy.tfplan
-terraform output                      # static_ip, url, ssh
+terraform output                      # static_ip, url, ssh, server_ip_parameter (the address is also in SSM: `server-ip` prints it)
 ```
 
 - On first boot, user-data sets up swap, Docker, the repository clone, the server `.env`, the backup cron, and the auto-deploy timer.
@@ -73,8 +73,8 @@ terraform output                      # static_ip, url, ssh
 ## 3. App deploy and rollback
 
 ```powershell
-./scripts/deploy.ps1 -Server <static_ip> -Ref origin/main   # deploy
-./scripts/deploy.ps1 -Server <static_ip> -Rollback          # return to the previous deploy
+./scripts/deploy.ps1 -Server (server-ip) -Ref origin/main   # deploy
+./scripts/deploy.ps1 -Server (server-ip) -Rollback          # return to the previous deploy
 ```
 
 Deploy order (`deploy/remote-deploy.sh`):
@@ -141,8 +141,8 @@ The nginx in the web container (`frontend/nginx.conf`, a centrally managed file)
 ## 5. Access
 
 - **Browser:** `https://{{service.host}}` (from allowed IPs only)
-- **SSH:** `ssh -i ~/.ssh/{{project.name}}-lightsail ubuntu@<static_ip>`
-- **SSH tunnel (if the proxy is down):** `ssh -i ~/.ssh/{{project.name}}-lightsail -L {{project.ports.web}}:127.0.0.1:<WEB_PORT> ubuntu@<static_ip>`, then `http://localhost:{{project.ports.web}}`
+- **SSH:** `server-ssh` (a shell) or `server-ssh "<command>"`. The address comes from SSM through `server-ip`, with a DNS fallback; install the tools with `tools/install.ps1` and open a new terminal (project-standards `docs/tools.md`)
+- **SSH tunnel (if the proxy is down):** `server-ssh -L {{project.ports.web}}:127.0.0.1:<WEB_PORT>`, then `http://localhost:{{project.ports.web}}`
 - **Logs:** on the server, `cd /opt/{{project.name}} && docker compose logs --tail 100 api`
 
 ## 6. Changing the allowed IPs
