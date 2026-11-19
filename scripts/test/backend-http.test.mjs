@@ -68,6 +68,31 @@ test('HttpError keeps its status and message; PostgreSQL input errors are 400 an
   assert.deepEqual(answer(Object.assign(new Error('duplicate key'), { code: '23505' })), { status: 409, body: { error: 'This item already exists' }, logged: [] });
 });
 
+test('client-caused PostgreSQL errors are 400 with a short message and no database text (#673)', () => {
+  const expected = {
+    23503: 'A related item does not exist or is still in use',
+    23514: 'Input is not allowed',
+    '22P02': 'Input has an invalid format',
+    '22007': 'Input has an invalid date or time',
+    '22008': 'Input has an invalid date or time',
+  };
+  for (const [code, message] of Object.entries(expected)) {
+    const err = Object.assign(new Error('violates constraint "items_owner_fkey" on table "items"'), { code });
+    assert.deepEqual(answer(err), { status: 400, body: { error: message }, logged: [] }, code);
+  }
+});
+
+test('after the response has started the error goes to Express and nothing is written (#673)', () => {
+  const res = fakeResponse();
+  res.headersSent = true;
+  res.json = () => assert.fail('must not write a second response');
+  const passed = [];
+  const err = new HttpError(404, 'late');
+  errorHandler(err, {}, res, (value) => passed.push(value));
+  assert.deepEqual(passed, [err]);
+  assert.equal(res.statusCode, 0);
+});
+
 test('anything else is a 500 whose internal message reaches only the log', () => {
   const result = answer(new Error('connect ECONNREFUSED 127.0.0.1:5432'));
   assert.deepEqual(result.body, { error: 'Server error' });
