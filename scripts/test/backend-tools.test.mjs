@@ -81,11 +81,11 @@ const tools = [
   }),
 ];
 
-function setup(publicKeyPem = publicPem) {
+function setup(publicKeyPem = publicPem, extra = {}) {
   const routes = {};
   const app = { get: (path, h) => (routes[`GET ${path}`] = h), post: (path, h) => (routes[`POST ${path}`] = h) };
   const pool = fakePool();
-  registerToolRoutes(app, { app: 'demo', tools, pool, publicKey: publicKeyPem });
+  registerToolRoutes(app, { app: 'demo', tools, pool, publicKey: publicKeyPem, ...extra });
   const call = async (route, { auth, name, body } = {}) => {
     const req = { params: { name }, body, get: (h) => (h.toLowerCase() === 'authorization' ? auth : undefined) };
     const res = { statusCode: 200, body: undefined, locals: { requestId: 'req-7' } };
@@ -175,7 +175,16 @@ test('invalid input is a 400 and a failing write rolls back, each with an error 
 });
 
 test('verifyCallToken returns the caller and its scopes', () => {
-  assert.deepEqual(verifyCallToken(token(), publicKey, 'demo'), { owner: 'owner-1', client: 'ai-shell', scopes: ['demo:read', 'demo:write'] });
+  const now = Math.floor(Date.now() / 1000);
+  assert.deepEqual(verifyCallToken(token({ iat: now, exp: now + 60, jti: 'a', tool: 'list_items' }), publicKey, 'demo'), {
+    owner: 'owner-1',
+    client: 'ai-shell',
+    scopes: ['demo:read', 'demo:write'],
+    jti: 'a',
+    tool: 'list_items',
+    exp: now + 60,
+  });
+  assert.deepEqual(verifyCallToken(token(), publicKey, 'demo').tool, null);
 });
 
 test('tool names must be <verb>_<noun> and unique', () => {
@@ -184,4 +193,59 @@ test('tool names must be <verb>_<noun> and unique', () => {
   assert.throws(bad('ListItems'), /Invalid or repeated tool name/);
   assert.throws(bad('list'), /Invalid or repeated tool name/);
   assert.throws(() => registerToolRoutes(app, { app: 'demo', tools: [tools[0], tools[0]], pool: fakePool(), publicKey: publicPem }), /repeated/);
+});
+
+const POST = 'POST /internal/tools/:name';
+const bound = (tool, jti, claims = {}) => `Bearer ${token({ tool, jti, scope: 'demo:read demo:write', ...claims })}`;
+
+test('a bound token works once: replaying it is a 401 and writes no row', async () => {
+  const { call, pool } = setup();
+  const auth = bound('add_item', 'jti-1');
+  assert.equal((await call(POST, { auth, name: 'add_item', body: { title: 'x' } })).status, 200);
+  const replay = await call(POST, { auth, name: 'add_item', body: { title: 'x' } });
+  assert.deepEqual([replay.status, replay.body], [401, { error: 'Call token was already used' }]);
+  assert.equal(audits(pool).length, 1);
+  assert.equal((await call(POST, { auth: bound('add_item', 'jti-2'), name: 'add_item', body: { title: 'x' } })).status, 200);
+});
+
+test('a token for another tool is a 401 and does not use up its jti', async () => {
+  const { call } = setup();
+  const auth = bound('list_items', 'jti-3');
+  const wrong = await call(POST, { auth, name: 'add_item', body: { title: 'x' } });
+  assert.deepEqual([wrong.status, wrong.body], [401, { error: 'Call token is not for this tool' }]);
+  assert.equal((await call(POST, { auth, name: 'list_items', body: {} })).status, 200);
+});
+
+test('the tool list token is bound to the list, not to a tool', async () => {
+  const { call } = setup();
+  assert.equal((await call('GET /internal/tools', { auth: bound('add_item', 'jti-4') })).status, 401);
+  assert.equal((await call('GET /internal/tools', { auth: bound('@list', 'jti-5') })).status, 200);
+  assert.equal((await call(POST, { auth: bound('@list', 'jti-6'), name: 'list_items', body: {} })).status, 401);
+});
+
+test('a malformed jti or tool claim is a 401', async () => {
+  const { call } = setup();
+  for (const claims of [{ jti: 5, tool: 'list_items' }, { jti: '', tool: 'list_items' }, { jti: 'j', tool: 7 }]) {
+    assert.equal((await call(POST, { auth: `Bearer ${token(claims)}`, name: 'list_items', body: {} })).status, 401);
+  }
+});
+
+test('a token without the binding claims passes only until requireBinding is set', async () => {
+  const old = `Bearer ${token()}`;
+  const lenient = setup();
+  assert.equal((await lenient.call(POST, { auth: old, name: 'list_items', body: {} })).status, 200);
+  assert.equal((await lenient.call(POST, { auth: old, name: 'list_items', body: {} })).status, 200, 'old tokens are not tracked');
+  const strict = setup(publicPem, { requireBinding: true });
+  const refused = await strict.call(POST, { auth: old, name: 'list_items', body: {} });
+  assert.deepEqual([refused.status, refused.body], [401, { error: 'Call token is not bound to one call' }]);
+  assert.equal((await strict.call(POST, { auth: bound('list_items', 'jti-7'), name: 'list_items', body: {} })).status, 200);
+});
+
+test('seen jti values are forgotten after their expiry', async () => {
+  const { createSeenTokens } = await import('../../templates/app/backend/src/standard/tools.ts');
+  const seen = createSeenTokens();
+  const t0 = 1_000_000_000_000;
+  assert.equal(seen.use('a', t0 / 1000 + 60, t0), true);
+  assert.equal(seen.use('a', t0 / 1000 + 60, t0 + 60_000), false);
+  assert.equal(seen.use('a', t0 / 1000 + 60, t0 + 100_000), true);
 });
