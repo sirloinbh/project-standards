@@ -35,7 +35,7 @@ Prerequisites: the domain is bought (#249), `rootDomain` is filled (#539), and t
 1. On the PC, generate the files and copy them to the server. Keep each `ssh` command on one line; a line break inside the quotes sends two broken commands.
    ```powershell
    node scripts/proxy-config.mjs
-   $k = "~/.ssh/<key>"; $s = "ubuntu@<static_ip>"
+   $k = "~/.ssh/<key>"; $s = "ubuntu@$(server-ip)"
    ssh -i $k $s "mkdir -p /tmp/proxy"
    scp -i $k -r .local/proxy/* "${s}:/tmp/proxy/"
    ssh -i $k $s "sudo install -d -m 755 /opt/project-standards/proxy && sudo cp -r /tmp/proxy/. /opt/project-standards/proxy/ && rm -rf /tmp/proxy"
@@ -68,5 +68,5 @@ Prerequisites: the domain is bought (#249), `rootDomain` is filled (#539), and t
 
 ## Limits
 
-- If the proxy or the certificate breaks, all subdomains break together, sign-in included. The firewall never opened the app web ports, so the fallback is an SSH tunnel to the app's web port: `ssh -i ~/.ssh/<key> -L <ports.web>:127.0.0.1:<ports.web> ubuntu@<static_ip>`, then `http://localhost:<ports.web>`.
+- If the proxy or the certificate breaks, all subdomains break together, sign-in included. The firewall never opened the app web ports, so the fallback is an SSH tunnel to the app's web port: `server-ssh -L <ports.web>:127.0.0.1:<ports.web>`, then `http://localhost:<ports.web>`.
 - An app that has not synced #254 yet sees every request as coming from the proxy, so its per-IP API rate limit (10 per second, burst 40) is shared by all its clients. With one user per app this does not matter.

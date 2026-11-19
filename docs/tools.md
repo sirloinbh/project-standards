@@ -7,7 +7,8 @@ Tools for using a company account and a personal account (`sirloinbh`) side by s
 | `gh-project.ps1` | Runs `gh` only with the personal config (`%USERPROFILE%\.config\gh-personal`) and the `sirloinbh` account. It clears inherited tokens and restores the caller's environment when it finishes. It also works as a Git credential helper |
 | `project-terminal.ps1` | Initializes the VS Code terminal. It leaves the default `gh` on the company config and creates the `ghp` function (personal account). It sets a personal `CODEX_HOME`. `ghp` calls `gh-project.ps1` in the same folder, so the install location does not matter |
 | `open-vscode-account-b.cmd` | The personal VS Code launcher. When opened with `--project <folder>`, it opens with the company gh config, token removal, personal Codex, and the personal VS Code data folder. For other folders it leaves the existing environment as is |
-| `install.ps1` | Installs the files above and `set-credential-helper.ps1` into `%LOCALAPPDATA%\sirloinbh-tools`. It backs up changed files as `.bak-<time>` and does not touch the old location (`%LOCALAPPDATA%\gh-workout-memo`) |
+| `server-ip.ps1`, `server-ssh.ps1` | `server-ip` prints the shared server's public IP; `server-ssh` runs `ssh` to it. See "Server address" below (#794) |
+| `install.ps1` | Installs the files above, `set-credential-helper.ps1`, `server-ip.ps1` and `server-ssh.ps1` into `%LOCALAPPDATA%\sirloinbh-tools`. It backs up changed files as `.bak-<time>` and does not touch the old location (`%LOCALAPPDATA%\gh-workout-memo`) |
 | `global-instructions/git-branches.md` | The source of the branch rules that go into each PC's global instructions. `install.ps1` replaces only the matching section of whichever of `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, and `%LOCALAPPDATA%\Codex-Account-B\AGENTS.md` exist, and backs them up. It also moves the Fork rule memory (`fork-branch-management.md`) aside as `.bak-<time>`. If you give only `-Destination`, this step is skipped (#365) |
 | `check-git-permissions.mjs` | Uses a short session to check whether Claude Code on this PC decides to run, ask for approval, or block each git branch command. It denies every approval request, so those commands are not executed. It runs only on a clean main and uses a little model quota (#365) |
 | `set-credential-helper.ps1` | Changes the credential helper in each repo's `.git/config` to the specified `gh-project.ps1`. It does not change the global Git config |
@@ -51,6 +52,22 @@ The parent folder where you cloned the repos differs by PC (for example, `%USERP
   ```
   `$repos` is the same as in step 2 of the migration steps. To roll back just one repo, write it like `-Repository "$base\study-log"`.
 - **A wrongly installed file:** Restore the `*.bak-<time>` files in `%LOCALAPPDATA%\sirloinbh-tools` to their original names.
+
+## Server address (tools/server-ip.ps1, tools/server-ssh.ps1)
+
+The server's static IP is stored once, in the SSM parameter `/sirloinbh/shared/server-static-ip` (a plain String that shared-aws-infrastructure creates, #69). Docs and runbooks use these commands instead of `<static_ip>`:
+
+```powershell
+server-ip                          # prints the address
+server-ssh                         # a shell on the server (user ubuntu)
+server-ssh "uptime"                # one command; keep double quotes out of it (Windows PowerShell 5.1 drops them)
+server-ssh -L 8101:127.0.0.1:8101  # extra arguments go to ssh unchanged, here a tunnel
+scp -i ~/.ssh/workout-memo-lightsail "ubuntu@$(server-ip):/var/backups/<dir>/<file>" ./backups/
+```
+
+- `server-ip` reads the parameter with the personal AWS profile (`SIRLOINBH_AWS_PROFILE`, default `workout-personal`). If that fails (the parameter is not applied yet, the profile has no SSM permission, no network to AWS) it resolves `auth.daysofme.com` and warns on standard error. The Terraform user needs the `terraform-server-ip` policy for the SSM path (shared-aws-infrastructure `docs/operations.md` step 4b).
+- `server-ssh` uses the key `~/.ssh/workout-memo-lightsail`; `SIRLOINBH_SERVER_KEY` changes it.
+- The bare commands `server-ip` and `server-ssh` are functions that `project-terminal.ps1` defines. After this change, run `toolsinstall.ps1` once and open a new terminal; until then call `& "$env:LOCALAPPDATAsirloinbh-toolsserver-ssh.ps1"`.
 
 ## Local agent worker (archived)
 
