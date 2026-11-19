@@ -1,0 +1,77 @@
+// Tests the managed OpenAPI builder templates/app/backend/src/standard/openapi.ts (#679): how the document is assembled
+// (security scheme, default 401/413/429, parameters, ordering). Zod is not installed in this repository, so a hook swaps
+// 'zod/v4' for a stub whose toJSONSchema returns the JSON Schema a test attaches to the fake schema. The conversion with
+// real Zod runs in the scaffold's backend/test/openapi.test.ts (the scaffold-tests CI job).
+import assert from 'node:assert/strict';
+import { registerHooks } from 'node:module';
+import test from 'node:test';
+
+registerHooks({
+  resolve(specifier, context, next) {
+    if (specifier === 'zod/v4') return { url: 'data:text/javascript,export const toJSONSchema = (schema) => ({ $schema: "x", ...schema.json });', shortCircuit: true };
+    return next(specifier, context);
+  },
+});
+const { buildOpenApi, schemaOf } = await import('../../templates/app/backend/src/standard/openapi.ts');
+
+const schema = (json) => ({ json });
+
+test('schemaOf drops the $schema key', () => {
+  assert.deepEqual(schemaOf(schema({ type: 'string' })), { type: 'string' });
+});
+
+const doc = buildOpenApi({
+  title: 'Demo API',
+  description: 'About',
+  errorDescription: 'Error text',
+  statusText: { 409: 'Taken' },
+  operations: {
+    'POST /api/items': { summary: 'Create', body: ['CreateItem', schema({ type: 'object', required: ['name'] })], status: [201, 400, 409] },
+    'GET /api/items/:id': { summary: 'Read', status: [200, 404] },
+    'GET /api/health': { summary: 'Health', status: [200, 500], public: true },
+    'GET /api/items': { summary: 'List', query: schema({ type: 'object', properties: { q: { type: 'string' }, page: { type: 'integer' } }, required: ['page'] }), status: [200] },
+  },
+});
+
+test('the document has the sign-in scheme and requires it by default', () => {
+  assert.equal(doc.openapi, '3.1.0');
+  assert.deepEqual(doc.info, { title: 'Demo API', version: '1.0.0', description: 'About' });
+  assert.deepEqual(doc.security, [{ session: [] }]);
+  assert.deepEqual(doc.components.securitySchemes.session, {
+    type: 'apiKey',
+    in: 'cookie',
+    name: 'sirloinbh.session_token',
+    description: 'The shared sign-in session cookie (ADR-0015).',
+  });
+  assert.equal(doc.components.schemas.Error.properties.error.description, 'Error text');
+});
+
+test('guarded routes get 401 and 429, a body adds 413, the public route gets none and opts out of the scheme', () => {
+  const codes = (path, method) => Object.keys(doc.paths[path][method].responses);
+  assert.deepEqual(codes('/api/items', 'post'), ['201', '400', '401', '409', '413', '429']);
+  assert.deepEqual(codes('/api/items', 'get'), ['200', '401', '429']);
+  assert.deepEqual(codes('/api/items/{id}', 'get'), ['200', '401', '404', '429']);
+  assert.deepEqual(codes('/api/health', 'get'), ['200', '500']);
+  assert.deepEqual(doc.paths['/api/health'].get.security, []);
+  assert.equal(doc.paths['/api/items'].get.security, undefined);
+});
+
+test('descriptions come from the defaults and the statusText override', () => {
+  const responses = doc.paths['/api/items'].post.responses;
+  assert.equal(responses['409'].description, 'Taken');
+  assert.equal(responses['401'].description, 'Sign-in required');
+  assert.equal(responses['201'].description, 'Created');
+  assert.deepEqual(responses['429'].content['application/json'].schema, { $ref: '#/components/schemas/Error' });
+  assert.equal(responses['201'].content, undefined);
+});
+
+test('paths use {id} parameters, query properties become parameters, and bodies become components', () => {
+  assert.deepEqual(doc.paths['/api/items/{id}'].get.parameters, [{ name: 'id', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } }]);
+  assert.deepEqual(doc.paths['/api/items'].get.parameters, [
+    { name: 'q', in: 'query', required: false, schema: { type: 'string' } },
+    { name: 'page', in: 'query', required: true, schema: { type: 'integer' } },
+  ]);
+  assert.deepEqual(doc.components.schemas.CreateItem, { type: 'object', required: ['name'] });
+  assert.deepEqual(doc.paths['/api/items'].post.requestBody.content['application/json'].schema, { $ref: '#/components/schemas/CreateItem' });
+  assert.deepEqual(Object.keys(doc.paths), ['/api/health', '/api/items', '/api/items/{id}']);
+});
