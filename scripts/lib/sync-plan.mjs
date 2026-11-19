@@ -1,4 +1,5 @@
 // Computes what a sync would write into one target repository, without any network access.
+import { renderGeneratedFiles } from './generated.mjs';
 import { APP_CI, inlineAppCi, REUSABLE_APP_CI } from './inline-ci.mjs';
 import { buildManifest, MANIFEST_PATH } from './manifest.mjs';
 import { renderProfile } from './templates.mjs';
@@ -57,11 +58,14 @@ export function planTarget({ root, data, target, centralSha, workflowSha = centr
     if (ci) Object.assign(ci, { source: REUSABLE_APP_CI, content: inlineAppCi(root, ci.content) });
   }
 
+  // Files generated from registry data, such as the app list shared-ai and Terraform read (#705).
+  rendered.push(...renderGeneratedFiles(target, data));
+
   const allowed = (project?.allowedDifferences ?? []).map((d) => d.path);
   const skipped = [];
   const kept = [];
   for (const file of rendered) {
-    if (matchesAny(file.path, profile.neverTouch)) throw new Error(`${target.repo}: template ${file.source} would write protected path ${file.path}`);
+    if (matchesAny(file.path, profile.neverTouch) && !matchesAny(file.path, profile.neverTouchExcept ?? [])) throw new Error(`${target.repo}: template ${file.source} would write protected path ${file.path}`);
     if (matchesAny(file.path, allowed)) skipped.push({ path: file.path, reason: 'allowedDifferences' });
     else kept.push(file);
   }

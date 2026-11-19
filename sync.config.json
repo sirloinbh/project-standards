@@ -18,6 +18,7 @@
       "templates": ["common", "service"],
       "packages": [],
       "ci": "reusable-service-ci.yml",
+      "neverTouchExcept": ["backend/src/apps.generated.ts"],
       "neverTouch": ["backend/**", "deploy/**", "compose.yaml", "README.md", ".env.example", "AGENTS.project.md"]
     }
   },
@@ -30,8 +31,8 @@
     { "repo": "sirloinbh/cert-manager", "profile": "app", "project": "cert-manager" },
     { "repo": "sirloinbh/plan-routine", "profile": "app", "project": "plan-routine" },
     { "repo": "sirloinbh/dev-career-portfolio", "profile": "app", "project": "dev-career-portfolio" },
-    { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null },
+    { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null, "generatedFiles": { "apps.json": "apps-json" } },
     { "repo": "sirloinbh/shared-auth", "profile": "service", "project": null },
-    { "repo": "sirloinbh/shared-ai", "profile": "service", "project": null }
+    { "repo": "sirloinbh/shared-ai", "profile": "service", "project": null, "generatedFiles": { "backend/src/apps.generated.ts": "apps-ts" } }
   ]
 }
