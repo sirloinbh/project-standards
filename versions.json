@@ -35,6 +35,7 @@
   },
   "optionalDependencies": {
     "frontend": {
+      "dependencies": { "@tanstack/react-query": "5.104.1" },
       "devDependencies": { "@testing-library/user-event": "14.6.8" }
     }
   },
