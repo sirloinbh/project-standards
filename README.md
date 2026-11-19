@@ -40,7 +40,7 @@ To preview the result merged with local clones, run something like `node scripts
    - If the domain or AWS prefix does not exist yet, set it to `null`.
 3. Add the new repo to `targets` in `sync.config.json`.
 4. Run `npm run docs` to regenerate `docs/projects.md`, confirm `npm run check` passes, then open a PR.
-5. **[User]** Create the umbrella repo and the 3 subtree repos (`<name>-frontend`, `-backend`, `-db`).
+5. **[User]** Create the app repo (no sub-repos: ADR-0022).
 6. **[User]** Add the new repo to the GitHub App installation scope (step 3 of [docs/github-app.md](docs/github-app.md)).
 7. Create the first commit with the scaffold. The standard tree, runbooks, centrally managed files, and manifest are created in one go, so `standards-check` passes from the first commit.
    ```powershell

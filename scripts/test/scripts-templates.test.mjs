@@ -18,27 +18,8 @@ const render = (project) => {
 const withoutHeader = (text) => text.split('\n').filter((l) => !hasHeader(l)).join('\n');
 const study = render('study-log');
 
-test('push-repositories pushes the three subtree repositories named in the registry', () => {
-  const text = study['scripts/push-repositories.ps1'];
-  assert.match(text, /\$repos = @\{ frontend='study-log-frontend'; backend='study-log-backend'; database='study-log-db' \}/);
-  assert.doesNotMatch(text, /infrastructure/, 'shared-aws-infrastructure is its own source repository now (#93, #94)');
-  assert.match(render('dev-career-portfolio')['scripts/push-repositories.ps1'], /database='dev-career-portfolio-db'/);
-});
-
-test('push-repositories never pushes the umbrella main, never rejoins, and checks the sub-repo remotes first (#640)', () => {
-  const apps = data.sync.targets.filter((t) => t.profile === 'app');
-  assert.ok(apps.length >= 8);
-  for (const t of apps) {
-    const text = render(t.project)['scripts/push-repositories.ps1'];
-    const code = text.split('\n').filter((l) => !l.startsWith('#')).join('\n');
-    assert.doesNotMatch(code, /push origin main/, t.project);
-    assert.doesNotMatch(code, /git push origin/, t.project);
-    assert.doesNotMatch(code, /--rejoin/, t.project);
-    assert.match(text, /git remote get-url/, t.project);
-    assert.match(text, /git remote add \$part https:\/\/github\.com\/sirloinbh\//, t.project);
-    assert.match(text, /git branch --delete --force \$branch/, t.project);
-    assert.match(text, /^[\x20-\x7e\r\n]*$/, `${t.project}: ASCII only (#214)`);
-  }
+test('the subtree push script is no longer a template (ADR-0022, #728)', () => {
+  assert.ok(!('scripts/push-repositories.ps1' in study));
 });
 
 test('backup copies the dump file out of the container instead of capturing stdout (Korean text safety)', () => {
