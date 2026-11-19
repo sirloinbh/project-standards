@@ -29,7 +29,6 @@ export function createApp(pool: Pool, options: { auth?: express.RequestHandler }
   app.get('/api/me', meHandler);
   registerHealthRoutes(app, pool);
   app.use('/api', notFound);
-  // fields: a validation 400 also lists the invalid fields by path (project-standards #674).
-  app.use(createErrorHandler({ fields: true }));
+  app.use(createErrorHandler({ fields: true })); // fields: a validation 400 also lists the invalid fields by path (#674)
   return app;
 }

@@ -14,3 +14,7 @@ The always-on `fields` from #674 broke the apps' backend tests, which compare th
 
 - `node --test scripts/test/backend-http.test.mjs`: 15 pass. The rendered scaffold compiles and its tests pass.
 - `npm run check`: see the PR.
+
+## Also changed
+
+- `scripts/standards-check.mjs` (lane-4's file, a one-token change): the check for the error middleware in `backend/src/app.ts` also accepts `app.use(createErrorHandler(...))`; without it the scaffold got a "middleware is missing" warning. The vendored copy reaches the apps through sync.
