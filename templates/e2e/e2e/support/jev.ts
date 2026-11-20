@@ -3,8 +3,8 @@
 // fixtures, and applies the gate. `judged.ts` wraps it for a Playwright page.
 //
 // Jev (TypeSafe AI) answers typed questions about text. With JEV_API_KEY set, a call goes to the API (the vendor's own
-// route by default; JEV_API_URL and JEV_MODEL select another, such as OpenRouter) and its answer is stored as e2e/fixtures/jev/<hash of the request>.json. Without them the stored answer with the
-// same hash is replayed, so PR CI stays offline. No fixture and no key: the check is skipped, never failed.
+// route by default; JEV_API_URL and JEV_MODEL select another, such as OpenRouter) and its answer is stored as
+// e2e/fixtures/jev/<hash of the request>.json. Without the key the stored answer with the same hash is replayed, so PR CI stays offline. No fixture and no key: the check is skipped, never failed.
 // Only a confident wrong answer fails; anything else is a warning. The key stays in this Node process.
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
