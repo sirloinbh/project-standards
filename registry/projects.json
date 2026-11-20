@@ -219,7 +219,8 @@
         "db": 15404
       },
       "ghcr": {
-        "push": true
+        "push": true,
+        "pull": true
       },
       "db": {
         "name": "journal",
