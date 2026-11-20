@@ -26,3 +26,7 @@ The private apps call the reusable workflow at `@main`, so the moment the workfl
 ## Checks
 
 - `node --test scripts/test/workflows.test.mjs`, `bash -n scripts/ci-migrate.sh`, `npm run check` (see the PR).
+
+## Stage 2 (done)
+
+Checked 2026-11-20: `.standards/ci-migrate.sh` is on main of all 8 apps. Both `DB migration` steps in `reusable-app-ci.yml` (verify and e2e) now run `bash .standards/ci-migrate.sh`; the inline blocks and the no-runner psql fallback with its warning are gone. The e2e-visual job still runs only `npm run db:migrate` (no psql in its image). `workflows.test.mjs` now requires both steps to be the script call and no inline `psql "$DATABASE_URL"` to remain. Apps pin the workflow to the synced central sha, so an app picks this up with its next sync PR, which also carries the script.
