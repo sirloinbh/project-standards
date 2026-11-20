@@ -6,7 +6,7 @@ import path from 'node:path';
 import { rendered, project, has } from './deploy-helpers.mjs';
 
 // Runs the rendered backup.sh with fake docker, curl and flock on PATH, in a temporary app folder.
-export function backupRun(args, { env = '', shared = null, restored = 'public.a|2\npublic.b|5\n', setup, failCounts = false } = {}) {
+export function backupRun(args, { env = '', shared = null, restored = 'public.a|2\npublic.b|5\n', setup, failCounts = false, failDump = false } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'backup-'));
   const bin = path.join(dir, 'bin');
   const app = path.join(dir, 'app');
@@ -23,7 +23,7 @@ export function backupRun(args, { env = '', shared = null, restored = 'public.a|
   tool('docker', [
     'echo "$*" >> "$FAKE_LOG.docker"',
     'case "$1 $2" in',
-    '  "exec cid") if [[ "$*" == *pg_dump* ]]; then echo "-- dump"; elif [ -n "$FAIL_COUNTS" ]; then exit 1; else printf "public.a|2\\npublic.b|5\\n"; fi ;;',
+    '  "exec cid") if [[ "$*" == *pg_dump* ]]; then if [ -n "$FAIL_DUMP" ]; then echo partial; exit 1; fi; echo "-- dump"; elif [ -n "$FAIL_COUNTS" ]; then exit 1; else printf "public.a|2\\npublic.b|5\\n"; fi ;;',
     '  "ps -q") echo cid ;;',
     '  "inspect --format") echo postgres:17 ;;',
     '  "exec -i") cat > /dev/null ;;',
@@ -46,7 +46,7 @@ export function backupRun(args, { env = '', shared = null, restored = 'public.a|
   fs.writeFileSync(scriptFile, `export PATH="${pathVar}"\n${script.replace(/^#!.*\n/, '')}`);
   const r = spawnSync('bash', [posix(scriptFile), ...args], {
     encoding: 'utf8',
-    env: { ...process.env, FAKE_LOG: posix(log), RESTORED: restored, FAIL_COUNTS: failCounts ? '1' : '', STANDARDS_ENV_FILE: posix(sharedFile) },
+    env: { ...process.env, FAKE_LOG: posix(log), RESTORED: restored, FAIL_COUNTS: failCounts ? '1' : '', FAIL_DUMP: failDump ? '1' : '', STANDARDS_ENV_FILE: posix(sharedFile) },
   });
   const read = (suffix) => (fs.existsSync(log + suffix) ? fs.readFileSync(log + suffix, 'utf8') : '');
   const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, files: fs.readdirSync(store).sort(), curlArgs: read('.curl-args'), curlStdin: read('.curl-stdin'), docker: read('.docker'), notify: read('.notify') };

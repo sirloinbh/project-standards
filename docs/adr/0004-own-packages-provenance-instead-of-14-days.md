@@ -1,6 +1,6 @@
 # 0004. Own packages are verified by provenance instead of the 14-day rule
 
-- Status: Proposed (issue #1)
+- Status: Accepted (issue #1; implemented: sync checks package provenance (`scripts/lib/sync-pr.mjs`), first release in #88)
 - Date: 2026-10-22
 
 ## Context

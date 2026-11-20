@@ -49,6 +49,32 @@ Idle values right after a reboot are the low end. One app takes about 95 MiB idl
 
 **Decision:** move to **2 GB** before deploying the second app or the auth service, as ADR-0009 says. 2 GB leaves about 900 MiB for builds, the auth service, and workers. Raise to 4 GB if, after the first few apps move in, available memory stays under about 300 MiB or swap is used during builds. The spec change is a user step: a snapshot, a new instance from it, and moving the static IP (ADR-0009).
 
+### Measured usage after the other 7 apps were deployed (2026-11-20, #745)
+
+The agent ran `free -m`, `df -h /`, and `docker stats --no-stream` on the server over ssh, before the first deploy and after the last one. The server is now the **2 GB** instance (1,905 MiB total) with 2 GB of swap, 2 CPUs.
+
+| Whole server | Before (8 containers) | After (29 containers) | Change |
+|---|---:|---:|---:|
+| Memory used / available | 741 / 1,164 MiB | 1,105 / 800 MiB | +364 / -364 MiB |
+| Swap used | 235 MiB | 501 MiB | +266 MiB |
+| Disk `/` used | 12 of 58 GB (20%) | 16 of 58 GB (27%) | +4 GB (images) |
+
+"Before" was measured with workout-memo, shared-auth, shared-ai, and the proxy running (8 containers). "After" is those plus health-log, life-journal, cert-manager, plan-routine, dev-career-portfolio, study-log, and money-ledger (3 containers each). The change is the 7 new apps together, so one app costs about **52 MiB of available memory** on average (364 / 7), measured after each build had finished. Available memory never dropped below about 800 MiB between the deploys (checked before and after each one).
+
+Idle container memory after the last deploy (MiB; `docker stats` falls and rises with the page cache, so read it as the order of magnitude):
+
+| App | api | db | web |
+|---|---:|---:|---:|
+| money-ledger (price jobs off, fake prices) | 125 | 45 | 5 |
+| study-log | 30 | 17 | 3 |
+| plan-routine | 17 | 13 | 1 |
+| dev-career-portfolio | 16 | 14 | 3 |
+| cert-manager | 14 | 12 | 1 |
+| health-log | 13 | 8 | 2 |
+| life-journal | 10 | 8 | 1 |
+
+The decision above holds: 2 GB is enough for all 8 apps plus the two shared services (available stays above the 300 MiB line). Margin left is about 800 MiB, and swap is in use, so watch it when money-ledger's price jobs and study-log's file features are switched on (both are off for now), and when the ADR-0023 image pull replaces the server builds. Raise to 4 GB if available memory drops under about 300 MiB.
+
 ### Conversion to Korean won (for illustration)
 
 This assumes an exchange rate of $1 = 1,400 KRW and 10% VAT. Pre-tax won = monthly USD × 1,400, and after-tax won = pre-tax won × 1.10.

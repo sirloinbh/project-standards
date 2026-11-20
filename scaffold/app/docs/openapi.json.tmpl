@@ -3,7 +3,7 @@
   "info": {
     "title": "{{project.title}} API",
     "version": "1.0.0",
-    "description": "날짜는 YYYY-MM-DD(Asia/Seoul). 오류 응답은 모두 { error: 한국어 메시지 }입니다."
+    "description": "Dates are YYYY-MM-DD (Asia/Seoul). Every error answer is { error: message }."
   },
   "servers": [
     {
@@ -18,14 +18,14 @@
   "paths": {
     "/api/health": {
       "get": {
-        "summary": "서버와 DB 연결 상태 확인",
+        "summary": "Check the server and database connection",
         "security": [],
         "responses": {
           "200": {
-            "description": "성공"
+            "description": "OK"
           },
           "500": {
-            "description": "서버 오류",
+            "description": "Server error",
             "content": {
               "application/json": {
                 "schema": {
@@ -39,13 +39,13 @@
     },
     "/api/me": {
       "get": {
-        "summary": "로그인한 사용자 확인",
+        "summary": "Show the signed-in user",
         "responses": {
           "200": {
-            "description": "성공"
+            "description": "OK"
           },
           "401": {
-            "description": "로그인이 필요함",
+            "description": "Sign-in required",
             "content": {
               "application/json": {
                 "schema": {
@@ -55,7 +55,7 @@
             }
           },
           "429": {
-            "description": "요청이 너무 많음",
+            "description": "Too many requests",
             "content": {
               "application/json": {
                 "schema": {
@@ -65,7 +65,7 @@
             }
           },
           "503": {
-            "description": "로그인 서비스를 사용할 수 없음",
+            "description": "Sign-in service unavailable",
             "content": {
               "application/json": {
                 "schema": {
@@ -85,7 +85,7 @@
         "properties": {
           "error": {
             "type": "string",
-            "description": "한국어 오류 메시지"
+            "description": "A short message for the user"
           }
         },
         "required": [

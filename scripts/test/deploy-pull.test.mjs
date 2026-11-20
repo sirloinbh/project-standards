@@ -96,10 +96,10 @@ test('push and pull follow the registry switches and are off for a project that 
     assert.match(files['.github/workflows/ci.yml'], new RegExp(`^ {6}push-images: ${entry.ghcr?.push === true}$`, 'm'), target.repo);
     assert.match(files['deploy/remote-deploy.sh'], new RegExp(String.raw`if \[ "${entry.ghcr?.pull === true ? 'on' : 'off'}" = on \] && pull_images`), target.repo);
   }
-  // Moving one project at a time (#757): workout-memo and shared-ai push; nothing pulls until the user says otherwise.
+  // Moving one project at a time (#757): workout-memo and shared-ai push, shared-ai also pulls; nothing else pulls until the user says otherwise.
   const pushing = entries.filter((e) => e.ghcr?.push).map((e) => e.name);
   assert.deepEqual(pushing, ['workout-memo', 'shared-ai']);
-  assert.deepEqual(entries.filter((e) => e.ghcr?.pull), []);
+  assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name), ['shared-ai']);
 });
 
 test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pull on for that project only', () => {
@@ -114,4 +114,27 @@ test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pu
   assert.match(auth['deploy/remote-deploy.sh'], /if \[ "off" = on \] && pull_images/, 'push alone does not turn pulling on');
   const other = renderFiles(copy, copy.sync.targets.find((t) => t.project === 'health-log'));
   assert.match(other['.github/workflows/ci.yml'], /^ {6}push-images: false$/m);
+});
+
+// The cleanup after a deploy removes old tags of both names a pulled image has (#870).
+test('the image cleanup removes old tags under the local name and the ghcr.io name, and keeps the current and previous', () => {
+  const start = app.indexOf('    keep="$tag|');
+  const end = app.indexOf('    # Repeated deploys must not grow the disk');
+  assert.ok(start > 0 && end > start, 'the cleanup block is in the rendered script');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'prune-'));
+  const posix = (p) => p.split(path.sep).join('/');
+  const bin = path.join(dir, 'bin');
+  fs.mkdirSync(bin);
+  const log = path.join(dir, 'log');
+  // `image ls <repo>` lists the current, the previous and one old tag for every repository; `image rm` is recorded.
+  fs.writeFileSync(path.join(bin, 'docker'), ['#!/bin/bash', 'if [ "$1 $2" = "image ls" ]; then printf "new1\nprev1\nold1\n"; else echo "$*" >> "$FAKE_LOG"; fi', ''].join('\n'), { mode: 0o755 });
+  const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+  const script = path.join(dir, 'run.sh');
+  fs.writeFileSync(script, `export PATH="${pathVar}"\nset -euo pipefail\ntag=new1\ncd "${posix(dir)}"\necho prev1 > .previous\n${app.slice(start, end)}\n`);
+  const r = spawnSync('bash', [posix(script)], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log) } });
+  assert.equal(r.status, 0, r.stderr);
+  const removed = fs.readFileSync(log, 'utf8').trim().split('\n').sort();
+  fs.rmSync(dir, { recursive: true, force: true });
+  const expected = ['study-backend', 'study-frontend'].flatMap((image) => [`image rm ${image}:old1`, `image rm ghcr.io/sirloinbh/${image}:old1`]).sort();
+  assert.deepEqual(removed, expected);
 });

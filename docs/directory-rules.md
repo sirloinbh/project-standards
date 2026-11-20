@@ -10,16 +10,16 @@ This standard is based on the workout-memo structure. New projects follow it as 
 ├─ package.json  package-lock.json          # npm workspaces: frontend, backend
 ├─ compose.yaml  .env.example
 ├─ shared/contract.ts                       # source of input schemas (Zod)
-├─ frontend/                                # subtree → <project>-frontend
-│  ├─ Dockerfile  nginx.conf  package.json  package-lock.json  vite.config.ts
+├─ frontend/
+│  ├─ Dockerfile  nginx.conf  package.json  vite.config.ts
 │  └─ src/
 │     ├─ main.tsx  app.tsx                  # entry point, layout and router
 │     ├─ <feature>.tsx                      # one file per screen
 │     ├─ components/ui/                     # shadcn/ui shared components (centrally managed, #123)
 │     ├─ lib/                               # utilities such as cn()
 │     └─ test/                              # test helpers
-├─ backend/                                 # subtree → <project>-backend
-│  ├─ Dockerfile  package.json  package-lock.json  tsconfig.json
+├─ backend/
+│  ├─ Dockerfile  package.json  tsconfig.json
 │  ├─ src/
 │  │  ├─ server.ts  app.ts                  # server start, app assembly and error handling
 │  │  ├─ routes/<feature>.ts  routes/shared.ts # per-feature API modules, re-export of shared helpers
@@ -36,7 +36,7 @@ This standard is based on the workout-memo structure. New projects follow it as 
 │  │  ├─ migrate.ts                         # one-line entry: imports standard/migrate.js
 │  │  └─ contract.ts                        # copy of shared/contract.ts
 │  └─ test/
-├─ database/                                # subtree → <project>-db
+├─ database/
 │  ├─ README.md
 │  └─ migrations/NNN_<description>.sql
 ├─ e2e/                                     # Playwright (for projects that use e2e)
@@ -116,7 +116,7 @@ app.use(errorHandler);
 ### IDs and dates
 
 - An ID is a positive integer of 1 to 15 digits, sent as a number in JSON (`"id": 7`). The existing plan-routine sends string IDs (`"id": "7"`) and stays that way because the screens would have to change at the same time. New apps use numbers (#312).
-- Path IDs are read with `parseId(req.params.id, '<what of>')`. Only a positive integer of 1 to 15 digits is accepted (no leading zeros, sign, `1e3`, or spaces); otherwise it returns `400 { error: '<무엇의> ID가 올바르지 않습니다' }`. Up to 15 digits is exact as a JS number even for a `BIGINT` column. In Zod schemas, use `ID_PATTERN`.
+- Path IDs are read with `parseId(req.params.id, '<what of>')`. Only a positive integer of 1 to 15 digits is accepted (no leading zeros, sign, `1e3`, or spaces); otherwise it returns `400 { error: 'Invalid <what> ID' }`. Up to 15 digits is exact as a JS number even for a `BIGINT` column. In Zod schemas, use `ID_PATTERN`.
 - "Today" is `serviceDate()` (`YYYY-MM-DD` in Asia/Seoul). Do not use the server clock's time zone.
 
 ### Where validation happens

@@ -2,10 +2,10 @@ import type { Pool } from 'pg';
 
 export type Db = Pick<Pool, 'query'>;
 
-// Every error leaves the API in one shape: `{ error: string }` with a Korean message
+// Every error leaves the API in one shape: `{ error: string }` with a message in English
 // (docs/directory-rules.md "API" in sirloinbh/project-standards). The error handler, the JSON 404 and the
 // id and date helpers are the central file standard/http.ts (#309). Handlers answer 404 for a missing
-// target with `throw new HttpError(404, '…을(를) 찾을 수 없습니다')` and read path ids with `parseId`.
+// target with `throw new HttpError(404, 'Textbook not found')` and read path ids with `parseId`.
 export {
   createErrorHandler,
   HttpError,
