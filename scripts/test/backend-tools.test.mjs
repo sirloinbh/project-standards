@@ -37,20 +37,22 @@ const schema = (check) => ({
   },
 });
 
-function fakePool() {
+function fakePool({ failAudit = false, failRollback = false } = {}) {
   const log = [];
   const client = {
     query: async (text, values) => {
       log.push({ on: 'client', text, values });
+      if (failRollback && text === 'ROLLBACK') throw new Error('connection lost');
       if (/INSERT INTO items/.test(text) && values[0] === 'boom') throw new Error('insert failed');
       return { rows: [{ id: 9 }] };
     },
-    release: () => log.push({ on: 'client', text: 'release' }),
+    release: (destroy) => log.push({ on: 'client', text: destroy ? 'release:destroy' : 'release' }),
   };
   return {
     log,
     query: async (text, values) => {
       log.push({ on: 'pool', text, values });
+      if (failAudit && /INSERT INTO audit_log/.test(text)) throw new Error('relation audit_log does not exist');
       return { rows: [{ id: 1, title: 'a' }] };
     },
     connect: async () => client,
@@ -81,10 +83,10 @@ const tools = [
   }),
 ];
 
-function setup(publicKeyPem = publicPem, extra = {}) {
+function setup(publicKeyPem = publicPem, extra = {}, poolOptions = {}) {
   const routes = {};
   const app = { get: (path, h) => (routes[`GET ${path}`] = h), post: (path, h) => (routes[`POST ${path}`] = h) };
-  const pool = fakePool();
+  const pool = fakePool(poolOptions);
   registerToolRoutes(app, { app: 'demo', tools, pool, publicKey: publicKeyPem, ...extra });
   const call = async (route, { auth, name, body } = {}) => {
     const req = { params: { name }, body, get: (h) => (h.toLowerCase() === 'authorization' ? auth : undefined) };
@@ -248,4 +250,41 @@ test('seen jti values are forgotten after their expiry', async () => {
   assert.equal(seen.use('a', t0 / 1000 + 60, t0), true);
   assert.equal(seen.use('a', t0 / 1000 + 60, t0 + 60_000), false);
   assert.equal(seen.use('a', t0 / 1000 + 60, t0 + 100_000), true);
+});
+
+test('a broken audit table does not change a 403, a 400 or a read answer; each failure is logged', async () => {
+  const logged = [];
+  const { call } = setup(publicPem, { log: (message) => logged.push(message) }, { failAudit: true });
+  const denied = await call(POST, { auth: bound('add_item', 'f-1', { scope: 'demo:read' }), name: 'add_item', body: { title: 'x' } });
+  assert.equal(denied.status, 403);
+  const invalid = await call(POST, { auth: bound('add_item', 'f-2'), name: 'add_item', body: { title: 3 } });
+  assert.deepEqual([invalid.status, invalid.body], [400, { error: 'Enter a title' }]);
+  const read = await call(POST, { auth: bound('list_items', 'f-3'), name: 'list_items', body: {} });
+  assert.deepEqual([read.status, read.body], [200, { result: [{ id: 1, title: 'a' }] }]);
+  assert.equal(logged.length, 3);
+});
+
+test('a write whose audit row cannot be written rolls back and fails, it is never done unaudited', async () => {
+  const { call, pool } = setup();
+  const original = pool.connect;
+  pool.connect = async () => {
+    const client = await original();
+    const query = client.query;
+    client.query = async (text, values) => {
+      if (/INSERT INTO audit_log/.test(text)) throw new Error('audit insert failed');
+      return query(text, values);
+    };
+    return client;
+  };
+  const result = await call(POST, { auth: bound('add_item', 'f-4'), name: 'add_item', body: { title: 'x' } });
+  assert.match(result.passed.message, /audit insert failed/);
+  assert.ok(pool.log.some((q) => q.text === 'ROLLBACK'));
+});
+
+test('a failing ROLLBACK keeps the original error, destroys the client, and still records the error row', async () => {
+  const { call, pool } = setup(publicPem, {}, { failRollback: true });
+  const failed = await call(POST, { auth: bound('add_item', 'f-5'), name: 'add_item', body: { title: 'boom' } });
+  assert.match(failed.passed.message, /insert failed/);
+  assert.ok(pool.log.some((q) => q.text === 'release:destroy'));
+  assert.deepEqual(audits(pool).map((q) => [q.on, q.values[7]]), [['pool', 'error']]);
 });
