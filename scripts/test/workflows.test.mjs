@@ -108,6 +108,18 @@ test('app CI applies migrations with psql first, then the shared runner, in both
   assert.doesNotMatch(text, /^\s+- run: npm run db:migrate$/m, 'no unconditional runner call');
 });
 
+// Stage 1 of #697: the vendored script exists and reaches the apps. The workflow switches to it in stage 2, after every app has it.
+test('ci-migrate.sh is vendored to the app profile and keeps the psql-then-runner order (#697)', () => {
+  const script = fs.readFileSync(path.join(root, 'scripts/ci-migrate.sh'), 'utf8').replace(/\r\n/g, '\n');
+  const firstPass = script.indexOf('psql "$DATABASE_URL" -v ON_ERROR_STOP=1');
+  const runner = script.search(/^npm run db:migrate$/m);
+  assert.ok(firstPass > 0 && runner > firstPass, 'psql pass (Docker init order) before the runner');
+  assert.doesNotMatch(script, /::warning|package\.json/, 'no fallback for an app without the runner');
+  assert.match(script, /^set -euo pipefail$/m);
+  const index = JSON.parse(fs.readFileSync(path.join(root, 'templates/index.json'), 'utf8'));
+  assert.deepEqual(index.vendor.files['.standards/ci-migrate.sh'], { from: 'scripts/ci-migrate.sh', profiles: ['app'] });
+});
+
 test('app CI runs once per commit and skips the slow jobs for docs-only pull requests (#699)', () => {
   const read = (rel) => fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
   // Triggers: main pushes and pull requests, not every push to every branch (a pull request branch ran twice).
