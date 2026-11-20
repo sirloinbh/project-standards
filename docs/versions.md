@@ -63,7 +63,6 @@ External dependencies that the 8 apps and the scaffold use at the same version, 
 | `tailwind-merge` | 3.7.0 | `frontend/package.json` | dependencies |
 | `tw-animate-css` | 1.4.0 | `frontend/package.json` | dependencies |
 | `vaul` | 1.1.2 | `frontend/package.json` | dependencies |
-| `zod` | 4.6.7 | `frontend/package.json` | dependencies |
 | `@tailwindcss/vite` | 4.3.3 | `frontend/package.json` | devDependencies |
 | `@testing-library/dom` | 10.4.2 | `frontend/package.json` | devDependencies |
 | `@testing-library/jest-dom` | 7.0.1 | `frontend/package.json` | devDependencies |
@@ -93,4 +92,5 @@ Used by only some apps. The sync writes the version below only into an app whose
 | Package | Version | File | Section |
 |---|---|---|---|
 | `@tanstack/react-query` | 5.104.1 | `frontend/package.json` | dependencies |
+| `zod` | 4.6.7 | `frontend/package.json` | dependencies |
 | `@testing-library/user-event` | 14.6.8 | `frontend/package.json` | devDependencies |

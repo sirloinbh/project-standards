@@ -186,3 +186,13 @@ test('apps build from the repo root: one root .dockerignore and no per-folder .n
   for (const p of ['frontend/.dockerignore', 'frontend/.npmrc', 'backend/.dockerignore', 'backend/.npmrc']) assert.equal(byPath[p], undefined, `${p} is not rendered`);
   for (const p of ['frontend/Dockerfile', 'backend/Dockerfile']) assert.match(byPath[p].content, /docker build -f (frontend|backend)\/Dockerfile \./, `${p} says it builds from the root`);
 });
+
+test('the frontend zod version is managed only where the frontend already lists it, so apps without a contract get none (#783)', () => {
+  const index = loadIndex(root);
+  assert.equal(data.versions.dependencies.frontend.dependencies.zod, undefined, 'zod is not a dependency every app must have');
+  const field = 'dependencies.zod';
+  const frontend = (pkg) => sharedDependencyFields(index, 'app', data.versions, (t) => (t === 'frontend/package.json' ? pkg : null))['frontend/package.json'];
+  assert.equal(frontend({ dependencies: { zod: '4.6.0' } })[field], data.versions.optionalDependencies.frontend.dependencies.zod);
+  assert.equal(frontend({ dependencies: {} })[field], undefined);
+  assert.equal(frontend(null)[field], undefined);
+});
