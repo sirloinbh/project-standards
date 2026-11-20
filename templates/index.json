@@ -2,7 +2,7 @@
   "description": "Files under templates/<folder> are rendered to the same path in the target repo. A trailing .tmpl is dropped (so Git, npm, and editors do not read the file as real config in the central repo). Files not listed here are fully managed (full).",
   "section": [".gitignore", ".prettierignore"],
   "vendor": {
-    "why": "Check scripts and their libraries are copied as they are so sub-repos can run the checks without the central repo. No template variables are substituted.",
+    "why": "Check scripts and their libraries are copied as they are so sub-repos can run the checks without the central repo. No template variables are substituted. An entry can be an object with from, profiles and optionally repos to go to some profiles or repos only: shared-ai gets the app's tool-token verifier files as a test fixture so shared-ai tests the real verifier (#672).",
     "files": {
       ".standards/check.mjs": "scripts/standards-check.mjs",
       ".standards/lib/manifest.mjs": "scripts/lib/manifest.mjs",
@@ -13,7 +13,10 @@
       ".standards/lockfiles.mjs": "scripts/lockfiles.mjs",
       ".standards/ioc-scan.mjs": "scripts/ioc-scan.mjs",
       ".standards/secret-scan.mjs": "scripts/secret-scan.mjs",
-      ".standards/blocked-packages.json": "security/blocked-packages.json"
+      ".standards/blocked-packages.json": "security/blocked-packages.json",
+      "backend/test/standard/tools.ts": { "from": "templates/app/backend/src/standard/tools.ts", "profiles": ["service"], "repos": ["sirloinbh/shared-ai"] },
+      "backend/test/standard/audit.ts": { "from": "templates/app/backend/src/standard/audit.ts", "profiles": ["service"], "repos": ["sirloinbh/shared-ai"] },
+      "backend/test/standard/db.ts": { "from": "templates/app/backend/src/standard/db.ts", "profiles": ["service"], "repos": ["sirloinbh/shared-ai"] }
     }
   },
   "data": { "why": "Data read by the sync script, so it is not copied to target repos as a file. labels.json is applied as the issue labels of the target repo (#40).", "files": ["common/labels.json"] },

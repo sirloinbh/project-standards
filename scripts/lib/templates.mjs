@@ -101,7 +101,10 @@ export function renderProfile({ root, profile, folders, vars, readExisting = () 
     return { path: target, source, mode, content: renderFile({ text, file: target, source, vars, mode, existing }) };
   });
   // Vendored code is copied verbatim (no variable rendering) with only the managed header added.
-  for (const [target, source] of Object.entries(index.vendor?.files ?? {})) {
+  // An entry is a source path (every profile) or { from, profiles, repos? } (only those profiles, and only those repos when listed, #672).
+  for (const [target, entry] of Object.entries(index.vendor?.files ?? {})) {
+    const source = typeof entry === 'string' ? entry : entry.from;
+    if (typeof entry !== 'string' && (!entry.profiles?.includes(profile) || (entry.repos && !entry.repos.includes(vars.target?.repo)))) continue;
     if (files.some((f) => f.path === target)) throw new Error(`${target} is both a template and a vendored file`);
     const text = fs.readFileSync(path.join(root, source), 'utf8').replace(/\r\n/g, '\n');
     files.push({ path: target, source, mode: 'full', content: addHeader(text, target, source) });

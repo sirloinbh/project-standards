@@ -170,3 +170,16 @@ test('two folders may not produce the same target path', () => {
     fs.rmSync(tmp, { recursive: true, force: true });
   }
 });
+
+test('the tool-token verifier files are vendored to shared-ai only, copied as they are (#672)', () => {
+  const paths = ['backend/test/standard/tools.ts', 'backend/test/standard/audit.ts', 'backend/test/standard/db.ts'];
+  const render = (repo) => renderProfile({ root, profile: 'service', folders: ['common', 'deploy', 'service'], vars: buildVars(data, data.sync.targets.find((t) => t.repo === repo), { centralSha: 'abcdef1234567' }) });
+  const ai = render('sirloinbh/shared-ai');
+  for (const target of paths) {
+    const file = ai.find((f) => f.path === target);
+    assert.ok(file, `${target} reaches shared-ai`);
+    assert.equal(withoutHeader(file.content), withoutHeader(fs.readFileSync(path.join(root, file.source), 'utf8').replace(/\r\n/g, '\n')));
+    assert.equal(byPath[target], undefined, `${target} is not sent to the app profile`);
+    assert.equal(render('sirloinbh/shared-auth').find((f) => f.path === target), undefined, `${target} is not sent to shared-auth`);
+  }
+});

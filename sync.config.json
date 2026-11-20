@@ -18,7 +18,7 @@
       "templates": ["common", "deploy", "service"],
       "packages": [],
       "ci": "reusable-service-ci.yml",
-      "neverTouchExcept": ["backend/src/apps.generated.ts"],
+      "neverTouchExcept": ["backend/src/apps.generated.ts", "backend/test/standard/*.ts"],
       "neverTouch": ["backend/**", "compose.yaml", "README.md", ".env.example", "AGENTS.project.md"]
     }
   },
