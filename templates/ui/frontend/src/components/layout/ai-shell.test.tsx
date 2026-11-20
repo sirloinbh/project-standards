@@ -160,3 +160,32 @@ test('closing the panel keeps the conversation and the draft', async () => {
   expect(await screen.findByText('Hello there.')).toBeInTheDocument();
   expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('half a sentence');
 });
+
+// jsdom does no layout: give the log element a size and remember where it is scrolled to.
+function sizeLog(log: HTMLElement, { scrollHeight, clientHeight }: { scrollHeight: number; clientHeight: number }) {
+  let top = 0;
+  Object.defineProperty(log, 'scrollHeight', { configurable: true, get: () => scrollHeight });
+  Object.defineProperty(log, 'clientHeight', { configurable: true, get: () => clientHeight });
+  Object.defineProperty(log, 'scrollTop', { configurable: true, get: () => top, set: (value: number) => (top = value) });
+}
+
+test('the conversation scrolls to the newest message', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(sseResponse({ type: 'text', delta: 'Done.' }, { type: 'done', conversationId: 'c1' })));
+  openPanel();
+  const log = screen.getByRole('log');
+  sizeLog(log, { scrollHeight: 900, clientHeight: 300 });
+  ask('Hi');
+  expect(await screen.findByText('Done.')).toBeInTheDocument();
+  expect(log.scrollTop).toBe(900);
+});
+
+test('the conversation stays where the user scrolled to', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue(sseResponse({ type: 'text', delta: 'Done.' }, { type: 'done', conversationId: 'c1' })));
+  openPanel();
+  const log = screen.getByRole('log');
+  sizeLog(log, { scrollHeight: 900, clientHeight: 300 });
+  fireEvent.scroll(log); // scrollTop is 0: the user is far from the bottom
+  ask('Hi');
+  expect(await screen.findByText('Done.')).toBeInTheDocument();
+  expect(log.scrollTop).toBe(0);
+});
