@@ -1,6 +1,6 @@
 # 0005. Promoting shared-aws-infrastructure to an independent source and the scope of its exceptions
 
-- Status: Proposed (issue #1)
+- Status: Accepted (issue #1; implemented: state rebuilt in #92, source promoted in #93, `infrastructure/` removed from workout-memo in #94)
 - Date: 2026-10-22
 
 ## Context

@@ -1,6 +1,6 @@
 # 0002. Use a GitHub App for sync authentication
 
-- Status: Proposed (issue #1)
+- Status: Accepted (issue #1; implemented: the App was created in #86 and opens the sync PRs)
 - Date: 2026-10-22
 
 ## Context

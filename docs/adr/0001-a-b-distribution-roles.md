@@ -1,6 +1,6 @@
 # 0001. Division of roles between Plan A (npm packages) and Plan B (template sync)
 
-- Status: Proposed (issue #1)
+- Status: Accepted (issue #1; implemented: shared packages released in #88, first sync PR in #97)
 - Date: 2026-10-22
 
 ## Context

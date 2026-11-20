@@ -1,6 +1,6 @@
 # 0013. Claude Code plugin only for repos outside sync; file sync stays for synced repos
 
-- Status: Proposed (issue #451)
+- Status: Accepted (issue #451; implemented: the plugin `sirloinbh-standards` exists (#451) and the decision was re-checked on 2026-11-14 (#517))
 - Date: 2026-11-14
 
 ## Context
