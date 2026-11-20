@@ -34,7 +34,7 @@ export const tools = [
 
 ```ts
 // backend/src/app.ts, after express.json() and before app.use('/api', notFound)
-registerToolRoutes(app, { app: 'workout-memo', tools, pool, publicKey: options.toolsPublicKey });
+registerToolRoutes(app, { app: 'workout-memo', tools, pool, publicKey: options.toolsPublicKey, requireBinding: true });
 ```
 
 | Route | Answer |
@@ -89,7 +89,7 @@ The network is external everywhere. `deploy/remote-deploy.sh` (managed) creates 
 
 The client's own token never reaches the app (no token passthrough). A token is valid for one call (#670): a captured token cannot be replayed or used for another tool. The `jti` set is in memory per API process, which is enough because tokens live at most 120 s and shared-ai calls one API container per app.
 
-**Deploy order for #670.** (1) Apps get the verifier that accepts tokens with or without `tool` and `jti` (it enforces both when present); (2) shared-ai deploys the signer that adds them; (3) each app sets `requireBinding: true` in `registerToolRoutes`, so a token without the claims is refused.
+**Deploy order for #670.** (1) Apps get the verifier that accepts tokens with or without `tool` and `jti` (it enforces both when present); (2) shared-ai deploys the signer that adds them; (3) each app sets `requireBinding: true` in `registerToolRoutes`, so a token without the claims is refused. shared-ai signs the claims since 2026-11-20 and workout-memo is strict (#822), so **a new app starts with `requireBinding: true`**, as in the example above; the default `false` exists only for the transition.
 
 ## Audit rows
 
