@@ -102,7 +102,7 @@ test('push and pull follow the registry switches and are off for a project that 
   // Moving one project at a time (#757, #928): every app and service pushes; the projects in the list below pull, nothing else until the user says otherwise.
   const pushing = entries.filter((e) => e.ghcr?.push).map((e) => e.name);
   assert.equal(pushing.length, entries.length, 'every app and service pushes (#920)');
-  assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name).sort(), ['shared-ai', 'shared-auth', 'study-log', 'workout-memo']);
+  assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name).sort(), ['health-log', 'shared-ai', 'shared-auth', 'study-log', 'workout-memo']);
 });
 
 test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pull on for that project only (health-log has no switch here)', () => {
