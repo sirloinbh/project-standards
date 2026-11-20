@@ -6,7 +6,7 @@ import { EventEmitter } from 'node:events';
 import { createErrorHandler, errorHandler, HttpError, ID_PATTERN, MAX_ISSUES, notFound, parseId, requestLog, serviceDate } from '../../templates/app/backend/src/standard/http.ts';
 
 function fakeResponse() {
-  const res = Object.assign(new EventEmitter(), { statusCode: 0, body: undefined, locals: {}, headers: {} });
+  const res = Object.assign(new EventEmitter(), { statusCode: 0, body: undefined, locals: {}, headers: {}, writableFinished: true });
   res.setHeader = (name, value) => {
     res.headers[name.toLowerCase()] = value;
   };
@@ -165,7 +165,7 @@ test('the service date is the Asia/Seoul calendar date', () => {
 });
 
 // requestLog (#552): the request ID header and one JSON line per request.
-function logRequest({ headers = {}, method = 'GET', url = '/api/workouts?from=2026-11-01', status = 200 } = {}) {
+function logRequest({ headers = {}, method = 'GET', url = '/api/workouts?from=2026-11-01', status = 200, finished = true } = {}) {
   const req = { method, originalUrl: url, get: (name) => headers[name.toLowerCase()] };
   const res = fakeResponse();
   const lines = { log: [], error: [] };
@@ -179,6 +179,7 @@ function logRequest({ headers = {}, method = 'GET', url = '/api/workouts?from=20
     });
     assert.ok(called, 'requestLog calls next');
     res.statusCode = status;
+    res.writableFinished = finished;
     res.emit('close');
   } finally {
     Object.assign(console, original);
@@ -222,4 +223,50 @@ test('requestLog logs 4xx as warn and 5xx as error, and errorHandler logs the sa
     console.error = original;
   }
   assert.equal(JSON.parse(logged[0]).requestId, 'req-1');
+});
+
+test('requestLog logs a request closed before the response was written as 499 aborted at warn level (#869)', () => {
+  const { lines } = logRequest({ status: 200, finished: false });
+  assert.equal(lines.error.length, 0);
+  const line = JSON.parse(lines.log[0]);
+  assert.deepEqual([line.level, line.status, line.aborted], ['warn', 499, true]);
+  const normal = JSON.parse(logRequest({ status: 200 }).lines.log[0]);
+  assert.equal(normal.aborted, undefined, 'a finished request has no aborted field');
+  assert.equal(normal.status, 200);
+});
+
+test('requestLog on a real server: a client that hangs up before the handler answers logs 499, a normal request logs 200 (#869)', async () => {
+  const { createServer, request } = await import('node:http');
+  const lines = [];
+  const original = console.log;
+  console.log = (line) => lines.push(JSON.parse(line));
+  let release;
+  const server = createServer((req, res) => {
+    // The few Express members requestLog reads, set by hand on the plain Node request and response.
+    Object.assign(req, { originalUrl: req.url, get: (name) => req.headers[name.toLowerCase()] });
+    res.locals ??= {};
+    requestLog(req, res, () => {
+      if (req.url === '/slow') release = () => res.end('late');
+      else res.end('ok');
+    });
+  });
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const { port } = server.address();
+  try {
+    await new Promise((resolve) => request({ port, path: '/ok' }, (res) => res.resume().on('end', resolve)).end());
+    const aborted = request({ port, path: '/slow' });
+    aborted.on('error', () => {});
+    aborted.end();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    aborted.destroy();
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    release?.();
+  } finally {
+    console.log = original;
+    server.closeAllConnections();
+    await new Promise((resolve) => server.close(resolve));
+  }
+  const byPath = Object.fromEntries(lines.map((l) => [l.path, l]));
+  assert.deepEqual([byPath['/ok'].status, byPath['/ok'].level, byPath['/ok'].aborted], [200, 'info', undefined]);
+  assert.deepEqual([byPath['/slow'].status, byPath['/slow'].level, byPath['/slow'].aborted], [499, 'warn', true]);
 });
