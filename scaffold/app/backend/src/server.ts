@@ -4,7 +4,7 @@ import { createApp } from './app.js';
 import { sharedAuth } from './standard/auth.js';
 import { createPool } from './standard/db.js';
 
-// createPool adds the error listener: a lost idle connection is logged, not a crash.
+// createPool adds the error listeners: a lost connection, idle or inside a transaction, is logged, not a crash.
 const pool = createPool(new Pool({ connectionString: process.env.DATABASE_URL }));
 const port = Number(process.env.PORT ?? {{project.ports.api}});
 // The shared sign-in: open without AUTH_INTERNAL_URL only in explicit local mode (#667), which also keeps the
