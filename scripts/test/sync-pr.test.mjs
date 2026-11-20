@@ -1,12 +1,15 @@
 import assert from 'node:assert/strict';
+import { execFileSync } from 'node:child_process';
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { createAppJwt, createClient, getInstallationToken } from '../lib/github-app.mjs';
 import { MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll } from '../lib/registry.mjs';
-import { gitBlobSha, syncTarget, verifyPackages } from '../lib/sync-pr.mjs';
+import { centralChanges, gitBlobSha, renderBody, syncTarget, verifyPackages } from '../lib/sync-pr.mjs';
 import { apply } from '../sync.mjs';
 import { fakePublishedCentral, fakeRepo } from './fake-github.mjs';
 
@@ -274,4 +277,60 @@ test('a GET answered 204 with no body is told apart from a 404 (#226)', async ()
   const api = createClient({ token: 't', fetchImpl: async (url) => new Response(null, { status: url.endsWith('/on') ? 204 : 404 }) });
   assert.equal(await api('GET', '/on'), '', 'vulnerability-alerts answers 204 when enabled');
   assert.equal(await api('GET', '/off'), null);
+});
+
+// #904: the PR body names the central PRs it carries, read from the first-parent history of the central checkout.
+function temporaryHistory() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'central-history-'));
+  const git = (...args) => execFileSync('git', ['-C', dir, '-c', 'user.name=t', '-c', 'user.email=t@example.com', '-c', 'commit.gpgsign=false', ...args], { encoding: 'utf8' }).trim();
+  git('init', '-q', '-b', 'main');
+  fs.writeFileSync(path.join(dir, 'a.txt'), '0\n');
+  git('add', '.');
+  git('commit', '-q', '-m', 'start');
+  const start = git('rev-parse', 'HEAD');
+  const merge = (number, title) => {
+    git('switch', '-q', '-c', `work-${number}`);
+    fs.writeFileSync(path.join(dir, 'a.txt'), `${number}\n`);
+    git('commit', '-q', '-am', `wip ${number}`);
+    git('switch', '-q', 'main');
+    git('merge', '-q', '--no-ff', '-m', `Merge pull request #${number} from owner/work-${number}`, '-m', title, `work-${number}`);
+  };
+  merge(11, 'feat: first change (#1)');
+  merge(12, 'fix: second change (#2)');
+  fs.writeFileSync(path.join(dir, 'b.txt'), 'direct\n');
+  git('add', '.');
+  git('commit', '-q', '-m', 'chore: a direct commit on main');
+  return { dir, start, head: git('rev-parse', 'HEAD') };
+}
+
+test('centralChanges lists the merged central PRs oldest first, direct commits by subject, and null when git cannot tell', (t) => {
+  const { dir, start, head } = temporaryHistory();
+  t.after(() => fs.rmSync(dir, { recursive: true, force: true }));
+  assert.deepEqual(centralChanges(dir, start, head), [
+    { number: 11, title: 'feat: first change (#1)' },
+    { number: 12, title: 'fix: second change (#2)' },
+    { number: null, title: 'chore: a direct commit on main' },
+  ]);
+  assert.deepEqual(centralChanges(dir, head, head), []);
+  assert.equal(centralChanges(dir, 'f'.repeat(40), head), null, 'an unknown commit gives no list');
+  assert.equal(centralChanges(path.join(dir, 'missing'), start, head), null, 'a folder that is not a repository gives no list');
+});
+
+test('the sync PR body lists the carried central changes, at most 15, and leaves the section out without them', () => {
+  const base = { target: studyTarget, centralSha: SHA2, changes: [], deletions: [], keptRemoved: [], packageNotes: [] };
+  const carried = Array.from({ length: 17 }, (_, i) => ({ number: 100 + i, title: `change ${i}` }));
+  const body = renderBody({ ...base, previousSha: SHA1, centralChanges: [...carried, { number: null, title: 'direct' }].slice(0, 17) });
+  assert.match(body, /- Central changes since the last sync \(`a1b2c3d`\), oldest first:\n {2}- `project-standards#100` change 0\n/);
+  assert.equal(body.match(/`project-standards#\d+`/g).length, 15);
+  assert.match(body, / {2}- and 2 more\n/);
+  assert.ok(body.indexOf('Central changes since') < body.indexOf('## Main changes'), 'the list sits under Why');
+  assert.match(renderBody({ ...base, previousSha: SHA1, centralChanges: [{ number: null, title: 'direct' }] }), / {2}- direct\n/);
+  for (const centralChanges of [null, []]) assert.doesNotMatch(renderBody({ ...base, previousSha: SHA1, centralChanges }), /Central changes since/);
+});
+
+test('a first sync PR has no central changes section: there is no earlier synced commit to compare with (#904)', async () => {
+  const repo = studyRepo();
+  const first = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, api: repo.api });
+  assert.equal(first.status, 'opened');
+  assert.doesNotMatch(repo.pulls[0].body, /Central changes since/);
 });
