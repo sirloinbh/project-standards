@@ -4,7 +4,7 @@ Every app changes the PostgreSQL schema only through `database/migrations/NNN_<d
 
 ## 1. File numbering rules
 
-- Location: `database/migrations/` in the umbrella repo. It is split out to the sub-repo `<project>-db` ([directory rules](../directory-rules.md)).
+- Location: `database/migrations/` in the app repo ([directory rules](../directory-rules.md)). There is no separate `<project>-db` repo (ADR-0022).
 - Name: `^(\d{3})_[a-z0-9_]+\.sql$`. A three-digit number, an underscore, and a description of lowercase English letters, digits, and underscores. Examples: `001_initial.sql`, `014_biceps_triceps.sql`.
 - Numbers start at 001 and increase one at a time with no gaps. Do not use the same number in two files.
 - Do not create a new file with a number lower than an already applied file. If two branches use the same number, the one merged later changes to the next number.

@@ -10,16 +10,16 @@ This standard is based on the workout-memo structure. New projects follow it as 
 ├─ package.json  package-lock.json          # npm workspaces: frontend, backend
 ├─ compose.yaml  .env.example
 ├─ shared/contract.ts                       # source of input schemas (Zod)
-├─ frontend/                                # subtree → <project>-frontend
-│  ├─ Dockerfile  nginx.conf  package.json  package-lock.json  vite.config.ts
+├─ frontend/
+│  ├─ Dockerfile  nginx.conf  package.json  vite.config.ts
 │  └─ src/
 │     ├─ main.tsx  app.tsx                  # entry point, layout and router
 │     ├─ <feature>.tsx                      # one file per screen
 │     ├─ components/ui/                     # shadcn/ui shared components (centrally managed, #123)
 │     ├─ lib/                               # utilities such as cn()
 │     └─ test/                              # test helpers
-├─ backend/                                 # subtree → <project>-backend
-│  ├─ Dockerfile  package.json  package-lock.json  tsconfig.json
+├─ backend/
+│  ├─ Dockerfile  package.json  tsconfig.json
 │  ├─ src/
 │  │  ├─ server.ts  app.ts                  # server start, app assembly and error handling
 │  │  ├─ routes/<feature>.ts  routes/shared.ts # per-feature API modules, re-export of shared helpers
@@ -36,7 +36,7 @@ This standard is based on the workout-memo structure. New projects follow it as 
 │  │  ├─ migrate.ts                         # one-line entry: imports standard/migrate.js
 │  │  └─ contract.ts                        # copy of shared/contract.ts
 │  └─ test/
-├─ database/                                # subtree → <project>-db
+├─ database/
 │  ├─ README.md
 │  └─ migrations/NNN_<description>.sql
 ├─ e2e/                                     # Playwright (for projects that use e2e)
