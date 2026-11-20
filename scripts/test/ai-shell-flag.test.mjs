@@ -1,4 +1,4 @@
-// features.aiShell (#612, ADR-0017): the AI shell button is off in every app until shared-ai serves /api/chat.
+// features.aiShell (#612, ADR-0017): the AI shell button follows the registry flag; every app has it on since #919.
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import test from 'node:test';
@@ -9,7 +9,7 @@ import { planTarget } from '../lib/sync-plan.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const { data } = loadAll(root);
 
-test('each ui app gets its own AI_SHELL value, off by default', () => {
+test('each ui app gets its own AI_SHELL value from the registry', () => {
   const uiApps = data.projects.projects.filter((p) => p.features.ui);
   assert.ok(uiApps.length > 0);
   for (const project of uiApps) {

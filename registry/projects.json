@@ -121,7 +121,7 @@
         "knipStrict": false,
         "darkOnly": false,
         "jobs": false,
-        "aiShell": false
+        "aiShell": true
       },
       "skills": [
         "study-log-foundation",
@@ -183,7 +183,7 @@
         "knipStrict": true,
         "darkOnly": false,
         "jobs": false,
-        "aiShell": false
+        "aiShell": true
       },
       "skills": [
         "health-log-foundation",
@@ -245,7 +245,7 @@
         "knipStrict": true,
         "darkOnly": false,
         "jobs": false,
-        "aiShell": false
+        "aiShell": true
       },
       "skills": [
         "life-journal-foundation",
@@ -307,7 +307,7 @@
         "knipStrict": true,
         "darkOnly": false,
         "jobs": true,
-        "aiShell": false
+        "aiShell": true
       },
       "skills": [
         "money-ledger-foundation",
@@ -369,7 +369,7 @@
         "knipStrict": true,
         "darkOnly": false,
         "jobs": false,
-        "aiShell": false
+        "aiShell": true
       },
       "skills": [
         "cert-manager-foundation",
@@ -431,7 +431,7 @@
         "knipStrict": false,
         "darkOnly": false,
         "jobs": false,
-        "aiShell": false
+        "aiShell": true
       },
       "skills": [
         "plan-routine-foundation",
@@ -493,7 +493,7 @@
         "knipStrict": true,
         "darkOnly": false,
         "jobs": false,
-        "aiShell": false
+        "aiShell": true
       },
       "skills": [
         "dev-career-portfolio-foundation",
