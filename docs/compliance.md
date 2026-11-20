@@ -1,49 +1,20 @@
 # Compliance status
 
-<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: 2026-11-19 22:37 UTC, central 018b162 -->
+<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: 2026-11-20 11:11 UTC, central 9f4df65 -->
 
 | Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text |
 |---|---|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | ✓ | `90927f0` | ✓ match | ✓ | [#388](https://github.com/sirloinbh/workout-memo/pull/388) 0 days old | ✓ | ✓ | △ 48 md, 0 comments (partial scan) |
-| sirloinbh/study-log | ✓ | `93cf8d7` | ✓ match | ✓ | [#289](https://github.com/sirloinbh/study-log/pull/289) 0 days old | ✓ | ✓ | △ 41 md, 0 comments (partial scan) |
-| sirloinbh/health-log | ✓ | `90927f0` | ✓ match | ✓ | [#217](https://github.com/sirloinbh/health-log/pull/217) 0 days old | ✓ | ✓ | △ 46 md, 0 comments (partial scan) |
-| sirloinbh/life-journal | ✓ | `018b162` | ✓ match | ✓ | none | ✓ | ✓ | △ 12 md, 0 comments (partial scan) |
-| sirloinbh/money-ledger | ✓ | `018b162` | ✓ match | ✓ | none | ✓ | ✓ | △ 33 md, 0 comments (partial scan) |
-| sirloinbh/cert-manager | ✓ | `f19cd0b` | ✓ match | ✓ | none | ✓ | ✓ | △ 18 md, 0 comments (partial scan) |
-| sirloinbh/plan-routine | ✓ | `7425a45` | ✓ match | ✓ | none | ✓ | ✓ | △ 11 md, 0 comments (partial scan) |
-| sirloinbh/dev-career-portfolio | ✓ | `018b162` | ✓ match | ✓ | none | ✓ | ✓ | △ 23 md, 0 comments (partial scan) |
-| sirloinbh/shared-aws-infrastructure | ✓ | `90927f0` | ✓ match | — | [#67](https://github.com/sirloinbh/shared-aws-infrastructure/pull/67) 0 days old | — | ✓ | ✓ |
-| sirloinbh/shared-auth | ✓ | `bbabf0f` | ✓ match | — | [#17](https://github.com/sirloinbh/shared-auth/pull/17) 0 days old | — | ✗ 4 △ 3 | ✓ |
-| sirloinbh/shared-ai | ✓ | `43f8038` | ✓ match | — | [#19](https://github.com/sirloinbh/shared-ai/pull/19) 0 days old | — | ✗ 4 △ 3 | ✓ |
-
-## Repo settings
-
-The standards and reasons are in [repo-settings.md](repo-settings.md). Secrets and variables are compared by name only.
-
-### sirloinbh/shared-auth
-
-| Status | Item | Current | Expected |
-|---|---|---|---|
-| △ recommended | Squash merge | on | off (recommended) |
-| △ recommended | Rebase merge | on | off (recommended) |
-| △ recommended | Auto-delete branch after merge | off | on (recommended) |
-| ✗ | main branch protection | none | on |
-| ✗ | CodeQL code scanning (default setup) | not-configured | configured |
-| ✗ | Dependabot vulnerability alerts | off | on |
-| ✗ | Dependabot security updates | off | on |
-
-### sirloinbh/shared-ai
-
-| Status | Item | Current | Expected |
-|---|---|---|---|
-| △ recommended | Squash merge | on | off (recommended) |
-| △ recommended | Rebase merge | on | off (recommended) |
-| △ recommended | Auto-delete branch after merge | off | on (recommended) |
-| ✗ | main branch protection | none | on |
-| ✗ | CodeQL code scanning (default setup) | not-configured | configured |
-| ✗ | Dependabot vulnerability alerts | off | on |
-| ✗ | Dependabot security updates | off | on |
-
+| sirloinbh/workout-memo | ✓ | `9c1f654` | ✓ match | ✓ | none | ✓ | ✓ | △ 47 md, 0 comments (partial scan) |
+| sirloinbh/study-log | ✓ | `9c1f654` | ✓ match | ✓ | none | ✓ | ✓ | △ 40 md, 0 comments (partial scan) |
+| sirloinbh/health-log | ✓ | `9c1f654` | ✓ match | ✓ | none | ✓ | ✓ | △ 45 md, 0 comments (partial scan) |
+| sirloinbh/life-journal | ✓ | `9c1f654` | ✓ match | ✓ | none | ✓ | ✓ | △ 12 md, 0 comments (partial scan) |
+| sirloinbh/money-ledger | ✓ | `9c1f654` | ✓ match | ✓ | none | ✓ | ✓ | △ 33 md, 0 comments (partial scan) |
+| sirloinbh/cert-manager | ✓ | `9c1f654` | ✓ match | ✓ | none | ✓ | ✓ | △ 18 md, 0 comments (partial scan) |
+| sirloinbh/plan-routine | ✓ | `9c1f654` | ✓ match | ✓ | none | ✓ | ✓ | △ 11 md, 0 comments (partial scan) |
+| sirloinbh/dev-career-portfolio | ✓ | `9c1f654` | ✓ match | ✓ | none | ✓ | ✓ | △ 23 md, 0 comments (partial scan) |
+| sirloinbh/shared-aws-infrastructure | ✓ | `9c1f654` | ✓ match | — | none | — | ✓ | ✓ |
+| sirloinbh/shared-auth | ✓ | `9c1f654` | ✓ match | — | none | — | ✓ | ✓ |
+| sirloinbh/shared-ai | ✓ | `9c1f654` | ✓ match | — | none | — | ✓ | ✓ |
 
 ## Korean text
 
@@ -61,7 +32,7 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/101-journal-card.md`
 - `docs/changes/101-period-controls.md`
 - `docs/changes/101-rest-timer.md`
-- and 38 more
+- and 37 more
 
 ### sirloinbh/study-log
 
@@ -75,7 +46,7 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/134-migrate-entry.md`
 - `docs/changes/14-study-log-textbook.md`
 - `docs/changes/146-compose-rollback.md`
-- and 31 more
+- and 30 more
 
 ### sirloinbh/health-log
 
@@ -89,7 +60,7 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/122-paste-more-shapes.md`
 - `docs/changes/126-card-save-focus.md`
 - `docs/changes/127-list-retry.md`
-- and 36 more
+- and 35 more
 
 ### sirloinbh/life-journal
 
