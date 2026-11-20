@@ -75,3 +75,27 @@ test('paths use {id} parameters, query properties become parameters, and bodies 
   assert.deepEqual(doc.paths['/api/items'].post.requestBody.content['application/json'].schema, { $ref: '#/components/schemas/CreateItem' });
   assert.deepEqual(Object.keys(doc.paths), ['/api/health', '/api/items', '/api/items/{id}']);
 });
+
+test('path parameters: ids and names ending in Id are integers, others strings, and params schemas win (#829)', () => {
+  const withParams = buildOpenApi({
+    title: 'Demo API',
+    description: 'About',
+    operations: {
+      'GET /api/workouts/:workoutId/sets/:kind/:start': {
+        summary: 'Sets',
+        params: { kind: schema({ type: 'string', enum: ['a', 'b'] }), start: schema({ type: 'string', format: 'date' }) },
+        status: [200],
+      },
+      'GET /api/things/:slug/:grid': { summary: 'Things', status: [200] },
+      'GET /api/things/:id/:ID': { summary: 'Id forms', params: { id: schema({ type: 'string', pattern: '^[a-z]+$' }) }, status: [200] },
+    },
+  });
+  assert.deepEqual(withParams.paths['/api/workouts/{workoutId}/sets/{kind}/{start}'].get.parameters, [
+    { name: 'workoutId', in: 'path', required: true, schema: { type: 'integer', minimum: 1 } },
+    { name: 'kind', in: 'path', required: true, schema: { type: 'string', enum: ['a', 'b'] } },
+    { name: 'start', in: 'path', required: true, schema: { type: 'string', format: 'date' } },
+  ]);
+  // "grid" ends in "id" but not in "Id"; a listed schema replaces the default for the name.
+  assert.deepEqual(withParams.paths['/api/things/{slug}/{grid}'].get.parameters.map((p) => p.schema), [{ type: 'string' }, { type: 'string' }]);
+  assert.deepEqual(withParams.paths['/api/things/{id}/{ID}'].get.parameters.map((p) => p.schema), [{ type: 'string', pattern: '^[a-z]+$' }, { type: 'string' }]);
+});
