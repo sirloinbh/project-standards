@@ -23,7 +23,8 @@
   "dependencyFields": {
     "why": "The versions.json dependencies (external dependencies shared by the 8 apps and the scaffold) are written into managed fields of the 3 app package.json files. Versions are raised centrally and spread through sync PRs; standards-check catches an app that differs (#304).",
     "profiles": ["app"],
-    "files": { "root": "package.json", "frontend": "frontend/package.json", "backend": "backend/package.json" }
+    "files": { "root": "package.json", "frontend": "frontend/package.json", "backend": "backend/package.json" },
+    "onlyWith": { "frontend/package.json": { "dependencies.zod": "contract" } }
   },
   "fields": {
     "app": {

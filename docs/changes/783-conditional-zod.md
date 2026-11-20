@@ -17,3 +17,7 @@ The optional section already exists (#704) and means "pin the version, never add
 ## Checks
 
 - `npm run check`: see the PR.
+
+## Follow-up: the manifest writer
+
+An app without a contract that still listed `zod` got the field recorded in `.standards/manifest.json`, so `check.mjs` kept requiring it. `templates/index.json` `dependencyFields.onlyWith` now names the project feature a field needs (`frontend/package.json` `dependencies.zod` → `contract`), and `sharedDependencyFields` skips the field when `vars.project.features` lacks it. Test: `templates.test.mjs`.

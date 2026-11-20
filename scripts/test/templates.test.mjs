@@ -191,8 +191,17 @@ test('the frontend zod version is managed only where the frontend already lists 
   const index = loadIndex(root);
   assert.equal(data.versions.dependencies.frontend.dependencies.zod, undefined, 'zod is not a dependency every app must have');
   const field = 'dependencies.zod';
-  const frontend = (pkg) => sharedDependencyFields(index, 'app', data.versions, (t) => (t === 'frontend/package.json' ? pkg : null))['frontend/package.json'];
+  const frontend = (pkg) => sharedDependencyFields(index, 'app', data.versions, (t) => (t === 'frontend/package.json' ? pkg : null), { contract: true })['frontend/package.json'];
   assert.equal(frontend({ dependencies: { zod: '4.6.0' } })[field], data.versions.optionalDependencies.frontend.dependencies.zod);
   assert.equal(frontend({ dependencies: {} })[field], undefined);
   assert.equal(frontend(null)[field], undefined);
+});
+
+test('the frontend zod field is not recorded for an app without features.contract, even when its package.json still lists it (#783)', () => {
+  const index = loadIndex(root);
+  const pkg = { dependencies: { zod: '4.6.7' } };
+  const field = (features) => sharedDependencyFields(index, 'app', data.versions, (t) => (t === 'frontend/package.json' ? pkg : null), features)['frontend/package.json']?.['dependencies.zod'];
+  assert.equal(field({ contract: true }), data.versions.optionalDependencies.frontend.dependencies.zod);
+  assert.equal(field({ contract: false }), undefined);
+  assert.equal(field({}), undefined);
 });
