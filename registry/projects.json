@@ -51,7 +51,7 @@
         "knipStrict": false,
         "darkOnly": true,
         "jobs": false,
-        "aiShell": false
+        "aiShell": true
       },
       "skills": [
         "workout-foundation",
