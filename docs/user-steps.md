@@ -2,36 +2,29 @@
 
 These are the steps an agent cannot do for you (secrets, remote account settings, files that exist only on your PC). When you finish an item, tell me in chat with the issue number. **Never paste secrets such as private keys or tokens into chat or documents.**
 
-| Order | Task | Time | Issue | Status (checked 2026-10-23) |
+| Order | Task | Time | Issue | Status (checked 2026-11-20) |
 |---|---|---|---|---|
 | 0 | Change the local `.env` ports | 5 min | (follow-up to #95) | Not checked (local file) |
-| 1 | Install the personal-account tools to the new location | 5 min | #21 | Not done: `%LOCALAPPDATA%\sirloinbh-tools` does not exist |
+| 1 | Install the personal-account tools to the new location | 5 min | #21 | Done (issue closed 2026-10-24) |
 | 2 | Update shared-aws-infrastructure and prepare the Terraform state | Done | #92 | Done (2026-10-24): state rebuilt by import, plan shows "No changes" |
-| 3 | Create the GitHub App and set up Actions sharing | 10 min | #86 | Not done: no `SYNC_APP_ID` variable or `SYNC_APP_PRIVATE_KEY` secret |
-| 4 | First publish of the shared packages and access permissions | 10 min | #88 | Not done: no package tags or Releases |
-| 5 | Align repo settings (Dependabot, merge method, workout-memo security) | 10 min | #22 | Not done: Dependabot alerts are off |
-| 6 | (If you already did 3) Add Issues write permission to the GitHub App | 3 min | #40 | Skipped because 3 is not done yet |
-| 7 | Trust the Codex hooks and check blocking | 3 min | #180 | Not done (Codex CLI 0.144.4 installed; rule decisions recorded in PR #185) |
-| 8 | Check the work PC (Claude Code version, agent runner) | 3 min | #183 | Partly: Claude Code 2.1.309 confirmed. The runner comes after 1 |
-| 9 | Turn on secret scanning, push protection, and CodeQL for 11 repos, and add Code scanning read permission to the App | 15 min | #261 | Not done (added 2026-10-27) |
-| 10 | Issue a Claude API key and set a spending limit, put it in SSM, and put the server read key in place | 15 min | #266 | Not done (added 2026-10-27) |
-| 11 | Create a healthchecks.io account and one check per app, and put the ping URLs in the server `.env` | 20 min | #286 | Not done (added 2026-10-27) |
+| 3 | Create the GitHub App and set up Actions sharing | 10 min | #86 | Done (issue closed 2026-10-24) |
+| 4 | First publish of the shared packages and access permissions | 10 min | #88 | Done (issue closed 2026-10-25) |
+| 5 | Align repo settings (Dependabot, merge method, workout-memo security) | 10 min | #22 | Done (issue closed 2026-10-22) |
+| 6 | (If you already did 3) Add Issues write permission to the GitHub App | 3 min | #40 | Done (issue closed 2026-10-22) |
+| 7 | Trust the Codex hooks and check blocking | 3 min | #180 | Done (issue closed 2026-10-27) |
+| 8 | Check the work PC (Claude Code version, agent runner) | 3 min | #183 | Done (issue closed 2026-10-26) |
+| 9 | Turn on secret scanning, push protection, and CodeQL for 11 repos, and add Code scanning read permission to the App | 15 min | #261 | Done (issue closed 2026-10-27) |
+| 10 | Issue a Claude API key and set a spending limit, put it in SSM, and put the server read key in place | 15 min | #266 | Done (issue closed 2026-11-14) |
+| 11 | Create a healthchecks.io account and one check per app, and put the ping URLs in the server `.env` | 20 min | #286 | Done (issue closed 2026-11-14) |
 | 12 | Fix the lockfiles of the 8 sync PRs (shared ESLint config 1.1.0) | 15 min | #328 | Done (2026-10-29) |
 | 13 | Merge 3 app PRs (skill cleanup) | 5 min | #313 | Done (2026-10-29, merged by the agent) |
-| 14 | Approve installing the ESLint and Prettier plugins and more | 10 min | #245 | Not done |
+| 14 | Approve installing the ESLint and Prettier plugins and more | 10 min | #245 | Done (issue closed 2026-10-29) |
 | 15 | Clean up merged local branches | 5 min | — | Not done (added 2026-10-28) |
 | 16 | Apply the git CLI branch rules on the other work PC | 5 min | #361 | `OneDrive\문서\github` PC done (2026-10-31). `Documents\GitHub` PC not done |
 
-**The recommended order for what remains is 1 → 3 → 4.** 2 is done. Once 1–4 are finished, you can start the first sync (#97: workout-memo). 0, 5, and 7 can be done at any time, in any order. Do 8 right after 1.
+Rows 0, 15 and 16 are local PC state that the agent cannot check, so they keep their last known status. Every other row's issue is closed. The sections below are the step-by-step instructions as they were; they are kept for reference and for setting up another PC. Open user steps now live in issues labelled `needs-user` (for example #573); list them with `gh issue list --label needs-user`.
 
-When you finish a step, tell me something like "#21 done". What the agent does next:
-
-| Finished step | What the agent does next |
-|---|---|
-| 1 (#21) | Guides you through the check in 8 (#183) |
-| 2 (#92) | Done: #93 cleanup of the infrastructure repo, #94 removal of `infrastructure/` from workout-memo. Next is the #36 deployment template |
-| 4 (#88) | A PR that puts package version 1.0.0 into `versions.json` |
-| All of 1–4 | #97 first sync PR for workout-memo (the 4-3 server token is needed before merging) |
+When you finish a step, tell me the issue number.
 
 ## 0. Change the local `.env` ports
 
