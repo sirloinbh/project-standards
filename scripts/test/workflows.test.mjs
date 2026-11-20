@@ -94,21 +94,16 @@ test('changelogSection returns one version section', () => {
   assert.equal(changelogSection(text, '2.0.0'), null);
 });
 
-// Both app CI jobs prepare the database the same way (docs/conventions/database.md, #27).
-test('app CI applies migrations with psql first, then the shared runner, in both jobs', () => {
+// Both app CI jobs prepare the database with the vendored script (docs/conventions/database.md #27, #697 stage 2).
+test('app CI runs the vendored migration script in the verify and e2e jobs and keeps no inline copy', () => {
   const text = fs.readFileSync(path.join(root, '.github/workflows/reusable-app-ci.yml'), 'utf8').replace(/\r\n/g, '\n');
-  const steps = [...text.matchAll(/- name: DB migration\n(?: +#.*\n)* +run: \|\n((?: {10}.*\n)+)/g)].map((m) => m[1]);
-  assert.equal(steps.length, 2, 'verify and e2e jobs');
-  assert.equal(steps[0], steps[1]);
-  const script = steps[0];
-  const firstPass = script.indexOf('psql "$DATABASE_URL" -v ON_ERROR_STOP=1');
-  const runner = script.indexOf('npm run db:migrate');
-  assert.ok(firstPass > 0 && runner > firstPass, 'psql pass (Docker init order) before the runner');
-  assert.match(script, /::warning title=DB migration::/, 'apps without the runner still pass, with a warning');
-  assert.doesNotMatch(text, /^\s+- run: npm run db:migrate$/m, 'no unconditional runner call');
+  const steps = [...text.matchAll(/- name: DB migration\n(?: +#.*\n)* +run: (.*)\n/g)].map((m) => m[1]);
+  assert.deepEqual(steps, ['bash .standards/ci-migrate.sh', 'bash .standards/ci-migrate.sh', 'npm run db:migrate'], 'verify and e2e use the script; e2e-visual (no psql in its image) runs the runner only');
+  assert.doesNotMatch(text, /psql "\$DATABASE_URL"/, 'no inline psql loop is left');
+  assert.doesNotMatch(text, /::warning title=DB migration::/, 'no runner-less fallback');
 });
 
-// Stage 1 of #697: the vendored script exists and reaches the apps. The workflow switches to it in stage 2, after every app has it.
+// #697: the vendored script reaches the apps and keeps the psql-then-runner order.
 test('ci-migrate.sh is vendored to the app profile and keeps the psql-then-runner order (#697)', () => {
   const script = fs.readFileSync(path.join(root, 'scripts/ci-migrate.sh'), 'utf8').replace(/\r\n/g, '\n');
   const firstPass = script.indexOf('psql "$DATABASE_URL" -v ON_ERROR_STOP=1');
