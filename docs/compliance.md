@@ -1,19 +1,49 @@
 # Compliance status
 
-<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: 2026-11-16 23:40 UTC, central 4236703 -->
+<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: 2026-11-19 22:37 UTC, central 018b162 -->
 
 | Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text |
 |---|---|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | ✓ | `ef519a0` | ✓ match | ✓ | none | ✓ | ✓ | △ 49 md, 0 comments (partial scan) |
-| sirloinbh/study-log | ✓ | `ef519a0` | ✓ match | ✓ | none | ✓ | ✓ | △ 45 md, 0 comments (partial scan) |
-| sirloinbh/health-log | ✓ | `ef519a0` | ✓ match | ✓ | none | ✓ | ✓ | △ 46 md, 0 comments (partial scan) |
-| sirloinbh/life-journal | ✓ | `ef519a0` | ✓ match | ✓ | none | ✓ | ✓ | △ 12 md, 0 comments (partial scan) |
-| sirloinbh/money-ledger | ✓ | `ef519a0` | ✓ match | ✓ | none | ✓ | ✓ | △ 33 md, 0 comments (partial scan) |
-| sirloinbh/cert-manager | ✓ | `ef519a0` | ✓ match | ✓ | none | ✓ | ✓ | △ 18 md, 0 comments (partial scan) |
-| sirloinbh/plan-routine | ✓ | `ef519a0` | ✓ match | ✓ | none | ✓ | ✓ | △ 11 md, 0 comments (partial scan) |
-| sirloinbh/dev-career-portfolio | ✓ | `ef519a0` | ✓ match | ✓ | none | ✓ | ✓ | △ 22 md, 0 comments (partial scan) |
-| sirloinbh/shared-aws-infrastructure | ✓ | `fed37ba` | ✓ match | — | none | — | ✓ | ✓ |
-| sirloinbh/shared-auth | unknown (the sync App is not installed on sirloinbh/shared-auth (docs/github-app.md step 3)) | — | — | — | — | — | — | — |
+| sirloinbh/workout-memo | ✓ | `90927f0` | ✓ match | ✓ | [#388](https://github.com/sirloinbh/workout-memo/pull/388) 0 days old | ✓ | ✓ | △ 48 md, 0 comments (partial scan) |
+| sirloinbh/study-log | ✓ | `93cf8d7` | ✓ match | ✓ | [#289](https://github.com/sirloinbh/study-log/pull/289) 0 days old | ✓ | ✓ | △ 41 md, 0 comments (partial scan) |
+| sirloinbh/health-log | ✓ | `90927f0` | ✓ match | ✓ | [#217](https://github.com/sirloinbh/health-log/pull/217) 0 days old | ✓ | ✓ | △ 46 md, 0 comments (partial scan) |
+| sirloinbh/life-journal | ✓ | `018b162` | ✓ match | ✓ | none | ✓ | ✓ | △ 12 md, 0 comments (partial scan) |
+| sirloinbh/money-ledger | ✓ | `018b162` | ✓ match | ✓ | none | ✓ | ✓ | △ 33 md, 0 comments (partial scan) |
+| sirloinbh/cert-manager | ✓ | `f19cd0b` | ✓ match | ✓ | none | ✓ | ✓ | △ 18 md, 0 comments (partial scan) |
+| sirloinbh/plan-routine | ✓ | `7425a45` | ✓ match | ✓ | none | ✓ | ✓ | △ 11 md, 0 comments (partial scan) |
+| sirloinbh/dev-career-portfolio | ✓ | `018b162` | ✓ match | ✓ | none | ✓ | ✓ | △ 23 md, 0 comments (partial scan) |
+| sirloinbh/shared-aws-infrastructure | ✓ | `90927f0` | ✓ match | — | [#67](https://github.com/sirloinbh/shared-aws-infrastructure/pull/67) 0 days old | — | ✓ | ✓ |
+| sirloinbh/shared-auth | ✓ | `bbabf0f` | ✓ match | — | [#17](https://github.com/sirloinbh/shared-auth/pull/17) 0 days old | — | ✗ 4 △ 3 | ✓ |
+| sirloinbh/shared-ai | ✓ | `43f8038` | ✓ match | — | [#19](https://github.com/sirloinbh/shared-ai/pull/19) 0 days old | — | ✗ 4 △ 3 | ✓ |
+
+## Repo settings
+
+The standards and reasons are in [repo-settings.md](repo-settings.md). Secrets and variables are compared by name only.
+
+### sirloinbh/shared-auth
+
+| Status | Item | Current | Expected |
+|---|---|---|---|
+| △ recommended | Squash merge | on | off (recommended) |
+| △ recommended | Rebase merge | on | off (recommended) |
+| △ recommended | Auto-delete branch after merge | off | on (recommended) |
+| ✗ | main branch protection | none | on |
+| ✗ | CodeQL code scanning (default setup) | not-configured | configured |
+| ✗ | Dependabot vulnerability alerts | off | on |
+| ✗ | Dependabot security updates | off | on |
+
+### sirloinbh/shared-ai
+
+| Status | Item | Current | Expected |
+|---|---|---|---|
+| △ recommended | Squash merge | on | off (recommended) |
+| △ recommended | Rebase merge | on | off (recommended) |
+| △ recommended | Auto-delete branch after merge | off | on (recommended) |
+| ✗ | main branch protection | none | on |
+| ✗ | CodeQL code scanning (default setup) | not-configured | configured |
+| ✗ | Dependabot vulnerability alerts | off | on |
+| ✗ | Dependabot security updates | off | on |
+
 
 ## Korean text
 
@@ -31,7 +61,7 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/101-journal-card.md`
 - `docs/changes/101-period-controls.md`
 - `docs/changes/101-rest-timer.md`
-- and 39 more
+- and 38 more
 
 ### sirloinbh/study-log
 
@@ -45,7 +75,7 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/134-migrate-entry.md`
 - `docs/changes/14-study-log-textbook.md`
 - `docs/changes/146-compose-rollback.md`
-- and 35 more
+- and 31 more
 
 ### sirloinbh/health-log
 
@@ -129,7 +159,7 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/39-education-form.md`
 - `docs/changes/40-career-list.md`
 - `docs/changes/41-career-form.md`
-- and 12 more
+- and 13 more
 
 
 To fix, follow "When standards-check fails in a sub-repo" in the [README](../README.md).
