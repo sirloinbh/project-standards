@@ -24,6 +24,7 @@ export const DEPLOY_FILES = [
   'deploy/backup.service',
   'deploy/backup.sh',
   'deploy/backup.timer',
+  'deploy/bootstrap-env.sh',
   'deploy/health.service',
   'deploy/health.timer',
   'deploy/install-autodeploy.sh',
