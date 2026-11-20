@@ -522,7 +522,8 @@
         "db": 15411
       },
       "ghcr": {
-        "push": true
+        "push": true,
+        "pull": true
       }
     }
   ]
