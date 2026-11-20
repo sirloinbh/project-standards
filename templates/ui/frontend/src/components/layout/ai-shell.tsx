@@ -1,5 +1,5 @@
 import { BotIcon, RotateCcwIcon, SendIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router';
 
 import { aiOrigin } from '../../lib/ai-chat';
@@ -63,6 +63,13 @@ function ChatPanel({
   setDraft: (value: string) => void;
 }) {
   const { messages, busy, error, limit, send, answer, reset } = chat;
+  const log = useRef<HTMLDivElement>(null);
+  // Follow the newest text, unless the user scrolled up to read an earlier part.
+  const following = useRef(true);
+  useEffect(() => {
+    const el = log.current;
+    if (el && following.current) el.scrollTop = el.scrollHeight;
+  }, [messages, error, limit]);
 
   const submit = () => {
     if (!draft.trim() || busy) return;
@@ -72,7 +79,17 @@ function ChatPanel({
 
   return (
     <>
-      <div className="flex-1 space-y-3 overflow-y-auto px-4" role="log" aria-live="polite" aria-label="Conversation">
+      <div
+        ref={log}
+        onScroll={(event) => {
+          const el = event.currentTarget;
+          following.current = el.scrollHeight - el.scrollTop - el.clientHeight < 48;
+        }}
+        className="flex-1 space-y-3 overflow-y-auto px-4"
+        role="log"
+        aria-live="polite"
+        aria-label="Conversation"
+      >
         {messages.length === 0 ? (
           <p className="text-body-sm text-muted-foreground">
             Ask about the data in any app. I ask before I change anything.
