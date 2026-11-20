@@ -21,9 +21,10 @@ const app = renderDeploy(data.sync.targets.find((t) => t.project === 'study-log'
 const service = renderDeploy(data.sync.targets.find((t) => t.repo === 'sirloinbh/shared-auth'));
 const has = (cmd) => spawnSync(cmd, ['--version'], { encoding: 'utf8' }).status === 0;
 
-test('pulling is off for every app and service, and a failed pull falls back to the build', () => {
-  for (const text of [app, service]) {
-    assert.match(text, /if \[ "off" = on \] && pull_images "\$tag"; then\n {6}echo "pulled \$tag from ghcr\.io\/sirloinbh"\n {4}else\n {6}IMAGE_TAG="\$tag" docker compose build\n {4}fi/);
+test('pulling follows the registry (off for study-log, on for shared-auth), and a failed pull falls back to the build', () => {
+  for (const [text, state] of [[app, 'off'], [service, 'on']]) {
+    const lines = [`if [ "${state}" = on ] && pull_images "$tag"; then`, '      echo "pulled $tag from ghcr.io/sirloinbh"', '    else', '      IMAGE_TAG="$tag" docker compose build', '    fi'];
+    assert.ok(text.includes(lines.join('\n')), `${state}: pull block`);
   }
 });
 
@@ -96,10 +97,10 @@ test('push and pull follow the registry switches and are off for a project that 
     assert.match(files['.github/workflows/ci.yml'], new RegExp(`^ {6}push-images: ${entry.ghcr?.push === true}$`, 'm'), target.repo);
     assert.match(files['deploy/remote-deploy.sh'], new RegExp(String.raw`if \[ "${entry.ghcr?.pull === true ? 'on' : 'off'}" = on \] && pull_images`), target.repo);
   }
-  // Moving one project at a time (#757): workout-memo, shared-auth and shared-ai push, shared-ai and workout-memo pull; nothing else pulls until the user says otherwise.
+  // Moving one project at a time (#757): workout-memo, shared-auth and shared-ai push, shared-ai, shared-auth and workout-memo pull; nothing else pulls until the user says otherwise.
   const pushing = entries.filter((e) => e.ghcr?.push).map((e) => e.name);
   assert.deepEqual(pushing.sort(), ['shared-ai', 'shared-auth', 'workout-memo']);
-  assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name).sort(), ['shared-ai', 'workout-memo']);
+  assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name).sort(), ['shared-ai', 'shared-auth', 'workout-memo']);
 });
 
 test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pull on for that project only', () => {

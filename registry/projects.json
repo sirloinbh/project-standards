@@ -510,7 +510,8 @@
         "db": 15410
       },
       "ghcr": {
-        "push": true
+        "push": true,
+        "pull": true
       }
     },
     {
