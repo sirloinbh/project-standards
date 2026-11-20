@@ -51,8 +51,8 @@ Run the app's own check (`npm run lint`, `typecheck`, tests) with Postgres up, a
 The merge deploys the app. Then check, in this order, and tick the app on #711:
 
 1. Deploy finished: deployed commit = main, health 200 on the public URL, no `.autodeploy-failed`.
-2. The app is in the shared-ai hub: shared-ai reads each app's tool list at start and every 3 minutes, so wait up to 3 minutes (restarting shared-ai needs the user's OK) and look for `<app>__list_<noun>` in the AI shell's tool list.
-3. Call the tool through shared-ai (the AI shell or the MCP connection) as the owner. Name it `<app>__list_<noun>` there (shared-ai adds the app prefix).
+2. The app is in the shared-ai hub: shared-ai reads each app's tool list at start and every 3 minutes, so wait up to 3 minutes (restarting shared-ai needs the user's OK) and look for `<app>__list_<noun>` in the AI shell's tool list (the app part has underscores, see step 3).
+3. Call the tool through shared-ai (the AI shell or the MCP connection) as the owner. Name it `<app>__list_<noun>` there: shared-ai adds the app prefix and turns the app's hyphens into underscores, so money-ledger's `list_entries` is `money_ledger__list_entries`. A call with the hyphenated name (`money-ledger__list_entries`) fails with "Tool … not found" even though the tool is listed; copy the name from `tools/list`.
 4. The audit row exists:
 
 ```sh
