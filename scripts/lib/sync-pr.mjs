@@ -1,5 +1,6 @@
 // Opens or updates the standards sync PR in one target repository through the GitHub REST API.
 // It never clones the target, so no hook or script of the target repository runs.
+import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import { mapLimit } from './github-app.mjs';
 import { checkEntry, MANIFEST_PATH } from './manifest.mjs';
@@ -25,7 +26,38 @@ export const gitBlobSha = (text) => {
   return crypto.createHash('sha1').update(Buffer.concat([Buffer.from(`blob ${body.length}\0`), body])).digest('hex');
 };
 
-export function renderBody({ target, centralSha, changes, deletions, keptRemoved, packageNotes }) {
+const MAX_CENTRAL_CHANGES = 15;
+
+/**
+ * The central PRs merged after `fromSha` up to `toSha`, oldest first: [{ number, title }] (#904). A commit that is not
+ * a merge commit of a PR is listed by its subject with number null. Returns null when git cannot tell (no history,
+ * an unknown commit), so the PR body simply leaves the section out.
+ */
+export function centralChanges(root, fromSha, toSha) {
+  const log = spawnSync('git', ['-C', root, 'log', '--first-parent', '--reverse', '--format=%s%x1f%b%x1e', `${fromSha}..${toSha}`], { encoding: 'utf8' });
+  if (log.status !== 0) return null;
+  return log.stdout
+    .split('\x1e')
+    .map((record) => record.replace(/^\n/, ''))
+    .filter(Boolean)
+    .map((record) => {
+      const [subject, body = ''] = record.split('\x1f');
+      const number = subject.match(/^Merge pull request #(\d+) from /)?.[1];
+      const title = body.split('\n').find((line) => line.trim()) ?? subject;
+      return { number: number ? Number(number) : null, title: title.trim() };
+    });
+}
+
+/** The `## Why` lines for the central PRs this sync carries (#904); nothing when the list is unknown or empty. */
+function renderCarried(carried, previousSha) {
+  if (!carried?.length) return [];
+  const shown = carried.slice(0, MAX_CENTRAL_CHANGES);
+  const line = (c) => `  - ${c.number ? `\`project-standards#${c.number}\` ` : ''}${c.title}`;
+  const more = carried.length - shown.length;
+  return [`- Central changes since the last sync (\`${previousSha.slice(0, 7)}\`), oldest first:`, ...shown.map(line), ...(more > 0 ? [`  - and ${more} more`] : [])];
+}
+
+export function renderBody({ target, centralSha, changes, deletions, keptRemoved, packageNotes, previousSha = null, centralChanges: carried = null }) {
   const short = centralSha.slice(0, 7);
   const app = target.profile === 'app';
   const changed = (p) => changes.some((c) => c.path === p);
@@ -47,6 +79,7 @@ export function renderBody({ target, centralSha, changes, deletions, keptRemoved
     '## Why',
     `- The central repo's main branch changed: https://github.com/${CENTRAL}/commit/${centralSha}`,
     '- The central sync workflow created this PR. To change its content, edit the central repo, not this one.',
+    ...renderCarried(carried, previousSha),
     '',
     '## Main changes',
     '| File | Change | Central source |',
@@ -153,7 +186,9 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
     await api('POST', `${repoPath}/git/refs`, { ref: `refs/heads/${branch}`, sha: commit.sha });
   }
   const title = `${COMMIT_PREFIX}${short})`;
-  const body = renderBody({ target, centralSha, changes: meaningful, deletions, keptRemoved, packageNotes });
+  const previousSha = previous.centralSha && previous.centralSha !== centralSha ? previous.centralSha : null;
+  const carried = previousSha ? centralChanges(root, previousSha, centralSha) : null;
+  const body = renderBody({ target, centralSha, changes: meaningful, deletions, keptRemoved, packageNotes, previousSha, centralChanges: carried });
   const pr = existing
     ? await api('PATCH', `${repoPath}/pulls/${existing.number}`, { title, body })
     : await api('POST', `${repoPath}/pulls`, { title, head: branch, base: repo.default_branch, body });
