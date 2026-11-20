@@ -111,7 +111,7 @@ journalctl -u {{project.db.name}}-autodeploy -n 50 --no-pager     # recent log
 cat /opt/{{project.name}}/.deployed                                # deployed commit
 sudo systemctl stop {{project.db.name}}-autodeploy.timer           # pause
 sudo systemctl start {{project.db.name}}-autodeploy.timer          # resume
-rm /opt/{{project.name}}/.autodeploy-failed                        # retry a skipped commit
+rm /opt/{{project.name}}/.autodeploy-failed                        # retry a commit whose deploy failed (a red CI clears itself when it turns green, #925)
 ```
 
 ## 4-1. Alerts (healthchecks.io)

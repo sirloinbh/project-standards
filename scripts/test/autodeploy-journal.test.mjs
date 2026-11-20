@@ -173,3 +173,57 @@ ${app.replace(/^app=.*$/m, `app=${posix(work)}`).replace('/run/lock/apps-deploy.
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// A red CI is looked at again every run; a failed deploy or a rollback is not (#925).
+test('a green re-run of a commit whose CI failed deploys it; a failed deploy or rollback keeps waiting for a new commit', { skip: !(has('bash') && has('flock') && has('git') && has('python3')) && 'bash, flock, git or python3 not found' }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-rerun-'));
+  try {
+    const git = (cwd, ...args) => spawnSync('git', args, { cwd, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' } });
+    const origin = path.join(dir, 'origin.git');
+    const work = path.join(dir, 'app');
+    git(dir, 'init', '-q', '--bare', '-b', 'main', origin);
+    git(dir, 'clone', '-q', posix(origin), posix(work));
+    fs.mkdirSync(path.join(work, 'deploy'));
+    fs.writeFileSync(path.join(work, 'deploy/notify.sh'), '#!/bin/bash\necho "$*" >> "$(dirname "$0")/../signals"\n');
+    fs.writeFileSync(path.join(work, 'deploy/remote-deploy.sh'), '#!/bin/bash\necho "deploy $*" >> "$(dirname "$0")/../deploys"\n');
+    git(work, 'add', '.');
+    git(work, 'commit', '-q', '-m', 'first');
+    git(work, 'push', '-q', 'origin', 'HEAD:main');
+    const bin = path.join(dir, 'bin');
+    fs.mkdirSync(bin);
+    const runs = (conclusion) => fs.writeFileSync(path.join(bin, 'curl'), `#!/bin/bash\necho '{"workflow_runs":[{"status":"completed","conclusion":"${conclusion}","event":"push"}]}'\n`, { mode: 0o755 });
+    const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+    const script = path.join(dir, 'autodeploy.sh');
+    fs.writeFileSync(script, `export PATH="${pathVar}"\n${app.replace(/^app=.*$/m, `app=${posix(work)}`).replace('/run/lock/apps-deploy.lock', `${posix(dir)}/lock`).replace('/run/lock/apps-deploy.holder', `${posix(dir)}/holder`)}`);
+    const run = () => spawnSync('bash', [posix(script)], { encoding: 'utf8' });
+    const exists = (f) => fs.existsSync(path.join(work, f));
+    const clearLog = () => fs.rmSync(path.join(work, '.autodeploy-log'), { force: true });
+
+    runs('failure');
+    let r = run();
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /CI failed for [0-9a-f]{12}; not deploying/);
+    assert.ok(exists('.autodeploy-failed') && exists('.autodeploy-ci-failed'));
+    clearLog();
+    r = run();
+    assert.match(r.stdout, /CI of [0-9a-f]{12} is still red; waiting for a green re-run or a new commit on main/);
+    assert.ok(exists('.autodeploy-failed') && !exists('deploys'), 'still red: nothing is deployed and the mark stays');
+
+    runs('success');
+    r = run();
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /CI of [0-9a-f]{12} is green now; deploying/);
+    assert.ok(!exists('.autodeploy-failed') && !exists('.autodeploy-ci-failed'), 'both marks are cleared');
+    assert.match(fs.readFileSync(path.join(work, 'deploys'), 'utf8'), /^deploy deploy [0-9a-f]{40}$/m, 'the commit is deployed');
+
+    // A mark without .autodeploy-ci-failed (a failed deploy, or a rollback) stays even when CI is green.
+    fs.rmSync(path.join(work, 'deploys'));
+    fs.writeFileSync(path.join(work, '.autodeploy-failed'), `${git(work, 'rev-parse', '--short=12', 'HEAD').stdout.trim()}\n`);
+    clearLog();
+    r = run();
+    assert.match(r.stdout, /failed before; waiting for a new commit on main/);
+    assert.ok(exists('.autodeploy-failed') && !exists('deploys'));
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
