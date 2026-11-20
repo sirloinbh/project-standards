@@ -1,13 +1,13 @@
 # 0028. e2e tests ask Jev typed questions through a helper; PR CI replays recorded answers and keeps no real key
 
-- Status: Proposed (issue #572, parent #571). The design is decided here; the Korean accuracy run and the key wait for #573, so the "Accuracy result" section is still empty.
+- Status: Accepted (issue #572, parent #571). Proposed on 2026-11-20; accepted on 2026-11-21 after the Korean accuracy run below (all 25 confident answers agreed with the labels).
 - Date: 2026-11-20
 - Builds on: [ADR-0010](0010-claude-api-key-ssm.md) (CI keeps no real AI key; tests use a fake), [ADR-0014](0014-app-secrets-ssm-paths.md) (SSM paths), [ADR-0019](0019-claude-call-tracking-without-gateway.md) (no LLM gateway for now)
 
 ## Context
 
 - Playwright tests (all 8 apps have `features.e2e`, #569) check exact selectors and text. Some questions need a judgment: "is this error message understandable?", "does the empty state say what to do?", "does the summary match the entered workout?".
-- Jev (TypeSafe AI) answers typed questions about text or JSON. Facts checked on 2026-11-20 in the Cloudflare, OpenRouter, and AIML API pages (the vendor's own API reference, `docs.typesafe.ai/api`, was not read; confirm it when #573 is done):
+- Jev (TypeSafe AI) answers typed questions about text or JSON. Facts checked on 2026-11-20 in the Cloudflare, OpenRouter, and AIML API pages. The vendor's own API reference, `docs.typesafe.ai/api`, was read on 2026-11-21 (#572); its route is under "Route" below:
 
   | Fact | Value |
   |---|---|
@@ -35,7 +35,7 @@ Jev is a **judge for a few non-deterministic checks**, called by one helper in t
 | Gate | The check passes when the answer equals the expectation. A wrong answer **fails** the test only when it is confident: `choice` and `score` with `confidence` at least 0.9, `noul` with the probability at least 0.9 or at most 0.1 on the wrong side. Below that it **warns** (`test.info().annotations`) and the test passes. The threshold is one constant in the helper |
 | Cost and time limits | One run is capped at 50 calls and 400k input tokens (about $0.017 at the vendor price); the helper stops asking and skips the rest with an annotation when a cap is hit. Each call has a 10 s timeout. A call that errors, times out, or answers 429 or 5xx is skipped with an annotation, never a failure: Jev is early access |
 | Key | `/sirloinbh/shared/jev-api-key` in SSM (ADR-0014 path rules), loaded to the PC's `project-standards/.env` by the central key command like the Claude key (ADR-0010 local flow). Read from `JEV_API_KEY` in the Node test process; never sent to the browser or logged. **Not** in GitHub secrets and not on the server |
-| Route | `JEV_API_URL` selects the route (default: the vendor's own API, decided when #573 shows what the account offers). The helper builds the flat body (`model`, `state`, `questions`) and reads `answers`. It uses `fetch`, so no SDK and no new package |
+| Route | `JEV_API_URL` selects the route. **Default: the vendor's own API** (the key in SSM is a TypeSafe AI key): `JEV_API_URL=https://api.typesafe.ai/v1/systemone` with `JEV_MODEL=jev-latest` (the vendor calls the API "System One"; `GET /v1/models` lists the models; auth is `Authorization: Bearer <key>`). The helper's built-in model name `typesafe/jev` is the OpenRouter name, so the vendor route needs `JEV_MODEL`. The helper builds the flat body (`model`, `state`, `questions`) and reads `answers`. It uses `fetch`, so no SDK and no new package |
 | Gateway | Not through `shared-ai` or any gateway: these are test calls from a PC, and ADR-0019 adopts no gateway |
 | Privacy | The text sent to Jev comes from test data on the e2e database, not from the owner's real records. Fixtures contain only that text |
 | ADR-0010 | Unchanged: CI still holds no real key, and the fixture replay is the "fake" it asks for |
@@ -49,16 +49,32 @@ Jev is a **judge for a few non-deterministic checks**, called by one helper in t
 | Summaries and statistics (workout-memo, study-log, health-log, money-ledger) | The summary text matches the entered data: the data is passed in `state` with the text; counting stays in a normal assertion |
 | AI features (study-log translation and extraction, later AI shell) | The translation keeps the meaning of the source (`choice`: same, partly, different) |
 
-## Accuracy result (pending #573)
+## Accuracy result (2026-11-21, #572)
 
-To be filled when the key exists: 20 or more labeled Korean samples from real app screens (the candidate checks above), the helper run with the real key, and the agreement rate at confidence 0.9 and above. Accept the 0.9 gate when agreement on those is at least 90%; otherwise raise the threshold or limit judged checks to English text and amend this ADR. Until then the helper is built and piloted with fixtures recorded from a few manual real calls.
+The plan: 20 or more labeled Korean samples (the candidate checks above), the helper run with the real key, and the agreement rate at confidence 0.9 and above; accept the 0.9 gate when that agreement is at least 90%, otherwise raise the threshold or limit judged checks to English text.
+
+The run: 27 samples, one Jev call each, through the helper itself (`judge()` in `templates/e2e/e2e/support/jev.ts`) on the vendor route (`jev-latest`, answered by `jev-1.14.0`). The samples follow the candidate checks: ARIA-snapshot-style regions written like the apps' screens (alerts, empty states with a heading and a button), a data line plus a summary sentence, and a Korean source with an English translation. Questions in English; labels set by hand before the run.
+
+| Kind (question) | Samples | Agree | Confident (0.9 gate) | Confident and agree |
+|---|---|---|---|---|
+| Form error says what to enter (`noul`) | 6 (3 yes, 3 no) | 6 | 6 (yes 0.93 to 0.96, no 0.05 to 0.06) | 6 |
+| Error tone (`choice`: actionable, vague, blaming) | 5 | 4 | 4 | 4 |
+| Empty state says what to do next (`noul`) | 6 (3 yes, 3 no) | 6 | 5 (one yes at 0.86) | 5 |
+| Summary describes the same thing as the data (`noul`) | 6 (3 yes, 3 no) | 6 | 6 (0.99 / 0.02) | 6 |
+| Translation keeps the meaning (`choice`: same, partly, different) | 4 | 4 | 4 (0.92 to 1.0) | 4 |
+| **Total** | **27** | **26 (96%)** | **25** | **25 (100%)** |
+
+- The one disagreement: "문제가 생겼습니다. 나중에 다시 시도하세요." labeled `vague`, answered `actionable` with confidence 0.40. Under the gate it is a warning, not a failure, and the label is arguable ("try again later" is an action). The two answers below the gate (this one and an empty state at 0.86) are the borderline texts.
+- **The 0.9 gate is accepted:** agreement at confidence 0.9 and above is 100% (25 of 25), above the 90% bar. No change to the threshold and no limit to English text.
+- Cost: 28 calls (one route test plus the 27 samples), 9,430 input tokens, about $0.0004 at the vendor price. A `noul` call on a short alert is about 300 input tokens.
+- Limits of this run: the samples are short hand-written texts, not snapshots captured from a running app, and the summary samples leave numbers out on purpose (counting stays in normal assertions). Revisit the gate if recorded fixtures show confident wrong answers.
 
 ## Consequences
 
 - PR CI stays offline and deterministic; the only new CI cost is reading fixture files.
 - A fixture is keyed by the whole request, so any change in the text under test needs a new local run with the key. That is the price of a replay that cannot hide a changed page; the `jev-fixture-missing` annotation makes the gap visible.
 - A judged check is advisory by design: only a confident wrong answer fails a test.
-- Implementation is #574 (helper in `templates/e2e`, central tests for the request shape, the gate, and the fixture replay, workout-memo pilot); the key is #573 (user step).
+- Implementation is #574 (helper in `templates/e2e`, central tests for the request shape, the gate, and the fixture replay, workout-memo pilot); the key is #573 (user step, done); the accuracy run is #572.
 
 ## Revisit when
 
