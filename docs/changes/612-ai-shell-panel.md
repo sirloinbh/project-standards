@@ -46,3 +46,7 @@ ADR-0017 puts an AI shell in every web app: a chat panel opened from the top bar
 ## Hide flag (follow-up PR)
 
 `features.aiShell` (registry, schema, `templates/ui/frontend/src/lib/ai-config.ts.tmpl`) is `false` for all 8 apps, so no app shows a button that cannot work yet. `AiShell` reads `AI_SHELL`; an explicit `origin` prop (tests) skips the flag. `scripts/test/ai-shell-flag.test.mjs` checks the rendered value.
+
+## Turned on for workout-memo (2026-11-20)
+
+shared-ai #23 serves `/api/chat` (deployed, health 200, preflight from `https://workout-memo.daysofme.com` answers 204 with credentials allowed). `AI_OWNER_ID` was missing in `/opt/shared-ai/.env`; it was set to the only user of the shared-auth database (checked: one row), after a backup of the file, and shared-ai was redeployed with `deploy/deploy.sh --no-pull`. `features.aiShell` is now `true` for workout-memo only. The other 7 apps follow after the live check.
