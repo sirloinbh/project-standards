@@ -153,3 +153,29 @@ test('remote-deploy creates the shared-ai network before compose uses it, only w
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test('bootstrap-env.sh creates a private .env from the registry, with a new password and no token (#846)', () => {
+  for (const [name, files] of Object.entries(rendered)) {
+    const text = files['deploy/bootstrap-env.sh'];
+    const p = project(name);
+    assert.ok(text.includes(`printf 'POSTGRES_DB=%s\\n' '${p.db.name}'`), name);
+    assert.ok(text.includes(`printf 'POSTGRES_USER=%s\\n' '${p.db.name}'`), name);
+    assert.match(text, /POSTGRES_PASSWORD=%s\\n' "\$\(openssl rand -hex 24\)"/, name);
+    assert.match(text, /WEB_BIND=127\.0\.0\.1/, name);
+    assert.ok(text.includes(`printf 'WEB_PORT=%s\\n' '${p.ports.web}'`), name);
+    assert.match(text, /chmod 600 \.env/, name);
+    assert.doesNotMatch(text, /NODE_AUTH_TOKEN=|aws ssm/, `${name}: no token or SSM key`);
+  }
+});
+
+test('the bootstrap script writes the .env and refuses nothing when run in a fresh checkout', { skip: !has('bash') || !has('openssl') }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'bootstrap-'));
+  fs.mkdirSync(path.join(dir, 'deploy'));
+  fs.writeFileSync(path.join(dir, 'deploy/bootstrap-env.sh'), rendered['study-log']['deploy/bootstrap-env.sh']);
+  const run = spawnSync('bash', ['deploy/bootstrap-env.sh'], { cwd: dir, encoding: 'utf8' });
+  assert.equal(run.status, 0, run.stderr);
+  const env = Object.fromEntries(fs.readFileSync(path.join(dir, '.env'), 'utf8').trim().split('\n').map((l) => l.split(/=(.*)/s).slice(0, 2)));
+  assert.deepEqual(Object.keys(env), ['POSTGRES_DB', 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'WEB_BIND', 'WEB_PORT']);
+  assert.match(env.POSTGRES_PASSWORD, /^[0-9a-f]{48}$/);
+  fs.rmSync(dir, { recursive: true });
+});
