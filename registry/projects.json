@@ -91,6 +91,9 @@
         "e2eWeb": 5302,
         "db": 15402
       },
+      "ghcr": {
+        "push": true
+      },
       "db": {
         "name": "study",
         "testName": "study_test"
@@ -151,6 +154,9 @@
         "e2eWeb": 5303,
         "db": 15403
       },
+      "ghcr": {
+        "push": true
+      },
       "db": {
         "name": "health",
         "testName": "health_test"
@@ -209,6 +215,9 @@
         "vite": 5204,
         "e2eWeb": 5304,
         "db": 15404
+      },
+      "ghcr": {
+        "push": true
       },
       "db": {
         "name": "journal",
@@ -269,6 +278,9 @@
         "e2eWeb": 5305,
         "db": 15405
       },
+      "ghcr": {
+        "push": true
+      },
       "db": {
         "name": "money",
         "testName": "money_test"
@@ -327,6 +339,9 @@
         "vite": 5206,
         "e2eWeb": 5306,
         "db": 15406
+      },
+      "ghcr": {
+        "push": true
       },
       "db": {
         "name": "cert",
@@ -387,6 +402,9 @@
         "e2eWeb": 5307,
         "db": 15407
       },
+      "ghcr": {
+        "push": true
+      },
       "db": {
         "name": "plan",
         "testName": "plan_test"
@@ -445,6 +463,9 @@
         "vite": 5208,
         "e2eWeb": 5308,
         "db": 15408
+      },
+      "ghcr": {
+        "push": true
       },
       "db": {
         "name": "career",
