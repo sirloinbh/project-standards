@@ -238,7 +238,7 @@ test('idSchema takes digits only, up to 15 like parseId, and no longer coerces "
 test('the scaffold gives api a healthcheck on /api/health and web waits for it (#875)', () => {
   const compose = byPath.get('compose.yaml');
   const api = compose.match(/^ {2}api:\n([\s\S]*?)^ {2}web:/m)[1];
-  assert.match(api, /^ {4}healthcheck:\n {6}test: \['CMD', 'node', '-e', "fetch\('http:\/\/127\.0\.0\.1:\d+\/api\/health'\)/m);
+  assert.match(api, /^ {4}healthcheck:\n {6}test:\n {8}\[\n {10}'CMD',\n {10}'node',\n {10}'-e',\n {10}"fetch\('http:\/\/127\.0\.0\.1:\d+\/api\/health'\)/m);
   assert.match(compose, /^ {4}depends_on:\n {6}api: \{ condition: service_healthy \}\n/m);
   assert.deepEqual(checkComposeWarnings(compose), []);
 });
