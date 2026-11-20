@@ -118,8 +118,7 @@ test('a failed deploy writes .last-deploy.log and signals the last lines with se
     assert.match(signals, /ENOENT scandir \/app\/database\/migrations\//);
     assert.match(signals, /NODE_AUTH_TOKEN=\*\*\*/);
     assert.doesNotMatch(signals, /ghp_secretvalue/);
-    assert.match(fs.readFileSync(path.join(work, '.autodeploy-failed'), 'utf8'), /^[0-9a-f]{12}
-$/);
+    assert.match(fs.readFileSync(path.join(work, '.autodeploy-failed'), 'utf8'), /^[0-9a-f]{12}s*$/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
