@@ -18,7 +18,7 @@ const vars = buildVars(data, data.sync.targets.find((t) => t.project === 'study-
 const fixture = (name) => fs.readFileSync(path.join(root, 'scripts/test/fixtures/study-log', `${name}.txt`), 'utf8').replace(/\r\n/g, '\n');
 const withoutHeader = (text) => text.split('\n').filter((line) => !hasHeader(line)).join('\n');
 
-const rendered = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app'], vars });
+const rendered = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars });
 const byPath = Object.fromEntries(rendered.map((f) => [f.path, f]));
 
 test('an optional dependency is written only into a package.json that already lists it (#704)', () => {
@@ -34,7 +34,7 @@ test('an optional dependency is written only into a package.json that already li
 });
 
 test('app profile renders the shared config files with .tmpl removed', () => {
-  for (const p of ['.editorconfig', '.gitattributes', '.gitignore', '.prettierignore', '.nvmrc', '.node-version', '.npmrc', 'frontend/.npmrc', 'backend/.npmrc', '.github/dependabot.yml']) {
+  for (const p of ['.editorconfig', '.gitattributes', '.gitignore', '.prettierignore', '.nvmrc', '.node-version', '.npmrc', '.dockerignore', '.github/dependabot.yml']) {
     assert.ok(byPath[p], `${p} is rendered`);
   }
   assert.ok(rendered.every((f) => !f.path.endsWith('.tmpl')));
@@ -56,8 +56,6 @@ test('intended differences from study-log: ignore-scripts and the project marker
     withoutHeader(byPath['.npmrc'].content),
     `${fixture('npmrc')}ignore-scripts=true\n@sirloinbh:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=\${NODE_AUTH_TOKEN}\n`,
   );
-  assert.equal(withoutHeader(byPath['frontend/.npmrc'].content), withoutHeader(byPath['.npmrc'].content));
-  assert.match(byPath['frontend/.npmrc'].content, /templates\/app\/frontend\//);
   // Tool outputs and personal settings every app produces were added to the shared section (#323).
   const toolOutputs = ['.claude/settings.local.json', '*.tfvars', 'test-results/', 'playwright-report/', 'blob-report/', 'coverage/', '.lighthouseci/', '*.tsbuildinfo'];
   assert.equal(withoutHeader(byPath['.gitignore'].content), `${fixture('gitignore')}${toolOutputs.join('\n')}\n${PROJECT_MARKER}\n`);
@@ -78,7 +76,7 @@ function ignoredBy(patterns, file) {
 test('every managed file Prettier would format is in .prettierignore, so npm run format keeps the hashes (#154)', () => {
   const patterns = withoutHeader(byPath['.prettierignore'].content).split('\n').filter((l) => l && !l.startsWith('#'));
   // Include the feature folders (ui #123, e2e and vitest #33), which apps get once the feature is on.
-  const withUi = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app', 'ui', 'e2e', 'vitest', 'lighthouse', 'msw', 'query'], vars });
+  const withUi = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app', 'ui', 'e2e', 'vitest', 'lighthouse', 'msw', 'query'], vars });
   const formatted = withUi.filter((f) => f.mode === 'full' && /\.(md|json|ya?ml|[cm]?js|tsx?|css|html)$/.test(f.path));
   assert.ok(formatted.length > 20);
   assert.deepEqual(formatted.map((f) => f.path).filter((p) => !ignoredBy(patterns, p)), []);
@@ -100,7 +98,7 @@ test('the app ESLint config takes the named react-refresh export, whose configs.
 
 test('section files keep what the project added below the marker', () => {
   const existing = { '.gitignore': `old/\n${PROJECT_MARKER}\ntest-results/\nplaywright-report/\n` };
-  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app'], vars, readExisting: (p) => existing[p] ?? null });
+  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars, readExisting: (p) => existing[p] ?? null });
   assert.match(files.find((f) => f.path === '.gitignore').content, new RegExp(`${PROJECT_MARKER}\ntest-results/\nplaywright-report/\n$`));
 });
 
@@ -119,7 +117,6 @@ test('package.json fields are rendered from versions.json for all three package 
     ...expected,
     ...shared['package.json'],
     'scripts.standards:check': 'node .standards/check.mjs',
-    'scripts.lockfiles:sync': 'node .standards/lockfiles.mjs --write',
     'scripts.knip': 'knip',
     'devDependencies.@sirloinbh/eslint-config': data.versions.packages['@sirloinbh/eslint-config'],
     'devDependencies.@sirloinbh/prettier-config': '1.0.0',
@@ -138,7 +135,7 @@ test('versions.json dependencies become managed fields of the app package files 
   assert.throws(() => sharedDependencyFields(index, 'app', dotted), /"tesseract\.js" contains a dot/);
   const twice = structuredClone(data);
   twice.versions.dependencies.root.devDependencies['@sirloinbh/eslint-config'] = '1.0.0';
-  assert.throws(() => renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app'], vars: buildVars(twice, data.sync.targets[0], { centralSha: 'x' }) }), /set by both templates\/index\.json fields and versions\.json dependencies/);
+  assert.throws(() => renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars: buildVars(twice, data.sync.targets[0], { centralSha: 'x' }) }), /set by both templates\/index\.json fields and versions\.json dependencies/);
 });
 
 test('a manifest built from the render accepts the rendered files and catches edits', () => {
@@ -182,4 +179,10 @@ test('the tool-token verifier files are vendored to shared-ai only, copied as th
     assert.equal(byPath[target], undefined, `${target} is not sent to the app profile`);
     assert.equal(render('sirloinbh/shared-auth').find((f) => f.path === target), undefined, `${target} is not sent to shared-auth`);
   }
+});
+
+test('apps build from the repo root: one root .dockerignore and no per-folder .npmrc or .dockerignore (ADR-0022, #770)', () => {
+  assert.ok(byPath['.dockerignore'], 'root .dockerignore');
+  for (const p of ['frontend/.dockerignore', 'frontend/.npmrc', 'backend/.dockerignore', 'backend/.npmrc']) assert.equal(byPath[p], undefined, `${p} is not rendered`);
+  for (const p of ['frontend/Dockerfile', 'backend/Dockerfile']) assert.match(byPath[p].content, /docker build -f (frontend|backend)\/Dockerfile \./, `${p} says it builds from the root`);
 });

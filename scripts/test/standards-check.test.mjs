@@ -29,7 +29,7 @@ const appFiles = {
 // Builds a repository that matches the standard exactly, then lets each test break one thing.
 function makeRepo(edit = () => {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'standards-check-'));
-  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
+  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
   const write = (rel, text) => {
     fs.mkdirSync(path.dirname(path.join(dir, rel)), { recursive: true });
     fs.writeFileSync(path.join(dir, rel), text);
@@ -40,7 +40,7 @@ function makeRepo(edit = () => {}) {
   const lint = { '@sirloinbh/eslint-config': v['@sirloinbh/eslint-config'], '@sirloinbh/prettier-config': v['@sirloinbh/prettier-config'] };
   const tsconfig = { '@sirloinbh/tsconfig': v['@sirloinbh/tsconfig'] };
   const shared = data.versions.dependencies;
-  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'db:migrate': 'npm run db:migrate -w backend --', 'standards:check': 'node .standards/check.mjs', 'lockfiles:sync': 'node .standards/lockfiles.mjs --write', knip: 'knip' }, devDependencies: { ...shared.root.devDependencies, ...lint } }));
+  write('package.json', JSON.stringify({ name: 'study-log', ...pkgFields, scripts: { 'db:migrate': 'npm run db:migrate -w backend --', 'standards:check': 'node .standards/check.mjs', knip: 'knip' }, devDependencies: { ...shared.root.devDependencies, ...lint } }));
   const tokens = { '@sirloinbh/design-tokens': v['@sirloinbh/design-tokens'] };
   const auth = { '@sirloinbh/auth-client': v['@sirloinbh/auth-client'] };
   write('frontend/package.json', JSON.stringify({ name: 'frontend', ...pkgFields, dependencies: { ...shared.frontend.dependencies, ...tokens, ...auth }, devDependencies: { ...shared.frontend.devDependencies, ...tsconfig } }));
@@ -171,20 +171,6 @@ test('warns when a pattern disappears or strictPort is missing', () => {
   assert.deepEqual(paths(result), ['managed file|frontend/vite.config.ts']);
   assert.equal(result.warnings.length, 3);
   assert.ok(result.warnings.some((w) => w.includes('strictPort')));
-});
-
-test('frontend/ and backend/ lockfiles must pin the versions of the root lockfile', () => {
-  const entry = (version) => ({ version, resolved: `https://registry.npmjs.org/react/-/react-${version}.tgz`, integrity: `sha512-${version}` });
-  const lockfiles = (subVersion) => ({ write, read }) => {
-    write('package.json', JSON.stringify({ ...JSON.parse(read('package.json')), workspaces: ['frontend', 'backend'] }));
-    const frontend = { name: 'frontend', dependencies: { react: '^1.0.0' } };
-    write('package-lock.json', JSON.stringify({ lockfileVersion: 3, packages: { '': { name: 'study-log' }, frontend, backend: { name: 'backend' }, 'node_modules/react': entry('1.0.1') } }));
-    write('frontend/package-lock.json', JSON.stringify({ lockfileVersion: 3, packages: { '': frontend, 'node_modules/react': entry(subVersion) } }));
-  };
-  assert.deepEqual(check(lockfiles('1.0.1')).problems, []);
-  const stale = check(lockfiles('1.0.0'));
-  assert.deepEqual(paths(stale), ['workspace lockfile|frontend/package-lock.json']);
-  assert.match(stale.problems[0].message, /1 package\(s\) differ in version from the root package-lock\.json: react 1\.0\.0 \(root 1\.0\.1\)\. Fix with node \.standards\/lockfiles\.mjs --write/);
 });
 
 test('frontend file names must be lowercase words and hyphens (warning only, #312)', () => {

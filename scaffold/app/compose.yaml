@@ -17,7 +17,8 @@ services:
     restart: unless-stopped
   api:
     build:
-      context: ./backend
+      context: .
+      dockerfile: backend/Dockerfile
       secrets: [npm_token]
     # Tagged by commit on the server so the previous version can be restarted.
     image: {{project.db.name}}-backend:${IMAGE_TAG:-local}
@@ -39,7 +40,8 @@ services:
     restart: unless-stopped
   web:
     build:
-      context: ./frontend
+      context: .
+      dockerfile: frontend/Dockerfile
       secrets: [npm_token]
     image: {{project.db.name}}-frontend:${IMAGE_TAG:-local}
     # Local default stays 127.0.0.1:{{project.ports.web}}; the server sets WEB_BIND/WEB_PORT in .env.

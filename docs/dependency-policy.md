@@ -37,18 +37,12 @@ Why each shared dependency's major version was chosen: tailwindcss 4, lucide-rea
 4. If needed, pre-verify with socket.dev, Snyk Advisor, or deps.dev.
 5. Leave the investigation result in the issue as a table. A package outside what the user already approved needs **user approval** (a comment on the issue). Never run `npx` or `pnpm/yarn/bun install`.
 6. Install with `npm install --ignore-scripts --save-exact <package>@<version>` and write the lockfile changes and the `ioc-scan` result in the PR.
-7. In an app repo, align the `frontend/` and `backend/` lockfiles to the root lockfile with `npm run lockfiles:sync` (see [Sub-lockfiles](#sub-lockfiles-frontend-backend) below).
 
 Exception: own packages (`@sirloinbh/*`) are verified by provenance checks instead of the 14-day rule ([ADR-0004](adr/0004-own-packages-provenance-instead-of-14-days.md)). External peerDependencies of own packages follow the procedure above as is.
 
-## Sub-lockfiles (frontend/, backend/)
+## One lockfile
 
-An app repo has three lockfiles. CI installs with the root `package-lock.json`, and the production Docker build installs with `frontend/package-lock.json` and `backend/package-lock.json`. If they differ, the versions CI checked and the versions in the production image differ (#303).
-
-- `standards-check` (`npm run standards:check`, CI) checks that the sub-lockfiles use the same versions as the root lockfile. Differences in package location (hoisting) are ignored, and only the versions that get installed are compared. It fails if they differ.
-- `npm run lockfiles:sync` (`node .standards/lockfiles.mjs --write`) rewrites only the differing sub-lockfiles to the root lockfile's versions. **It downloads and installs nothing.** It copies `resolved` and `integrity` from the root lockfile as they are, and recomputes only the location and the `dev` and `optional` marks. Files that already match are not touched.
-- Run without `--write`, it only shows the differing packages.
-- In the central repo, the same check is run with `node scripts/lockfiles.mjs --root <app folder>`.
+An app repo has one lockfile, the root `package-lock.json`. CI and both production Docker builds install from it (`docker build -f frontend/Dockerfile .` and `-f backend/Dockerfile .` use the repo root as the context, with `npm ci -w <workspace>`), so the versions CI checked are the versions in the production image (ADR-0022, #770). The earlier `frontend/` and `backend/` sub-lockfiles and `npm run lockfiles:sync` are gone.
 
 ## Automatic updates
 
