@@ -12,7 +12,7 @@ const client = pathToFileURL(path.resolve('packages/auth-client/index.mjs')).hre
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'backend-auth-'));
 const file = path.join(dir, 'auth.ts');
 fs.writeFileSync(file, source.replace("'@sirloinbh/auth-client'", `'${client}'`));
-const { sharedAuth } = await import(pathToFileURL(file).href);
+const { listenHost, sharedAuth } = await import(pathToFileURL(file).href);
 test.after(() => fs.rmSync(dir, { recursive: true, force: true }));
 
 const quiet = () => {};
@@ -35,4 +35,11 @@ test('explicit local mode returns undefined and logs one warning', () => {
     assert.equal(lines.length, 1);
     assert.match(lines[0], /WITHOUT sign-in/);
   }
+});
+
+test('listenHost: all interfaces only with the sign-in, 127.0.0.1 without, and HOST wins', () => {
+  assert.equal(listenHost(true, {}), '0.0.0.0');
+  assert.equal(listenHost(false, {}), '127.0.0.1');
+  assert.equal(listenHost(false, { HOST: '0.0.0.0' }), '0.0.0.0');
+  assert.equal(listenHost(true, { HOST: '127.0.0.1' }), '127.0.0.1');
 });
