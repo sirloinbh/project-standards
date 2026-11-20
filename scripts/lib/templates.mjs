@@ -53,7 +53,7 @@ function flatten(object, prefix = '') {
 }
 
 /** versions.json dependencies as flat package.json fields per target file, for the profiles in index.dependencyFields (#304). */
-export function sharedDependencyFields(index, profile, versions, readPackage = () => null) {
+export function sharedDependencyFields(index, profile, versions, readPackage = () => null, features = {}) {
   const spec = index.dependencyFields;
   if (!spec?.profiles?.includes(profile)) return {};
   const out = {};
@@ -77,6 +77,9 @@ export function sharedDependencyFields(index, profile, versions, readPackage = (
       for (const [name, version] of Object.entries(deps)) {
         if (name.includes('.')) throw new Error(`versions.json optionalDependencies.${part}.${section}: "${name}" contains a dot and cannot be a managed field`);
         if (out[target]?.[`${section}.${name}`] !== undefined) throw new Error(`versions.json: ${name} is in both dependencies and optionalDependencies (${part}.${section})`);
+        // A field in dependencyFields.onlyWith also needs the project feature, so an app that dropped the package is not asked for it again (#783).
+        const feature = spec.onlyWith?.[target]?.[`${section}.${name}`];
+        if (feature && !features?.[feature]) continue;
         if (pkg?.[section]?.[name] !== undefined) (out[target] ??= {})[`${section}.${name}`] = version;
       }
     }
@@ -125,7 +128,7 @@ export function renderProfile({ root, profile, folders, vars, readExisting = () 
       return null;
     }
   };
-  const shared = sharedDependencyFields(index, profile, vars.versions, readPackage);
+  const shared = sharedDependencyFields(index, profile, vars.versions, readPackage, vars.project?.features);
   for (const target of new Set([...Object.keys(index.fields[profile] ?? {}), ...Object.keys(shared)])) {
     if (files.some((f) => f.path === target)) throw new Error(`${target} is both a template file and a fields entry`);
     const own = flatten(renderFields(index.fields[profile]?.[target] ?? {}, vars, `templates/index.json ${target}`));
