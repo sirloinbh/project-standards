@@ -69,7 +69,7 @@ function renderCarried(carried, previousSha) {
   return [`- Central changes since the last sync (\`${previousSha.slice(0, 7)}\`), oldest first:`, ...shown.map(line), ...(more > 0 ? [`  - and ${more} more`] : [])];
 }
 
-export function renderBody({ target, centralSha, changes, deletions, keptRemoved, packageNotes, previousSha = null, centralChanges: carried = null }) {
+export function renderBody({ target, centralSha, changes, deletions, keptRemoved, packageNotes, previousSha = null, centralChanges: carried = null, firstSync = false }) {
   const short = centralSha.slice(0, 7);
   const app = target.profile === 'app';
   const changed = (p) => changes.some((c) => c.path === p);
@@ -79,6 +79,8 @@ export function renderBody({ target, centralSha, changes, deletions, keptRemoved
   if (app) confirm.push('- [ ] Merging to main in this repo deploys to production. I checked that now is a good time to deploy');
   if (changes.some((c) => c.path.endsWith('package.json'))) confirm.push('- [ ] I checked the `package.json` and lockfile changes. If a new `@sirloinbh/*` package was added, regenerate the lockfile with `npm install --ignore-scripts` and commit it to this branch (needs user approval)');
   if (changes.some((c) => c.path.endsWith('.npmrc'))) confirm.push('- [ ] Because of the `${NODE_AUTH_TOKEN}` line in `.npmrc`, npm commands fail without this environment variable. I set it locally and on the server (a token with `read:packages`, or empty if no packages are used)');
+  // A repo that had its own Claude settings before its first sync loses them to the managed file (ADR-0029, #944).
+  if (firstSync && changes.some((c) => c.path === '.claude/settings.json' && !c.isNew)) confirm.push('- [ ] `.claude/settings.json` existed before this first sync and is replaced by the managed file. I moved this repo\'s own settings (for example turned-off plugins) to `.claude/settings.local.json` or to user settings');
   if (changed('AGENTS.md')) confirm.push('- [ ] I checked that this project\'s own rules did not disappear from `AGENTS.md`. Move them to `AGENTS.project.md` if needed');
   if (keptRemoved.length) confirm.push(...keptRemoved.map((p) => `- [ ] \`${p}\` is no longer managed centrally but was modified in this repo, so it was not deleted. Delete it yourself if it is not needed`));
   if (!confirm.length) confirm.push('- None');
@@ -201,7 +203,7 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
   const title = `${COMMIT_PREFIX}${short})`;
   const previousSha = previous.centralSha && previous.centralSha !== centralSha ? previous.centralSha : null;
   const carried = previousSha ? centralChanges(root, previousSha, centralSha) : null;
-  const body = renderBody({ target, centralSha, changes: meaningful, deletions, keptRemoved, packageNotes, previousSha, centralChanges: carried });
+  const body = renderBody({ target, centralSha, changes: meaningful, deletions, keptRemoved, packageNotes, previousSha, centralChanges: carried, firstSync: !previous.centralSha });
   const pr = existing
     ? await api('PATCH', `${repoPath}/pulls/${existing.number}`, { title, body })
     : await api('POST', `${repoPath}/pulls`, { title, head: branch, base: repo.default_branch, body });

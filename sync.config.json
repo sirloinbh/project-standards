@@ -20,6 +20,11 @@
       "ci": "reusable-service-ci.yml",
       "neverTouchExcept": ["backend/src/apps.generated.ts", "backend/test/standard/*.ts", "backend/Dockerfile", "backend/.npmrc", "backend/.dockerignore"],
       "neverTouch": ["backend/**", "compose.yaml", "README.md", ".env.example", "AGENTS.project.md"]
+    },
+    "utility": {
+      "templates": ["common"],
+      "packages": [],
+      "neverTouch": []
     }
   },
   "targets": [
