@@ -162,7 +162,9 @@ test('the service profile gives shared-auth the instructions, skills, and CI, an
   for (const expected of ['AGENTS.md', 'CLAUDE.md', '.github/workflows/ci.yml', '.claude/skills/std-code-review/SKILL.md', '.claude/hooks/block-package-installs.mjs', '.standards/manifest.json']) {
     assert.ok(paths.includes(expected), `${expected} is synced`);
   }
-  assert.ok(!paths.some((p) => /^backend\//.test(p) || ['compose.yaml', 'README.md', 'AGENTS.project.md', 'package.json'].includes(p)), 'no app source or repo-owned file');
+  // The backend skeleton (Dockerfile, .npmrc, .dockerignore) is managed since #758; the source and tsconfig.json are not.
+  assert.deepEqual(paths.filter((p) => /^backend\//.test(p)).sort(), ['backend/.dockerignore', 'backend/.npmrc', 'backend/Dockerfile']);
+  assert.ok(!paths.some((p) => ['compose.yaml', 'README.md', 'AGENTS.project.md', 'package.json'].includes(p)), 'no repo-owned file');
   // The deploy files are managed since #696; the repo-owned .env bootstrap is not.
   assert.ok(paths.includes('deploy/remote-deploy.sh') && !paths.includes('deploy/bootstrap-env.sh'), 'the shared deploy files are synced');
   const agents = files.find((f) => f.path === 'AGENTS.md').content;

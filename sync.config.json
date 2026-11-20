@@ -2,7 +2,7 @@
   "$schema": "./sync.config.schema.json",
   "profiles": {
     "app": {
-      "templates": ["common", "deploy", "app"],
+      "templates": ["common", "deploy", "backend", "app"],
       "packages": ["@sirloinbh/eslint-config", "@sirloinbh/prettier-config", "@sirloinbh/tsconfig", "@sirloinbh/design-tokens", "@sirloinbh/auth-client"],
       "ci": "reusable-app-ci.yml",
       "featureTemplates": { "ui": "ui", "e2e": "e2e", "vitest": "vitest", "devcontainer": "devcontainer", "lighthouse": "lighthouse", "msw": "msw", "query": "query", "jobs": "jobs" },
@@ -15,10 +15,10 @@
       "neverTouch": ["**/*.tf", "**/*.tfvars", "**/*.tfvars.*", "**/*.sh", ".terraform.lock.hcl"]
     },
     "service": {
-      "templates": ["common", "deploy", "service"],
+      "templates": ["common", "deploy", "backend", "service"],
       "packages": [],
       "ci": "reusable-service-ci.yml",
-      "neverTouchExcept": ["backend/src/apps.generated.ts", "backend/test/standard/*.ts"],
+      "neverTouchExcept": ["backend/src/apps.generated.ts", "backend/test/standard/*.ts", "backend/Dockerfile", "backend/.npmrc", "backend/.dockerignore"],
       "neverTouch": ["backend/**", "compose.yaml", "README.md", ".env.example", "AGENTS.project.md"]
     }
   },

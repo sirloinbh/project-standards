@@ -11,7 +11,7 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..')
 const { data } = loadAll(root);
 const render = (project) => {
   const target = data.sync.targets.find((t) => t.project === project);
-  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
+  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app'], vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
   return Object.fromEntries(files.map((f) => [f.path, f.content]));
 };
 const study = render('study-log');
@@ -31,7 +31,7 @@ test('the package token reaches npm ci only through the BuildKit secret', () => 
     assert.match(text, /RUN --mount=type=secret,id=npm_token NODE_AUTH_TOKEN="\$\(cat \/run\/secrets\/npm_token 2>\/dev\/null\)" npm ci --ignore-scripts/, file);
     assert.doesNotMatch(text, /^(ARG|ENV)\s+NODE_AUTH_TOKEN/m, `${file}: no token in ARG or ENV`);
     assert.match(text, /COPY package\*\.json \.npmrc \.\//, `${file}: .npmrc is present for npm ci`);
-    assert.ok(text.startsWith(`# ${HEADER_TEXT} templates/app/`), `${file}: managed header first`);
+    assert.ok(text.startsWith(`# ${HEADER_TEXT} templates/`), `${file}: managed header first`);
   }
 });
 
