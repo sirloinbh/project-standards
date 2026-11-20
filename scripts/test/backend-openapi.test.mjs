@@ -99,3 +99,24 @@ test('path parameters: ids and names ending in Id are integers, others strings, 
   assert.deepEqual(withParams.paths['/api/things/{slug}/{grid}'].get.parameters.map((p) => p.schema), [{ type: 'string' }, { type: 'string' }]);
   assert.deepEqual(withParams.paths['/api/things/{id}/{ID}'].get.parameters.map((p) => p.schema), [{ type: 'string', pattern: '^[a-z]+$' }, { type: 'string' }]);
 });
+
+test('request headers and non-JSON success bodies are documented (#709)', () => {
+  const withExtras = buildOpenApi({
+    title: 'Demo API',
+    description: 'About',
+    operations: {
+      'POST /api/items': {
+        summary: 'Create',
+        headers: { 'Idempotency-Key': { description: 'Retry key', schema: schema({ type: 'string', format: 'uuid' }) }, 'X-Plain': { description: 'Plain', required: true } },
+        status: [201],
+      },
+      'GET /api/export.csv': { summary: 'Export', produces: 'text/csv', status: [200] },
+    },
+  });
+  assert.deepEqual(withExtras.paths['/api/items'].post.parameters, [
+    { name: 'Idempotency-Key', in: 'header', required: false, description: 'Retry key', schema: { type: 'string', format: 'uuid' } },
+    { name: 'X-Plain', in: 'header', required: true, description: 'Plain', schema: { type: 'string' } },
+  ]);
+  assert.deepEqual(withExtras.paths['/api/export.csv'].get.responses[200], { description: 'OK', content: { 'text/csv': { schema: { type: 'string' } } } });
+  assert.equal(withExtras.paths['/api/export.csv'].get.parameters, undefined);
+});
