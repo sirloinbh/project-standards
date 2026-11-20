@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll, serviceHost } from '../lib/registry.mjs';
-import { checkApi, checkComposeDeploy, checkComposeWarnings, checkFileNames, checkZodArrays, formatReport, rangeVersions, runCheck } from '../standards-check.mjs';
+import { ADOPTION_RULES, checkAdoption, checkApi, checkComposeDeploy, checkComposeWarnings, checkFileNames, checkZodArrays, formatReport, rangeVersions, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -22,7 +22,7 @@ const host = serviceHost(project, data.platform);
 // template with the ports filled in since #680, so the rendered one is used.)
 const appFiles = {
   'compose.yaml': `services:\n  db:\n    ports: ['127.0.0.1:${ports.db}:5432']\n  api:\n    build: { context: ./backend, secrets: [npm_token] }\n    image: ${db.name}-backend:\${IMAGE_TAG:-local}\n    environment:\n      PORT: ${ports.api}\n    healthcheck:\n      test: x\n  web:\n    build:\n      context: ./frontend\n      secrets:\n        - npm_token\n    image: ${db.name}-frontend:\${IMAGE_TAG:-local}\n    ports: ['\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80']\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`,
-  'backend/src/server.ts': `const port = Number(process.env.PORT ?? ${ports.api});\n`,
+  'backend/src/server.ts': `const port = Number(process.env.PORT ?? ${ports.api});\nconst host = listenHost(auth !== undefined);\n`,
   '.env.example': `POSTGRES_DB=${db.name}\nDATABASE_URL=postgres://u:p@localhost:${ports.db}/${db.name}\nPORT=${ports.api}\n`,
 };
 
@@ -353,4 +353,51 @@ test('a compose api service without a healthcheck is a warning, not a failure (#
   assert.deepEqual(checkComposeWarnings(withCheck), []);
   assert.deepEqual(checkComposeWarnings('services:\n  db:\n    image: x\n'), [], 'no api service, nothing to warn about');
   assert.deepEqual(checkComposeDeploy(without, { dbName: 'x', scripts: { 'db:migrate': 'x' } }).filter((m) => /healthcheck/.test(m)), [], 'the deploy-contract failures do not include it');
+});
+
+// Adoption rules (#906): a managed helper that the repo-owned file does not use is a warning, only where the helper exists.
+const src = (file, text) => ({ file, text });
+const managedAll = { 'backend/src/standard/auth.ts': {}, 'backend/src/standard/db.ts': {}, 'backend/src/standard/tools.ts': {} };
+
+test('adoption rules: the export names each helper, its managed file and its repo-owned file', () => {
+  assert.deepEqual(ADOPTION_RULES.map((r) => [r.id, r.helper]), [['listen-host', 'listenHost'], ['create-pool', 'createPool'], ['tool-routes', 'registerToolRoutes']]);
+  for (const rule of ADOPTION_RULES) {
+    assert.ok(rule.managedFile.startsWith('backend/src/standard/') && rule.ownedFile && typeof rule.check === 'function' && typeof rule.applies === 'function', rule.id);
+  }
+});
+
+test('adoption rules: listenHost must be used by server.ts (#866, #898)', () => {
+  const literal = [src('backend/src/server.ts', "createApp(pool).listen(port, '0.0.0.0', () => {});\n")];
+  assert.match(checkAdoption(literal, managedAll).join('\n'), /backend\/src\/server\.ts: listen on `listenHost\(auth !== undefined\)`/);
+  const adopted = [src('backend/src/server.ts', 'const auth = sharedAuth();\ncreateApp(pool, { auth }).listen(port, listenHost(auth !== undefined), () => {});\n')];
+  assert.deepEqual(checkAdoption(adopted, managedAll), []);
+  assert.deepEqual(checkAdoption(literal, {}), [], 'without the managed auth.ts the helper does not exist, so nothing is asked');
+  assert.deepEqual(checkAdoption([src('backend/src/app.ts', '')], managedAll), [], 'no server.ts, nothing to check');
+});
+
+test('adoption rules: a pool created with new Pool must go through createPool (ADR-0025)', () => {
+  const bare = [src('backend/src/server.ts', 'const pool = new Pool({ connectionString });\n')];
+  assert.match(checkAdoption(bare, { 'backend/src/standard/db.ts': {} }).join('\n'), /backend\/src\/server\.ts: wrap the pool with createPool\(new Pool/);
+  const wrapped = [src('backend/src/pool.ts', 'export const connectPool = (u) => createPool(new Pool({ connectionString: u }));\n')];
+  assert.deepEqual(checkAdoption(wrapped, { 'backend/src/standard/db.ts': {} }), []);
+  assert.deepEqual(checkAdoption([src('backend/src/standard/db.ts', 'new Pool(')], { 'backend/src/standard/db.ts': {} }), [], 'the managed file itself is not checked');
+  assert.deepEqual(checkAdoption([src('backend/src/import-words.ts', 'const pool = new Pool({ connectionString });\n')], { 'backend/src/standard/db.ts': {} }), [], 'a one-off import script is not asked');
+});
+
+test('adoption rules: an app with ai-tools.ts must register the tool routes with requireBinding and pass the public key', () => {
+  const only = { 'backend/src/standard/tools.ts': {} };
+  const noRoutes = [src('backend/src/ai-tools.ts', 'export const tools = [];\n'), src('backend/src/app.ts', 'app.use(x);\n'), src('backend/src/server.ts', 'createApp(pool);\n')];
+  const text = checkAdoption(noRoutes, only).join('\n');
+  assert.match(text, /app\.ts: ai-tools\.ts exists but registerToolRoutes/);
+  assert.match(text, /server\.ts: pass toolsPublicKey: process\.env\.AI_TOOLS_PUBLIC_KEY/);
+  const noBinding = [src('backend/src/ai-tools.ts', ''), src('backend/src/app.ts', 'registerToolRoutes(app, { app: "x", tools, pool, publicKey });\n'), src('backend/src/server.ts', 'toolsPublicKey: process.env.AI_TOOLS_PUBLIC_KEY')];
+  assert.match(checkAdoption(noBinding, only).join('\n'), /needs requireBinding: true/);
+  const ok = [src('backend/src/ai-tools.ts', ''), src('backend/src/app.ts', 'registerToolRoutes(app, { app: "x", tools, pool, publicKey, requireBinding: true });\n'), src('backend/src/server.ts', 'toolsPublicKey: process.env.AI_TOOLS_PUBLIC_KEY')];
+  assert.deepEqual(checkAdoption(ok, only), []);
+  assert.deepEqual(checkAdoption([src('backend/src/app.ts', 'app.use(x);\n')], only), [], 'no ai-tools.ts, no tools to register');
+});
+
+test('adoption warnings reach runCheck without failing it', () => {
+  const result = check(({ write }) => write('backend/src/server.ts', "createApp(pool).listen(3101, '0.0.0.0', () => {});\n"));
+  assert.equal(result.problems.length, 0);
 });
