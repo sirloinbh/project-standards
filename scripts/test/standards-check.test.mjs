@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll, serviceHost } from '../lib/registry.mjs';
-import { checkApi, checkComposeDeploy, checkFileNames, checkZodArrays, formatReport, rangeVersions, runCheck } from '../standards-check.mjs';
+import { checkApi, checkComposeDeploy, checkComposeWarnings, checkFileNames, checkZodArrays, formatReport, rangeVersions, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -21,7 +21,7 @@ const host = serviceHost(project, data.platform);
 // Files that carry registry values, written the way study-log writes them today. (frontend/vite.config.ts is a managed
 // template with the ports filled in since #680, so the rendered one is used.)
 const appFiles = {
-  'compose.yaml': `services:\n  db:\n    ports: ['127.0.0.1:${ports.db}:5432']\n  api:\n    build: { context: ./backend, secrets: [npm_token] }\n    image: ${db.name}-backend:\${IMAGE_TAG:-local}\n    environment:\n      PORT: ${ports.api}\n  web:\n    build:\n      context: ./frontend\n      secrets:\n        - npm_token\n    image: ${db.name}-frontend:\${IMAGE_TAG:-local}\n    ports: ['\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80']\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`,
+  'compose.yaml': `services:\n  db:\n    ports: ['127.0.0.1:${ports.db}:5432']\n  api:\n    build: { context: ./backend, secrets: [npm_token] }\n    image: ${db.name}-backend:\${IMAGE_TAG:-local}\n    environment:\n      PORT: ${ports.api}\n    healthcheck:\n      test: x\n  web:\n    build:\n      context: ./frontend\n      secrets:\n        - npm_token\n    image: ${db.name}-frontend:\${IMAGE_TAG:-local}\n    ports: ['\${WEB_BIND:-127.0.0.1}:\${WEB_PORT:-${ports.web}}:80']\nsecrets:\n  npm_token:\n    environment: NODE_AUTH_TOKEN\n`,
   'backend/src/server.ts': `const port = Number(process.env.PORT ?? ${ports.api});\n`,
   '.env.example': `POSTGRES_DB=${db.name}\nDATABASE_URL=postgres://u:p@localhost:${ports.db}/${db.name}\nPORT=${ports.api}\n`,
 };
@@ -344,4 +344,13 @@ test('compose deploy contract: image tags, WEB_BIND/WEB_PORT, no initdb mount, $
 test('checkComposeDeploy accepts the ${VAR:-default} forms', () => {
   const ok = "image: x-backend:${IMAGE_TAG}\nimage: x-frontend:${IMAGE_TAG:-local}\nports: ['${WEB_BIND}:${WEB_PORT}:80']\n";
   assert.deepEqual(checkComposeDeploy(ok, { dbName: 'x', scripts: { 'db:migrate': 'x' } }), []);
+});
+
+test('a compose api service without a healthcheck is a warning, not a failure (#875)', () => {
+  const without = 'services:\n  db:\n    healthcheck:\n      test: x\n  api:\n    image: x-backend:${IMAGE_TAG}\n    restart: unless-stopped\n  web:\n    depends_on: [api]\n';
+  assert.match(checkComposeWarnings(without).join('\n'), /the api service has no healthcheck/);
+  const withCheck = without.replace('    restart: unless-stopped\n  web:', '    healthcheck:\n      test: x\n    restart: unless-stopped\n  web:');
+  assert.deepEqual(checkComposeWarnings(withCheck), []);
+  assert.deepEqual(checkComposeWarnings('services:\n  db:\n    image: x\n'), [], 'no api service, nothing to warn about');
+  assert.deepEqual(checkComposeDeploy(without, { dbName: 'x', scripts: { 'db:migrate': 'x' } }).filter((m) => /healthcheck/.test(m)), [], 'the deploy-contract failures do not include it');
 });
