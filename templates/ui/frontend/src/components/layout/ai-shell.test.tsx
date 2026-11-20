@@ -144,3 +144,19 @@ test('a turn cancelled by New conversation does not end the busy state of the ne
   await new Promise((resolve) => setTimeout(resolve, 20));
   expect(fetchMock).toHaveBeenCalledTimes(2);
 });
+
+test('closing the panel keeps the conversation and the draft', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn().mockResolvedValue(sseResponse({ type: 'text', delta: 'Hello there.' }, { type: 'done', conversationId: 'c1' })),
+  );
+  openPanel();
+  ask('Hi');
+  expect(await screen.findByText('Hello there.')).toBeInTheDocument();
+  fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), { target: { value: 'half a sentence' } });
+  fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  fireEvent.click(screen.getByRole('button', { name: 'AI assistant' }));
+  expect(await screen.findByText('Hello there.')).toBeInTheDocument();
+  expect(screen.getByRole('textbox', { name: 'Message' })).toHaveValue('half a sentence');
+});
