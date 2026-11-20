@@ -19,6 +19,18 @@ test('skips templated skills and copies hooks unchanged', () => {
   assert.deepEqual(out.get('.claude/hooks/block-package-installs.mjs'), fs.readFileSync(path.join(root, 'templates/common/.claude/hooks/block-package-installs.mjs')));
 });
 
+test('the editor config is a plain copy of the template (#951)', () => {
+  const { out } = buildSelf(root);
+  for (const [target, source] of [['.editorconfig', '.editorconfig.tmpl'], ['.vscode/settings.json', '.vscode/settings.json.tmpl']]) {
+    const template = fs.readFileSync(path.join(root, 'templates/common', source));
+    // A template variable would need rendering, and this script copies bytes.
+    assert.ok(!template.includes('{{'), source);
+    assert.deepEqual(out.get(target), template, target);
+  }
+  // The old tool folder must not come back (AGENTS.md, Accounts and security).
+  assert.ok(!fs.readFileSync(path.join(root, '.vscode/settings.json'), 'utf8').includes('gh-workout-memo'));
+});
+
 test('check reports stale, missing, and unexpected files, and write fixes them', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'self-'));
   try {

@@ -1,4 +1,4 @@
-// Generates this repo's own copies of the shared skills, hooks, Codex files, and GitHub templates from templates/common/ (#702).
+// Generates this repo's own copies of the shared skills, hooks, Codex files, GitHub templates, and editor config from templates/common/ (#702, #951).
 // Usage: node scripts/build-self.mjs          write the copies
 //        node scripts/build-self.mjs --check  fail if a copy differs from its source
 import fs from 'node:fs';
@@ -15,6 +15,9 @@ export const SELF_COPIES = [
   [`${C}/.codex/hooks.json.tmpl`, '.codex/hooks.json'],
   [`${C}/.github/ISSUE_TEMPLATE`, '.github/ISSUE_TEMPLATE'],
   [`${C}/.github/pull_request_template.md`, '.github/pull_request_template.md'],
+  // .gitattributes is not copied: this repo adds `*.cmd text eol=crlf` for tools/**/*.cmd, which the template does not need (#951).
+  [`${C}/.editorconfig.tmpl`, '.editorconfig'],
+  [`${C}/.vscode/settings.json.tmpl`, '.vscode/settings.json'],
 ];
 
 function listFiles(dir, base = dir) {

@@ -92,7 +92,7 @@ Cells: **Sync** (arrives through the group's channel: self-copy for the hub, syn
 
 - **G1. Infra `AGENTS.md` and `CLAUDE.md` are hand-written copies** of the common procedure (design.md 9.2 says the common part is applied, but `templates/infra/` has only `ci.yml`). Proposed: give `infra` the same split the services have (managed `AGENTS.md` and `CLAUDE.md`, repo rules in `AGENTS.project.md`).
 - **G2. The two services get no Node version files and no `dependabot.yml`**, although each has `backend/package.json`. Proposed: research what fits (`.nvmrc`, `.node-version`, security-only Dependabot) and add it to `templates/service/` or `templates/backend/`.
-- **G3. The hub's own `.editorconfig`, `.gitattributes`, and `.vscode/settings.json` are not in `SELF_COPIES`.** `.vscode/settings.json` has drifted: it still starts `%LOCALAPPDATA%\gh-workout-memo\project-terminal.ps1`, the old location `AGENTS.md` says not to use. Proposed: add them to `scripts/build-self.mjs`.
+- **G3. The hub's own `.editorconfig`, `.gitattributes`, and `.vscode/settings.json` are not in `SELF_COPIES`.** `.vscode/settings.json` has drifted: it still starts `%LOCALAPPDATA%\gh-workout-memo\project-terminal.ps1`, the old location `AGENTS.md` says not to use. Proposed: add them to `scripts/build-self.mjs`. Done in #951 for `.editorconfig` and `.vscode/settings.json`; `.gitattributes` stays the hub's own file because it adds a `*.cmd` line for `tools/`.
 
 ## Choices and the user's decisions (2026-11-21)
 

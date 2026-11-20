@@ -143,7 +143,7 @@ The synced `.vscode/settings.json` turns on cleanup on save, along with the term
 - JS, TS, JSON, CSS, HTML, Markdown, and YAML files are formatted with Prettier on save. This happens only when that repo has a Prettier config (`prettier.config.mjs` for apps) (`prettier.requireConfig`). So it does not format in shared-aws-infrastructure, which receives the same file, nor in this central repo, which does not use Prettier.
 - On save, ESLint auto-fix (`source.fixAll.eslint`) is applied. In a repo with no ESLint config, it does nothing.
 - App repos recommend 4 extensions through `.vscode/extensions.json`: Prettier, ESLint, EditorConfig, and GitHub Pull Requests. When you first open the folder, VS Code asks whether to install them.
-- This central repo's `.vscode/settings.json` is not a sync target. The central repo has no Prettier or ESLint, so I did not put in format settings.
+- This central repo's `.vscode/settings.json` is not a sync target, but it is a copy of the same template (`npm run self`, checked by `self:check`, #951). The central repo has no Prettier or ESLint config, so the format settings do nothing here.
 
 ## Repo batch commands and VS Code workspace (tools/repos.mjs)
 
