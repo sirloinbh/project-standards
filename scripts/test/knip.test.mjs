@@ -16,6 +16,12 @@ test('knip skips the central files every app receives', () => {
   for (const pattern of ['.standards/**', '.claude/**', 'backend/src/standard/**', 'frontend/src/components/ui/**']) assert.ok(ignore.includes(pattern), pattern);
 });
 
+test('knip reads the backend node:test files and lets the root e2e specs use workspace dependencies (#657)', () => {
+  const config = JSON.parse(read('templates/app/knip.json'));
+  assert.deepEqual(config.workspaces.backend.entry, ['test/**/*.test.ts']);
+  assert.deepEqual(config.ignoreIssues['e2e/**'], ['unlisted']);
+});
+
 test('the shared CI warns on knip findings unless the app is strict, and then fails', () => {
   const ci = read('.github/workflows/reusable-app-ci.yml');
   assert.match(ci, /if: hashFiles\('knip\.json'\) != '' && !inputs\.knip-strict\n\s+run: npm run knip \|\| echo "::warning/);
