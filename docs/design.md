@@ -211,7 +211,7 @@ central main push
           ├─ if the open sync PR has commits added by a person: leave the branch alone, notify through a PR comment and a workflow warning, then exit (#367)
           ├─ if an open sync PR exists: rebuild its branch as downstream main + rendered result, force-push, and update the title and body with the latest SHA
           │  otherwise: create a chore/standards-sync-<first 7 chars of central SHA> branch and open a PR
-          └─ PR body: central SHA and compare link, changed-files table, package CHANGELOG excerpts and Release links,
+          └─ PR body: central SHA and compare link, the central PRs merged since the last synced commit (#904), changed-files table, package CHANGELOG excerpts and Release links,
                       checklist (lockfile update, "merge = production deploy"), and for the infra profile a "no apply" statement
 ```
 
@@ -398,7 +398,7 @@ downstream PR / push
 4. **When adding a new package (`@sirloinbh/*`):** The lockfile must be regenerated, so it is left on the PR checklist. After the user approves, update it with `npm install --ignore-scripts` and commit it in the same PR.
 5. **When deleting a file centrally:** Only files that are in the manifest and whose current hash is the same are deleted. If the hash differs, the file is left and a warning is written in the PR body.
 6. **Registry values and project-specific files:** Not overwritten. The schema rejects `allowedDifferences` without a reason. Central CI warns once `until` has passed.
-7. **When central is merged again while a sync PR is open:** The same PR is updated. The branch name keeps the first SHA, and the title and body point to the latest SHA.
+7. **When central is merged again while a sync PR is open:** The same PR is updated. The branch name keeps the first SHA, and the title and body point to the latest SHA. The body lists every central PR merged since the commit in the repo's manifest, so one PR that carries several central changes says which.
 8. **When a sync PR stays unmerged for a long time:** `docs/compliance.md` shows the elapsed days. There is no automatic merge.
 
 ## 9. shared-aws-infrastructure (ADR-0005)
