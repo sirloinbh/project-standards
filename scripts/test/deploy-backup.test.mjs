@@ -1,6 +1,8 @@
 // Deploy script templates: backup.sh dumps and S3 upload (#36, ADR-0009, ADR-0010).
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import test from 'node:test';
 import { rendered } from './deploy-helpers.mjs';
 import { backupRun, S3_ENV, canRunBackup } from './deploy-backup-helpers.mjs';
@@ -54,4 +56,24 @@ test('a bucket without keys keeps the local dump and exits 3, which a deploy acc
   assert.match(rendered['study-log']['deploy/remote-deploy.sh'], /dump predeploy \|\| \[ \$\? -eq 3 \]/);
   const tolerated = spawnSync('bash', ['-c', 'set -e; f() { return 3; }; f || [ $? -eq 3 ]; echo went-on'], { encoding: 'utf8' });
   assert.equal(tolerated.stdout.trim(), 'went-on');
+});
+
+test('a failed pg_dump leaves no .part file, and an old .part file is pruned (#874)', { skip: !canRunBackup && 'bash or gzip not found' }, () => {
+  const failed = backupRun(['dump'], { failDump: true });
+  assert.notEqual(failed.status, 0, 'a failed dump fails the script');
+  assert.deepEqual(failed.files, [], 'no .part or partial dump remains');
+  // A .part file from a killed script (no exit handler ran) is deleted after a day; a fresh one is kept.
+  const pruned = backupRun(['dump'], {
+    setup: ({ store }) => {
+      const old = path.join(store, 'study-2020-01-01-000000.sql.gz.part');
+      const fresh = path.join(store, 'study-2999-01-01-000000.sql.gz.part');
+      fs.writeFileSync(old, 'x');
+      fs.writeFileSync(fresh, 'x');
+      const past = new Date(Date.now() - 3 * 24 * 3600 * 1000);
+      fs.utimesSync(old, past, past);
+    },
+  });
+  assert.equal(pruned.status, 0, pruned.stderr);
+  assert.ok(!pruned.files.includes('study-2020-01-01-000000.sql.gz.part'), 'old .part file is deleted');
+  assert.ok(pruned.files.includes('study-2999-01-01-000000.sql.gz.part'), 'fresh .part file is kept');
 });
