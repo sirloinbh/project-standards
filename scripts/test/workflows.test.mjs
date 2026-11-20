@@ -140,3 +140,14 @@ test('app CI runs once per commit and skips the slow jobs for docs-only pull req
   // verify holds the format check, the standards check, and the docs tests, so it always runs.
   assert.doesNotMatch(job('verify'), /docs_only|needs:/);
 });
+
+test('CI cancels superseded pull request runs and never a run on main (#873)', () => {
+  const files = ['.github/workflows/ci.yml', 'templates/app/.github/workflows/ci.yml.tmpl', 'templates/service/.github/workflows/ci.yml.tmpl', 'templates/infra/.github/workflows/ci.yml.tmpl'];
+  for (const rel of files) {
+    const text = fs.readFileSync(path.join(root, rel), 'utf8').replace(/\r\n/g, '\n');
+    // The group is shared by pull request runs of one branch; a push run gets its own group (the run id).
+    assert.match(text, /\nconcurrency:\n {2}group: \$\{\{ github\.workflow \}\}-\$\{\{ github\.event_name == 'pull_request' && github\.ref \|\| github\.run_id \}\}\n/, `${rel} has the group`);
+    // Cancelling is on only for pull_request events, so autodeploy never sees a cancelled run of a main commit.
+    assert.match(text, /\n {2}cancel-in-progress: \$\{\{ github\.event_name == 'pull_request' \}\}\n/, `${rel} cancels only pull_request runs`);
+  }
+});
