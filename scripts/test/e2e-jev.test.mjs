@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 
-const { buildRequest, CONFIDENCE_GATE, gate, judge, MAX_CALLS, MAX_STATE_CHARS, requestHash } = await import(
+const { buildRequest, CONFIDENCE_GATE, DEFAULT_API_URL, DEFAULT_MODEL, gate, judge, MAX_CALLS, MAX_STATE_CHARS, requestHash } = await import(
   '../../templates/e2e/e2e/support/jev.ts'
 );
 
@@ -27,7 +27,9 @@ const expectBoth = { clear: true, tone: 'polite' };
 test('the request is flat: model, state and questions; the hash ignores key order but not content', () => {
   const request = buildRequest('page text', questions);
   assert.deepEqual(Object.keys(request), ['model', 'state', 'questions']);
-  assert.equal(request.model, 'typesafe/jev');
+  assert.equal(request.model, 'jev-latest');
+  assert.equal(request.model, DEFAULT_MODEL);
+  assert.equal(buildRequest('page text', questions, 'typesafe/jev').model, 'typesafe/jev', 'JEV_MODEL overrides it');
   const reordered = { questions: request.questions, state: request.state, model: request.model };
   assert.equal(requestHash(reordered), requestHash(request));
   assert.notEqual(requestHash(buildRequest('other text', questions)), requestHash(request));
@@ -79,13 +81,28 @@ test('without a key the recorded answer is replayed offline, and a confident wro
   assert.deepEqual(lenient.failures, [], 'the same answers satisfy the opposite expectation');
 });
 
-test('no fixture and no key is a skip, not a failure; so is a key without a URL', async () => {
+test('no fixture and no key is a skip, not a failure; a URL without a key does not call', async () => {
   const dir = await fixtures();
-  for (const e of [{}, { JEV_API_KEY: 'k' }]) {
-    const result = await judge({ state: 'x', questions, expected: expectBoth, fixtureDir: dir, env: e });
+  for (const e of [{}, { JEV_API_URL: 'https://jev.example/v1/decisions' }]) {
+    const result = await judge({ state: 'x', questions, expected: expectBoth, fixtureDir: dir, env: e, fetchFn: async () => assert.fail('no call without a key') });
     assert.equal(result.outcome, 'skipped');
     assert.match(result.reason, /^jev-fixture-missing/);
   }
+});
+
+test('the key alone calls the vendor route with jev-latest; JEV_API_URL and JEV_MODEL select another route', async () => {
+  const calls = [];
+  const fetchFn = async (url, init) => {
+    calls.push({ url, body: JSON.parse(init.body) });
+    return reply(answers(0.95, 'polite', 0.7))();
+  };
+  const base = { state: 'Enter a title', questions, expected: expectBoth, fetchFn, budget: fresh() };
+  await judge({ ...base, fixtureDir: await fixtures(), env: { JEV_API_KEY: 'k' } });
+  assert.equal(DEFAULT_API_URL, 'https://api.typesafe.ai/v1/systemone');
+  assert.deepEqual([calls[0].url, calls[0].body.model], [DEFAULT_API_URL, 'jev-latest']);
+  const openRouter = { JEV_API_KEY: 'k', JEV_API_URL: 'https://openrouter.ai/api/alpha/decisions', JEV_MODEL: 'typesafe/jev' };
+  await judge({ ...base, fixtureDir: await fixtures(), env: openRouter });
+  assert.deepEqual([calls[1].url, calls[1].body.model], [openRouter.JEV_API_URL, 'typesafe/jev']);
 });
 
 test('an API error, a bad body, a timeout, or a used-up budget is a skip', async () => {
