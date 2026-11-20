@@ -116,7 +116,7 @@ app.use(errorHandler);
 ### IDs and dates
 
 - An ID is a positive integer of 1 to 15 digits, sent as a number in JSON (`"id": 7`). The existing plan-routine sends string IDs (`"id": "7"`) and stays that way because the screens would have to change at the same time. New apps use numbers (#312).
-- Path IDs are read with `parseId(req.params.id, '<what of>')`. Only a positive integer of 1 to 15 digits is accepted (no leading zeros, sign, `1e3`, or spaces); otherwise it returns `400 { error: '<무엇의> ID가 올바르지 않습니다' }`. Up to 15 digits is exact as a JS number even for a `BIGINT` column. In Zod schemas, use `ID_PATTERN`.
+- Path IDs are read with `parseId(req.params.id, '<what of>')`. Only a positive integer of 1 to 15 digits is accepted (no leading zeros, sign, `1e3`, or spaces); otherwise it returns `400 { error: 'Invalid <what> ID' }`. Up to 15 digits is exact as a JS number even for a `BIGINT` column. In Zod schemas, use `ID_PATTERN`.
 - "Today" is `serviceDate()` (`YYYY-MM-DD` in Asia/Seoul). Do not use the server clock's time zone.
 
 ### Where validation happens
