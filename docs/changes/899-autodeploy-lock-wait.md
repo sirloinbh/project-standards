@@ -1,0 +1,6 @@
+# Autodeploy waits for the shared lock (#899)
+
+- `templates/deploy/deploy/autodeploy.sh.tmpl`: `flock -n` becomes `flock -w "${AUTODEPLOY_LOCK_WAIT:-100}"`. A deploy that finds the shared lock busy waits up to 100 seconds (inside the 2-minute timer period) instead of giving up until the next run, so a deploy no longer loses the lock again and again while several apps merge at once. `AUTODEPLOY_LOCK_WAIT` shortens the wait for tests.
+- The run that takes the lock writes its app name to `/run/lock/apps-deploy.holder` and removes it when it ends, so the "busy" journal line says who is deploying: `another deploy holds the lock (<app>); trying again on the next run`. A manual `remote-deploy.sh` does not write it, so the name can be `unknown` or an older run's.
+- Tests: `scripts/test/autodeploy-journal.test.mjs` (a holder that lets go after 3 s lets the run proceed; a lock still held after the wait names the holder) and `deploy-templates.test.mjs` (the lock path variable). These need `flock`, so they run on Linux (CI; locally in a `node:24-bookworm` container).
+- Found on 2026-11-20 evening: no hang, but plan-routine, health-log and others waited 15 to 20+ minutes behind a queue of 9 merges.
