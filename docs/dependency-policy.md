@@ -14,6 +14,7 @@ An npm supply-chain attack (the Shai-Hulud family) is ongoing, so dependencies a
 | react-hook-form, @hookform/resolvers | 7, 5 | workout-memo | |
 | @playwright/test, @axe-core/playwright, @lhci/cli, concurrently | 1, 4, 0, 9 | all 8 apps | Pinned in `versions.json` `dependencies.root`. `@playwright/test` must equal the visual comparison image version (`images.playwright`); `registry:check` fails otherwise |
 | @testing-library/user-event | 14 | workout-memo, dev-career-portfolio | In `versions.json` `optionalDependencies`: applied only where the app already has it |
+| zod (frontend) | 4 | the apps with `features.contract` (the frontend copy of `contract.ts` imports it) | In `versions.json` `optionalDependencies`: applied only where the frontend already lists it, so an app without a contract gets none (#783). The backend `zod` stays in `dependencies` |
 | recharts | 3 | study-log | |
 | pg-boss | 12 | money-ledger (`features.jobs`) | backend only; [ADR-0018](adr/0018-job-runner-pg-boss.md), [jobs.md](jobs.md) |
 
