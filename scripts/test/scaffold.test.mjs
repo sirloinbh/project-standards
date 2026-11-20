@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { checkAll, loadAll } from '../lib/registry.mjs';
 import { CONTRACT_COPIES, packageVars, renderScaffold, RUNBOOKS, writeScaffold } from '../scaffold.mjs';
-import { runCheck } from '../standards-check.mjs';
+import { checkComposeWarnings, runCheck } from '../standards-check.mjs';
 
 const root = path.join(import.meta.dirname, '..', '..');
 const sha = 'a'.repeat(40);
@@ -97,7 +97,7 @@ test('a new app starts behind the shared sign-in (#550): middleware, gate, compo
   for (const file of ['backend/src/standard/auth.ts', 'frontend/src/sign-in.tsx', 'frontend/src/auth-origin.ts', 'backend/test/sign-in.test.ts']) assert.ok(byPath.has(file), file);
   assert.match(byPath.get('backend/src/app.ts'), /if \(options\.auth\) app\.use\('\/api', options\.auth\);\n\s+app\.get\('\/api\/me', meHandler\);/);
   // #667: without the sign-in (explicit local mode only) the API listens on 127.0.0.1.
-  assert.match(byPath.get('backend/src/server.ts'), /const auth = sharedAuth\(\);\nconst server = createApp\(pool, \{ auth \}\)\.listen\(port, auth \? '0\.0\.0\.0' : '127\.0\.0\.1'/);
+  assert.match(byPath.get('backend/src/server.ts'), /const auth = sharedAuth\(\);\nconst host = listenHost\(auth !== undefined\);\nconst server = createApp\(pool, \{ auth \}\)\.listen\(port, host,/);
   assert.match(byPath.get('frontend/src/app.tsx'), /<SignInGate>[\s\S]*<AppShell [^>]*actions=\{<AccountActions \/>\}/);
   const compose = byPath.get('compose.yaml');
   assert.match(compose, /AUTH_INTERNAL_URL: \$\{AUTH_INTERNAL_URL:-http:\/\/shared-auth-api:3110\}\n/);
@@ -233,4 +233,12 @@ test('idSchema takes digits only, up to 15 like parseId, and no longer coerces "
   assert.ok(text.includes(pattern), 'same pattern as ID_PATTERN in standard/http.ts');
   const http = fs.readFileSync(path.join(root, 'templates/app/backend/src/standard/http.ts'), 'utf8');
   assert.ok(http.includes(`export const ID_PATTERN = ${pattern};`));
+});
+
+test('the scaffold gives api a healthcheck on /api/health and web waits for it (#875)', () => {
+  const compose = byPath.get('compose.yaml');
+  const api = compose.match(/^ {2}api:\n([\s\S]*?)^ {2}web:/m)[1];
+  assert.match(api, /^ {4}healthcheck:\n {6}test: \['CMD', 'node', '-e', "fetch\('http:\/\/127\.0\.0\.1:\d+\/api\/health'\)/m);
+  assert.match(compose, /^ {4}depends_on:\n {6}api: \{ condition: service_healthy \}\n/m);
+  assert.deepEqual(checkComposeWarnings(compose), []);
 });

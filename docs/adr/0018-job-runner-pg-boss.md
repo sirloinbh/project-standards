@@ -21,7 +21,7 @@ So one app already carries a hand-made scheduler, one has slow Claude calls insi
 ### Constraints
 
 - Stack: Node 24, Express 5, `pg`, Zod 4, PostgreSQL 17, one compose project per app (`nginx`, `api`, `postgres`).
-- One Lightsail server for 8 apps, `shared-auth`, the planned `shared-ai`, and the proxy. Measured on 2026-11-15 (#564, [costs.md](../costs.md)): one app takes about 95 MiB idle (Postgres 62, api 29, nginx 3), the OS and Docker about 340 MiB. The decision there is to move to 2 GB, which leaves about 900 MiB for builds, `shared-auth`, `shared-ai`, and workers.
+- One Lightsail server for 8 apps, `shared-auth`, `shared-ai`, and the proxy. Measured on 2026-11-15 (#564, [costs.md](../costs.md)): one app takes about 95 MiB idle (Postgres 62, api 29, nginx 3), the OS and Docker about 340 MiB. The decision there is to move to 2 GB, which leaves about 900 MiB for builds, `shared-auth`, `shared-ai`, and workers.
 - No new paid service and no outside cloud holding app data or secrets.
 - New packages must be at least 14 days old, and the first install needs the user's confirmation ([dependency-policy.md](../dependency-policy.md)).
 

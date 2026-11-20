@@ -50,3 +50,76 @@ test('say prints on a change and once an hour, not on every run', { skip: !has('
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+// A failed GitHub API call says so and signals, and the run ends with exit 0 so the next run tries again (#871).
+test('a failed CI state request is reported, signalled and retried, not a silent failure', { skip: !(has('bash') && has('flock') && has('git') && has('python3')) && 'bash, flock, git or python3 not found' }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'api-error-'));
+  try {
+    const git = (cwd, ...args) => spawnSync('git', args, { cwd, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' } });
+    const origin = path.join(dir, 'origin.git');
+    const work = path.join(dir, 'app');
+    git(dir, 'init', '-q', '--bare', '-b', 'main', origin);
+    git(dir, 'clone', '-q', posix(origin), posix(work));
+    fs.mkdirSync(path.join(work, 'deploy'));
+    fs.writeFileSync(path.join(work, 'deploy/notify.sh'), '#!/bin/bash\necho "$*" >> "$(dirname "$0")/../signals"\n');
+    git(work, 'add', '.');
+    git(work, 'commit', '-q', '-m', 'first');
+    git(work, 'push', '-q', 'origin', 'HEAD:main');
+    const bin = path.join(dir, 'bin');
+    fs.mkdirSync(bin);
+    // curl behaves as it does when GitHub refuses (HTTP 403 with -f) or answers with nothing.
+    const fakeCurl = (body) => fs.writeFileSync(path.join(bin, 'curl'), `#!/bin/bash\n${body}\n`, { mode: 0o755 });
+    const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+    const script = path.join(dir, 'autodeploy.sh');
+    fs.writeFileSync(script, `export PATH="${pathVar}"\n${app.replace(/^app=.*$/m, `app=${posix(work)}`).replace('/run/lock/apps-deploy.lock', `${posix(dir)}/lock`)}`);
+    const run = () => spawnSync('bash', [posix(script)], { encoding: 'utf8' });
+    for (const body of ['echo "curl: (22) The requested URL returned error: 403" >&2; exit 22', 'exit 0']) {
+      fs.rmSync(path.join(work, '.autodeploy-log'), { force: true });
+      fs.rmSync(path.join(work, 'signals'), { force: true });
+      fakeCurl(body);
+      const r = run();
+      assert.equal(r.status, 0, r.stderr);
+      assert.match(r.stdout, /could not read the CI state of [0-9a-f]{12} from GitHub; trying again on the next run/);
+      assert.match(fs.readFileSync(path.join(work, 'signals'), 'utf8'), /^ping deploy fail could not read the CI state of [0-9a-f]{12} from GitHub$/m);
+      assert.ok(!fs.existsSync(path.join(work, '.autodeploy-failed')), 'a failed request does not mark the commit failed');
+    }
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// A failed deploy keeps its output and sends the last lines with the fail signal, secrets masked (#872).
+test('a failed deploy writes .last-deploy.log and signals the last lines with secret values masked', { skip: !(has('bash') && has('flock') && has('git') && has('python3')) && 'bash, flock, git or python3 not found' }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'deploy-fail-'));
+  try {
+    const git = (cwd, ...args) => spawnSync('git', args, { cwd, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' } });
+    const origin = path.join(dir, 'origin.git');
+    const work = path.join(dir, 'app');
+    git(dir, 'init', '-q', '--bare', '-b', 'main', origin);
+    git(dir, 'clone', '-q', posix(origin), posix(work));
+    fs.mkdirSync(path.join(work, 'deploy'));
+    fs.writeFileSync(path.join(work, 'deploy/notify.sh'), '#!/bin/bash\necho "$*" >> "$(dirname "$0")/../signals"\n');
+    fs.writeFileSync(path.join(work, 'deploy/remote-deploy.sh'), '#!/bin/bash\necho "migrating"\necho "NODE_AUTH_TOKEN=ghp_secretvalue in the log"\necho "ENOENT scandir /app/database/migrations/" >&2\nexit 1\n');
+    git(work, 'add', '.');
+    git(work, 'commit', '-q', '-m', 'first');
+    git(work, 'push', '-q', 'origin', 'HEAD:main');
+    const bin = path.join(dir, 'bin');
+    fs.mkdirSync(bin);
+    fs.writeFileSync(path.join(bin, 'curl'), '#!/bin/bash\necho \'{"workflow_runs":[{"status":"completed","conclusion":"success","event":"push"}]}\'\n', { mode: 0o755 });
+    const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+    const script = path.join(dir, 'autodeploy.sh');
+    fs.writeFileSync(script, `export PATH="${pathVar}"\n${app.replace(/^app=.*$/m, `app=${posix(work)}`).replace('/run/lock/apps-deploy.lock', `${posix(dir)}/lock`)}`);
+    const r = spawnSync('bash', [posix(script)], { encoding: 'utf8' });
+    assert.equal(r.status, 1, 'a failed deploy still fails the run');
+    const log = fs.readFileSync(path.join(work, '.last-deploy.log'), 'utf8');
+    assert.match(log, /ENOENT scandir \/app\/database\/migrations\//);
+    const signals = fs.readFileSync(path.join(work, 'signals'), 'utf8');
+    assert.match(signals, /^ping deploy fail deploy of [0-9a-f]{12} failed\. Last lines of the deploy output:$/m);
+    assert.match(signals, /ENOENT scandir \/app\/database\/migrations\//);
+    assert.match(signals, /NODE_AUTH_TOKEN=\*\*\*/);
+    assert.doesNotMatch(signals, /ghp_secretvalue/);
+    assert.match(fs.readFileSync(path.join(work, '.autodeploy-failed'), 'utf8').trim(), /^[0-9a-f]{12}$/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

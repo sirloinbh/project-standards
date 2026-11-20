@@ -120,3 +120,21 @@ test('request headers and non-JSON success bodies are documented (#709)', () => 
   assert.deepEqual(withExtras.paths['/api/export.csv'].get.responses[200], { description: 'OK', content: { 'text/csv': { schema: { type: 'string' } } } });
   assert.equal(withExtras.paths['/api/export.csv'].get.parameters, undefined);
 });
+
+test('a table the builder cannot document throws an error that names the route (#868)', () => {
+  const build = (operations) => () => buildOpenApi({ title: 'Demo API', description: 'About', operations });
+  const objectQuery = schema({ type: 'object', properties: { q: { type: 'string' } } });
+  assert.throws(build({ 'GET /api/a': { summary: 'A', status: [] } }), /GET \/api\/a: status needs at least the success status/);
+  assert.throws(build({ 'GET /api/a': { summary: 'A', query: schema({ anyOf: [{ type: 'object' }, { type: 'object' }] }), status: [200] } }), /GET \/api\/a: query must be a Zod object/);
+  assert.throws(build({ 'GET /api/a': { summary: 'A', query: schema({ type: 'array' }), status: [200] } }), /GET \/api\/a: query must be a Zod object/);
+  assert.throws(build({ 'GET /api/a/:id': { summary: 'A', params: { slug: schema({ type: 'string' }) }, status: [200] } }), /GET \/api\/a\/:id: params lists 'slug'/);
+  assert.throws(build({ 'GET /api/a/:id/b/:id': { summary: 'A', status: [200] } }), /GET \/api\/a\/:id\/b\/:id: the path parameter :id appears twice/);
+  assert.throws(
+    build({ 'POST /api/a': { summary: 'A', headers: { 'Idempotency-Key': { description: 'x' }, 'idempotency-key': { description: 'y' } }, status: [201] } }),
+    /POST \/api\/a: the header 'idempotency-key' is listed twice/,
+  );
+  assert.throws(build({ 'GET': { summary: 'A', status: [200] } }), /the key must be 'METHOD \/path'/);
+  assert.throws(build({ 'GET /api/a extra': { summary: 'A', status: [200] } }), /the key must be 'METHOD \/path'/);
+  // A valid table, with a query object, still builds.
+  assert.doesNotThrow(build({ 'GET /api/a/:id': { summary: 'A', query: objectQuery, params: { id: schema({ type: 'integer' }) }, status: [200] } }));
+});

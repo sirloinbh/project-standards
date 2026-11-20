@@ -1,6 +1,6 @@
 # 0003. Sub-repo edits are only detected and guided
 
-- Status: Proposed (issue #1)
+- Status: Accepted (issue #1; implemented: `standards-check` in #60 detects and guides)
 - Date: 2026-10-22
 
 ## Context

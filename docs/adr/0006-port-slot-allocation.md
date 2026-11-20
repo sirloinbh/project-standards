@@ -1,6 +1,6 @@
 # 0006. Slot-number-based port allocation
 
-- Status: Proposed (issue #1)
+- Status: Accepted (issue #1; implemented: workout-memo ports reassigned in #95, slots live in `registry/projects.json`)
 - Date: 2026-10-22
 
 ## Context

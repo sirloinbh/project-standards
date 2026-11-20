@@ -142,3 +142,21 @@ test('apps and infrastructure repositories receive the scanner and run it in CI'
   }
   assert.match(fs.readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8'), /run: node scripts\/secret-scan\.mjs/);
 });
+
+test('a tracked file under a build-output folder is scanned, an untracked one is not (#865)', () => {
+  withRepo(
+    { 'dist/leak.js': `const token = '${FAKES['github-token']}';\n`, 'src/app.ts': 'export {};\n' },
+    (dir) => {
+      fs.mkdirSync(path.join(dir, 'coverage'), { recursive: true });
+      fs.writeFileSync(path.join(dir, 'coverage/untracked.js'), FAKES['npm-token']);
+      assert.deepEqual(scan(dir), ['dist/leak.js:1: GitHub token(github-token) has a value that looks like this']);
+    },
+    { git: true },
+  );
+});
+
+test('outside git the folder walk still skips build output (#865)', () => {
+  withRepo({ 'dist/leak.js': FAKES['github-token'], 'src/leak.ts': FAKES['npm-token'] }, (dir) => {
+    assert.deepEqual(scan(dir), ['src/leak.ts:1: npm token(npm-token) has a value that looks like this']);
+  });
+});
