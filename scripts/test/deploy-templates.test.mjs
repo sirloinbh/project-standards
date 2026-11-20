@@ -37,7 +37,9 @@ test('workout-memo renders to the names its running server already uses', () => 
 
 test('apps share one deploy lock and pass it from the timer to the deploy script', () => {
   for (const [name, files] of Object.entries(rendered)) {
-    for (const file of ['deploy/autodeploy.sh', 'deploy/remote-deploy.sh']) assert.match(files[file], /exec 9> \/run\/lock\/apps-deploy\.lock/, `${name} ${file}`);
+    assert.match(files['deploy/remote-deploy.sh'], /exec 9> \/run\/lock\/apps-deploy\.lock/, name);
+    // The timer script keeps the path in a variable, because it also names the holder next to it (#899).
+    assert.match(files['deploy/autodeploy.sh'], /^lock=\/run\/lock\/apps-deploy\.lock\n(?:.*\n)?exec 9> "\$lock"$/m, name);
     assert.match(files['deploy/autodeploy.sh'], /APPS_DEPLOY_LOCKED=1 bash deploy\/remote-deploy\.sh deploy/, name);
     assert.match(files['deploy/remote-deploy.sh'], /if \[ -z "\$\{APPS_DEPLOY_LOCKED:-\}" \]; then/, name);
   }

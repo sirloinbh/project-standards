@@ -1,6 +1,6 @@
 // The autodeploy timer says what it decided without filling the journal: one line per change and one repeat an hour (#808).
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -24,7 +24,7 @@ const posix = (p) => p.split(path.sep).join('/');
 
 test('every silent exit now says something, and the fetched tip is read from FETCH_HEAD', () => {
   for (const text of [app, service]) {
-    assert.match(text, /flock -n 9 \|\| \{ say "another deploy holds the lock; trying again on the next run"; exit 0; \}/);
+    assert.match(text, /if ! flock -w "\$\{AUTODEPLOY_LOCK_WAIT:-100\}" 9; then\n {2}say "another deploy holds the lock \(\$\(cat "\$holder" 2> \/dev\/null \|\| echo unknown\)\); trying again on the next run"\n {2}exit 0\nfi/);
     assert.match(text, /say "up to date at \$sha"/);
     assert.match(text, /say "waiting for CI of \$sha \(deployed: /);
     assert.match(text, /git fetch --quiet origin main\nfull=\$\(git rev-parse FETCH_HEAD\)/);
@@ -71,7 +71,7 @@ test('a failed CI state request is reported, signalled and retried, not a silent
     const fakeCurl = (body) => fs.writeFileSync(path.join(bin, 'curl'), `#!/bin/bash\n${body}\n`, { mode: 0o755 });
     const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
     const script = path.join(dir, 'autodeploy.sh');
-    fs.writeFileSync(script, `export PATH="${pathVar}"\n${app.replace(/^app=.*$/m, `app=${posix(work)}`).replace('/run/lock/apps-deploy.lock', `${posix(dir)}/lock`)}`);
+    fs.writeFileSync(script, `export PATH="${pathVar}"\n${app.replace(/^app=.*$/m, `app=${posix(work)}`).replace('/run/lock/apps-deploy.lock', `${posix(dir)}/lock`).replace('/run/lock/apps-deploy.holder', `${posix(dir)}/holder`)}`);
     const run = () => spawnSync('bash', [posix(script)], { encoding: 'utf8' });
     for (const body of ['echo "curl: (22) The requested URL returned error: 403" >&2; exit 22', 'exit 0']) {
       fs.rmSync(path.join(work, '.autodeploy-log'), { force: true });
@@ -108,7 +108,7 @@ test('a failed deploy writes .last-deploy.log and signals the last lines with se
     fs.writeFileSync(path.join(bin, 'curl'), '#!/bin/bash\necho \'{"workflow_runs":[{"status":"completed","conclusion":"success","event":"push"}]}\'\n', { mode: 0o755 });
     const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
     const script = path.join(dir, 'autodeploy.sh');
-    fs.writeFileSync(script, `export PATH="${pathVar}"\n${app.replace(/^app=.*$/m, `app=${posix(work)}`).replace('/run/lock/apps-deploy.lock', `${posix(dir)}/lock`)}`);
+    fs.writeFileSync(script, `export PATH="${pathVar}"\n${app.replace(/^app=.*$/m, `app=${posix(work)}`).replace('/run/lock/apps-deploy.lock', `${posix(dir)}/lock`).replace('/run/lock/apps-deploy.holder', `${posix(dir)}/holder`)}`);
     const r = spawnSync('bash', [posix(script)], { encoding: 'utf8' });
     assert.equal(r.status, 1, 'a failed deploy still fails the run');
     const log = fs.readFileSync(path.join(work, '.last-deploy.log'), 'utf8');
@@ -119,6 +119,56 @@ test('a failed deploy writes .last-deploy.log and signals the last lines with se
     assert.match(signals, /NODE_AUTH_TOKEN=\*\*\*/);
     assert.doesNotMatch(signals, /ghp_secretvalue/);
     assert.match(fs.readFileSync(path.join(work, '.autodeploy-failed'), 'utf8').trim(), /^[0-9a-f]{12}$/);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+// A busy lock is waited for, and a lock that stays busy names its holder (#899).
+test('a busy lock is waited for, and a lock that stays busy says who holds it', { skip: !(has('bash') && has('flock') && has('git') && has('python3')) && 'bash, flock, git or python3 not found' }, () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lock-wait-'));
+  try {
+    const git = (cwd, ...args) => spawnSync('git', args, { cwd, encoding: 'utf8', env: { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' } });
+    const origin = path.join(dir, 'origin.git');
+    const work = path.join(dir, 'app');
+    git(dir, 'init', '-q', '--bare', '-b', 'main', origin);
+    git(dir, 'clone', '-q', posix(origin), posix(work));
+    fs.mkdirSync(path.join(work, 'deploy'));
+    fs.writeFileSync(path.join(work, 'deploy/notify.sh'), '#!/bin/bash\n');
+    git(work, 'add', '.');
+    git(work, 'commit', '-q', '-m', 'first');
+    git(work, 'push', '-q', 'origin', 'HEAD:main');
+    const bin = path.join(dir, 'bin');
+    fs.mkdirSync(bin);
+    fs.writeFileSync(path.join(bin, 'curl'), '#!/bin/bash\necho \'{"workflow_runs":[]}\'\n', { mode: 0o755 });
+    const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
+    const script = path.join(dir, 'autodeploy.sh');
+    fs.writeFileSync(script, `export PATH="${pathVar}"
+${app.replace(/^app=.*$/m, `app=${posix(work)}`).replace('/run/lock/apps-deploy.lock', `${posix(dir)}/lock`).replace('/run/lock/apps-deploy.holder', `${posix(dir)}/holder`)}`);
+    // Another app takes the lock for 3 seconds and names itself in the holder file.
+    const hold = (seconds) => spawn('bash', ['-c', `exec 9> "${posix(dir)}/lock"; flock 9; echo other-app > "${posix(dir)}/holder"; sleep ${seconds}`], { stdio: 'ignore' });
+    const run = (wait) => spawnSync('bash', [posix(script)], { encoding: 'utf8', env: { ...process.env, AUTODEPLOY_LOCK_WAIT: String(wait) } });
+    const settle = () => spawnSync('bash', ['-c', 'sleep 1']);
+
+    // Waits 20 s at most; the holder lets go after 3 s, so the run takes the lock and decides about the commit.
+    let holder = hold(3);
+    settle();
+    let r = run(20);
+    assert.equal(r.status, 0, r.stderr);
+    assert.doesNotMatch(r.stdout, /holds the lock/);
+    assert.match(r.stdout, /waiting for CI of [0-9a-f]{12}/);
+    holder.kill();
+    assert.ok(!fs.existsSync(path.join(dir, 'holder')) || fs.readFileSync(path.join(dir, 'holder'), 'utf8').trim() === 'other-app');
+
+    // Still busy after the wait: the line names the holder and the run ends without error.
+    fs.rmSync(path.join(work, '.autodeploy-log'), { force: true });
+    fs.writeFileSync(path.join(dir, 'holder'), 'other-app\n');
+    holder = hold(8);
+    settle();
+    r = run(1);
+    holder.kill();
+    assert.equal(r.status, 0, r.stderr);
+    assert.match(r.stdout, /another deploy holds the lock \(other-app\); trying again on the next run/);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
