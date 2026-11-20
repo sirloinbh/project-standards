@@ -92,7 +92,8 @@
         "db": 15402
       },
       "ghcr": {
-        "push": true
+        "push": true,
+        "pull": true
       },
       "db": {
         "name": "study",

@@ -18,11 +18,13 @@ const renderDeploy = (target) => {
   return files.find((f) => f.path === 'deploy/remote-deploy.sh').content;
 };
 const app = renderDeploy(data.sync.targets.find((t) => t.project === 'study-log'));
+// What the registry says for study-log: the rollout (#757, #928) switches projects on one at a time, so the checks follow it.
+const appState = data.projects.projects.find((p) => p.name === 'study-log').ghcr?.pull === true ? 'on' : 'off';
 const service = renderDeploy(data.sync.targets.find((t) => t.repo === 'sirloinbh/shared-auth'));
 const has = (cmd) => spawnSync(cmd, ['--version'], { encoding: 'utf8' }).status === 0;
 
-test('pulling follows the registry (off for study-log, on for shared-auth), and a failed pull falls back to the build', () => {
-  for (const [text, state] of [[app, 'off'], [service, 'on']]) {
+test('pulling follows the registry (study-log as the registry says, on for shared-auth), and a failed pull falls back to the build', () => {
+  for (const [text, state] of [[app, appState], [service, 'on']]) {
     const lines = [`if [ "${state}" = on ] && pull_images "$tag"; then`, '      echo "pulled $tag from ghcr.io/sirloinbh"', '    else', '      IMAGE_TAG="$tag" docker compose build', '    fi'];
     assert.ok(text.includes(lines.join('\n')), `${state}: pull block`);
   }
@@ -30,7 +32,7 @@ test('pulling follows the registry (off for study-log, on for shared-auth), and 
 
 test('rollback takes an optional commit tag and pulls it when pulling is on', () => {
   assert.match(app, /previous=\$\{2:-\$\(cat \.previous 2>\/dev\/null \|\| true\)\}/);
-  assert.match(app, /if \[ -n "\$\{2:-\}" \] && \[ "off" = on \]; then\n {6}git fetch --quiet --tags origin\n {6}pull_images "\$previous"/);
+  assert.match(app, new RegExp(String.raw`if \[ -n "\$\{2:-\}" \] && \[ "${appState}" = on \]; then\n {6}git fetch --quiet --tags origin\n {6}pull_images "\$previous"`));
   assert.match(app, /usage: remote-deploy\.sh deploy <git ref> \| rollback \[tag\]/);
 });
 
@@ -97,10 +99,10 @@ test('push and pull follow the registry switches and are off for a project that 
     assert.match(files['.github/workflows/ci.yml'], new RegExp(`^ {6}push-images: ${entry.ghcr?.push === true}$`, 'm'), target.repo);
     assert.match(files['deploy/remote-deploy.sh'], new RegExp(String.raw`if \[ "${entry.ghcr?.pull === true ? 'on' : 'off'}" = on \] && pull_images`), target.repo);
   }
-  // Moving one project at a time (#757): every app and service pushes, shared-ai, shared-auth and workout-memo pull; nothing else pulls until the user says otherwise.
+  // Moving one project at a time (#757, #928): every app and service pushes; the projects in the list below pull, nothing else until the user says otherwise.
   const pushing = entries.filter((e) => e.ghcr?.push).map((e) => e.name);
   assert.equal(pushing.length, entries.length, 'every app and service pushes (#920)');
-  assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name).sort(), ['shared-ai', 'shared-auth', 'workout-memo']);
+  assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name).sort(), ['shared-ai', 'shared-auth', 'study-log', 'workout-memo']);
 });
 
 test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pull on for that project only (health-log has no switch here)', () => {
