@@ -36,6 +36,9 @@
       "aws": {
         "prefix": null
       },
+      "ghcr": {
+        "push": true
+      },
       "features": {
         "e2e": true,
         "e2eVisual": true,
