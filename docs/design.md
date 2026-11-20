@@ -16,7 +16,6 @@
 | Docker images | `node:24.21.0-alpine`, `nginx:1.27-alpine`, `postgres:17-alpine` | Dockerfile, `compose.yaml`, `ci.yml` |
 | Line endings | `* text=auto eol=lf`, `*.ps1 text eol=crlf` | `.gitattributes` |
 | Lint tools | `eslint 10.12.0`, `@eslint/js 10.0.1`, `typescript-eslint 8.71.2`, `globals 16.5.0`, `eslint-plugin-react-hooks 7.1.1`, `eslint-config-prettier 10.1.8`, `prettier 3.9.10` | Root `devDependencies` |
-| Subtree repo names | `<name>-frontend`, `<name>-backend`, `<name>-db` | `git remote` |
 
 ### 1.2 Differences and problems
 
@@ -157,10 +156,9 @@ packages/<pkg> change PR (with version and CHANGELOG) → user merges
 | Option A package | ESLint, Prettier, tsconfig, and design token contents | Fails if the installed version differs from the manifest |
 | Option B fully managed | `.editorconfig`, `.gitattributes`, `.nvmrc`, `.node-version`, `.npmrc` (root, `frontend/`, `backend/`), `eslint.config.mjs`, `prettier.config.mjs`, `frontend/tsconfig.json`, `backend/tsconfig.json`, `AGENTS.md`, `CLAUDE.md`, `skills/std-*`, `.claude/skills/std-*`, `.github/ISSUE_TEMPLATE/*`, `.github/pull_request_template.md`, `.github/workflows/ci.yml`, `.github/dependabot.yml`, `.standards/check.mjs`, `.standards/lockfiles.mjs`, `scripts/claude-skills.mjs`, `frontend/Dockerfile`, `backend/Dockerfile`, `frontend/nginx.conf`, `backend/src/standard/http.ts`, common UI (`features.ui`: `frontend/src/components/ui/`, the shared helpers in `frontend/src/lib/`, `frontend/src/health.ts`) | Fails if the hash differs |
 | Option B section managed | `.gitignore`, `.prettierignore`, `.env.example`: above the `# --- project ---` line is the central section, below it is the project section | Only the central section hash is compared |
-| Option B field managed | In `package.json` (root, `frontend/`, `backend/`): `packageManager`, `engines`, `@sirloinbh/*` versions, the 42 common app dependencies (`versions.json` `dependencies`), and the `standards:check` and `lockfiles:sync` scripts | Only the fields are compared |
+| Option B field managed | In `package.json` (root, `frontend/`, `backend/`): `packageManager`, `engines`, `@sirloinbh/*` versions, the 42 common app dependencies (`versions.json` `dependencies`), and the `standards:check` script | Only the fields are compared |
 | Project fixed values | Ports, DB names, repo names, domains, AWS prefix | Fails if the actual values in `compose.yaml`, `vite.config.ts`, `playwright.config.ts`, `backend/src/server.ts`, `frontend/nginx.conf`, and Dockerfile `EXPOSE` differ from the registry |
 | Project specific | `AGENTS.project.md`, `skills/<proj>-*`, app code, `compose.yaml` (build secret settings are checked), `docs/changes/` | Not checked |
-| Downstream lockfiles | `frontend/package-lock.json`, `backend/package-lock.json` | Fails if installed versions differ from the root `package-lock.json` ([dependency policy](dependency-policy.md#sub-lockfiles-frontend-backend)) |
 | Scaffold only | `scaffold/app/**` | Warning only for existing repos (`directory-rules`) |
 | Central tools | `tools/**` (account tools; the local agent worker `tools/agents/` was archived in #708) | Not copied to downstream repos. Install once on the PC and run against a specified target repo (#19, #165) |
 
@@ -363,7 +361,7 @@ When the DB port changes, `DATABASE_URL` in each user's local `.env` must also b
 
 1. Add an entry to `registry/projects.json` with the next slot and add a target to `sync.config.json`. Because the scaffold brings in the test and common UI dependencies together, register it with `features.e2e`, `vitest`, and `ui` turned on ([test config](test-config.md)).
 2. Merge a PR that passes the conflict checks and the `docs/projects.md` regeneration.
-3. [User] Create the umbrella repo and the 3 subtree repos, and add them to the App installation scope.
+3. [User] Create the app repo and add it to the App installation scope (no sub-repos: ADR-0022).
 4. Create the first commit with `node scripts/scaffold.mjs <name> --out <folder>`. It renders together `scaffold/app` (project-owned starter files), `docs/runbooks` (operations docs), a copy of the contract, and the centrally managed files and manifest that the first sync will use. Later changes arrive as sync PRs.
 
 ## 7. Detection and guidance in downstream repos
@@ -406,6 +404,8 @@ downstream PR / push
 ## 9. shared-aws-infrastructure (ADR-0005)
 
 ### 9.1 Promotion to an independent source (done before sync)
+
+This section is history: it still names the subtree split and `push-repositories.ps1`, which are gone (ADR-0022).
 
 1. Check that the result of `git subtree split --prefix=infrastructure` is the same as `shared-aws-infrastructure` main. If it differs, report and stop.
 2. [User] Move the local `workout-memo/infrastructure/terraform.tfstate` and `.terraform/` to the new local clone location. Before moving, make a state backup outside the repo. The state is not committed and its path is not recorded in docs.
