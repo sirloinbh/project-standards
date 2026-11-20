@@ -93,4 +93,4 @@ The client's own token never reaches the app (no token passthrough). A token is 
 
 ## Audit rows
 
-Every authenticated call writes one `audit_log` row with actor type `ai-tool`, the tool name, the client and the request ID: `ok`, `denied` (missing scope), or `error` (invalid input or a failure). A call with a bad token writes no row; it is in the request log as a 401.
+Every authenticated call writes one `audit_log` row with actor type `ai-tool`, the tool name, the client and the request ID: `ok`, `denied` (missing scope), or `error` (invalid input or a failure). The rows for `denied`, `error` and a read are best effort (#671): if the audit insert fails, the caller still gets the original 403, 400, error, or read answer, and the failure is logged (`log` option of `registerToolRoutes`, default `console.error`). A write's own row is in its transaction, so a write is never done without its row. A failing `ROLLBACK` keeps the original error and destroys the connection instead of returning it to the pool (`withTransaction`). A call with a bad token writes no row; it is in the request log as a 401.
