@@ -115,7 +115,7 @@ test('autodeploy signals every decision and the health timer runs every 5 minute
   for (const [name, files] of Object.entries(rendered)) {
     const auto = files['deploy/autodeploy.sh'];
     assert.match(auto, /^signal\(\) \{ if \[ -f deploy\/notify\.sh \]; then bash deploy\/notify\.sh ping deploy "\$@" \|\| true; fi; \}$/m, name);
-    for (const s of ['signal ok "up to date at $sha"', 'signal fail "$sha failed before', 'signal ok "waiting for CI of $sha"', 'signal fail "CI failed for $sha"', 'signal ok "deployed $sha"', 'signal fail "deploy of $sha failed"']) assert.ok(auto.includes(s), `${name}: ${s}`);
+    for (const s of ['signal ok "up to date at $sha"', 'signal fail "$sha failed before', 'signal ok "waiting for CI of $sha"', 'signal fail "CI failed for $sha"', 'signal ok "deployed $sha"', 'signal fail "deploy of $sha failed. Last lines']) assert.ok(auto.includes(s), `${name}: ${s}`);
     assert.match(files['deploy/health.timer'], /^OnUnitActiveSec=5min$/m, name);
     assert.ok(files['deploy/health.service'].includes(`/tmp/${project(name).db.name}-notify.sh health`), name);
     assert.match(files['deploy/install-backup.sh'], /^units="backup restore-check health report"$/m, name);
