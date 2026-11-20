@@ -18,7 +18,7 @@ const vars = buildVars(data, data.sync.targets.find((t) => t.project === 'study-
 const fixture = (name) => fs.readFileSync(path.join(root, 'scripts/test/fixtures/study-log', `${name}.txt`), 'utf8').replace(/\r\n/g, '\n');
 const withoutHeader = (text) => text.split('\n').filter((line) => !hasHeader(line)).join('\n');
 
-const rendered = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars });
+const rendered = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app'], vars });
 const byPath = Object.fromEntries(rendered.map((f) => [f.path, f]));
 
 test('an optional dependency is written only into a package.json that already lists it (#704)', () => {
@@ -78,7 +78,7 @@ function ignoredBy(patterns, file) {
 test('every managed file Prettier would format is in .prettierignore, so npm run format keeps the hashes (#154)', () => {
   const patterns = withoutHeader(byPath['.prettierignore'].content).split('\n').filter((l) => l && !l.startsWith('#'));
   // Include the feature folders (ui #123, e2e and vitest #33), which apps get once the feature is on.
-  const withUi = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app', 'ui', 'e2e', 'vitest', 'lighthouse', 'msw', 'query'], vars });
+  const withUi = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app', 'ui', 'e2e', 'vitest', 'lighthouse', 'msw', 'query'], vars });
   const formatted = withUi.filter((f) => f.mode === 'full' && /\.(md|json|ya?ml|[cm]?js|tsx?|css|html)$/.test(f.path));
   assert.ok(formatted.length > 20);
   assert.deepEqual(formatted.map((f) => f.path).filter((p) => !ignoredBy(patterns, p)), []);
@@ -100,7 +100,7 @@ test('the app ESLint config takes the named react-refresh export, whose configs.
 
 test('section files keep what the project added below the marker', () => {
   const existing = { '.gitignore': `old/\n${PROJECT_MARKER}\ntest-results/\nplaywright-report/\n` };
-  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars, readExisting: (p) => existing[p] ?? null });
+  const files = renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app'], vars, readExisting: (p) => existing[p] ?? null });
   assert.match(files.find((f) => f.path === '.gitignore').content, new RegExp(`${PROJECT_MARKER}\ntest-results/\nplaywright-report/\n$`));
 });
 
@@ -138,7 +138,7 @@ test('versions.json dependencies become managed fields of the app package files 
   assert.throws(() => sharedDependencyFields(index, 'app', dotted), /"tesseract\.js" contains a dot/);
   const twice = structuredClone(data);
   twice.versions.dependencies.root.devDependencies['@sirloinbh/eslint-config'] = '1.0.0';
-  assert.throws(() => renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars: buildVars(twice, data.sync.targets[0], { centralSha: 'x' }) }), /set by both templates\/index\.json fields and versions\.json dependencies/);
+  assert.throws(() => renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app'], vars: buildVars(twice, data.sync.targets[0], { centralSha: 'x' }) }), /set by both templates\/index\.json fields and versions\.json dependencies/);
 });
 
 test('a manifest built from the render accepts the rendered files and catches edits', () => {
@@ -173,7 +173,7 @@ test('two folders may not produce the same target path', () => {
 
 test('the tool-token verifier files are vendored to shared-ai only, copied as they are (#672)', () => {
   const paths = ['backend/test/standard/tools.ts', 'backend/test/standard/audit.ts', 'backend/test/standard/db.ts'];
-  const render = (repo) => renderProfile({ root, profile: 'service', folders: ['common', 'deploy', 'service'], vars: buildVars(data, data.sync.targets.find((t) => t.repo === repo), { centralSha: 'abcdef1234567' }) });
+  const render = (repo) => renderProfile({ root, profile: 'service', folders: ['common', 'deploy', 'backend', 'service'], vars: buildVars(data, data.sync.targets.find((t) => t.repo === repo), { centralSha: 'abcdef1234567' }) });
   const ai = render('sirloinbh/shared-ai');
   for (const target of paths) {
     const file = ai.find((f) => f.path === target);

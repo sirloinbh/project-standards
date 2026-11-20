@@ -13,7 +13,7 @@ const root = path.join(import.meta.dirname, '..', '..');
 const { data } = loadAll(root);
 const render = (project) => {
   const vars = buildVars(data, data.sync.targets.find((t) => t.project === project), { centralSha: 'a'.repeat(40) });
-  return Object.fromEntries(renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'app'], vars }).map((f) => [f.path, f.content]));
+  return Object.fromEntries(renderProfile({ root, profile: 'app', folders: ['common', 'deploy', 'backend', 'app'], vars }).map((f) => [f.path, f.content]));
 };
 const study = render('study-log');
 
