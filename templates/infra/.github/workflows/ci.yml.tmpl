@@ -6,6 +6,12 @@ on: [push, pull_request]
 permissions:
   contents: read
 
+# A new push to a pull request branch cancels that branch's older run. A run on main is never cancelled:
+# autodeploy treats a cancelled run of a commit as a failure, so main runs get a group of their own (#873).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   ci:
     uses: sirloinbh/project-standards/.github/workflows/reusable-infra-ci.yml@{{central.workflowSha}}
