@@ -1,4 +1,4 @@
-// Tests the managed backend file templates/app/backend/src/standard/db.ts (#676): the pool error listener and the
+// Tests the managed backend file templates/app/backend/src/standard/db.ts (#676, #832): the pool and client error listeners and the
 // transaction helper, including a failed ROLLBACK that destroys the connection.
 import assert from 'node:assert/strict';
 import test from 'node:test';
@@ -19,13 +19,20 @@ function fakePool({ failOn } = {}) {
   return { log, listeners, connect: async () => client, on: (event, fn) => listeners.push([event, fn]) };
 }
 
-test('createPool adds an error listener that logs instead of crashing', () => {
+test('createPool listens on the pool quietly and on every connected client, which logs', () => {
   const pool = fakePool();
   const seen = [];
   assert.equal(createPool(pool, (message, err) => seen.push([message, err.message])), pool);
-  assert.equal(pool.listeners[0][0], 'error');
-  pool.listeners[0][1](new Error('lost'));
-  assert.deepEqual(seen, [['Idle database client failed', 'lost']]);
+  assert.deepEqual(pool.listeners.map(([event]) => event), ['error', 'connect']);
+  // An idle client reports on the pool and on itself: the pool-level listener must not throw and must not log.
+  pool.listeners[0][1](new Error('idle'));
+  assert.deepEqual(seen, []);
+  // A client in a transaction has only its own listener (pg removes the pool's while it is checked out).
+  const clientListeners = [];
+  pool.listeners[1][1]({ on: (event, fn) => clientListeners.push([event, fn]) });
+  assert.equal(clientListeners[0][0], 'error');
+  clientListeners[0][1](new Error('lost'));
+  assert.deepEqual(seen, [['Database connection failed', 'lost']]);
 });
 
 test('withTransaction commits and returns the result', async () => {
