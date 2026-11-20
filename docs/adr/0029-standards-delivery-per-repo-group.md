@@ -1,6 +1,6 @@
 # 0029. Standards delivery per repo group; utilities become sync targets
 
-- Status: Proposed (issue #941, parent #940; the choices under "Choices for the user" are waiting for the user)
+- Status: Accepted (issue #941, parent #940; user decisions relayed 2026-11-21: 1A, 2A, 3A, 4A, and the G1-G3 defaults)
 - Date: 2026-11-21
 - Builds on: [ADR-0001](0001-a-b-distribution-roles.md) (packages and file sync), [ADR-0005](0005-shared-aws-infrastructure-exception.md) (infra profile), [ADR-0013](0013-plugin-for-repos-outside-sync.md) (plugin for repos outside sync; this ADR replaces its decision 3).
 
@@ -88,20 +88,22 @@ Cells: **Sync** (arrives through the group's channel: self-copy for the hub, syn
 | Files generated from the registry (`apps.json`, `apps.generated.ts`) | Source (`registry/`) | Sync where the target lists `generatedFiles` (`shared-aws-infrastructure`, `shared-ai`) | No | No |
 | Scaffold (`scaffold/app/`) | Source | No | No | No: only for creating a new app repo |
 
-## Gaps found in the other groups (follow-up issues, not decided here)
+## Gaps found in the other groups (follow-up issues; the user accepted the proposed defaults)
 
 - **G1. Infra `AGENTS.md` and `CLAUDE.md` are hand-written copies** of the common procedure (design.md 9.2 says the common part is applied, but `templates/infra/` has only `ci.yml`). Proposed: give `infra` the same split the services have (managed `AGENTS.md` and `CLAUDE.md`, repo rules in `AGENTS.project.md`).
 - **G2. The two services get no Node version files and no `dependabot.yml`**, although each has `backend/package.json`. Proposed: research what fits (`.nvmrc`, `.node-version`, security-only Dependabot) and add it to `templates/service/` or `templates/backend/`.
 - **G3. The hub's own `.editorconfig`, `.gitattributes`, and `.vscode/settings.json` are not in `SELF_COPIES`.** `.vscode/settings.json` has drifted: it still starts `%LOCALAPPDATA%\gh-workout-memo\project-terminal.ps1`, the old location `AGENTS.md` says not to use. Proposed: add them to `scripts/build-self.mjs`.
 
-## Choices for the user
+## Choices and the user's decisions (2026-11-21)
+
+The user chose option A in all four.
 
 1. **How utilities receive the shared skills.** A (recommended): the `utility` sync profile above. B: keep the plugin and widen it to every skill in `templates/common/skills/` without template variables. B is a small change to `scripts/build-plugin.mjs`, but keeps the silent-failure install step and still cannot deliver permission rules, Codex files, GitHub templates, or a drift check.
 2. **The plugin after the utilities are synced.** A (recommended): remove it, so there is one channel (it can be rebuilt from git history). B: keep building it for a future repo outside sync; then it must stay disabled in every synced repo.
-3. **Utilities' `.claude/settings.json`.** A (recommended): fully managed, like every other target. `develop-skill` loses its repo-level list of 8 turned-off plugins; the user moves those to user settings or `.claude/settings.local.json`. B: leave the file repo-owned for utilities; then the guard hooks are not registered and do not run, so B really means "skills only".
+3. **Utilities' `.claude/settings.json`.** A (recommended): fully managed, like every other target. `develop-skill` loses its repo-level list of 8 turned-off plugins; they move to user settings or `.claude/settings.local.json` before the first sync PR is merged, so none is lost. B: leave the file repo-owned for utilities; then the guard hooks are not registered and do not run, so B really means "skills only".
 4. **Drift check in the utilities.** A (recommended): each utility's own CI gains one `node .standards/check.mjs` step. B: no CI step; only the daily compliance report shows drift.
 
-User steps this needs under choice 1A: install the GitHub App `project-standards-sync` on `develop-skill` and `file-control` ([github-app.md](../github-app.md)), and uninstall the plugin on each PC after choice 2A.
+User steps this needs: install the GitHub App `project-standards-sync` on `develop-skill` and `file-control` ([github-app.md](../github-app.md)), and uninstall the plugin on each PC once it is retired.
 
 ## Consequences
 
@@ -111,10 +113,10 @@ User steps this needs under choice 1A: install the GitHub App `project-standards
 - The compliance report and the repo settings baseline start covering the two utilities.
 - ADR-0013 stays as the record of the plugin research. Its decisions 1, 2, and 4 hold; decision 3 is replaced by this ADR.
 
-## Follow-up work (filed under #940 after the user answers)
+## Follow-up work (sub-issues of #940)
 
 - Add the `utility` profile, make `ci` optional, add the two targets, update tests and the snapshot.
 - `[Manual]` Install the GitHub App on the two utility repos.
 - Onboard `file-control` and `develop-skill`: review and merge the first sync PR, drop the plugin settings, add the check step to their CI, trim `file-control`'s `CLAUDE.md`.
-- Retire the plugin (choice 2A) and update `docs/tools.md`.
+- Retire the plugin and update `docs/tools.md`.
 - G1, G2, G3 above, one issue each.

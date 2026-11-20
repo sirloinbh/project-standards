@@ -6,7 +6,7 @@ Docs only. No sync behavior changes in this PR.
 
 | File | Content |
 |---|---|
-| `docs/adr/0029-standards-delivery-per-repo-group.md` | New ADR (Proposed): the 4 repo groups, a matrix of file families x groups (sync / do not sync / plugin only, with a reason), the decision to make the utilities sync targets with a `utility` profile and retire the plugin, 3 gaps found in the other groups, and 4 choices for the user |
+| `docs/adr/0029-standards-delivery-per-repo-group.md` | New ADR (Accepted; the user chose option A in all four choices on 2026-11-21): the 4 repo groups, a matrix of file families x groups (sync / do not sync / plugin only, with a reason), the decision to make the utilities sync targets with a `utility` profile and retire the plugin, 3 gaps found in the other groups, and the 4 choices |
 | `docs/design.md` | Key-decision row for ADR-0029, a note that the 5.4 config block is the initial value, and a new section 5.5 with the per-group summary |
 
 ## How it was surveyed
