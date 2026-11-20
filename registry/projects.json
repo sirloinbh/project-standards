@@ -282,7 +282,8 @@
         "db": 15405
       },
       "ghcr": {
-        "push": true
+        "push": true,
+        "pull": true
       },
       "db": {
         "name": "money",
