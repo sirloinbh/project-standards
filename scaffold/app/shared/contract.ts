@@ -1,6 +1,6 @@
 // Source of truth for input schemas shared by the API and the screens. Opt-in (ADR-0026): the scaffold writes this
 // file only when the project's `features.contract` is on.
-// `npm run contract:sync` copies this file to backend/src and frontend/src; never edit the copies.
+// `npm run contract:sync` copies this file to backend/src (never edit the copy); the frontend imports this file directly.
 import { z } from 'zod/v4';
 
 // An id is a number or a string of digits, up to 15 digits like parseId in the backend (ADR-0025). The old

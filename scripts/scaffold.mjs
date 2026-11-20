@@ -23,7 +23,7 @@ export const RUNBOOKS = {
   'daily.md': 'docs/daily/README.md',
   'next-steps.md': 'docs/next-steps/README.md',
 };
-export const CONTRACT_COPIES = ['backend/src/contract.ts', 'frontend/src/contract.ts'];
+export const CONTRACT_COPIES = ['backend/src/contract.ts'];
 
 function walk(dir, base = dir) {
   return fs
