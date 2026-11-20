@@ -17,7 +17,6 @@ This standard is based on the workout-memo structure. New projects follow it as 
 │     ├─ <feature>.tsx                      # one file per screen
 │     ├─ components/ui/                     # shadcn/ui shared components (centrally managed, #123)
 │     ├─ lib/                               # utilities such as cn()
-│     ├─ contract.ts                        # copy of shared/contract.ts (do not edit directly)
 │     └─ test/                              # test helpers
 ├─ backend/                                 # subtree → <project>-backend
 │  ├─ Dockerfile  package.json  package-lock.json  tsconfig.json
@@ -162,8 +161,8 @@ The basis for the rules is workout-memo. The scaffold adds the parts the other 7
 ## Shared contract (shared/contract.ts)
 
 - `shared/contract.ts` is the single source of input schemas. It is opt-in (`features.contract`, ADR-0026): an app without it has no contract files, and `contract:check` passes with a note.
-- `npm run contract:sync` copies it to `backend/src/contract.ts` and `frontend/src/contract.ts`. This is so each area can build on its own in the subtree repos and the Docker build.
-- Do not edit the copies directly. `contract:check` in `npm run check` fails on any mismatch.
+- The frontend imports `shared/contract.ts` directly (a relative path such as `../../shared/contract`; `frontend/tsconfig.json` includes `../shared`). The Docker builds use the repo root as the context, so `shared/` is there (ADR-0022, #784).
+- `npm run contract:sync` copies it to `backend/src/contract.ts`, because the backend builds with `tsc` and `src/` is its root. Do not edit that copy directly; `contract:check` in `npm run check` fails on any mismatch. Moving the backend root to the repo root would remove the copy but changes `dist/` paths (start command, Dockerfile, migrations path).
 
 ## OpenAPI
 

@@ -149,7 +149,7 @@
             "e2e": { "type": "boolean", "description": "Uses Playwright browser tests. Turns on the CI e2e job and the playwright.config.ts template (templates/e2e) (#33)" },
             "e2eVisual": { "type": "boolean", "description": "Runs e2e in a Playwright container pinned by digest (versions.json images.playwright) with E2E_VISUAL=1 and compares screenshots. Turn on only when e2e and the db:migrate runner exist (#203)" },
             "openapi": { "type": "boolean" },
-            "contract": { "type": "boolean", "description": "Uses the shared input contract shared/contract.ts with its two copies and `npm run contract:sync` (ADR-0026). Off for new apps: the scaffold writes the contract files only when this is on. Turn on when routes and screens share an enum or schema" },
+            "contract": { "type": "boolean", "description": "Uses the shared input contract shared/contract.ts with its backend copy and `npm run contract:sync` (ADR-0026). Off for new apps: the scaffold writes the contract files only when this is on. Turn on when routes and screens share an enum or schema" },
             "ui": { "type": "boolean", "description": "Syncs the shared UI components (templates/ui). Turn on after installing dependencies such as radix-ui in the app (#123, #126)" },
             "vitest": { "type": "boolean", "description": "Syncs the component test setup frontend/vitest.config.ts (templates/vitest). Turn on after installing vitest, jsdom, and Testing Library (#33)" },
             "devcontainer": { "type": "boolean", "description": "Syncs the Dev Container setup for a new PC (.devcontainer/, templates/devcontainer). Node uses versions.json images.devcontainerNode, and the DB uses the db service in the app's compose.yaml (#282)" },

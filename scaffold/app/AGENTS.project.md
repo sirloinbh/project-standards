@@ -22,4 +22,4 @@ This file holds rules that apply only to {{project.name}}. The common instructio
 
 - Unit tests: `npm test`. The backend uses node:test (`backend/test`), and the UI uses Vitest and Testing Library (`frontend/src/*.test.tsx`).
 - Browser checks: `npm run test:e2e`. Point `E2E_DATABASE_URL` (or `TEST_DATABASE_URL` if it is not set) at a test DB prepared with `db:migrate`. It uses API port {{project.ports.e2eApi}} and web port {{project.ports.e2eWeb}}, and never points at a personal DB.
-- If the app has `shared/contract.ts` (opt-in, ADR-0026): edit it, then run `npm run contract:sync`. Do not edit the copies directly.
+- If the app has `shared/contract.ts` (opt-in, ADR-0026): edit it, then run `npm run contract:sync`. Do not edit the copy `backend/src/contract.ts` directly; the frontend imports `shared/contract.ts` itself.
