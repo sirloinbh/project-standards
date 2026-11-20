@@ -112,3 +112,35 @@ test('a failed request shows an alert', async () => {
   ask('Hello');
   expect(await screen.findByRole('alert')).toHaveTextContent('Cannot reach the AI service');
 });
+
+// A streamed answer that stays open until the request is aborted, like a real fetch.
+function openStream(signal: AbortSignal | undefined) {
+  return new Response(
+    new ReadableStream({
+      start(controller) {
+        signal?.addEventListener('abort', () => controller.error(new Error('aborted')));
+      },
+    }),
+    { status: 200, headers: { 'content-type': 'text/event-stream' } },
+  );
+}
+
+test('a turn cancelled by New conversation does not end the busy state of the next turn', async () => {
+  const fetchMock = vi
+    .fn()
+    .mockImplementation((_url: string, init: RequestInit) =>
+      Promise.resolve(openStream(init.signal as AbortSignal)),
+    );
+  vi.stubGlobal('fetch', fetchMock);
+  openPanel();
+  ask('first');
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+  fireEvent.click(screen.getByRole('button', { name: 'New conversation' }));
+  ask('second');
+  await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+  // Let the cancelled first request settle.
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  ask('third');
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  expect(fetchMock).toHaveBeenCalledTimes(2);
+});
