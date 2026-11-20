@@ -50,3 +50,7 @@ ADR-0017 puts an AI shell in every web app: a chat panel opened from the top bar
 ## Turned on for workout-memo (2026-11-20)
 
 shared-ai #23 serves `/api/chat` (deployed, health 200, preflight from `https://workout-memo.daysofme.com` answers 204 with credentials allowed). `AI_OWNER_ID` was missing in `/opt/shared-ai/.env`; it was set to the only user of the shared-auth database (checked: one row), after a backup of the file, and shared-ai was redeployed with `deploy/deploy.sh --no-pull`. `features.aiShell` is now `true` for workout-memo only. The other 7 apps follow after the live check.
+
+## Fix: unused export (2026-11-20)
+
+`applyEvent` in `lib/use-ai-chat.ts` was exported "for tests" but no test imports it, so strict knip failed in every app with `knipStrict` (found on dev-career-portfolio#154). It is no longer exported; knip in a real app shows none of the AI shell files as unused.
