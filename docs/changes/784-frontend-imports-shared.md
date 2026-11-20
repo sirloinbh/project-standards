@@ -21,3 +21,7 @@ Option B: set the backend `rootDir` to the repo root and update the start comman
 ## Checks
 
 - `npm run check`: see the PR.
+
+## Follow-up: knip
+
+`templates/app/knip.json` no longer ignores `frontend/src/contract.ts`; the frontend copy does not exist any more.
