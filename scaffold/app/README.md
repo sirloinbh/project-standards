@@ -11,7 +11,6 @@ Node.js **{{versions.node}}**, npm **{{versions.npm}}**. The common rules come f
 | `npm ci` | Install dependencies (`.npmrc` blocks install scripts) |
 | `npm run check` | Format, lint, contract copy, skill copy, types, tests, build |
 | `npm run standards:check` | Check the centrally managed files and the registry values |
-| `npm run lockfiles:sync` | After changing dependencies, align the `frontend/` and `backend/` lockfiles to the root lockfile versions (no install) |
 | `npm run test:e2e` | Playwright browser checks (needs a test DB) |
 | `npm run db:migrate` | Apply DB migrations |
 | `npm run openapi` | Regenerate `docs/openapi.json` after changing the API |

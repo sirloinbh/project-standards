@@ -2,7 +2,7 @@
   "$schema": "./sync.config.schema.json",
   "profiles": {
     "app": {
-      "templates": ["common", "deploy", "backend", "app"],
+      "templates": ["common", "deploy", "app"],
       "packages": ["@sirloinbh/eslint-config", "@sirloinbh/prettier-config", "@sirloinbh/tsconfig", "@sirloinbh/design-tokens", "@sirloinbh/auth-client"],
       "ci": "reusable-app-ci.yml",
       "featureTemplates": { "ui": "ui", "e2e": "e2e", "vitest": "vitest", "devcontainer": "devcontainer", "lighthouse": "lighthouse", "msw": "msw", "query": "query", "jobs": "jobs" },
