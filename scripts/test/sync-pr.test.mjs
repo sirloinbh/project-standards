@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { createAppJwt, createClient, getInstallationToken } from '../lib/github-app.mjs';
 import { MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll } from '../lib/registry.mjs';
-import { centralChanges, gitBlobSha, renderBody, syncTarget, verifyPackages } from '../lib/sync-pr.mjs';
+import { adoptionNotes, centralChanges, gitBlobSha, renderBody, syncTarget, verifyPackages } from '../lib/sync-pr.mjs';
 import { apply } from '../sync.mjs';
 import { fakePublishedCentral, fakeRepo } from './fake-github.mjs';
 
@@ -333,4 +333,23 @@ test('a first sync PR has no central changes section: there is no earlier synced
   const first = await syncTarget({ root, data, target: studyTarget, centralSha: SHA1, api: repo.api });
   assert.equal(first.status, 'opened');
   assert.doesNotMatch(repo.pulls[0].body, /Central changes since/);
+});
+
+// #910: a changed managed file with an adoption rule (#906) is named in the PR body with the repo-owned file to adopt it in.
+test('adoptionNotes names the helper and the repo-owned file for each changed managed file with a rule', () => {
+  const change = (p) => ({ path: p, isNew: false, source: 'x' });
+  assert.deepEqual(adoptionNotes([change('backend/src/standard/auth.ts')]), ['- `backend/src/standard/auth.ts` changed: `listenHost` must be used by the repo-owned `backend/src/server.ts`. `standards-check` warns when it is not.']);
+  const all = adoptionNotes([change('backend/src/standard/db.ts'), change('backend/src/standard/tools.ts'), change('backend/src/standard/auth.ts'), change('README.md')]);
+  assert.equal(all.length, 3);
+  assert.match(all.join('\n'), /`createPool` must be used by the repo-owned `backend\/src\/server\.ts, pool\.ts or db\.ts/);
+  assert.match(all.join('\n'), /`registerToolRoutes` must be used by the repo-owned `backend\/src\/app\.ts, backend\/src\/server\.ts`/);
+  assert.deepEqual(adoptionNotes([change('backend/src/standard/http.ts'), change('deploy/autodeploy.sh')]), []);
+  assert.deepEqual(adoptionNotes([]), []);
+});
+
+test('the sync PR body puts the adoption notes under Impact, and has none for other files', () => {
+  const base = { target: studyTarget, centralSha: SHA2, deletions: [], keptRemoved: [], packageNotes: [] };
+  const withAuth = renderBody({ ...base, changes: [{ path: 'backend/src/standard/auth.ts', isNew: false, source: 'x' }] });
+  assert.match(withAuth, /## Impact\n- After merging[^\n]*\n- `backend\/src\/standard\/auth\.ts` changed: `listenHost` must be used by the repo-owned `backend\/src\/server\.ts`/);
+  assert.doesNotMatch(renderBody({ ...base, changes: [{ path: 'deploy/autodeploy.sh', isNew: false, source: 'x' }] }), /must be used by the repo-owned/);
 });
