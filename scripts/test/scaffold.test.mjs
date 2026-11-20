@@ -6,7 +6,7 @@ import path from 'node:path';
 import test from 'node:test';
 import { checkAll, loadAll } from '../lib/registry.mjs';
 import { CONTRACT_COPIES, packageVars, renderScaffold, RUNBOOKS, writeScaffold } from '../scaffold.mjs';
-import { runCheck } from '../standards-check.mjs';
+import { checkComposeWarnings, runCheck } from '../standards-check.mjs';
 
 const root = path.join(import.meta.dirname, '..', '..');
 const sha = 'a'.repeat(40);
@@ -233,4 +233,12 @@ test('idSchema takes digits only, up to 15 like parseId, and no longer coerces "
   assert.ok(text.includes(pattern), 'same pattern as ID_PATTERN in standard/http.ts');
   const http = fs.readFileSync(path.join(root, 'templates/app/backend/src/standard/http.ts'), 'utf8');
   assert.ok(http.includes(`export const ID_PATTERN = ${pattern};`));
+});
+
+test('the scaffold gives api a healthcheck on /api/health and web waits for it (#875)', () => {
+  const compose = byPath.get('compose.yaml');
+  const api = compose.match(/^ {2}api:\n([\s\S]*?)^ {2}web:/m)[1];
+  assert.match(api, /^ {4}healthcheck:\n {6}test: \['CMD', 'node', '-e', "fetch\('http:\/\/127\.0\.0\.1:\d+\/api\/health'\)/m);
+  assert.match(compose, /^ {4}depends_on:\n {6}api: \{ condition: service_healthy \}\n/m);
+  assert.deepEqual(checkComposeWarnings(compose), []);
 });
