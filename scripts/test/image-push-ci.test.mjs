@@ -1,5 +1,6 @@
 // The reusable app CI can push images to GHCR on main, off by default (ADR-0023, #754).
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
@@ -85,4 +86,24 @@ test('the image name the service CI pushes is the one the service deploy pulls',
   const deploy = read('templates/deploy/deploy/remote-deploy.sh.tmpl');
   assert.match(deploy, /docker pull --quiet "\{\{project\.deploy\.registry\}\}\/\$image:\$1"/);
   assert.match(read('scripts/lib/vars.mjs'), /images: `\$\{project\.name\}-backend`/);
+});
+
+// A network blip in the image build must not fail main CI and so stop the deploy (#923).
+test('every docker build and push in the image-push job goes through retry, which tries 3 times and then fails', () => {
+  for (const [name, text] of [['app', reusable], ['service', service]]) {
+    const push = job(text, 'image-push');
+    const lines = push.split('\n').filter((l) => /^\s+(retry )?docker (build|push)\b/.test(l));
+    assert.ok(lines.length >= 2, `${name}: build and push found`);
+    for (const l of lines) assert.match(l.trim(), /^retry docker /, `${name}: ${l.trim().slice(0, 40)}`);
+    const fn = /^\s+(retry\(\) \{.*\})$/m.exec(push)?.[1];
+    assert.ok(fn, `${name}: retry function`);
+    assert.match(fn, /for n in 1 2 3/);
+    if (spawnSync('bash', ['--version']).status !== 0) continue;
+    const run = (body) => spawnSync('bash', ['-c', `set -euo pipefail; ${fn.replace(/sleep \$\(\(n \* 10\)\)/, 'sleep 0')}; c=0; ${body}`], { encoding: 'utf8' });
+    const flaky = run('f() { c=$((c+1)); [ $c -ge 3 ]; }; retry f; echo "calls=$c"');
+    assert.equal(flaky.status, 0, flaky.stderr);
+    assert.match(flaky.stdout, /calls=3/);
+    const broken = run('g() { c=$((c+1)); return 1; }; retry g || echo "gave up after $c"');
+    assert.match(broken.stdout, /gave up after 3/);
+  }
 });
