@@ -13,7 +13,7 @@ Rule documents: [Tech stack](docs/stack.md) · [Dependency policy](docs/dependen
 
 ## Current status
 
-This repo is in the operating phase. All 8 apps, the infrastructure repo, and the shared service repos (`shared-auth`, `shared-ai`) are sync targets (listed in `sync.config.json`; a target is paused with `enabled: false`), and a sync PR opens in each sub-repo when a change is merged to central main. Check sub-repo status in the daily-updated [compliance status](docs/compliance.md). Work order follows the GitHub issue priority labels and the [std-backlog](templates/common/skills/std-backlog/SKILL.md) rules.
+This repo is in the operating phase. All 8 apps, the infrastructure repo, the shared service repos (`shared-auth`, `shared-ai`), and the utilities (`develop-skill`, `file-control`, agent files only, [ADR-0029](docs/adr/0029-standards-delivery-per-repo-group.md)) are sync targets (listed in `sync.config.json`; a target is paused with `enabled: false`), and a sync PR opens in each sub-repo when a change is merged to central main. Check sub-repo status in the daily-updated [compliance status](docs/compliance.md). Work order follows the GitHub issue priority labels and the [std-backlog](templates/common/skills/std-backlog/SKILL.md) rules.
 
 ## Getting started
 
@@ -27,7 +27,7 @@ This repo is in the operating phase. All 8 apps, the infrastructure repo, and th
 | `npm test` | Tests only |
 | `npm run registry:check` | Checks for port, DB name, and repo name conflicts and verifies the port formula |
 | `npm run docs` | Regenerates `docs/projects.md` |
-| `npm run sync:preview` | Builds the files the 11 repos would receive into `.local/sync-preview/` |
+| `npm run sync:preview` | Builds the files the 13 repos would receive into `.local/sync-preview/` |
 
 To preview the result merged with local clones, run something like `node scripts/sync.mjs --dry-run --out .local/sync-preview --local study-log=../study-log`.
 

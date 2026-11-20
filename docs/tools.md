@@ -147,7 +147,7 @@ The synced `.vscode/settings.json` turns on cleanup on save, along with the term
 
 ## Repo batch commands and VS Code workspace (tools/repos.mjs)
 
-It handles this repo and the target repos in `sync.config.json` (8 apps, shared-aws-infrastructure, shared-auth, and shared-ai) all at once (#276). It assumes the clones are in this repo's parent folder; if not, add `--base <folder>`.
+It handles this repo and the target repos in `sync.config.json` (8 apps, shared-aws-infrastructure, shared-auth, shared-ai, develop-skill, and file-control) all at once (#276). It assumes the clones are in this repo's parent folder; if not, add `--base <folder>`.
 
 ```powershell
 node tools/repos.mjs status            # branch, uncommitted changes, behind/ahead of origin/main (--fetch fetches first)

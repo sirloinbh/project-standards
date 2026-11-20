@@ -38,6 +38,8 @@
     { "repo": "sirloinbh/dev-career-portfolio", "profile": "app", "project": "dev-career-portfolio" },
     { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null, "generatedFiles": { "apps.json": "apps-json" } },
     { "repo": "sirloinbh/shared-auth", "profile": "service", "project": null },
-    { "repo": "sirloinbh/shared-ai", "profile": "service", "project": null, "generatedFiles": { "backend/src/apps.generated.ts": "apps-ts" } }
+    { "repo": "sirloinbh/shared-ai", "profile": "service", "project": null, "generatedFiles": { "backend/src/apps.generated.ts": "apps-ts" } },
+    { "repo": "sirloinbh/develop-skill", "profile": "utility", "project": null },
+    { "repo": "sirloinbh/file-control", "profile": "utility", "project": null }
   ]
 }
