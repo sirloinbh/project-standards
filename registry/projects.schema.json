@@ -143,7 +143,7 @@
         },
         "features": {
           "type": "object",
-          "required": ["e2e", "e2eVisual", "openapi", "contract", "ui", "vitest", "claude", "devcontainer", "lighthouse", "msw", "query", "knipStrict", "darkOnly", "jobs"],
+          "required": ["e2e", "e2eVisual", "openapi", "contract", "ui", "vitest", "claude", "devcontainer", "lighthouse", "msw", "query", "knipStrict", "darkOnly", "jobs", "aiShell"],
           "additionalProperties": false,
           "properties": {
             "e2e": { "type": "boolean", "description": "Uses Playwright browser tests. Turns on the CI e2e job and the playwright.config.ts template (templates/e2e) (#33)" },
@@ -159,6 +159,7 @@
             "knipStrict": { "type": "boolean", "description": "The CI knip step fails if it reports anything. When off, it only warns. Turn on only for apps whose npm run knip result is 0 (#342)" },
             "darkOnly": { "type": "boolean", "description": "The app uses dark mode only. It renders dark from the first paint, hides the theme menu, and uses a dark background for PWA colors. When off, users choose light, dark, or system (ADR-0011, #354)" },
             "jobs": { "type": "boolean", "description": "Background jobs on pg-boss in the app's own Postgres, worked inside the api process (ADR-0018). Syncs backend/src/standard/jobs.ts (templates/jobs). The file imports only types, so it can be turned on before the app PR that installs pg-boss in backend (#556)" },
+            "aiShell": { "type": "boolean", "description": "Show the AI shell button in the top bar (ADR-0017, #612). Rendered into frontend/src/lib/ai-config.ts. Turn on per app only after shared-ai serves /api/chat" },
             "claude": { "type": "boolean", "description": "The backend uses the Claude API. The deploy script reads ANTHROPIC_API_KEY from AWS SSM and passes it on, and the central command tools/app-secrets.mjs puts it in the local .env (ADR-0010, #265)" }
           }
         },

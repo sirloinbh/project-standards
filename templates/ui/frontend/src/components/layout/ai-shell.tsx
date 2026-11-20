@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router';
 
 import { aiOrigin } from '../../lib/ai-chat';
+import { AI_SHELL } from '../../lib/ai-config';
 import { CURRENT_APP } from '../../lib/apps';
 import { ROOT_DOMAIN } from '../../lib/auth-config';
 import { type ToolCallView, useAiChat } from '../../lib/use-ai-chat';
@@ -130,7 +131,8 @@ function ChatPanel({ origin }: { origin: string }) {
 
 /** The top bar button and its panel. `origin` is for tests; the app derives it from its address. */
 function AiShell({ origin }: { origin?: string | null }) {
-  const resolved = origin === undefined ? aiOrigin(window.location, ROOT_DOMAIN) : origin;
+  // An app turns the button on with features.aiShell; an explicit `origin` (tests) skips the flag.
+  const resolved = origin !== undefined ? origin : AI_SHELL ? aiOrigin(window.location, ROOT_DOMAIN) : null;
   if (!resolved) return null;
   return (
     <Sheet>

@@ -9,6 +9,7 @@ All 8 apps use the same screen skeleton and menu (#124). The only things that di
 | `frontend/src/components/layout/app-shell.tsx` | `AppShell`: top bar, main menu (LNB), body (`<main id="main">`), footer, skip-to-content link |
 | `frontend/src/components/layout/theme-toggle.tsx` | Display mode menu (system setting, light, dark). `AppShell` does not render it in `darkOnly` apps |
 | `frontend/src/components/layout/app-switcher.tsx` | `AppSwitcher`: top bar menu that opens each of the 8 apps (#561). Hidden when the list has fewer than two apps |
+| `frontend/src/lib/ai-config.ts` | `AI_SHELL`, rendered from `features.aiShell`. The AI shell button (`ai-shell.tsx`) shows only when it is true; turn it on per app after shared-ai serves `/api/chat` (#612) |
 | `frontend/src/lib/apps.ts` | The app list (`APPS`) and this app's name (`CURRENT_APP`), rendered at sync time from `registry/projects.json` and the root domain in `registry/platform.json` |
 | `frontend/src/lib/theme.ts` | Read, apply, and save the mode (`theme` in `localStorage`). In `darkOnly` apps, reading always returns `dark` |
 | `frontend/src/lib/theme-config.ts` | The `DARK_ONLY` value rendered from the registry's `features.darkOnly` ([ADR-0011](adr/0011-dark-only-option.md)) |

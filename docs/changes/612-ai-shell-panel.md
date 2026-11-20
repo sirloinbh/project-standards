@@ -29,7 +29,7 @@ ADR-0017 puts an AI shell in every web app: a chat panel opened from the top bar
 
 ## What was decided
 
-- **The panel sits in `AppShell`.** All 8 apps already use it, so sync delivers the button without any app change. It is hidden where `aiOrigin` is null (local development, IP, foreign hosts), so existing app tests and dev runs do not change.
+- **The panel sits in `AppShell` and is off by default.** All 8 apps already use it, so sync delivers the code without any app change. The button shows only where the registry sets `features.aiShell` (rendered into `lib/ai-config.ts`, all `false` for now) and the address is under the root domain; turn it on per app after shared-ai serves `/api/chat`.
 - **The server keeps the history.** The client sends one message per turn, so a long chat does not grow the request.
 - **Confirmation is by a separate endpoint** and the stream stays open meanwhile, so the model loop continues on the same stream and a refused call is recorded by the server.
 - **No Markdown rendering** in the first version: answers are plain text, which avoids a new dependency.
@@ -42,3 +42,7 @@ ADR-0017 puts an AI shell in every web app: a chat panel opened from the top bar
 ## Left for later
 
 - The `shared-ai` chat route (lane-7 or a new issue), then "add it to workout-memo first" and the live check (the shell lists workouts, adds one after confirmation, audit client `ai-shell`).
+
+## Hide flag (follow-up PR)
+
+`features.aiShell` (registry, schema, `templates/ui/frontend/src/lib/ai-config.ts.tmpl`) is `false` for all 8 apps, so no app shows a button that cannot work yet. `AiShell` reads `AI_SHELL`; an explicit `origin` prop (tests) skips the flag. `scripts/test/ai-shell-flag.test.mjs` checks the rendered value.
