@@ -1,0 +1,6 @@
+# AI shell: Allow works on the first message of a conversation (#907)
+
+- Cause: `use-ai-chat.ts` kept the conversation id only from the `done` event, but shared-ai sends `done` after the owner answers the confirm card, and `POST /api/chat/confirm` needs the id. `answer()` returned silently without it, so Allow looked normal and did nothing on the first message of a conversation.
+- `lib/ai-chat.ts`: a new first event `start {conversationId}`; the parser accepts it. A client ignores events it does not know, so this template can reach the apps before shared-ai sends it (shared-ai sends it since the shared-ai PR linked on #907).
+- `lib/use-ai-chat.ts`: `start` and `done` both set the conversation id. `answer()` without an id shows "This conversation has no ID yet. Start a new conversation and try again." instead of returning silently. A failed confirm already shows the server's error and marks the call failed; a test covers it.
+- Tests (`ai-shell.test.tsx`): a held-open stream (the real server holds the stream while it waits for Allow) confirms with the id from `start`; Allow without an id shows an alert; a failed confirm shows its error. Before the fix, 3 of 13 failed. After: 13 pass, eslint, tsc clean (run in plan-routine with the files copied in, then restored).
