@@ -156,7 +156,8 @@
         "db": 15403
       },
       "ghcr": {
-        "push": true
+        "push": true,
+        "pull": true
       },
       "db": {
         "name": "health",
