@@ -97,13 +97,13 @@ test('push and pull follow the registry switches and are off for a project that 
     assert.match(files['.github/workflows/ci.yml'], new RegExp(`^ {6}push-images: ${entry.ghcr?.push === true}$`, 'm'), target.repo);
     assert.match(files['deploy/remote-deploy.sh'], new RegExp(String.raw`if \[ "${entry.ghcr?.pull === true ? 'on' : 'off'}" = on \] && pull_images`), target.repo);
   }
-  // Moving one project at a time (#757): workout-memo, shared-auth and shared-ai push, shared-ai, shared-auth and workout-memo pull; nothing else pulls until the user says otherwise.
+  // Moving one project at a time (#757): every app and service pushes, shared-ai, shared-auth and workout-memo pull; nothing else pulls until the user says otherwise.
   const pushing = entries.filter((e) => e.ghcr?.push).map((e) => e.name);
-  assert.deepEqual(pushing.sort(), ['shared-ai', 'shared-auth', 'workout-memo']);
+  assert.equal(pushing.length, entries.length, 'every app and service pushes (#920)');
   assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name).sort(), ['shared-ai', 'shared-auth', 'workout-memo']);
 });
 
-test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pull on for that project only', () => {
+test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pull on for that project only (health-log has no switch here)', () => {
   const copy = structuredClone(data);
   copy.projects.projects.find((p) => p.name === 'study-log').ghcr = { push: true, pull: true };
   copy.projects.sharedServices.find((s) => s.repo === 'shared-auth').ghcr = { push: true };
@@ -113,6 +113,7 @@ test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pu
   const auth = renderFiles(copy, copy.sync.targets.find((t) => t.repo === 'sirloinbh/shared-auth'));
   assert.match(auth['.github/workflows/ci.yml'], /^ {6}push-images: true$/m);
   assert.match(auth['deploy/remote-deploy.sh'], /if \[ "off" = on \] && pull_images/, 'push alone does not turn pulling on');
+  delete copy.projects.projects.find((p) => p.name === 'health-log').ghcr;
   const other = renderFiles(copy, copy.sync.targets.find((t) => t.project === 'health-log'));
   assert.match(other['.github/workflows/ci.yml'], /^ {6}push-images: false$/m);
 });
