@@ -211,7 +211,7 @@ central main push
           ├─ if the open sync PR has commits added by a person: leave the branch alone, notify through a PR comment and a workflow warning, then exit (#367)
           ├─ if an open sync PR exists: rebuild its branch as downstream main + rendered result, force-push, and update the title and body with the latest SHA
           │  otherwise: create a chore/standards-sync-<first 7 chars of central SHA> branch and open a PR
-          └─ PR body: central SHA and compare link, the central PRs merged since the last synced commit (#904), changed-files table, package CHANGELOG excerpts and Release links,
+          └─ PR body: central SHA and compare link, the central PRs merged since the last synced commit (#904), changed-files table, a note for each changed managed file that has an adoption rule (#910), package CHANGELOG excerpts and Release links,
                       checklist (lockfile update, "merge = production deploy"), and for the infra profile a "no apply" statement
 ```
 

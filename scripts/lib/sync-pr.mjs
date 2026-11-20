@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import crypto from 'node:crypto';
 import { mapLimit } from './github-app.mjs';
 import { checkEntry, MANIFEST_PATH } from './manifest.mjs';
+import { ADOPTION_RULES } from '../standards-check.mjs';
 import { planTarget } from './sync-plan.mjs';
 import { loadIndex } from './templates.mjs';
 
@@ -46,6 +47,17 @@ export function centralChanges(root, fromSha, toSha) {
       const title = body.split('\n').find((line) => line.trim()) ?? subject;
       return { number: number ? Number(number) : null, title: title.trim() };
     });
+}
+
+/**
+ * The lines for the changed managed files that have an adoption rule (#910): the helper arrives in a managed file,
+ * but the repo-owned file that must call it is the app's to change. Same rule list as standards-check (#906).
+ */
+export function adoptionNotes(changes) {
+  const paths = new Set(changes.map((c) => c.path));
+  return ADOPTION_RULES.filter((rule) => paths.has(rule.managedFile)).map(
+    (rule) => `- \`${rule.managedFile}\` changed: \`${rule.helper}\` must be used by the repo-owned \`${rule.ownedFile}\`. \`standards-check\` warns when it is not.`,
+  );
 }
 
 /** The `## Why` lines for the central PRs this sync carries (#904); nothing when the list is unknown or empty. */
@@ -95,6 +107,7 @@ export function renderBody({ target, centralSha, changes, deletions, keptRemoved
     '',
     '## Impact',
     app ? '- After merging, the production server may deploy automatically once CI passes.' : '- No effect on infrastructure resources.',
+    ...adoptionNotes(changes),
     '',
   ].join('\n');
 }
