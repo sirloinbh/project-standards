@@ -96,10 +96,10 @@ test('push and pull follow the registry switches and are off for a project that 
     assert.match(files['.github/workflows/ci.yml'], new RegExp(`^ {6}push-images: ${entry.ghcr?.push === true}$`, 'm'), target.repo);
     assert.match(files['deploy/remote-deploy.sh'], new RegExp(String.raw`if \[ "${entry.ghcr?.pull === true ? 'on' : 'off'}" = on \] && pull_images`), target.repo);
   }
-  // Moving one project at a time (#757): workout-memo, shared-auth and shared-ai push, shared-ai also pulls; nothing else pulls until the user says otherwise.
+  // Moving one project at a time (#757): workout-memo, shared-auth and shared-ai push, shared-ai and workout-memo pull; nothing else pulls until the user says otherwise.
   const pushing = entries.filter((e) => e.ghcr?.push).map((e) => e.name);
   assert.deepEqual(pushing.sort(), ['shared-ai', 'shared-auth', 'workout-memo']);
-  assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name), ['shared-ai']);
+  assert.deepEqual(entries.filter((e) => e.ghcr?.pull).map((e) => e.name).sort(), ['shared-ai', 'workout-memo']);
 });
 
 test('ghcr.push and ghcr.pull in the registry turn the CI push and the deploy pull on for that project only', () => {

@@ -37,7 +37,8 @@
         "prefix": null
       },
       "ghcr": {
-        "push": true
+        "push": true,
+        "pull": true
       },
       "features": {
         "e2e": true,
