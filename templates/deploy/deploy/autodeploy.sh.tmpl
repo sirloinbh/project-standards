@@ -93,11 +93,17 @@ esac
 # Run the deploy script of the new commit (git replaces files, the running bash keeps
 # the old inode, so checking out under a running script is safe).
 git checkout --quiet --detach "$full"
-if APPS_DEPLOY_LOCKED=1 bash deploy/remote-deploy.sh deploy "$full"; then
+#
+# The output of the deploy is kept in .last-deploy.log (overwritten by each run), and a failed deploy sends its last lines
+# with the fail signal, so the reason is visible without a shell (#872). Values that look like a token, secret, password or
+# key are masked first; the deploy scripts do not print them, this is a second guard.
+if APPS_DEPLOY_LOCKED=1 bash deploy/remote-deploy.sh deploy "$full" 2>&1 | tee .last-deploy.log; then
   rm -f .autodeploy-failed
   signal ok "deployed $sha"
 else
   echo "$sha" > .autodeploy-failed
-  signal fail "deploy of $sha failed"
+  reason=$(tail -n 20 .last-deploy.log 2> /dev/null | sed -E 's/((TOKEN|SECRET|PASSWORD|KEY)[A-Za-z0-9_]*=)[^[:space:]]+/\1***/g' || true)
+  signal fail "deploy of $sha failed. Last lines of the deploy output:
+$reason"
   exit 1
 fi
