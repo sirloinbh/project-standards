@@ -322,16 +322,15 @@ Read-only: workout-memo, plan-routine and study-log opened signed in at 0.2 to 0
 - Shared Claude API key: `node --test scripts/test/app-secrets.test.mjs`. It uses only a fake AWS CLI (`APP_SECRETS_AWS`) and checks that the value appears neither in output nor in arguments.
 - Account tools: `node --test scripts/test/tools.test.mjs` (Windows-only checks are skipped on other OSes). The install check verifies that the tools are installed and that changed files are backed up. It uses only a fake `gh` and `code`, a temporary user folder, and synthetic tokens, and does not touch real credentials, the installed copy, or VS Code.
 
-## Claude Code plugin for repos outside sync (#515)
+## Claude Code plugin for repos outside sync (retired, #948)
 
-`npm run plugin` generates the `sirloinbh-standards` plugin (`plugins/sirloinbh-standards/`) and the marketplace file (`.claude-plugin/marketplace.json`) from `templates/common/skills/std-*` and `templates/common/.claude/hooks/`. It is for repos that are not sync targets (`file-control`, `develop-skill`); synced repos already have the same files and must not enable it ([ADR-0013](adr/0013-plugin-for-repos-outside-sync.md)). `npm run check` fails when the generated files are out of date.
+The `sirloinbh-standards` plugin (#515) delivered the `std-*` skills and guard hooks to `file-control` and `develop-skill`. Both repos are sync targets with the `utility` profile since #946 and receive the same files, and more, through sync PRs ([ADR-0029](adr/0029-standards-delivery-per-repo-group.md)). The plugin, its build script (`npm run plugin`), and the marketplace file were removed in #948.
+
+**[User] Once per PC that installed it:**
 
 ```powershell
-claude plugin marketplace add sirloinbh/project-standards
-claude plugin install sirloinbh-standards@sirloinbh-standards --scope project
+claude plugin uninstall sirloinbh-standards@sirloinbh-standards
+claude plugin marketplace remove sirloinbh-standards
 ```
 
-- Skills appear as `/sirloinbh-standards:std-*`. Skills with `{{` template variables (`std-implementation`) are left out and listed in the plugin README.
-- Hooks (`block-package-installs`, `block-forbidden-commands`, `pc-setup-notice`) come from the plugin's `hooks/hooks.json` with `${CLAUDE_PLUGIN_ROOT}` paths. Permission rules, `AGENTS.md`, and `.claude/rules/` cannot ship in a plugin; each repo keeps its own.
-- Install once per PC. If the plugin is missing, its skills and hooks are silently absent.
-- Only the repository root `.claude-plugin/marketplace.json` and `plugins/` are new. `sync.mjs` copies only `templates/`, so nothing here reaches app repos.
+Until then the plugin stays in the PC's cache but nothing enables it: neither repo's `.claude/settings.json` lists it any more.

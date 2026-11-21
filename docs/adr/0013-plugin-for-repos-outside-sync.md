@@ -1,6 +1,6 @@
 # 0013. Claude Code plugin only for repos outside sync; file sync stays for synced repos
 
-- Status: Accepted (issue #451; implemented: the plugin `sirloinbh-standards` exists (#451) and the decision was re-checked on 2026-11-14 (#517))
+- Status: Decision 3 superseded by [ADR-0029](0029-standards-delivery-per-repo-group.md): the two repos outside sync became sync targets (#946) and the plugin was removed (#948). Decisions 1, 2, and 4 still hold. Originally: Accepted (issue #451; implemented: the plugin `sirloinbh-standards` exists (#451) and the decision was re-checked on 2026-11-14 (#517))
 - Date: 2026-11-14
 
 ## Context

@@ -21,6 +21,7 @@ These are the steps an agent cannot do for you (secrets, remote account settings
 | 14 | Approve installing the ESLint and Prettier plugins and more | 10 min | #245 | Done (issue closed 2026-10-29) |
 | 15 | Clean up merged local branches | 5 min | — | Not done (added 2026-10-28) |
 | 16 | Apply the git CLI branch rules on the other work PC | 5 min | #361 | `OneDrive\문서\github` PC done (2026-10-31). `Documents\GitHub` PC not done |
+| 17 | Uninstall the retired `sirloinbh-standards` Claude Code plugin on each PC ([tools.md](tools.md), "Claude Code plugin for repos outside sync") | 2 min | #948 | Not done (added 2026-11-21) |
 
 Rows 0, 15 and 16 are local PC state that the agent cannot check, so they keep their last known status. Every other row's issue is closed. The sections below are the step-by-step instructions as they were; they are kept for reference and for setting up another PC. Open user steps now live in issues labelled `needs-user` (for example #573); list them with `gh issue list --label needs-user`.
 

@@ -264,7 +264,7 @@ A file reaches a repo through the template folders of its profile. `templates/co
 |---|---|---|---|---|
 | 1. Hub | `project-standards` | Self-copy (`npm run self`) | General skills, guard hooks, `.claude/settings.json`, `.codex/`, issue and PR templates, `.editorconfig`, `.vscode/settings.json` | Everything else: it holds the sources |
 | 2. Shared services and infra | `shared-auth`, `shared-ai`, `shared-aws-infrastructure` | Sync PR, `service` and `infra` profiles | `common`, a CI caller, `.standards/`; services also `AGENTS.md`, `CLAUDE.md`, server deploy scripts, backend Docker files | App code, UI, packages, design tokens, e2e, app skills and path rules |
-| 3. Utilities | `develop-skill`, `file-control` | Sync PR, `utility` profile (until the rollout under #940 is done: the plugin `sirloinbh-standards`, `std-*` skills and guard hooks only) | `common` and `.standards/` only | `AGENTS.md`, `CLAUDE.md`, CI workflow, tool versions, packages, deploy, all app files |
+| 3. Utilities | `develop-skill`, `file-control` | Sync PR, `utility` profile (since #946; the plugin `sirloinbh-standards` they used before was removed in #948) | `common` and `.standards/` only | `AGENTS.md`, `CLAUDE.md`, CI workflow, tool versions, packages, deploy, all app files |
 | 4. Web apps | The 8 apps | Sync PR, `app` profile | Everything in `common`, `deploy`, `app`, and the feature folders the registry turns on; packages and design tokens | Service-only files, generated registry files |
 
 The full matrix (file family x group, with a reason per cell), the gaps it found, and the user's decisions are in [ADR-0029](adr/0029-standards-delivery-per-repo-group.md).
