@@ -1,11 +1,11 @@
 # Project Standards Agent Instructions
 
-This repository is the central repo for `sirloinbh`'s personal app portfolio (8 apps + `shared-aws-infrastructure` + the shared services `shared-auth` and `shared-ai`). It manages the shared standards: settings, conventions, skills, and fixed project values.
+This repository is the central repo for `sirloinbh`'s personal app portfolio (8 apps + `shared-aws-infrastructure` + the shared services `shared-auth` and `shared-ai` + the utilities `develop-skill` and `file-control`). It manages the shared standards: settings, conventions, skills, and fixed project values.
 
 ## Current phase: operation
 
 - The design source is [docs/design.md](docs/design.md) and [docs/adr/](docs/adr/). The requirements source is [docs/bootstrap-prompt.md](docs/bootstrap-prompt.md).
-- The "12. Phased rollout plan" in design.md is done (#116). `sync.config.json` lists the targets (none has `enabled: false`), so all 8 apps, the infrastructure repo, and the shared service repos (`shared-auth`, `shared-ai`, `service` profile) are sync targets.
+- The "12. Phased rollout plan" in design.md is done (#116). `sync.config.json` lists the targets (none has `enabled: false`), so all 8 apps, the infrastructure repo, the shared service repos (`shared-auth`, `shared-ai`, `service` profile), and the utilities (`develop-skill`, `file-control`, `utility` profile: agent files only) are sync targets. Which file families each group receives is in [ADR-0029](docs/adr/0029-standards-delivery-per-repo-group.md).
 - Order for changing a standard from now on: fix the source in this repo → `npm run check` → merge the PR in this repo (agent) → `sync.yml` opens or updates the sync PRs in the downstream repos → the agent reviews each sync PR, records it on the issue, and merges it once CI is green (#591).
 - When you must add a commit directly to a sync PR (for example when a shared package grows and the lockfile needs an update), do not start the commit message with `chore: sync central standards (project-standards@`. The sync bot does not overwrite a branch that has such a commit; it reports it with a PR comment and a workflow warning (#114, #367). While that PR is open, central changes are not applied, so run the `sync` workflow after merging it.
 - The agent merges the daily compliance report PR (`chore/compliance-report`). Register each new `✗` item as an issue in the affected repo or in this repo.
