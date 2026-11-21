@@ -18,7 +18,7 @@
       "templates": ["common", "deploy", "backend", "service"],
       "packages": [],
       "ci": "reusable-service-ci.yml",
-      "neverTouchExcept": ["backend/src/apps.generated.ts", "backend/test/standard/*.ts", "backend/Dockerfile", "backend/.npmrc", "backend/.dockerignore"],
+      "neverTouchExcept": ["backend/src/apps.generated.ts", "backend/test/standard/*.ts", "backend/Dockerfile", "backend/.npmrc", "backend/.dockerignore", "backend/package.json"],
       "neverTouch": ["backend/**", "compose.yaml", "README.md", ".env.example", "AGENTS.project.md"]
     },
     "utility": {

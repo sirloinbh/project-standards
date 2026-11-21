@@ -62,7 +62,7 @@ Cells: **Sync** (arrives through the group's channel: self-copy for the hub, syn
 | Issue and PR templates | Sync: self-copy | Sync | ***Sync*** (today nothing): `std-git-writing` expects them | Sync |
 | Issue labels (`templates/common/labels.json`, applied by the sync run) | Source | Sync | ***Sync*** (today a manual tool run, `file-control` only): `std-backlog` needs the labels | Sync |
 | CI workflow (`.github/workflows/ci.yml`) | No: own `ci.yml` | Sync: `reusable-service-ci.yml`, `reusable-infra-ci.yml` | No: no shared shape (Windows test matrix; wiki build). Each keeps its own workflow and adds one `node .standards/check.mjs` step | Sync: `reusable-app-ci.yml` |
-| `.github/dependabot.yml` (security updates only) | No: no dependencies | No today (gap G2: the services have `backend/package.json`) | No: no npm dependencies | Sync |
+| `.github/dependabot.yml` (security updates only) | No: no dependencies | Services: Sync since #959 (`/backend` lockfile). Infra: No | No: no npm dependencies | Sync |
 | Repo settings baseline (`docs/repo-settings.md`, compared daily) | Checked by hand (not a sync target) | Sync (checked) | ***Sync*** (checked once they are targets) | Sync (checked) |
 | Compliance: `.standards/` (check script, manifest, secret and IOC scan, blocked packages) and the daily report | No: runs the sources directly in `npm run check` | Sync | ***Sync*** (today nothing): drift in the synced agent files must be visible | Sync |
 
@@ -71,7 +71,7 @@ Cells: **Sync** (arrives through the group's channel: self-copy for the hub, syn
 | File family | 1. Hub | 2. Services and infra | 3. Utilities | 4. Web apps |
 |---|---|---|---|---|
 | `.editorconfig`, `.gitattributes`, central section of `.gitignore`, `.vscode/settings.json` (personal-account terminal) | No today: own copies that nothing checks (gap G3: `.vscode/settings.json` still names the old tool folder) | Sync | ***Sync*** (today nothing): they are correct in any repo, and the terminal profile keeps the personal account | Sync |
-| Node tool versions and lint config (`.nvmrc`, `.node-version`, `.npmrc`, `eslint.config.mjs`, `prettier.config.mjs`, `knip.json`, managed `package.json` fields) | No: `versions.json` is the source | No today (gap G2 for the two services; infra has no Node code) | No: `file-control` supports Node 22 and 24 with zero dependencies; `develop-skill` has no Node code | Sync |
+| Node tool versions and lint config (`.nvmrc`, `.node-version`, `.npmrc`, `eslint.config.mjs`, `prettier.config.mjs`, `knip.json`, managed `package.json` fields) | No: `versions.json` is the source | Services: Sync since #959 for `.nvmrc`, `.node-version`, and the `engines` and `packageManager` fields only (no lint config). Infra: No, no Node code | No: `file-control` supports Node 22 and 24 with zero dependencies; `develop-skill` has no Node code | Sync |
 | Shared packages (`@sirloinbh/eslint-config`, `prettier-config`, `tsconfig`, `auth-client`) | Source (`packages/`) | No: profile `packages` is empty; a service pins what it uses itself | No: no dependencies by rule | Sync: versions as managed fields |
 | Design tokens (`@sirloinbh/design-tokens`) | Source | No: no UI | No: no shared UI | Sync |
 
@@ -91,7 +91,7 @@ Cells: **Sync** (arrives through the group's channel: self-copy for the hub, syn
 ## Gaps found in the other groups (follow-up issues; the user accepted the proposed defaults)
 
 - **G1. Infra `AGENTS.md` and `CLAUDE.md` are hand-written copies** of the common procedure (design.md 9.2 says the common part is applied, but `templates/infra/` has only `ci.yml`). Proposed: give `infra` the same split the services have (managed `AGENTS.md` and `CLAUDE.md`, repo rules in `AGENTS.project.md`). Done in #949: the template keeps the Terraform prohibitions and verification commands word for word, and `CLAUDE.md` now imports both files with `@` (the hand-written one only linked them, which Claude Code does not follow).
-- **G2. The two services get no Node version files and no `dependabot.yml`**, although each has `backend/package.json`. Proposed: research what fits (`.nvmrc`, `.node-version`, security-only Dependabot) and add it to `templates/service/` or `templates/backend/`.
+- **G2. The two services get no Node version files and no `dependabot.yml`**, although each has `backend/package.json`. Proposed: research what fits (`.nvmrc`, `.node-version`, security-only Dependabot) and add it to `templates/service/` or `templates/backend/`. Researched in #950 and done in #959: `engines` and `packageManager` in `backend/package.json` are managed fields (the managed `backend/.npmrc` is `engine-strict`, so a hand-pinned value would break `npm ci` on a central version bump), and the services get `.nvmrc`, `.node-version`, and a security-only `dependabot.yml`. Their dependencies stay their own.
 - **G3. The hub's own `.editorconfig`, `.gitattributes`, and `.vscode/settings.json` are not in `SELF_COPIES`.** `.vscode/settings.json` has drifted: it still starts `%LOCALAPPDATA%\gh-workout-memo\project-terminal.ps1`, the old location `AGENTS.md` says not to use. Proposed: add them to `scripts/build-self.mjs`. Done in #951 for `.editorconfig` and `.vscode/settings.json`; `.gitattributes` stays the hub's own file because it adds a `*.cmd` line for `tools/`.
 
 ## Choices and the user's decisions (2026-11-21)
@@ -115,7 +115,7 @@ User steps this needs: install the GitHub App `project-standards-sync` on `devel
 
 ## Follow-up work (sub-issues of #940)
 
-State on 2026-11-21: the profile (#944), the App install (#945), the targets (#946), the onboarding (#947, `develop-skill#41`, `file-control#333`), the plugin removal (#948), G1 (#949), and G3 (#951) are done. The matrix above describes the state after them; "today" in a cell means before this ADR.
+State on 2026-11-21: the profile (#944), the App install (#945), the targets (#946), the onboarding (#947, `develop-skill#41`, `file-control#333`), the plugin removal (#948), G1 (#949), G2 (#950, #959), and G3 (#951) are done. The matrix above describes the state after them; "today" in a cell means before this ADR.
 
 
 - Add the `utility` profile, make `ci` optional, add the two targets, update tests and the snapshot.

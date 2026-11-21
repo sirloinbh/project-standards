@@ -1,0 +1,25 @@
+# Dependabot is used for security updates only. It does not open version-bump PRs (open-pull-requests-limit: 0).
+# Turn on security updates in the repo settings (Settings → Code security → Dependabot security updates).
+# A shared service has one lockfile, backend/package-lock.json.
+# Security updates are opened as only two PRs: a minor/patch group and a major group (#267). Majors need code review, so they are kept separate.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
+    groups:
+      security-minor-patch:
+        applies-to: security-updates
+        patterns: ['*']
+        update-types: [minor, patch]
+      security-major:
+        applies-to: security-updates
+        patterns: ['*']
+        update-types: [major]
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 0
