@@ -48,7 +48,7 @@ Cells: **Sync** (arrives through the group's channel: self-copy for the hub, syn
 | General skills (`templates/common/skills/`: `std-backlog`, `std-code-review`, `std-communication`, `std-feature-overview`, `std-git-writing`, `std-session-notes`, `orca-lanes`) | Sync: self-copy to `.claude/skills/` | Sync: same issue, PR, and review procedure | ***Sync*** (today plugin only, and without `orca-lanes`): the user wants them synced | Sync |
 | `std-implementation` (rendered with the repo name) | No: the hub's procedure is its own `AGENTS.md` | Sync | ***Sync*** (today nothing): it only names the repo and points at the repo's own instructions | Sync |
 | App skills (`templates/app/skills/`: `std-foundation`, `std-testing`, `std-ux-audit`), `scripts/claude-skills.mjs` | No: they describe the app stack | No: same reason | No: same reason | Sync |
-| `AGENTS.md`, `CLAUDE.md` | No: own files, the source of the procedure | Services: Sync (`templates/service/`). Infra: No today, own hand-written copy (gap G1) | No: each has a single-purpose `CLAUDE.md` that a shared procedure would dilute | Sync (`templates/app/`) |
+| `AGENTS.md`, `CLAUDE.md` | No: own files, the source of the procedure | Sync (`templates/service/`, `templates/infra/`). Infra was a hand-written copy until #949 (gap G1) | No: each has a single-purpose `CLAUDE.md` that a shared procedure would dilute | Sync (`templates/app/`) |
 | `.claude/rules/` (path rules) | No: own rules about sources and copies | No: the rules are about the app's `frontend/`, `backend/`, `database/` | No: same reason | Sync |
 | Guard hooks (`.claude/hooks/`) | Sync: self-copy | Sync | ***Sync*** (today plugin only): a committed hook cannot be silently missing | Sync |
 | `.claude/settings.json` (permission rules, hook registration) | Sync: self-copy | Sync | ***Sync*** (today repo-owned): a plugin cannot ship permission rules, and the hooks need this file to run | Sync |
@@ -90,7 +90,7 @@ Cells: **Sync** (arrives through the group's channel: self-copy for the hub, syn
 
 ## Gaps found in the other groups (follow-up issues; the user accepted the proposed defaults)
 
-- **G1. Infra `AGENTS.md` and `CLAUDE.md` are hand-written copies** of the common procedure (design.md 9.2 says the common part is applied, but `templates/infra/` has only `ci.yml`). Proposed: give `infra` the same split the services have (managed `AGENTS.md` and `CLAUDE.md`, repo rules in `AGENTS.project.md`).
+- **G1. Infra `AGENTS.md` and `CLAUDE.md` are hand-written copies** of the common procedure (design.md 9.2 says the common part is applied, but `templates/infra/` has only `ci.yml`). Proposed: give `infra` the same split the services have (managed `AGENTS.md` and `CLAUDE.md`, repo rules in `AGENTS.project.md`). Done in #949: the template keeps the Terraform prohibitions and verification commands word for word, and `CLAUDE.md` now imports both files with `@` (the hand-written one only linked them, which Claude Code does not follow).
 - **G2. The two services get no Node version files and no `dependabot.yml`**, although each has `backend/package.json`. Proposed: research what fits (`.nvmrc`, `.node-version`, security-only Dependabot) and add it to `templates/service/` or `templates/backend/`.
 - **G3. The hub's own `.editorconfig`, `.gitattributes`, and `.vscode/settings.json` are not in `SELF_COPIES`.** `.vscode/settings.json` has drifted: it still starts `%LOCALAPPDATA%\gh-workout-memo\project-terminal.ps1`, the old location `AGENTS.md` says not to use. Proposed: add them to `scripts/build-self.mjs`. Done in #951 for `.editorconfig` and `.vscode/settings.json`; `.gitattributes` stays the hub's own file because it adds a `*.cmd` line for `tools/`.
 
@@ -115,7 +115,7 @@ User steps this needs: install the GitHub App `project-standards-sync` on `devel
 
 ## Follow-up work (sub-issues of #940)
 
-State on 2026-11-21: the profile (#944), the App install (#945), the targets (#946), the onboarding (#947, `develop-skill#41`, `file-control#333`), the plugin removal (#948), and G3 (#951) are done. The matrix above describes the state after them; "today" in a cell means before this ADR.
+State on 2026-11-21: the profile (#944), the App install (#945), the targets (#946), the onboarding (#947, `develop-skill#41`, `file-control#333`), the plugin removal (#948), G1 (#949), and G3 (#951) are done. The matrix above describes the state after them; "today" in a cell means before this ADR.
 
 
 - Add the `utility` profile, make `ci` optional, add the two targets, update tests and the snapshot.
