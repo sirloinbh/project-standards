@@ -69,3 +69,21 @@ test('nginx keeps the 1m body limit for /api/ unless the app sets service.apiBod
   assert.equal(limit(study['frontend/nginx.conf']), '21m');
   assert.equal(limit(workout['frontend/nginx.conf']), '1m');
 });
+
+test('the backend image installs npm before copying package files, so a dependency change keeps that layer (#963)', () => {
+  const lines = study['backend/Dockerfile'].split('\n');
+  const installs = lines.flatMap((l, i) => (l.startsWith('RUN npm install --global npm@') ? [i] : []));
+  const copies = lines.flatMap((l, i) => (/^COPY package/.test(l) ? [i] : []));
+  assert.equal(installs.length, 2, 'build and prod-deps stages');
+  assert.equal(copies.length, 2);
+  installs.forEach((n, k) => assert.ok(n < copies[k], `stage ${k + 1}: npm install (line ${n + 1}) before COPY package (line ${copies[k] + 1})`));
+  assert.match(study['.dockerignore'], /^backend\/test$/m, 'the build context skips backend tests');
+});
+
+test('the service backend image does the same and skips test/', () => {
+  const target = data.sync.targets.find((t) => t.profile === 'service');
+  const files = Object.fromEntries(renderProfile({ root, profile: 'service', folders: data.sync.profiles.service.templates, vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) }).map((f) => [f.path, f.content]));
+  const text = files['backend/Dockerfile'];
+  assert.ok(text.indexOf('RUN npm install --global npm@') < text.indexOf('COPY package*.json'), 'npm install first');
+  assert.match(files['backend/.dockerignore'], /^test$/m);
+});
