@@ -49,7 +49,8 @@ test('adding an active app to the registry changes both files, and a retired app
 
 test('the generated file may sit under a neverTouch pattern only through neverTouchExcept', () => {
   const copy = structuredClone(data);
-  copy.sync.profiles.service.neverTouchExcept = ['backend/test/standard/*.ts', 'backend/Dockerfile', 'backend/.npmrc', 'backend/.dockerignore'];
+  // Drop only the generated file's exception, so the list follows sync.config.json (#959 added backend/package.json).
+  copy.sync.profiles.service.neverTouchExcept = copy.sync.profiles.service.neverTouchExcept.filter((p) => p !== 'backend/src/apps.generated.ts');
   assert.throws(() => planned('shared-ai', copy), /would write protected path backend\/src\/apps\.generated\.ts/);
 });
 
