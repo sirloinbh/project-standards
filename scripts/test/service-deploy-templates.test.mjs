@@ -10,6 +10,7 @@ import { loadAll } from '../lib/registry.mjs';
 import { HEADER_TEXT } from '../lib/render.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
+import { errLine, reportRun } from './deploy-report-helpers.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const { data } = loadAll(root);
@@ -36,12 +37,15 @@ const SERVICE_FILES = [
   'deploy/install-backup.sh',
   'deploy/notify.sh',
   'deploy/remote-deploy.sh',
+  'deploy/report.service',
+  'deploy/report.sh',
+  'deploy/report.timer',
   'deploy/restore-check.service',
   'deploy/restore-check.timer',
   'deploy/ssm-get.sh',
 ];
 
-test('both services get the shared deploy files, and no app-only health or report files', () => {
+test('both services get the shared deploy files with the daily report, and no app-only health files', () => {
   assert.deepEqual(Object.keys(rendered).sort(), ['shared-ai', 'shared-auth']);
   for (const [name, files] of Object.entries(rendered)) {
     assert.deepEqual(Object.keys(files).sort(), SERVICE_FILES, name);
@@ -58,7 +62,7 @@ test('the services keep the unit and folder names already installed on the serve
     assert.match(files['deploy/install-autodeploy.sh'], new RegExp(`^unit=${name}-autodeploy$`, 'm'), name);
     assert.match(files['deploy/install-backup.sh'], new RegExp(`^prefix=${name}$`, 'm'), name);
     assert.match(files['deploy/install-backup.sh'], new RegExp(`^db=${db}$`, 'm'), name);
-    assert.match(files['deploy/install-backup.sh'], /^units="backup restore-check"$/m, name);
+    assert.match(files['deploy/install-backup.sh'], /^units="backup restore-check report"$/m, name);
     assert.match(files['deploy/autodeploy.sh'], new RegExp(`^repo=sirloinbh/${name}$`, 'm'), name);
     assert.match(files['deploy/autodeploy.sh'], new RegExp(`^app=/opt/${name}$`, 'm'), name);
     assert.match(files['deploy/backup.sh'], /^dir=\/var\/backups\/\$db$/m, name);
@@ -177,5 +181,18 @@ test('the wrapper pulls then deploys the new commit, and skips the pull with --n
     assert.equal(fs.readFileSync(path.join(dir, 'log'), 'utf8').trim().split('\n').pop(), `deploy ${second}`);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test('the services send the same daily report with the api error count (#967)', { skip: !has('bash') && 'bash not found' }, () => {
+  for (const [name, files] of Object.entries(rendered)) {
+    assert.ok(files['deploy/report.service'].includes(`/tmp/${name}-report.sh`), name);
+    assert.match(files['deploy/report.timer'], /^OnCalendar=\*-\*-\* 04:00:00 Asia\/Seoul$/m, name);
+    const ok = reportRun([], { source: files['deploy/report.sh'], name });
+    assert.equal(ok.status, 0, ok.stderr);
+    assert.match(ok.notify, /^ping\|report\|ok\|memory=45% disk=41% deployed=abc123def456 errors=0 containers:/, name);
+    const failed = reportRun([], { source: files['deploy/report.sh'], name, logs: errLine('svc-1', 500, '/api/health') + '\n' });
+    assert.match(failed.notify, /^ping\|report\|fail\|.* errors=1 \[svc-1 500 \/api\/health\] containers:/, name);
+    assert.match(failed.logArgs, /--since 24h --until \S+ api/, `${name} reads the api container`);
   }
 });

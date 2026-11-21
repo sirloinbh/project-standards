@@ -6,7 +6,8 @@ import path from 'node:path';
 import { root, rendered, has } from './deploy-helpers.mjs';
 
 // Runs the rendered report.sh with fake free, df and docker and a recording deploy/notify.sh (#285).
-export function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, failed = null, logs = '', saved = null, lastSent = null } = {}) {
+// source and name pick another target's rendered report.sh, e.g. a shared service's (#967).
+export function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, failed = null, logs = '', saved = null, lastSent = null, source = rendered['study-log']['deploy/report.sh'], name = 'study-log' } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'report-'));
   const bin = path.join(dir, 'bin');
   const app = path.join(dir, 'app');
