@@ -1,6 +1,6 @@
 # Environment variables at a glance
 
-<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: 2026-11-19 22:37 UTC -->
+<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: 2026-11-20 22:10 UTC -->
 
 Rules: [env-conventions.md](env-conventions.md)
 
@@ -33,6 +33,7 @@ Rules: [env-conventions.md](env-conventions.md)
 | `WEB_BIND` | (no description) |  |  | `127.0.0.1` |  |  | central |
 | `WEB_PORT` | (no description) |  |  | `8102` |  |  | central |
 | `AUTH_INTERNAL_URL` | (no description) |  |  |  |  |  | central |
+| `AI_TOOLS_PUBLIC_KEY` | (no description) |  | yes | (secret) |  | `/sirloinbh/shared/ai-tools-public-key` | central |
 
 ## sirloinbh/health-log
 
@@ -43,6 +44,7 @@ Rules: [env-conventions.md](env-conventions.md)
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  |  | central |
 | `PORT` | (no description) |  |  | `3103` |  |  | central |
+| `AI_TOOLS_PUBLIC_KEY` | (no description) |  | yes | (secret) |  | `/sirloinbh/shared/ai-tools-public-key` | central |
 
 ## sirloinbh/life-journal
 
@@ -53,6 +55,7 @@ Rules: [env-conventions.md](env-conventions.md)
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  |  | central |
 | `PORT` | (no description) |  |  | `3104` |  |  | central |
+| `AI_TOOLS_PUBLIC_KEY` | (no description) |  | yes | (secret) |  | `/sirloinbh/shared/ai-tools-public-key` | central |
 
 ## sirloinbh/money-ledger
 
@@ -63,6 +66,7 @@ Rules: [env-conventions.md](env-conventions.md)
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  |  | central |
 | `PORT` | (no description) |  |  | `3105` |  |  | central |
+| `AI_TOOLS_PUBLIC_KEY` | shared-ai's Ed25519 public key (PEM, one line with \\n escapes). Set: the API serves its AI tools at /internal/tools; empty: no tools |  | yes | (secret) | backend, compose | `/sirloinbh/shared/ai-tools-public-key` | central |
 | `KRX_API_KEY` | KRX Open API auth key (domestic daily prices, AUTH_KEY header) |  | yes | (secret) | backend | `/sirloinbh/money-ledger/krx-api-key` | central |
 | `TIINGO_API_KEY` | Tiingo API token (US prices) |  | yes | (secret) | backend | `/sirloinbh/money-ledger/tiingo-api-key` | central |
 | `KOREAEXIM_API_KEY` | Korea Eximbank exchange rate API auth key (KRW/USD) |  | yes | (secret) | backend | `/sirloinbh/money-ledger/koreaexim-api-key` | central |
@@ -79,6 +83,7 @@ Rules: [env-conventions.md](env-conventions.md)
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  |  | central |
 | `PORT` | (no description) |  |  | `3106` |  |  | central |
+| `AI_TOOLS_PUBLIC_KEY` | shared-ai's Ed25519 public key (PEM, one line with \\n escapes). Set: the API serves its AI tools at /internal/tools; empty: no tools |  | yes | (secret) | backend, compose | `/sirloinbh/shared/ai-tools-public-key` | central |
 
 ## sirloinbh/plan-routine
 
@@ -89,6 +94,7 @@ Rules: [env-conventions.md](env-conventions.md)
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  |  | central |
 | `PORT` | (no description) |  |  | `3107` |  |  | central |
+| `AI_TOOLS_PUBLIC_KEY` | (no description) |  | yes | (secret) |  | `/sirloinbh/shared/ai-tools-public-key` | central |
 
 ## sirloinbh/dev-career-portfolio
 
@@ -99,3 +105,4 @@ Rules: [env-conventions.md](env-conventions.md)
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  |  | central |
 | `PORT` | (no description) |  |  | `3108` |  |  | central |
+| `AI_TOOLS_PUBLIC_KEY` | (no description) |  | yes | (secret) |  | `/sirloinbh/shared/ai-tools-public-key` | central |
