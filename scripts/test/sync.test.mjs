@@ -144,7 +144,7 @@ test('the dry-run CLI writes every target and plan.json', () => {
     assert.equal(plan.targets.length, 13);
     assert.ok(fs.existsSync(path.join(out, 'study-log', 'AGENTS.md')));
     assert.ok(fs.existsSync(path.join(out, 'shared-aws-infrastructure', MANIFEST_PATH)));
-    assert.ok(!fs.existsSync(path.join(out, 'shared-aws-infrastructure', 'AGENTS.md')));
+    assert.ok(fs.existsSync(path.join(out, 'shared-aws-infrastructure', 'AGENTS.md')), 'the infra profile ships AGENTS.md since #949');
     assert.ok(fs.existsSync(path.join(out, 'shared-auth', 'AGENTS.md')), 'the service profile ships AGENTS.md');
     assert.ok(fs.existsSync(path.join(out, 'shared-ai', 'AGENTS.md')), 'shared-ai gets the service profile too');
     // The utility profile (ADR-0029): shared skills arrive, instructions and CI stay the repo's own.
