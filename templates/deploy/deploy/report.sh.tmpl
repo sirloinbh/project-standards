@@ -47,8 +47,9 @@ started=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
 error_lines() {
   local id
-  # -a: a crashed api container still has its logs. 2>&1: stdout and stderr, both kept by the log driver.
-  id=$(project_ids -a --filter label=com.docker.compose.service=api | head -n 1)
+  # -a: a crashed api container still has its logs. oneoff=False: not a leftover `docker compose run` (migrations).
+  # 2>&1: stdout and stderr, both kept by the log driver.
+  id=$(project_ids -a --filter label=com.docker.compose.service=api --filter label=com.docker.compose.oneoff=False | head -n 1)
   { cat .errors-before-deploy.log 2> /dev/null || true; if [ -n "$id" ]; then docker logs --since "$since" --until "$started" "$id" 2>&1 || true; fi; } |
     { grep -F '"level":"error"' || true; }
 }

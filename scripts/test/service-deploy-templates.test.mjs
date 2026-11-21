@@ -194,7 +194,7 @@ test('the services send the same daily report with the api error count (#967)', 
     const failed = reportRun([], { source: files['deploy/report.sh'], name, logs: errLine('svc-1', 500, '/api/health') + '\n' });
     assert.match(failed.notify, /^ping\|report\|fail\|.* errors=1 \[svc-1 500 \/api\/health\] containers:/, name);
     assert.match(failed.logArgs, /^logs --since 24h --until \S+ api-id$/m, `${name} reads the api container`);
-    assert.ok(failed.psArgs.includes(`ps -a --filter label=com.docker.compose.service=api -q --filter label=com.docker.compose.project=${name}\n`), `${name}: ${failed.psArgs}`);
+    assert.ok(failed.psArgs.includes(`ps -a --filter label=com.docker.compose.service=api --filter label=com.docker.compose.oneoff=False -q --filter label=com.docker.compose.project=${name}\n`), `${name}: ${failed.psArgs}`);
     assert.doesNotMatch(files['deploy/report.sh'], /docker compose (ps|logs)/, `${name}: compose.yaml requires SSM secrets the report does not have`);
   }
 });
