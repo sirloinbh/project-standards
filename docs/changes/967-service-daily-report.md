@@ -6,7 +6,7 @@ The daily report (`deploy/report.sh`, #285, with the API error count and `REPORT
 
 | File | Content |
 |---|---|
-| `templates/deploy/deploy/report.sh.tmpl`, `report.service.tmpl`, `report.timer.tmpl` | Moved from `templates/app/deploy/`, so both the `app` and `service` profiles receive them. The script was already generic (`/opt/<name>`, the `api` compose service, `.deployed`, `notify.sh report`); one comment now says "this project's container memory" instead of "this app's" |
+| `templates/deploy/deploy/report.sh.tmpl`, `report.service.tmpl`, `report.timer.tmpl` | Moved from `templates/app/deploy/`, so both the `app` and `service` profiles receive them. `report.sh` now finds the containers by their compose labels (`docker ps --filter label=com.docker.compose.project=<name>`, plus `service=api` for the error logs, read with `docker logs`) instead of `docker compose ps` and `docker compose logs`, and no longer exports `IMAGE_TAG` (only compose needed it). One comment says "this project's container memory" instead of "this app's" |
 | `scripts/lib/vars.mjs` | Services install `backup restore-check report` (was `backup restore-check`) |
 | `templates/deploy/deploy/install-backup.sh.tmpl` | The comments name the report timer for both groups and the health timer as apps only |
 | `scripts/test/service-deploy-templates.test.mjs` | Services receive the three report files, install the report unit, and their rendered `report.sh` runs with fakes: `ok` with no errors, `fail` with `errors=1 [<id> 500 /api/health]`, reading the `api` container |
@@ -17,13 +17,14 @@ The daily report (`deploy/report.sh`, #285, with the API error count and `REPORT
 ## What was decided
 
 - **Move, not copy.** Both groups get the same file from one source; a copy in `templates/service/` would drift.
-- **No service-specific rendering.** Both services run their API as the compose service `api` and write the same `requestLog` JSON lines, and `remote-deploy.sh` (already shared) saves the replaced container's error lines. So the app script is correct for them as it is.
+- **No service-specific rendering.** Both services run their API as the compose service `api` and write the same `requestLog` JSON lines, and `remote-deploy.sh` (already shared) saves the replaced container's error lines.
+- **Labels instead of docker compose (review finding).** The services' `compose.yaml` requires secrets with `${VAR:?}` (shared-auth: `BETTER_AUTH_SECRET`, the OAuth keys, `ALLOWED_EMAILS`; shared-ai: `AI_TOOLS_SIGNING_KEY`). `remote-deploy.sh` reads them from SSM and exports them only during a deploy, so the server `.env` has no copy. A `docker compose ps` or `logs` from the timer would fail interpolation, and the report would quietly say `no containers` and `errors=0`. `backup.sh` already uses the same labels for the same reason (#696). For the apps the output is the same; `docker ps -a` also reads a crashed `api` container's logs, as `docker compose logs` did.
 - **The health timer stays app-only.** It is outside #967 and shared-auth#11.
-- **Apps' rendered files change only in comments** (`install-backup.sh` lines 2, 3 and 10; `report.sh` line 4). The old line 10 ("the shared services have only the first two") would be wrong after this change, and it is in the shared template.
+- **Apps' rendered files change**: comments in `install-backup.sh` (the old line "the shared services have only the first two" would be wrong now) and the label lookup in `report.sh` (same report line).
 - Installing the timer on the server stays a user step: `sudo bash /opt/<service>/deploy/install-backup.sh` after the sync PR is merged and deployed.
 
 ## Checks
 
-- `node --test scripts/test/service-deploy-templates.test.mjs`: 9 passed.
+- `node --test scripts/test/service-deploy-templates.test.mjs scripts/test/deploy-report.test.mjs scripts/test/deploy-report-errors.test.mjs`: 15 passed. The fake `docker` now fails on any `docker compose` call, and the service test checks the label filters and the `api` container's `docker logs` window.
 - `UPDATE_SNAPSHOT=1 npm test`: 611 passed, 5 skipped, 0 failed. The snapshot diff adds only the three report files to the two service targets.
-- `npm run check`: see the PR.
+- `npm run check`: exit 0, 611 passed, 5 skipped.
