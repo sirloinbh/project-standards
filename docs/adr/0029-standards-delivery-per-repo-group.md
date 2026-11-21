@@ -115,6 +115,9 @@ User steps this needs: install the GitHub App `project-standards-sync` on `devel
 
 ## Follow-up work (sub-issues of #940)
 
+State on 2026-11-21: the profile (#944), the App install (#945), the targets (#946), the onboarding (#947, `develop-skill#41`, `file-control#333`), the plugin removal (#948), and G3 (#951) are done. The matrix above describes the state after them; "today" in a cell means before this ADR.
+
+
 - Add the `utility` profile, make `ci` optional, add the two targets, update tests and the snapshot.
 - `[Manual]` Install the GitHub App on the two utility repos.
 - Onboard `file-control` and `develop-skill`: review and merge the first sync PR, drop the plugin settings, add the check step to their CI, trim `file-control`'s `CLAUDE.md`.
