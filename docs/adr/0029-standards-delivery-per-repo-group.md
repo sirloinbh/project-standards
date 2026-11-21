@@ -83,7 +83,7 @@ Cells: **Sync** (arrives through the group's channel: self-copy for the hub, syn
 | Service Docker files (`templates/backend/`) | No | Services: Sync. Infra: No | No | No: apps have their own Dockerfiles in `templates/app/` |
 | Frontend base, shared UI, MSW, React Query, Vitest (`templates/app/frontend/`, `ui`, `msw`, `query`, `vitest`) | No | No: no frontend | No: `file-control`'s local screen is not the app shell | Sync (by feature flag) |
 | E2E, Lighthouse, dev container (`templates/e2e/`, `lighthouse`, `devcontainer`) | No | No | No | Sync (by feature flag) |
-| Server deploy scripts (`templates/deploy/`: autodeploy, backup, restore check, notify) | No | Services: Sync. Infra: No (it creates the server; it is not deployed to it) | No: not deployed | Sync |
+| Server deploy scripts (`templates/deploy/`: autodeploy, backup, restore check, notify, daily report since #967) | No | Services: Sync. Infra: No (it creates the server; it is not deployed to it) | No: not deployed | Sync |
 | App deploy extras (`templates/app/deploy/`, app Dockerfiles, `nginx.conf`) and the service `deploy.sh` | No | Services: Sync (`templates/service/deploy/`). Infra: No | No | Sync |
 | Files generated from the registry (`apps.json`, `apps.generated.ts`) | Source (`registry/`) | Sync where the target lists `generatedFiles` (`shared-aws-infrastructure`, `shared-ai`) | No | No |
 | Scaffold (`scaffold/app/`) | Source | No | No | No: only for creating a new app repo |

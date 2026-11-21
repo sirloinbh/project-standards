@@ -45,7 +45,7 @@ const SERVICE_CMD = '["sh", "-c", "node dist/migrate.js && exec node dist/server
 
 function deployVars(project, kind) {
   if (kind === 'service') {
-    return { unit: project.name, pull: ghcrFlag(project, 'pull') ? 'on' : 'off', push: String(ghcrFlag(project, 'push')), registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check', images: `${project.name}-backend`, migrate: 'image', cmd: SERVICE_CMD };
+    return { unit: project.name, pull: ghcrFlag(project, 'pull') ? 'on' : 'off', push: String(ghcrFlag(project, 'push')), registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check report', images: `${project.name}-backend`, migrate: 'image', cmd: SERVICE_CMD };
   }
   return { unit: project.db.name, pull: ghcrFlag(project, 'pull') ? 'on' : 'off', push: String(ghcrFlag(project, 'push')), registry: 'ghcr.io/sirloinbh', registryUser: 'sirloinbh', units: 'backup restore-check health report', images: `${project.db.name}-backend ${project.db.name}-frontend`, migrate: 'step', cmd: APP_CMD };
 }

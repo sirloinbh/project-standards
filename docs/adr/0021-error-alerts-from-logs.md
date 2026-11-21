@@ -14,7 +14,7 @@
   | `health` | Every 5 minutes | `/api/health` is down, or the whole server is down (a missing ping) |
   | `deploy` | Every autodeploy run | A failed build or deploy |
   | `backup`, `restore` | Nightly, weekly | A failed dump or restore check |
-  | `report` | Daily at 04:00 Seoul ([`report.sh`](../../templates/app/deploy/report.sh.tmpl)) | Memory over 85% or disk over 90%; the body is a one-line summary |
+  | `report` | Daily at 04:00 Seoul ([`report.sh`](../../templates/deploy/deploy/report.sh.tmpl)) | Memory over 85% or disk over 90%; the body is a one-line summary |
 
   None of them sees a 500 on one route while `/api/health` stays green.
 - Docker keeps container logs with the `json-file` driver, `max-size` 10m and `max-file` 3 (`/etc/docker/daemon.json` from `shared-aws-infrastructure/user-data.sh`), so at most 30 MB per container. Old lines roll off; nothing is kept beyond that.
@@ -54,7 +54,7 @@
 | Count | `report.sh` counts lines with `"level":"error"` in `docker compose logs --since 24h api` and adds `errors=<N>` to the report line. When N > 0 it also adds up to 5 request IDs with their `status` and `path` (`errors=3 [5f0c… 500 /api/workouts, …]`), so the owner can run the `grep` in [logging.md](../logging.md). No error `message` text goes into the ping body |
 | Deploys | A deploy recreates the `api` container (`remote-deploy.sh`, `docker compose up -d` with a new image tag), and `docker compose logs` then shows only the new container. So `remote-deploy.sh` saves the old container's error lines from the last 24 hours to a file in the app's deploy folder just before `up -d`, and `report.sh` counts that file together with the running container's logs, then empties it. Without this, an app that deploys after an error would report `errors=0` |
 | Alert | The `report` signal is `fail` when N is over `REPORT_ERROR_LIMIT` (server `.env`, default `0`: any error fails the day). healthchecks.io emails on `fail`, as it does for memory and disk today |
-| Services without `report.sh` | shared-auth and `shared-ai` get the same count when their deploy scripts gain the report (they use the same `requestLog` format) |
+| Shared services | shared-auth and `shared-ai` get the same count: since #967 the report is in the shared deploy templates (`templates/deploy/deploy/`), and they use the same `requestLog` format and `api` container. Installing their report timer is a user step (`install-backup.sh`) |
 | Retention | Unchanged: the Docker `json-file` limit (10 MB × 3 per container). The daily report runs well before a quiet app's errors roll off; a noisy app is the case to decide again |
 | Not adopted | Sentry (hosted or self-hosted), Better Stack, Grafana Cloud, GlitchTip, Dozzle, a shared logger package (`pino`) |
 
