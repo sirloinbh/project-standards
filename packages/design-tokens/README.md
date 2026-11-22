@@ -26,6 +26,6 @@ An app without Tailwind imports only `@sirloinbh/design-tokens/tokens.css` and u
 |---|---|
 | `tokens.css` | `:root` CSS variables (light colors, fonts, `--radius`, z-index, motion durations, layout spacing, touch target size), the colors for `.dark` and the system dark mode, and the Pretendard `@font-face` |
 | `tailwind.css` | `tokens.css` + the `dark:` variant + the Tailwind theme (font sizes, breakpoints, colors, corners) + base styles (body, h1–h4) + the `text-body`, `text-body-sm`, `text-caption`, and `text-meta` utilities |
-| `fonts/` | The Pretendard Variable woff2 and its license |
+| `fonts/` | Pretendard Variable as the official dynamic subset: `pretendard.css` (92 `@font-face` rules with `unicode-range`), the 92 woff2 chunks in `woff2-dynamic-subset/`, and the license. A page downloads only the chunks its text uses. |
 
 Apps do not override the tokens. If a change is needed, edit `design/tokens.json` in the central repo.
