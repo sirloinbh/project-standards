@@ -433,7 +433,7 @@
         "devcontainer": false,
         "lighthouse": true,
         "msw": false,
-        "query": false,
+        "query": true,
         "knipStrict": false,
         "darkOnly": false,
         "jobs": false,
