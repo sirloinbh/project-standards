@@ -50,7 +50,7 @@ External dependencies that the 8 apps and the scaffold use at the same version, 
 | `typescript-eslint` | 8.71.2 | `package.json` | devDependencies |
 | `@playwright/test` | 1.63.0 | `package.json` | devDependencies |
 | `@axe-core/playwright` | 4.13.0 | `package.json` | devDependencies |
-| `@lhci/cli` | 0.16.0 | `package.json` | devDependencies |
+| `@lhci/cli` | 0.16.1 | `package.json` | devDependencies |
 | `concurrently` | 9.2.5 | `package.json` | devDependencies |
 | `class-variance-authority` | 0.7.1 | `frontend/package.json` | dependencies |
 | `clsx` | 2.1.1 | `frontend/package.json` | dependencies |
