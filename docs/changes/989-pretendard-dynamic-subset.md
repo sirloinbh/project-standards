@@ -36,6 +36,10 @@ Round 1 (PR comment) found 3 blocking items, fixed in this commit:
 - Offline behaviour: the delivery text said "works offline" without a qualifier. Offline, only chunks the service worker has already cached render in Pretendard; other characters use the next font in the stack. The delivery text and `CHANGELOG.md` now say so; `docs/design-tokens.md` is regenerated.
 - `npm run check` after the fixes: passed (617 tests: 612 pass, 0 fail, 5 skipped; all other checks passed).
 
+## Review round 2 — 2026-11-22
+
+Approve, no blocking comments. One nit fixed in this commit: `CHANGELOG.md` said the look is the same; it now says Latin and Hangul render identically and a symbol from a different chunk can sit 1 px lower, as measured. `npm run check`: passed (617 tests: 612 pass, 0 fail, 5 skipped).
+
 ## Limits and follow-up
 
 - Publishing is a user step: push the tag `design-tokens/v1.1.0` after this PR is merged (`publish.yml`). After the release, a follow-up PR raises `@sirloinbh/design-tokens` to 1.1.0 in `versions.json`, and each app picks it up through its sync PR.
