@@ -8,7 +8,7 @@ Values shared by the 8 apps. Names follow the shadcn/ui and Tailwind CSS 4 conve
 
 - Body and headings: `"Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif`
 - Monospace: `ui-monospace, SFMono-Regular, Menlo, Consolas, monospace`
-- Pretendard 1.3.9 (2023-11-05), SIL Open Font License 1.1. A single PretendardVariable.woff2 from the official release zip (the full variable font, 2.0MB) is placed in the @sirloinbh/design-tokens package and served directly. No external CDN is used (works offline and as a PWA, no external dependency). The dynamic subset is distributed only as an npm package or CDN, so it is not used. `font-display: swap`.
+- Pretendard 1.3.9 (2023-11-05), SIL Open Font License 1.1. The official dynamic subset (pretendardvariable-dynamic-subset.css and 92 woff2 chunks with unicode-range) is placed in the @sirloinbh/design-tokens package and served directly, so a page downloads only the chunks its text uses (about 38 kB for Latin text instead of the full 2.0MB variable font). The release zip has no subset files, so they come from the official npm package pretendard@1.3.9, checked against its registry integrity; its full PretendardVariable.woff2 has the same hash as the zip's. No external CDN is used (works offline and as a PWA, no external dependency). `font-display: swap`.
 
 ## Font sizes
 

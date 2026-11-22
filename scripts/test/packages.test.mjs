@@ -154,7 +154,32 @@ test('the design-tokens CSS is generated from design/tokens.json and committed',
 
 test('the bundled Pretendard files match the recorded hashes', () => {
   const sha = (rel) => crypto.createHash('sha256').update(fs.readFileSync(path.join(root, rel))).digest('hex');
-  assert.equal(sha('packages/design-tokens/fonts/PretendardVariable.woff2'), tokens.font.pretendard.files['PretendardVariable.woff2']);
-  assert.equal(sha('packages/design-tokens/fonts/LICENSE-Pretendard.txt'), tokens.font.pretendard.files['LICENSE.txt']);
-  assert.match(read('packages/design-tokens/fonts/LICENSE-Pretendard.txt'), /SIL Open Font License, Version 1\.1/);
+  const { files } = tokens.font.pretendard;
+  const fonts = 'packages/design-tokens/fonts';
+  assert.equal(sha(`${fonts}/pretendard.css`), files['pretendardvariable-dynamic-subset.css']);
+  assert.equal(sha(`${fonts}/LICENSE-Pretendard.txt`), files['LICENSE.txt']);
+  assert.match(read(`${fonts}/LICENSE-Pretendard.txt`), /SIL Open Font License, Version 1\.1/);
+  // Exactly the recorded chunks are bundled, and the full 2 MB font is not (#989).
+  assert.deepEqual(fs.readdirSync(path.join(root, fonts)).sort(), ['LICENSE-Pretendard.txt', 'pretendard.css', 'woff2-dynamic-subset']);
+  assert.deepEqual(fs.readdirSync(path.join(root, fonts, 'woff2-dynamic-subset')).sort(), Object.keys(files.subsets).sort());
+  assert.equal(Object.keys(files.subsets).length, 92);
+  for (const [name, hash] of Object.entries(files.subsets)) assert.equal(sha(`${fonts}/woff2-dynamic-subset/${name}`), hash, name);
+});
+
+test('pretendard.css loads each subset chunk only for its unicode-range, with the same family, weights and display', () => {
+  const css = read('packages/design-tokens/fonts/pretendard.css');
+  const faces = [...css.matchAll(/@font-face\s*\{([^}]*)\}/g)].map((m) => m[1]);
+  assert.equal(faces.length, 92);
+  const urls = [];
+  for (const face of faces) {
+    assert.match(face, /font-family: 'Pretendard Variable';/);
+    assert.match(face, /font-weight: 45 920;/);
+    assert.match(face, new RegExp(`font-display: ${tokens.font.pretendard.fontDisplay};`));
+    assert.match(face, /unicode-range: U\+[0-9a-f]/i, 'without a unicode-range the browser downloads the chunk for every page');
+    const url = /src: url\(\.\/woff2-dynamic-subset\/([^)]+)\) format\('woff2-variations'\);/.exec(face);
+    assert.ok(url, face);
+    urls.push(url[1]);
+  }
+  assert.deepEqual(urls.sort(), Object.keys(tokens.font.pretendard.files.subsets).sort(), 'every chunk is referenced exactly once');
+  assert.ok(tokens.font.sans.startsWith('"Pretendard Variable",'), 'the token font stack names the same family');
 });
