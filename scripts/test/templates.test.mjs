@@ -111,7 +111,7 @@ test('package.json fields are rendered from versions.json for all three package 
     path: 'frontend/package.json',
     source: 'templates/index.json',
     mode: 'fields',
-    fields: { ...expected, 'dependencies.@sirloinbh/auth-client': '1.0.0', 'dependencies.@sirloinbh/design-tokens': '1.0.0', ...tsconfig, ...shared['frontend/package.json'] },
+    fields: { ...expected, 'dependencies.@sirloinbh/auth-client': '1.0.0', 'dependencies.@sirloinbh/design-tokens': data.versions.packages['@sirloinbh/design-tokens'], ...tsconfig, ...shared['frontend/package.json'] },
   });
   assert.deepEqual(byPath['package.json'].fields, {
     ...expected,
