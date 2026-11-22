@@ -611,6 +611,8 @@
     "full frontend/src/lib/api.ts",
     "full frontend/src/lib/apps.ts",
     "full frontend/src/lib/auth-config.ts",
+    "full frontend/src/lib/query.test.tsx",
+    "full frontend/src/lib/query.ts",
     "full frontend/src/lib/theme-config.ts",
     "full frontend/src/lib/theme.test.ts",
     "full frontend/src/lib/theme.ts",
