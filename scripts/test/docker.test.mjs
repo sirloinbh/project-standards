@@ -70,6 +70,15 @@ test('nginx keeps the 1m body limit for /api/ unless the app sets service.apiBod
   assert.equal(limit(workout['frontend/nginx.conf']), '1m');
 });
 
+test('nginx waits up to 300 s for a slow API call on /api/ only (#1011)', () => {
+  for (const conf of [study['frontend/nginx.conf'], workout['frontend/nginx.conf']]) {
+    const api = conf.match(/location \/api\/ \{([\s\S]*?)\n {2}\}/)[1];
+    assert.match(api, /proxy_read_timeout 300s;/);
+    assert.match(api, /proxy_send_timeout 300s;/);
+    assert.doesNotMatch(conf.replace(api, ''), /proxy_(read|send)_timeout/, 'static files keep the default');
+  }
+});
+
 test('the backend image installs npm before copying package files, so a dependency change keeps that layer (#963)', () => {
   const lines = study['backend/Dockerfile'].split('\n');
   const installs = lines.flatMap((l, i) => (l.startsWith('RUN npm install --global npm@') ? [i] : []));
