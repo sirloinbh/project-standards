@@ -496,7 +496,7 @@
         "devcontainer": false,
         "lighthouse": true,
         "msw": false,
-        "query": false,
+        "query": true,
         "knipStrict": true,
         "darkOnly": false,
         "jobs": false,
