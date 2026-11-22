@@ -138,3 +138,14 @@ test('a table the builder cannot document throws an error that names the route (
   // A valid table, with a query object, still builds.
   assert.doesNotThrow(build({ 'GET /api/a/:id': { summary: 'A', query: objectQuery, params: { id: schema({ type: 'integer' }) }, status: [200] } }));
 });
+
+test('errorFields documents the validation fields list on the Error schema; without it the schema has only error (#999)', () => {
+  assert.deepEqual(Object.keys(doc.components.schemas.Error.properties), ['error']);
+  const withFields = buildOpenApi({ title: 'T', description: 'D', errorFields: true, operations: { 'GET /api/items': { summary: 'List', status: [200] } } });
+  const error = withFields.components.schemas.Error;
+  assert.deepEqual(Object.keys(error.properties), ['error', 'fields']);
+  assert.deepEqual(error.required, ['error']);
+  assert.equal(error.properties.fields.type, 'array');
+  assert.deepEqual(error.properties.fields.items.required, ['path', 'message']);
+  assert.deepEqual(Object.keys(error.properties.fields.items.properties), ['path', 'message']);
+});
