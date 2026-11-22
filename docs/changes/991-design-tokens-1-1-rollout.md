@@ -20,12 +20,13 @@
 
 ## What the sync PR needs
 
-The sync PR changes only `frontend/package.json` `@sirloinbh/design-tokens` to 1.1.0 and leaves the lockfile alone, so its CI fails at `npm ci`. On each app's sync PR branch, align the lockfile:
+The sync PR changes only `frontend/package.json` `@sirloinbh/design-tokens` to 1.1.0 and leaves the lockfile alone, so its CI fails at `npm ci`. On each app's sync PR branch, rewrite the one root `package-lock.json` (the procedure in [user-steps.md](../user-steps.md) section 12; it creates no `node_modules` and runs no install scripts):
 
 ```
-npm install --ignore-scripts
-npm run lockfiles:sync
+npm install --package-lock-only --ignore-scripts --engine-strict=false --no-audit --no-fund
 ```
+
+The lockfile change should be only the `@sirloinbh/design-tokens` entry (version, URL and integrity).
 
 `@sirloinbh/*` packages are our own, so they are checked by source instead of the 14-day rule (ADR-0004). No new external package comes in (1.1.0 still has 0 dependencies).
 
