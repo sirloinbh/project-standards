@@ -27,6 +27,15 @@ User decision 2026-11-22 (relayed by the health-log coordinator, recorded on sir
   - A specimen line with Latin, digits, Korean food names and symbols at weights 400/500/600/700: 11 chunks, 289,392 bytes (-85.9%).
   - Screenshots at 390x844 and 1440x900, before and after, compared pixel by pixel: every Latin and Hangul glyph and every glyph position is identical. The only difference is that `+ = @ ~ →`, which now come from other chunks than the text around them, are drawn 1 px lower (Chromium rounds the baseline per font file). The shapes and the horizontal spacing are the same.
 
+## Review round 1 fixes — 2026-11-22
+
+Round 1 (PR comment) found 3 blocking items, fixed in this commit:
+
+- `packages/design-tokens/LICENSE.md` named the removed `fonts/PretendardVariable.woff2`. It now names `fonts/pretendard.css` and the subset chunks, with both sources.
+- The CSS cost was not recorded. Measured with a health-log production build (`npm run build -w frontend`, these `fonts/` copied over `node_modules` and restored): `index-*.css` 55.63 kB / 10.31 kB gzip -> 103.61 kB / 25.37 kB gzip (+15.06 kB gzip, render-blocking). Font plus CSS on a cold `/`: about 2,068 kB -> about 90 kB (-95.7%). The build emits the 92 chunks (2,957,724 bytes) as separate assets; none is inlined (the smallest is 8,252 bytes, above Vite's 4 kB inline limit). Now in `design/tokens.json` (delivery), `CHANGELOG.md` and the PR.
+- Offline behaviour: the delivery text said "works offline" without a qualifier. Offline, only chunks the service worker has already cached render in Pretendard; other characters use the next font in the stack. The delivery text and `CHANGELOG.md` now say so; `docs/design-tokens.md` is regenerated.
+- `npm run check` after the fixes: passed (617 tests: 612 pass, 0 fail, 5 skipped; all other checks passed).
+
 ## Limits and follow-up
 
 - Publishing is a user step: push the tag `design-tokens/v1.1.0` after this PR is merged (`publish.yml`). After the release, a follow-up PR raises `@sirloinbh/design-tokens` to 1.1.0 in `versions.json`, and each app picks it up through its sync PR.
