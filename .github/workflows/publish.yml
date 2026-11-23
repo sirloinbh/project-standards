@@ -49,7 +49,15 @@ jobs:
         working-directory: packages/${{ steps.tag.outputs.package }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm publish --ignore-scripts
+          PACKAGE: ${{ steps.tag.outputs.package }}
+          VERSION: ${{ steps.tag.outputs.version }}
+        # A rerun after the Release step failed must not stop here: npm refuses to publish a version twice (#1031).
+        run: |
+          if [ "$(npm view "@sirloinbh/$PACKAGE@$VERSION" version 2>/dev/null)" = "$VERSION" ]; then
+            echo "@sirloinbh/$PACKAGE@$VERSION is already published, skipping npm publish"
+          else
+            npm publish --ignore-scripts
+          fi
 
       - name: Record the release in the Release
         env:
@@ -58,6 +66,10 @@ jobs:
           VERSION: ${{ steps.tag.outputs.version }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "The Release for $TAG already exists, skipping"
+            exit 0
+          fi
           node scripts/changelog-section.mjs "$PACKAGE" "$VERSION" > changes.md
           {
             echo "## Changes"
