@@ -60,3 +60,9 @@ test('report keeps the saved error lines and the window start when the ping fail
   assert.equal(sent.savedAfter, '');
   assert.notEqual(sent.lastSentAfter, '2026-11-17T00:00:00Z');
 });
+
+test('a non-numeric memory or disk limit in .env falls back to the default (#1033)', { skip: !has('bash') && 'bash not found' }, () => {
+  assert.match(reportRun([], { usedMb: 1800, env: 'REPORT_MEMORY_PERCENT=90%\n' }).notify, /^ping\|report\|fail\|/, 'default 85 still alerts at 90%');
+  assert.match(reportRun([], { diskPercent: 95, env: 'REPORT_DISK_PERCENT=high\n' }).notify, /^ping\|report\|fail\|/, 'default 90 still alerts at 95%');
+  assert.match(reportRun([], { usedMb: 1800, env: 'REPORT_MEMORY_PERCENT=95\n' }).notify, /^ping\|report\|ok\|/, 'a number still wins');
+});
