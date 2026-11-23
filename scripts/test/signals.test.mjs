@@ -37,7 +37,7 @@ function sandbox(sharedEnv = AWS_ENV, appEnv = '') {
   fs.writeFileSync(path.join(dir, 'shared.env'), sharedEnv);
   fs.writeFileSync(path.join(app, '.env'), appEnv);
   const signals = path.join(dir, 'signals.sh');
-  fs.writeFileSync(signals, files.get('signals.sh'));
+  fs.writeFileSync(signals, files.get('signals.sh'), { mode: 0o644 }); // not executable, like the proxy files on the server: callers use bash
   const run = (script, args, { now = 1000000, failUrls = [], extraEnv = {}, prelude = '' } = {}) => {
     const r = spawnSync('bash', ['-c', `export PATH="${msys(bin)}:$PATH"; ${prelude} bash "${posix(script)}" ${args.map((a) => `'${a}'`).join(' ')}`], {
       encoding: 'utf8',

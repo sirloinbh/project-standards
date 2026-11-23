@@ -49,7 +49,7 @@ send_healthchecks() {
 # Sink aws: only the state is written here; signals.sh evaluate judges all signals and talks to AWS. The message is not sent anywhere.
 send_aws() {
   local check=$1 status=$2
-  if ! "$signals_sh" record "{{project.name}}" "$check" "$status"; then
+  if ! bash "$signals_sh" record "{{project.name}}" "$check" "$status"; then
     echo "could not record the $check signal for the aws sink" >&2
     return 1
   fi

@@ -47,8 +47,8 @@ send_healthchecks() {
 # The aws sink: record this signal, then judge all signals and send the metrics (this run is the 5-minute heartbeat).
 send_aws() {
   local status=$1
-  "\${SIGNALS_SH:-$dir/signals.sh}" record server public "$status" || echo "could not record the public signal" >&2
-  "\${SIGNALS_SH:-$dir/signals.sh}" evaluate || echo "signals.sh evaluate failed" >&2
+  bash "\${SIGNALS_SH:-$dir/signals.sh}" record server public "$status" || echo "could not record the public signal" >&2
+  bash "\${SIGNALS_SH:-$dir/signals.sh}" evaluate || echo "signals.sh evaluate failed" >&2
 }
 
 send_signal() {
