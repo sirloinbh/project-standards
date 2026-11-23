@@ -87,6 +87,7 @@ Deploy order (`deploy/remote-deploy.sh`):
 6. If health fails, restart with the previous images and finish as a failure.
 7. On success, record `.deployed` and `.previous` and keep only the current and previous images.
 
+- **Healthcheck cadence (#1096).** Each api container check starts a Node.js process. At `interval: 5s` across 10 apps that was about two start-ups a second and kept the burstable server throttled (79.6% steal, load 17-21 on 2 vCPUs on 2026-11-23). The scaffold now uses `interval: 60s`, `retries: 3`, `start_period` and `start_interval: 2s` (Docker Engine 25+; the server runs 29.1.3), so `up -d --wait` still sees a ready container within about 2 s and the steady state costs one check a minute. `npm run check` warns on an interval under 30 s.
 - A rollback does not rebuild. Migrations are not reverted, so if you need to roll data back, restore from the dump taken just before the deploy ([Backup and restore](backup-restore.md)).
 
 ## 4. Auto deploy from main
