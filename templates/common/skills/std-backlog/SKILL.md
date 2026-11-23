@@ -136,3 +136,5 @@ ghp api repos/<owner>/<repo>/issues/<sub-number>/parent --jq .number
 # Parent progress
 ghp api repos/<owner>/<repo>/issues/<parent-number> --jq .sub_issues_summary
 ```
+
+<!-- demo -->
