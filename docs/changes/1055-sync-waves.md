@@ -15,7 +15,7 @@
 ## Not done here
 
 - The compliance report "held by wave" column is in `scripts/compliance.mjs`, which another lane owns this round; filed as a follow-up under #1050.
-- Reading check runs needs the sync App permission **Checks: Read** (user step). Without it the first wave is reported as "could not read checks" and later waves are held, which is the safe direction; `all_waves` still works.
+- Reading check runs needs the sync App permission **Checks: Read** (user step). Without it (a 403) the gate cannot work, so the run keeps syncing every wave as before and logs a `::warning::` that the wave was not verified; any other error reading checks holds later waves.
 
 ## Verification
 

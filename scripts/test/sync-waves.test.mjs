@@ -18,6 +18,7 @@ function world({ checks = {}, failSync = [] } = {}) {
   const comments = [];
   const polls = {};
   const makeClient = (token) => async (method, p, body) => {
+    if (checks.forbidden && /check-runs/.test(p)) throw new Error(`GitHub API GET ${p} failed: 403 Resource not accessible by integration`);
     const m = /^\/repos\/([^/]+\/[^/]+)\/commits\/.+\/check-runs/.exec(p);
     if (m) {
       const answers = checks[m[1]] ?? [[run('success')]];
@@ -108,4 +109,13 @@ test('waitForChecks times out when a PR never shows a check and the grace is lon
   let now = 0;
   const out = await waitForChecks({ api: async () => ({ check_runs: [] }), repo: 'o/r', branch: 'b', sleep: async (ms) => { now += ms; }, now: () => now, deadline: 1000, pollMs: 300, noChecksGraceMs: 5000 });
   assert.equal(out.state, 'timeout');
+});
+
+test('without the Checks: Read permission the next wave still syncs, with a warning', async () => {
+  const w = world({ checks: { forbidden: true } });
+  const logs = [];
+  const results = await apply(base(w, [t('a', 1), t('b', 2)], { log: (l) => logs.push(l) }));
+  assert.deepEqual(w.synced, ['sirloinbh/a', 'sirloinbh/b']);
+  assert.equal(results.find((r) => r.target === 'sirloinbh/a').checks, 'unverified');
+  assert.ok(logs.some((l) => l.startsWith('::warning::') && /Checks: Read/.test(l)));
 });

@@ -150,6 +150,12 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
         log(`${s.target.repo}: checks ${checked.state} (${checked.detail})`);
         if (checked.state !== 'green') failures.push({ target: s.target.repo, reason: `CI ${checked.state}: ${checked.detail}` });
       } catch (error) {
+        // Until the App has Checks: Read, the gate cannot work. Keep syncing as before and say so loudly (no regression).
+        if (/ 403 /.test(error.message)) {
+          s.result.checks = 'unverified';
+          log(`::warning::${s.target.repo}: the sync App cannot read check runs (grant Checks: Read, docs/github-app.md), so wave ${wave.label} was not verified and the next wave is not held`);
+          continue;
+        }
         s.result.checks = 'error';
         log(`${s.target.repo}: could not read checks: ${error.message}`);
         failures.push({ target: s.target.repo, reason: `could not read checks: ${error.message}` });
