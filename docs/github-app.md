@@ -26,11 +26,14 @@ Repos to install on: `project-standards`, `workout-memo`, `study-log`, `health-l
 | Secrets | Read-only | Check only secret **names** in the compliance report. It cannot read the values (#22) |
 | Variables | Read-only | Check variable names in the compliance report (#22) |
 | Code scanning alerts | Read-only | Check in the compliance report that the CodeQL default setup is on (#260). It does not read the alert contents |
-| Issues | Read and write | Create and update issue labels (`templates/common/labels.json`). It does not delete labels (#40) |
+| Issues | Read and write | Create and update issue labels (`templates/common/labels.json`). It does not delete labels (#40). The compliance run also reads issues and closes finished epics (#1065) |
+| Actions | Read-only | Last CI result on `main` in the compliance report (#1057). **Not granted yet** |
+| Dependabot alerts | Read-only | Open Dependabot alert counts in the compliance report (#1057). **Not granted yet** |
+| Deployments | Read-only | Latest GitHub deployment record per repo in the compliance report (#1086). **Not granted yet** |
 
 Leave all other permissions at "No access". If you already created the App, add the Issues permission and the Code scanning alerts permission as described in "When changing permissions" below.
 
-Do not grant the Actions permission. When the sync checks the publish record of a shared package (the Release and the `publish.yml` run), it reads only the central repo with the `GITHUB_TOKEN` of `sync.yml` (`actions: read`), not the App token (#205).
+The Actions permission is read-only and only for the compliance report's CI column (#1057); the sync itself does not need it. When the sync checks the publish record of a shared package (the Release and the `publish.yml` run), it reads only the central repo with the `GITHUB_TOKEN` of `sync.yml` (`actions: read`), not the App token (#205).
 
 ## 1. Create the App [User]
 

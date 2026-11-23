@@ -1,5 +1,5 @@
 // Operations columns of the compliance report (#1057): last CI result on main, open security alerts,
-// last merge to main (the deploy time proxy) and the age of the oldest open PR, plus the daily trend history.
+// last deploy (GitHub deployment record, else the last merge to main) and the age of the oldest open PR, plus the daily trend history.
 // Every value is read separately; a value the token cannot read is null and shows as "?".
 
 const DAY_MS = 86_400_000;
@@ -28,6 +28,17 @@ async function countAlerts(api, path) {
   return Array.isArray(alerts) ? { count: alerts.length, more: alerts.length === ALERT_CAP } : null;
 }
 
+/** Time of the newest successful GitHub deployment to `production` (looks at the 5 newest), or null when there is none. */
+export async function lastDeployment(api, repo) {
+  const deployments = await api('GET', `/repos/${repo}/deployments?environment=production&per_page=5`);
+  for (const d of Array.isArray(deployments) ? deployments : []) {
+    const statuses = await api('GET', `/repos/${repo}/deployments/${d.id}/statuses?per_page=5`);
+    const ok = (Array.isArray(statuses) ? statuses : []).find((s) => s.state === 'success');
+    if (ok) return ok.created_at;
+  }
+  return null;
+}
+
 /** Commit time of the head of main: the merge time of the commit that autodeploy ships. */
 export async function lastMainMerge(api, repo, branch = 'main') {
   const commit = await api('GET', `/repos/${repo}/commits/${encodeURIComponent(branch)}`);
@@ -48,6 +59,7 @@ export async function collectOps(api, repo, { pulls = [], now = new Date(), bran
     ci: await safe(() => lastMainCi(api, repo, branch)),
     dependabot: await safe(() => countAlerts(api, `/repos/${repo}/dependabot/alerts`)),
     codeScanning: await safe(() => countAlerts(api, `/repos/${repo}/code-scanning/alerts`)),
+    deployedAt: await safe(() => lastDeployment(api, repo)),
     lastMerge: await safe(() => lastMainMerge(api, repo, branch)),
     oldestPr: oldestOpenPr(pulls, now),
   };
@@ -67,7 +79,8 @@ export function opsCells(ops, now = new Date()) {
   const ci = !ops.ci ? '?' : ops.ci.conclusion === 'none' ? 'no run' : `${ops.ci.conclusion === 'success' ? '✓' : `✗ ${ops.ci.conclusion}`} ${ago(ops.ci.at, now)}`;
   const failing = [ops.dependabot, ops.codeScanning].some((a) => a?.count);
   const alerts = `${failing ? '✗ ' : ''}${alertText(ops.dependabot)} / ${alertText(ops.codeScanning)}`;
-  const merge = ops.lastMerge ? ago(ops.lastMerge, now) : '?';
+  // A deployment record is the real deploy time; without one the merge time of main stands in, and says so (#1086).
+  const merge = ops.deployedAt ? ago(ops.deployedAt, now) : ops.lastMerge ? `${ago(ops.lastMerge, now)} (main merge, no deploy record)` : '?';
   const pr = ops.oldestPr.number ? `[#${ops.oldestPr.number}](${ops.oldestPr.url}) ${ops.oldestPr.ageDays}d` : 'none';
   return { ci, alerts, merge, pr };
 }
