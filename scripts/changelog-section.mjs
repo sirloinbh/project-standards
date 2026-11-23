@@ -12,7 +12,7 @@ export function changelogSection(text, version) {
   return lines.slice(start + 1, end < 0 ? undefined : end).join('\n').trim();
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   const [name, version] = process.argv.slice(2);
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');

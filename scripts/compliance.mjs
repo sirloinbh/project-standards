@@ -137,7 +137,7 @@ export async function publishReports({ api, reports, centralSha }) {
   return { status: open ? 'updated' : 'opened', pr: pr.html_url, changed };
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   const args = process.argv.slice(2);
   const { data } = loadAll(root);
