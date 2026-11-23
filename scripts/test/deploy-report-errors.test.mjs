@@ -8,6 +8,9 @@ import test from 'node:test';
 import { rendered, has } from './deploy-helpers.mjs';
 import { reportRun, errLine, handlerLine, infoLine } from './deploy-report-helpers.mjs';
 
+// A shared-auth sign-in line (shared-auth#33): info for a success, warn for a refusal, never an error.
+const signInLine = (outcome) => JSON.stringify({ time: '2026-11-18T01:00:00.000Z', level: outcome === 'success' ? 'info' : 'warn', event: 'sign_in', outcome, provider: 'github', ip: '203.0.113.7', userAgent: 'Mozilla/5.0' });
+
 test('the report counts error log lines, lists request IDs without messages, and fails over REPORT_ERROR_LIMIT', { skip: !has('bash') && 'bash not found' }, () => {
   const none = reportRun([], { logs: infoLine + '\n' });
   assert.match(none.notify, /^ping\|report\|ok\|memory=45% disk=41% deployed=abc123def456 errors=0 containers:/);
@@ -40,7 +43,7 @@ test('remote-deploy saves the api error lines before replacing the container and
   const posix = (p) => p.split(path.sep).join('/');
   const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
   const logsFile = path.join(dir, 'logs.txt');
-  fs.writeFileSync(logsFile, [infoLine, errLine('r1', 500, '/api/a')].join('\n') + '\n');
+  fs.writeFileSync(logsFile, [infoLine, errLine('r1', 500, '/api/a'), signInLine('success')].join('\n') + '\n');
   const docker = (running, exit = 0) => fs.writeFileSync(path.join(bin, 'docker'), ['#!/bin/bash', 'case "$1 $2" in', `  "compose ps") ${running ? 'echo id1' : 'true'} ;;`, `  "compose logs") echo "$@" >> '${posix(path.join(dir, 'args.txt'))}'; cat '${posix(logsFile)}'; exit ${exit} ;;`, 'esac', ''].join('\n'), { mode: 0o755 });
   const run = () => spawnSync('bash', ['-c', `set -euo pipefail; export PATH="${pathVar}"; ${fn}\nsave_api_errors; echo done`], { cwd: dir, encoding: 'utf8' });
   const file = path.join(dir, '.errors-before-deploy.log');
@@ -51,9 +54,9 @@ test('remote-deploy saves the api error lines before replacing the container and
     assert.equal(fs.existsSync(file), false, 'no running container, nothing saved');
     docker(true);
     assert.equal(run().status, 0);
-    assert.equal(fs.readFileSync(file, 'utf8'), errLine('r1', 500, '/api/a') + '\n', 'only error lines are saved');
+    assert.equal(fs.readFileSync(file, 'utf8'), errLine('r1', 500, '/api/a') + '\n' + signInLine('success') + '\n', 'only error and sign-in lines are saved');
     assert.equal(run().status, 0);
-    assert.equal(fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).length, 2, 'later deploys append');
+    assert.equal(fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).length, 4, 'later deploys append');
     const args = path.join(dir, 'args.txt');
     assert.match(fs.readFileSync(args, 'utf8'), /--since 24h api/, 'without .report-last-sent the window is 24 hours');
     fs.writeFileSync(path.join(dir, '.report-last-sent'), '2026-11-17T19:00:00Z\n');
@@ -67,4 +70,18 @@ test('remote-deploy saves the api error lines before replacing the container and
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+test('the report adds sign-in counts only when the api logs have sign-in lines, and never counts them as errors (#1089)', { skip: !has('bash') && 'bash not found' }, () => {
+  assert.doesNotMatch(reportRun([], { logs: infoLine + '\n' }).notify, /signins=/, 'repos without sign-in lines keep their line');
+
+  const day = [signInLine('success'), signInLine('refused_not_allowed'), signInLine('success'), signInLine('refused_second_user'), signInLine('refused_not_allowed'), infoLine].join('\n') + '\n';
+  const counted = reportRun([], { logs: day });
+  assert.match(counted.notify, /^ping\|report\|ok\|.* errors=0 signins=2 refused=3 containers:/);
+  assert.doesNotMatch(counted.notify, /203\.0\.113\.7|Mozilla/, 'no IP or user agent leaves the server');
+
+  const saved = reportRun(['line'], { logs: signInLine('success') + '\n', saved: signInLine('refused_not_allowed') + '\n' + errLine('r9', 500, '/api/auth/x') + '\n' });
+  assert.match(saved.stdout, / errors=1 \[r9 500 \/api\/auth\/x\] signins=1 refused=1 containers:/, 'lines saved before a deploy count too');
+
+  assert.match(reportRun([], { logs: signInLine('refused_not_allowed') + '\n' }).notify, /^ping\|report\|ok\|.* errors=0 signins=0 refused=1 /, 'refusals do not fail the day');
 });

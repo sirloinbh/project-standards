@@ -72,6 +72,7 @@ In the browser, the request ID is the `X-Request-Id` response header in the netw
 - The signal is `fail` when N is over `REPORT_ERROR_LIMIT` (server `.env`, default `0`: any error fails the day), and healthchecks.io emails on `fail`. Raise the limit for one app with a known noisy error, and open an issue for it ([env-conventions.md](env-conventions.md#server-only-keys-report-thresholds-636)).
 - A deploy replaces the `api` container, and `docker compose logs` then shows only the new one. So `remote-deploy.sh` appends the old container's error lines of the last 24 hours to `/opt/<app>/.errors-before-deploy.log` just before `docker compose up -d` (deploy and rollback), and the report counts that file with the live logs and then empties it.
 - Logs are still limited by the Docker `json-file` size (10 MB x 3 per container), so the report has to run before a noisy app's errors roll off.
+- Sign-in counts (#1089): a service that writes sign-in lines (`"event":"sign_in"`, today only shared-auth, shared-auth#33) also gets ` signins=<N> refused=<M>` after `errors=`, from the same window and saved file: `"outcome":"success"` lines and `"outcome":"refused_..."` lines. The lines are `info` or `warn`, so they never count as errors or fail the day; `remote-deploy.sh` saves them with the error lines. A repo without sign-in lines gets no sign-in field.
 
 To find the cause of an entry such as `errors=2 [5f0c… 500 /api/workouts]`, run on the server in `/opt/<app>`:
 
