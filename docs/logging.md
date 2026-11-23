@@ -30,6 +30,24 @@ One JSON object per line on stdout (`console.log`), or stderr (`console.error`) 
 
 The log line holds no body, header, cookie, or user data.
 
+### Other error lines
+
+Three more places write one JSON line with `"level":"error"` and no request ID, so they are not tied to a request:
+
+```json
+{"time":"2026-11-23T03:10:02.417Z","level":"error","message":"Database connection failed","error":"Connection terminated unexpectedly","code":"ECONNRESET"}
+{"time":"2026-11-23T03:10:09.002Z","level":"error","event":"audit_write_failed","message":"Tool audit row could not be written","error":"relation \"audit_log\" does not exist"}
+{"time":"2026-11-23T03:10:15.880Z","level":"error","event":"jobs_error","message":"Connection terminated unexpectedly"}
+```
+
+| Line | Written by | Meaning |
+|---|---|---|
+| `Database connection failed` | `createPool` in `standard/db.ts` (#1003) | A pg connection was lost, idle or inside a transaction. The process keeps running; `code` is the error code (for example `ECONNRESET`) when there is one. No stack trace |
+| `audit_write_failed` | `registerToolRoutes` in `standard/tools.ts` (#1036) | The `audit_log` row of a denied, invalid, or failed AI tool call (or a read) could not be written; the caller still got its normal answer |
+| `jobs_error` | `startJobs` in `standard/jobs.ts` | pg-boss reported an error. A failed job run is a separate line with `queue`, `jobId`, `attempt` and `result` |
+
+An app can pass its own `log` to `createPool` and `registerToolRoutes`; keep the one-line JSON shape with `level: "error"` so the daily report still counts it.
+
 ## Searching
 
 On the server, in the app folder (`/opt/<app>`):
@@ -47,6 +65,7 @@ In the browser, the request ID is the `X-Request-Id` response header in the netw
 [ADR-0021](adr/0021-error-alerts-from-logs.md): there is no error tracker or log service. The daily report (`deploy/report.sh`, 04:00 Seoul) counts the error lines and uses the existing `report` signal.
 
 - It counts lines with `"level":"error"` in `docker compose logs --since 24h api` and adds `errors=<N>` to the report line. An unexpected 500 writes two error lines with the same request ID (the handler line and the request line), so one failure can count as 2.
+- Every line with `"level":"error"` counts, so a lost database connection and a failed audit write (see [Other error lines](#other-error-lines)) count too; before #1003 and #1036 they were multi-line stack traces and were not counted. A line without a `requestId` is listed as `no-id`, and all such lines share that one entry. Find them with `docker compose logs api --since 24h | grep '"level":"error"' | grep -v requestId`.
 - When N is above 0 the line also lists up to 5 entries `<requestId> <status> <path>`. The error `message` never goes into the ping body, because a message from Postgres or a library can quote a value.
 - The signal is `fail` when N is over `REPORT_ERROR_LIMIT` (server `.env`, default `0`: any error fails the day), and healthchecks.io emails on `fail`. Raise the limit for one app with a known noisy error, and open an issue for it ([env-conventions.md](env-conventions.md#server-only-keys-report-thresholds-636)).
 - A deploy replaces the `api` container, and `docker compose logs` then shows only the new one. So `remote-deploy.sh` appends the old container's error lines of the last 24 hours to `/opt/<app>/.errors-before-deploy.log` just before `docker compose up -d` (deploy and rollback), and the report counts that file with the live logs and then empties it.
