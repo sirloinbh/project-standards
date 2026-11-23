@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderCompliance, renderEnvMatrix, repoStatus } from './lib/compliance.mjs';
 import { closeFinishedEpics, collectEpicState } from './lib/epics.mjs';
+import { classifyChecks } from './lib/sync-waves.mjs';
 import { collectOps, countItems, HISTORY_PATH, updateHistory } from './lib/ops.mjs';
 import { createClient, getInstallationToken, mapLimit } from './lib/github-app.mjs';
 import { koreanStats, scannable } from './lib/korean-text.mjs';
@@ -98,6 +99,15 @@ export async function remoteStatuses({ data, getClient, now = new Date() }) {
       } catch (error) {
         status.epicsError = error.message;
         status.rateLimited ||= RATE_LIMITED.test(error.message);
+      }
+      // The CI state of the sync PR decides whether a later wave is held (#1075); it needs Checks: Read, else it stays unknown.
+      if (status.syncPr?.sha) {
+        try {
+          const checks = await api('GET', `/repos/${target.repo}/commits/${status.syncPr.sha}/check-runs?per_page=100`);
+          status.syncPr.checks = checks ? classifyChecks(checks.check_runs ?? []) : null;
+        } catch {
+          status.syncPr.checks = null;
+        }
       }
       // Operations values are read one by one inside collectOps, so a missing permission blanks only that value (#1057).
       status.ops = await collectOps(api, target.repo, { pulls, now });

@@ -5,6 +5,7 @@ import { checkManifest, MANIFEST_PATH } from './manifest.mjs';
 import { parseEnvExample, ssmProblems } from './env-tags.mjs';
 import { BRANCH_PREFIX } from './sync-pr.mjs';
 import { opsCells, renderTrend } from './ops.mjs';
+import { waveOf } from './sync-waves.mjs';
 
 export { parseEnvExample };
 
@@ -43,7 +44,7 @@ export function repoStatus({ target, project, read, pulls = [], now = new Date()
     }
   }
   const pr = pulls.find((p) => p.head?.ref?.startsWith(BRANCH_PREFIX));
-  const syncPr = pr ? { number: pr.number, url: pr.html_url, ageDays: Math.floor((now - new Date(pr.created_at)) / 86_400_000) } : null;
+  const syncPr = pr ? { number: pr.number, url: pr.html_url, sha: pr.head?.sha ?? null, checks: null, ageDays: Math.floor((now - new Date(pr.created_at)) / 86_400_000) } : null;
   const envText = read('.env.example');
   const env = envText ? parseEnvExample(envText) : [];
   return {
@@ -54,10 +55,34 @@ export function repoStatus({ target, project, read, pulls = [], now = new Date()
     problems,
     packages,
     syncPr,
+    wave: target.wave ?? null,
     env,
     envProblems: project && envText ? envMismatches(env, project) : [],
     korean,
   };
+}
+
+/**
+ * Repos held by a sync wave (#1075, #1055): a repo is held while a repo of an earlier wave has a sync PR with red CI
+ * and the repo itself has not reached the current central commit. Returns Map(repo -> the earliest red wave).
+ */
+export function heldByWave(statuses, centralSha) {
+  const red = statuses.filter((s) => !s.unknown && s.syncPr?.checks === 'red');
+  const held = new Map();
+  for (const s of statuses) {
+    if (s.unknown || s.wave === undefined) continue;
+    const blockers = red.filter((r) => waveOf({ wave: r.wave ?? undefined }) < waveOf({ wave: s.wave ?? undefined }));
+    const current = Boolean(s.centralSha) && Boolean(centralSha) && centralSha !== 'local' && s.centralSha.startsWith(centralSha.slice(0, 7));
+    if (blockers.length && !current) held.set(s.repo, Math.min(...blockers.map((r) => waveOf({ wave: r.wave ?? undefined }))));
+  }
+  return held;
+}
+
+/** Wave cell: the target's wave, `held by wave N` when an earlier wave's red sync PR holds it back. */
+export function waveCell(s, held) {
+  if (s.wave === undefined) return '—';
+  const own = s.wave === null ? 'last' : String(s.wave);
+  return held.has(s.repo) ? `${own} (held by wave ${held.get(s.repo)})` : own;
 }
 
 /** A Markdown table cell: backslashes first, so a value ending in "\" cannot escape the next "|" (#290). */
@@ -92,20 +117,21 @@ export function renderCompliance(statuses, { generatedAt, centralSha, history = 
     '',
     `<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: ${generatedAt}, central ${centralSha.slice(0, 7)} -->`,
     '',
-    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text | Work issues without epic | CI on main | Alerts (Dependabot / code scanning) | Last deploy | Oldest open PR |',
-    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
+    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | Sync wave | .env.example | Repo settings | Korean text | Work issues without epic | CI on main | Alerts (Dependabot / code scanning) | Last deploy | Oldest open PR |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
   ];
+  const held = heldByWave(statuses, centralSha);
   for (const s of statuses) {
     if (s.unknown) {
-      lines.push(`| ${s.repo} | unknown (${s.unknown}) | — | — | — | — | — | — | — | — | — | — | — | — |`);
+      lines.push(`| ${s.repo} | unknown (${s.unknown}) | — | — | — | — | — | — | — | — | — | — | — | — | — |`);
       continue;
     }
     const files = !s.synced ? '—' : s.problems.length ? `✗ ${s.problems.length} differ` : '✓ match';
     const pkgs = !s.packages.length ? '—' : s.packages.every((p) => p.ok) ? '✓' : `✗ ${s.packages.filter((p) => !p.ok).map((p) => `${p.name} ${p.actual ?? 'none'}≠${p.expected}`).join(', ')}`;
-    const pr = s.syncPr ? `[#${s.syncPr.number}](${s.syncPr.url}) ${s.syncPr.ageDays} days old` : 'none';
+    const pr = s.syncPr ? `[#${s.syncPr.number}](${s.syncPr.url}) ${s.syncPr.ageDays} days old${s.syncPr.checks === 'red' ? ', CI red' : ''}` : 'none';
     const env = s.profile !== 'app' ? '—' : s.envProblems.length ? `✗ ${s.envProblems.length} differ` : '✓';
     const ops = opsCells(s.ops, now ?? new Date());
-    lines.push(`| ${s.repo} | ${s.synced ? '✓' : 'not yet'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} | ${koreanCell(s.korean)} | ${epicsCell(s)} | ${ops.ci} | ${ops.alerts} | ${ops.merge} | ${ops.pr} |`);
+    lines.push(`| ${s.repo} | ${s.synced ? '✓' : 'not yet'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${waveCell(s, held)} | ${env} | ${settingsCell(s)} | ${koreanCell(s.korean)} | ${epicsCell(s)} | ${ops.ci} | ${ops.alerts} | ${ops.merge} | ${ops.pr} |`);
   }
   const details = statuses.filter((s) => !s.unknown && (s.problems.length || s.envProblems.length));
   if (details.length) {
