@@ -122,7 +122,7 @@ export function run(argv, { root = central, log = console.log } = {}) {
   throw new Error('Usage: node tools/repos.mjs status [--fetch] | pull | run -- <command> | workspace [--base <folder>]');
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   try {
     process.exit(run(process.argv.slice(2)));

@@ -200,7 +200,7 @@ export async function run(argv, { log = console.log, ask = confirm, root = centr
   return failedRepos.size ? 1 : 0;
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   run(process.argv.slice(2)).then(
     (code) => process.exit(code),
