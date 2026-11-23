@@ -77,7 +77,7 @@ export function checkAll(root) {
   return workflowFiles(root).flatMap((file) => checkWorkflow(file, fs.readFileSync(path.join(root, file), 'utf8'), actions, runner, windowsRunner));
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
   const problems = checkAll(root);
