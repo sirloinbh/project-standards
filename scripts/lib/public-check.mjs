@@ -22,7 +22,8 @@ ${HEADER}
 #   PUBLIC_CHECK_SERVER_IP     the server's public address; when empty it is read from checkip.amazonaws.com
 #   PUBLIC_CHECK_RESOLVER      DNS server for the check (default 1.1.1.1)
 #   PUBLIC_CHECK_DIG           name of the dig command (default dig; the tests point it at a missing name)
-#   PUBLIC_CHECK_SINK          where the result goes; only "healthchecks" (default) exists. A new sink is a new case in send_signal
+#   NOTIFY_SINK                where the result goes: healthchecks (default), aws or both. aws records the state for signals.sh,
+#                              which sends the CloudWatch metrics and the SNS message (#1091)
 # The signal body lists the failing host names and the reason, never a secret.
 set -uo pipefail
 
@@ -35,17 +36,32 @@ read_key() {
 }
 
 # The only place that knows where the result goes. status is ok or fail. A missing key or a failed send never changes the exit code.
+send_healthchecks() {
+  local status=$1 body=$2 url
+  url=$(read_key HEALTHCHECK_URL_PUBLIC || true)
+  [ -n "$url" ] || return 0
+  [ "$status" = ok ] || url="$url/fail"
+  printf '%s' "$body" | head -c 10000 | curl -fsS -m 10 --retry 3 -o /dev/null --data-binary @- "$url" || echo "healthchecks.io ping failed" >&2
+}
+
+# The aws sink: record this signal, then judge all signals and send the metrics (this run is the 5-minute heartbeat).
+send_aws() {
+  local status=$1
+  "\${SIGNALS_SH:-$dir/signals.sh}" record server public "$status" || echo "could not record the public signal" >&2
+  "\${SIGNALS_SH:-$dir/signals.sh}" evaluate || echo "signals.sh evaluate failed" >&2
+}
+
 send_signal() {
-  local status=$1 body=$2 sink url
-  sink=$(read_key PUBLIC_CHECK_SINK || true)
+  local status=$1 body=$2 sink
+  sink=$(read_key NOTIFY_SINK || true)
   case "\${sink:-healthchecks}" in
-    healthchecks)
-      url=$(read_key HEALTHCHECK_URL_PUBLIC || true)
-      [ -n "$url" ] || return 0
-      [ "$status" = ok ] || url="$url/fail"
-      printf '%s' "$body" | head -c 10000 | curl -fsS -m 10 --retry 3 -o /dev/null --data-binary @- "$url" || echo "healthchecks.io ping failed" >&2
+    healthchecks) send_healthchecks "$status" "$body" ;;
+    aws) send_aws "$status" ;;
+    both)
+      send_healthchecks "$status" "$body"
+      send_aws "$status"
       ;;
-    *) echo "unknown PUBLIC_CHECK_SINK: $sink" >&2 ;;
+    *) echo "unknown NOTIFY_SINK: $sink" >&2 ;;
   esac
   return 0
 }
