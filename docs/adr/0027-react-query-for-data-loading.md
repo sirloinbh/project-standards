@@ -61,6 +61,16 @@ Each adoption issue installs with `npm install --ignore-scripts --save-exact @ta
 - A newer major of the library changes its API in a way the shared layer cannot hide.
 - A screen needs offline mutation queues or persistence; that is a separate decision.
 
+## Not moved: `useHealth` (#1021, 2026-11-23)
+
+`useHealth` in `templates/ui/frontend/src/health.ts` (the footer and overview server check) stays on its own effect, timer and abort controller. Moving it to `useQuery` was tried on paper and does not fit cleanly:
+
+- `templates/ui` would import `@tanstack/react-query`, while the `query` feature is opt-in per app (decision 3 above keeps the library out of `templates/ui` for this reason). An app with `query: false` would break at typecheck.
+- Every screen or test that renders `useHealth` would need a `QueryClientProvider`; today it works without one.
+- The check must see an outage at once and poll only while it fails, so a `useQuery` call has to switch off the shared client's 30 s `staleTime` and focus refetch, set `retry: false` and give a `refetchInterval` function: five overrides to undo defaults made for screens, in place of about 40 lines that are already tested.
+
+Revisit if the `query` feature becomes part of `templates/ui` for every app.
+
 ## Consequences
 
 - Adoption issues, one per app, each blocked by #788: workout-memo#394 (only switches to the shared layer), plan-routine#178, health-log#220, money-ledger#213, cert-manager#161, dev-career-portfolio#152, study-log#287, life-journal#158.
