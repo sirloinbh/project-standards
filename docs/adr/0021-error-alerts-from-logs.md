@@ -7,7 +7,7 @@
 ## Context
 
 - Since #552 every app API writes one JSON line per request with a request ID. A 5xx response and an unexpected error go to stderr with `"level":"error"`. The logs stay in `docker compose logs` per app and are searched with `grep` ([logging.md](../logging.md)). Nothing tells the owner that an error happened.
-- What already alerts, per app, through healthchecks.io ([`notify.sh`](../../templates/app/deploy/notify.sh.tmpl)):
+- What already alerts, per app, through healthchecks.io ([`notify.sh`](../../templates/deploy/deploy/notify.sh.tmpl)):
 
   | Signal | When | What it catches |
   |---|---|---|

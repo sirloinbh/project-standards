@@ -9,7 +9,7 @@ Accumulate a summary for each workday as `docs/daily/YYYY-MM-DD.md`. Dates are i
 - Record only verification results that were actually run. Do not record work that was not run as done.
 - Record PR creation, CI passing, merge, and deployment as separate states.
 - Do not overwrite the state of a past date with today's state. When fixing a factual error, leave the reason for the correction.
-- Add the new record at the top of the list below. Manage upcoming work in [Next steps](../next-steps/README.md).
+- Add the new record at the top of the list below. Manage upcoming work in [Next steps](next-steps.md).
 - Keep detailed per-issue records separately in `docs/changes/`.
 
 ## Summaries by date
