@@ -76,3 +76,14 @@ Branch protection is easiest to set on the web: workout-memo → Settings → Br
 On the web, turn on "Secret Protection" (secret scanning, push protection) and "Code scanning → CodeQL analysis → Default" under each repo → Settings → Code security.
 
 To use branch protection, secret scanning, and CodeQL on private repos as well, GitHub Pro or higher is required. That is the user's decision.
+
+## What the compliance run reads and writes (#1065)
+
+The daily compliance run uses the sync GitHub App token, one repository at a time ([github-app.md](github-app.md)). Besides the settings above it uses:
+
+| Column or step | API | App permission |
+|---|---|---|
+| Work issues without epic | `GET /repos/{repo}/issues` (`parent_issue_url`, `sub_issues_summary`) | Issues: read |
+| Closing finished epics (comment and close) | `GET .../issues/{n}/sub_issues`, `POST .../comments`, `PATCH .../issues/{n}` | Issues: write (the permission the label sync already needs) |
+
+A repo where the token cannot read issues shows `unknown` in the column and the rest of the report is unaffected. Epics whose body says "keep open" or "do not close" are never closed.

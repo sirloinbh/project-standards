@@ -79,14 +79,20 @@ export function koreanCell(k) {
   return `△ ${k.markdownFiles} md, ${k.commentLines} comments${k.partial ? ' (partial scan)' : ''}`;
 }
 
+/** One cell for the epic structure column (#1065): work issues that have no parent epic. */
+export function epicsCell(s) {
+  if (!s.epics) return s.epicsError ? 'unknown' : '—';
+  return s.epics.orphans.length ? `✗ ${s.epics.orphans.length}` : '✓';
+}
+
 export function renderCompliance(statuses, { generatedAt, centralSha }) {
   const lines = [
     '# Compliance status',
     '',
     `<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: ${generatedAt}, central ${centralSha.slice(0, 7)} -->`,
     '',
-    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text |',
-    '|---|---|---|---|---|---|---|---|---|',
+    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text | Work issues without epic |',
+    '|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const s of statuses) {
     if (s.unknown) {
@@ -97,7 +103,7 @@ export function renderCompliance(statuses, { generatedAt, centralSha }) {
     const pkgs = !s.packages.length ? '—' : s.packages.every((p) => p.ok) ? '✓' : `✗ ${s.packages.filter((p) => !p.ok).map((p) => `${p.name} ${p.actual ?? 'none'}≠${p.expected}`).join(', ')}`;
     const pr = s.syncPr ? `[#${s.syncPr.number}](${s.syncPr.url}) ${s.syncPr.ageDays} days old` : 'none';
     const env = s.profile !== 'app' ? '—' : s.envProblems.length ? `✗ ${s.envProblems.length} differ` : '✓';
-    lines.push(`| ${s.repo} | ${s.synced ? '✓' : 'not yet'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} | ${koreanCell(s.korean)} |`);
+    lines.push(`| ${s.repo} | ${s.synced ? '✓' : 'not yet'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} | ${koreanCell(s.korean)} | ${epicsCell(s)} |`);
   }
   const details = statuses.filter((s) => !s.unknown && (s.problems.length || s.envProblems.length));
   if (details.length) {
@@ -115,6 +121,16 @@ export function renderCompliance(statuses, { generatedAt, centralSha }) {
     for (const s of withSettings) {
       lines.push(`### ${s.repo}`, '', '| Status | Item | Current | Expected |', '|---|---|---|---|');
       for (const r of s.settings.filter((x) => x.status !== 'ok')) lines.push(`| ${MARK[r.status]} | ${cell(r.label)} | ${cell(r.actual)} | ${cell(r.expected)} |`);
+      lines.push('');
+    }
+  }
+  const withEpics = statuses.filter((s) => s.epics?.orphans.length || s.epics?.closed?.length);
+  if (withEpics.length) {
+    lines.push('', '## Epic structure', '', 'Every open work issue belongs under an epic, and an epic whose sub-issues are all closed is closed by this run (#1065, std-backlog section 6). Link each issue below as a sub-issue of a fitting epic.', '');
+    for (const s of withEpics) {
+      lines.push(`### ${s.repo}`, '');
+      for (const i of s.epics.orphans) lines.push(`- No epic: [#${i.number}](https://github.com/${s.repo}/issues/${i.number}) ${cell(i.title)}`);
+      for (const n of s.epics.closed ?? []) lines.push(`- Closed epic [#${n}](https://github.com/${s.repo}/issues/${n}) (all sub-issues closed)`);
       lines.push('');
     }
   }

@@ -8,6 +8,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderCompliance, renderEnvMatrix, repoStatus } from './lib/compliance.mjs';
+import { closeFinishedEpics, collectEpicState } from './lib/epics.mjs';
 import { createClient, getInstallationToken, mapLimit } from './lib/github-app.mjs';
 import { koreanStats, scannable } from './lib/korean-text.mjs';
 import { MANIFEST_PATH } from './lib/manifest.mjs';
@@ -83,12 +84,31 @@ export async function remoteStatuses({ data, getClient, now = new Date() }) {
         status.settingsError = error.message;
         status.rateLimited = RATE_LIMITED.test(error.message);
       }
+      // The backlog structure is judged separately too, so a missing Issues permission only blanks this column (#1065).
+      try {
+        status.epics = await collectEpicState(api, target.repo);
+      } catch (error) {
+        status.epicsError = error.message;
+        status.rateLimited ||= RATE_LIMITED.test(error.message);
+      }
       statuses.push(status);
     } catch (error) {
       statuses.push({ repo: target.repo, profile: target.profile, unknown: error.message, rateLimited: RATE_LIMITED.test(error.message) });
     }
   }
   return statuses;
+}
+
+/** Closes the epics whose sub-issues are all closed and records them on the status; a failure only blanks that repo's column (#1065). */
+export async function closeFinished({ statuses, getClient }) {
+  for (const s of statuses) {
+    if (!s.epics?.finished.length) continue;
+    try {
+      s.epics.closed = await closeFinishedEpics(await getClient(s.repo), s.repo, s.epics.finished);
+    } catch (error) {
+      console.warn(`compliance: could not close finished epics of ${s.repo}: ${error.message}`);
+    }
+  }
 }
 
 /** Opens or updates the report PR in the central repository when the reports changed. */
@@ -153,6 +173,7 @@ if (isMain) {
     const getClient = async (repo) => createClient({ token: (await getInstallationToken({ ...credentials, repo })).token });
     remoteStatuses({ data, getClient, now })
       .then(async (statuses) => {
+        await closeFinished({ statuses, getClient });
         const reports = renderReports(statuses, meta);
         write(reports);
         const limited = rateLimitedRepos(statuses);
