@@ -114,8 +114,8 @@ test('full mode passes when DNS and the certificate are fine, and reads the serv
   assert.equal(r.curlStdin, `public ok: ${hosts.length} hosts (full)`);
 });
 
-test('without dig the DNS check is skipped with a note instead of failing', { skip: skip || process.platform === 'win32' ? skip || 'the fake PATH cannot hide a real dig on Windows' : false }, () => {
-  const r = run(['full'], { env: `HEALTHCHECK_URL_PUBLIC=${HC}\nPUBLIC_CHECK_SERVER_IP=${SERVER_IP}\n`, noDig: true });
+test('without dig the DNS check is skipped with a note instead of failing', { skip }, () => {
+  const r = run(['full'], { env: `HEALTHCHECK_URL_PUBLIC=${HC}\nPUBLIC_CHECK_SERVER_IP=${SERVER_IP}\nPUBLIC_CHECK_DIG=dig-that-does-not-exist\n`, noDig: true });
   assert.equal(r.status, 0, r.stderr);
   assert.match(r.curlStdin, /dns skipped: dig is not installed/);
 });

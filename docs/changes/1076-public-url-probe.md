@@ -15,6 +15,6 @@
 
 ## Verification
 
-- `node --test scripts/test/public-check.test.mjs`: 9 passed, 1 skipped on Windows (all hosts ok; one failing host named in the body; DNS mismatch; certificate near expiry; server address read from checkip; missing dig; no URL, failed ping and unknown sink; bad argument), with a fake `curl`, `dig` and `openssl`.
+- `node --test scripts/test/public-check.test.mjs`: 10 passed (all hosts ok; one failing host named in the body; DNS mismatch; certificate near expiry; server address read from checkip; missing dig; no URL, failed ping and unknown sink; bad argument), with a fake `curl`, `dig` and `openssl`.
 - `npm run check`: see the PR.
 - Not verified: the probe on the real server. The user step in `docs/server-proxy.md` records whether `--resolve` to 127.0.0.1 and a direct public-address probe work there (reported on #1076).

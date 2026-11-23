@@ -21,6 +21,7 @@ ${HEADER}
 #   HEALTHCHECK_URL_PUBLIC     ping URL of the healthchecks.io check "public" (holds a secret UUID; never printed)
 #   PUBLIC_CHECK_SERVER_IP     the server's public address; when empty it is read from checkip.amazonaws.com
 #   PUBLIC_CHECK_RESOLVER      DNS server for the check (default 1.1.1.1)
+#   PUBLIC_CHECK_DIG           name of the dig command (default dig; the tests point it at a missing name)
 #   PUBLIC_CHECK_SINK          where the result goes; only "healthchecks" (default) exists. A new sink is a new case in send_signal
 # The signal body lists the failing host names and the reason, never a secret.
 set -uo pipefail
@@ -71,10 +72,12 @@ notes=()
 server_ip=$(read_key PUBLIC_CHECK_SERVER_IP || true)
 resolver=$(read_key PUBLIC_CHECK_RESOLVER || true)
 resolver=\${resolver:-1.1.1.1}
+dig_bin=$(read_key PUBLIC_CHECK_DIG || true)
+dig_bin=\${dig_bin:-dig}
 if [ "$mode" = full ]; then
   if [ -z "$server_ip" ]; then server_ip=$(curl -fsS -m 10 https://checkip.amazonaws.com 2> /dev/null | tr -d '[:space:]' || true); fi
   if [ -z "$server_ip" ]; then notes+=("dns skipped: server address unknown"); fi
-  if ! command -v dig > /dev/null 2>&1; then notes+=("dns skipped: dig is not installed"); fi
+  if ! command -v "$dig_bin" > /dev/null 2>&1; then notes+=("dns skipped: dig is not installed"); fi
 fi
 
 for host in "\${hosts[@]}"; do
@@ -82,8 +85,8 @@ for host in "\${hosts[@]}"; do
     failures+=("$host: https://$host/api/health did not answer 200 through nginx")
   fi
   [ "$mode" = full ] || continue
-  if [ -n "$server_ip" ] && command -v dig > /dev/null 2>&1; then
-    answers=$(dig +short +time=3 +tries=1 A "$host" "@$resolver" 2> /dev/null || true)
+  if [ -n "$server_ip" ] && command -v "$dig_bin" > /dev/null 2>&1; then
+    answers=$("$dig_bin" +short +time=3 +tries=1 A "$host" "@$resolver" 2> /dev/null || true)
     if ! printf '%s\\n' "$answers" | grep -Fxq "$server_ip"; then
       failures+=("$host: DNS from $resolver does not return the server address")
     fi
