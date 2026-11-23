@@ -7,6 +7,7 @@
 // options must contain P0..P4. The tool never creates or changes fields; it says what is missing.
 // Issues that are closed or already on the board are not removed. Needs the gh "project" scope.
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
@@ -151,7 +152,7 @@ export async function run(argv, { log = console.log, ask = confirm, root = centr
   return failed ? 1 : 0;
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   run(process.argv.slice(2)).then(
     (code) => process.exit(code),

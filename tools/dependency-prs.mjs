@@ -5,6 +5,7 @@
 // merging an app PR deploys it, so that stays with the user.
 // GitHub is reached only as sirloinbh, through tools/gh-project.ps1 on Windows.
 import { spawnSync } from 'node:child_process';
+import fs from 'node:fs';
 import path from 'node:path';
 import readline from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
@@ -126,7 +127,7 @@ export async function run(argv, { log = console.log, ask = confirm } = {}) {
   return failed ? 1 : 0;
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (isMain) {
   run(process.argv.slice(2)).then(
     (code) => process.exit(code),
