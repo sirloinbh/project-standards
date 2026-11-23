@@ -218,6 +218,7 @@ central main push
 
 - Commits are created through the GitHub API (Git Data API). Because the runner does not clone the downstream repo, no hooks or scripts of the downstream repo run.
 - The only sync target is the umbrella repo. There are no sub-repos to push to (ADR-0022, #728); managed files such as `frontend/.npmrc` arrive in the same sync PR.
+- **Waves (#1055):** a target may have an integer `wave` in `sync.config.json` (no value = last wave). `sync.yml` syncs wave 1 first, waits up to 20 minutes for the CI check runs of the sync PRs it opened or updated, and starts the next wave only when all are green. If a PR fails CI, times out, or a sync errors, the later waves stay on their current central commit (reported as `held`), the run ends red with a workflow warning, and a comment goes on the central PR. Wave 1 is the canary: `workout-memo` (the most complete app) and `file-control` (a non-app repo); wave 2 is the other apps and `develop-skill`; the infra repo and shared services have no wave, so they go last. `workflow_dispatch` with `all_waves` syncs everything at once for an urgent fix. Reading check runs needs the App permission Checks: Read.
 - A target with `enabled: false` gets no PR. (The original design had a `maxRollout` stage counter; it was removed in #701 once every target was synced.)
 
 ### 5.4 sync.config schema and initial values

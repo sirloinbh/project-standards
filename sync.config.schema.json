@@ -33,6 +33,7 @@
         "properties": {
           "repo": { "type": "string", "pattern": "^sirloinbh/[a-z][a-z0-9-]*$" },
           "profile": { "type": "string" },
+          "wave": { "type": "integer", "minimum": 1, "description": "Sync wave (#1055). Wave 1 is synced first; the next wave starts when the CI checks of the sync PRs just opened are green. No value = last wave" },
           "project": { "type": ["string", "null"], "description": "app 프로필은 registry 프로젝트 이름, infra 프로필은 null" },
           "generatedFiles": { "type": "object", "additionalProperties": { "enum": ["apps-ts", "apps-json"] }, "description": "템플릿 없이 레지스트리 데이터로 생성해 쓰는 파일: 경로 → 종류 (scripts/lib/generated.mjs, #705)" },
           "enabled": { "type": "boolean", "description": "false이면 이 target에는 동기화 PR을 열지 않는다. 없으면 true" },
