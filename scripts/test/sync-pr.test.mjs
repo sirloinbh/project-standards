@@ -340,7 +340,10 @@ test('adoptionNotes names the helper and the repo-owned file for each changed ma
   const change = (p) => ({ path: p, isNew: false, source: 'x' });
   assert.deepEqual(adoptionNotes([change('backend/src/standard/auth.ts')]), ['- `backend/src/standard/auth.ts` changed: `listenHost` must be used by the repo-owned `backend/src/server.ts`. `standards-check` warns when it is not.']);
   const all = adoptionNotes([change('backend/src/standard/db.ts'), change('backend/src/standard/tools.ts'), change('backend/src/standard/auth.ts'), change('README.md')]);
-  assert.equal(all.length, 3);
+  // db.ts has two rules (createPool and setInt8Parser, #1035).
+  assert.equal(all.length, 4);
+  assert.match(all.join('\n'), /`setInt8Parser` must be used by the repo-owned/);
+  assert.match(adoptionNotes([change('backend/src/standard/rate-limit.ts')]).join('\n'), /`apiRateLimit` must be used by the repo-owned `backend\/src\/app\.ts`/);
   assert.match(all.join('\n'), /`createPool` must be used by the repo-owned `backend\/src\/server\.ts, pool\.ts or db\.ts/);
   assert.match(all.join('\n'), /`registerToolRoutes` must be used by the repo-owned `backend\/src\/app\.ts, backend\/src\/server\.ts`/);
   assert.deepEqual(adoptionNotes([change('backend/src/standard/http.ts'), change('deploy/autodeploy.sh')]), []);
