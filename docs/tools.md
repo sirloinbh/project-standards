@@ -313,21 +313,6 @@ The user does this once; agents never install it (it is a GUI installer, not `np
 
 Read-only: workout-memo, plan-routine and study-log opened signed in at 0.2 to 0.65 s per page; menus and lists were readable. Write run on workout-memo (approved by the user): the AI panel's confirm card appeared in 4.6 s and Allow added a test workout, which confirmed the #907 fix in a real browser; the journal listed it; after deleting it and the user's earlier test entry through the UI the empty state showed. An empty "Save record" is blocked by the browser's own required-field validation (no `role=alert` in the app).
 
-## Messages between local Claude Code sessions (#1064)
-
-The coordinator and the lane sessions of the orca-lanes skill message each other with `SendMessage`. Two different things can show a prompt (Claude Code documentation, checked 2026-11-23):
-
-| Prompt | Cause | Fix |
-|---|---|---|
-| "Deny or deliver" at the receiver | `crossSessionInbound` has no value, so Claude Code holds a message that crosses the permission-mode groups (Bypass vs all others; lanes run in Bypass, the coordinator usually does not) | `"crossSessionInbound": "accept"` in the user-level `~/.claude/settings.json` (or `/config` → "Messages from your other sessions"; Claude Code 2.1.232+). Project and local settings can only set a stricter value, so it cannot be managed from this repo |
-| A review or prompt at the sender | In auto mode (`defaultMode: "auto"` in the user settings) a classifier reviews each `SendMessage` before delivery (2.1.222+). An allow rule for `SendMessage` skips the review | `SendMessage` and `ListAgents` are in `permissions.allow` of the managed `.claude/settings.json` (#1064) |
-
-- **State on this PC (2026-11-23):** `crossSessionInbound: "accept"` is already in `~/.claude/settings.json` and in all three Orca profile `settings.json` files (`%APPDATA%\orca\claude-profiles\*\home`); the repo and its `settings.local.json` set no stricter value; Claude Code is 2.1.323. So the receiver hold is covered, and the remaining prompt is most likely the sender-side classifier, now covered by the allow rule once the sync PRs reach the repos the coordinator runs in. A session started before the setting was written may still hold the old value: restart it.
-- **Other prompts `accept` does not cover:** a normal permission prompt for what the message asks for (for example a Bash command); messages to another machine (`isolatePeerMachines`); rapid bursts and loops are throttled. A message never counts as the user's approval.
-- **If a prompt still appears,** check in the prompting session: `/status` (which settings files loaded), `/config` (the "Messages from your other sessions" row is missing when managed settings or `--settings` set the key), `/permissions` → Recently blocked (a sender-side block), and `Ctrl+O` (a held message shows under "Waiting to be delivered"). A prompt that names a tool such as Bash or Edit is an ordinary permission prompt, not a delivery prompt.
-- Held messages expire after `dialogExpiry` (five minutes by default); the VS Code extension and the desktop app cannot show the dialog.
-- The user-level files are changed only by the user; the agent does not edit `~/.claude`.
-
 ## Verification
 
 - Repo batch commands: `node --test scripts/test/repos.test.mjs`. It uses only temporary git repos.
