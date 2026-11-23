@@ -40,6 +40,30 @@ aws s3 ls s3://<bucket>/{{project.name}}/ --profile {{project.db.name}}-personal
 aws s3 cp s3://<bucket>/{{project.name}}/<file> ./backups/ --profile {{project.db.name}}-personal
 ```
 
+## Quarterly drill [User]
+
+The weekly restore check proves that the newest **local** dump restores. It does not prove that the off-server S3 copy can be downloaded and restored. On the first day of January, April, July and October the central `restore-drill` workflow opens one issue, "Quarterly restore drill <year>-Q<n>", with one checkbox for every app and shared service that has a database. Do the steps below for each item (personal AWS profile, Docker on the PC), write the result on the item, and fix this runbook where a step was wrong.
+
+```powershell
+# 1. Newest file and its row counts (the .counts file is uploaded with every dump)
+aws s3 ls s3://<bucket>/{{project.name}}/ --profile {{project.db.name}}-personal
+aws s3 cp s3://<bucket>/{{project.name}}/<file>.sql.gz ./backups/ --profile {{project.db.name}}-personal
+aws s3 cp s3://<bucket>/{{project.name}}/<file>.counts ./backups/ --profile {{project.db.name}}-personal
+# 2. Scratch database (the same image as production, see versions.json)
+docker run -d --rm --name drill-{{project.name}} -e POSTGRES_PASSWORD=drill -e POSTGRES_DB=restore_check postgres:17-alpine
+# 3. Restore and time it
+Measure-Command { gunzip -c ./backups/<file>.sql.gz | docker exec -i drill-{{project.name}} psql -q -v ON_ERROR_STOP=1 -U postgres -d restore_check }
+# 4. Row counts for the comparison: the same query as backup.sh (COUNT_SQL), then compare with the .counts file
+docker exec drill-{{project.name}} psql -At -U postgres -d restore_check -c "select table_schema || '.' || table_name || '|' || (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name), false, true, '')))[1]::text from information_schema.tables where table_schema not in ('pg_catalog', 'information_schema') and table_type = 'BASE TABLE' order by 1" > ./backups/restored.counts
+# 5. Clean up: the dump holds personal data
+docker rm -f drill-{{project.name}}
+Remove-Item ./backups/<file>.sql.gz, ./backups/<file>.counts, ./backups/restored.counts
+```
+
+Compare `restored.counts` with the downloaded `.counts` file (they must be identical). If `gunzip` is not on the PC, use `7z` or `tar -xzOf`. A dump with no `.counts` file in S3 is a finding: open an issue, because `backup.sh dump` uploads both.
+
+`node scripts/restore-drill.mjs --dry-run` in the central repo prints the issue body that the next quarter will open.
+
 ## Copying to a PC
 
 ```powershell
