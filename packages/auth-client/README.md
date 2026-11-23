@@ -14,6 +14,7 @@ app.get('/api/me', meHandler);
 ```
 
 - Forwards only the shared session cookies (`sirloinbh.session_token`, `sirloinbh.session_data`, with or without `__Secure-`) to `GET <authUrl>/api/auth/get-session`.
+- Sends the request's ID (`res.locals.requestId`, set by `requestLog`) to the auth service as `X-Request-Id` when it is a valid ID, so a failed check can be matched to the auth service's log (since 1.1.0).
 - No session, or the auth service says the session is gone: `401 {"error":"unauthorized"}`.
 - Auth service unreachable, slow (`timeoutMs`, default 3 s), or failing: `503 {"error":"auth_unavailable"}`. A request is never let through without a check.
 - A successful check is reused for `cacheMs` (default 30 s), so a sign-out reaches every app within that time.
