@@ -301,7 +301,8 @@ test('API rule warnings reach runCheck without failing it; tests are not scanned
     write('backend/src/app.test.ts', 'req.body.x');
   });
   assert.deepEqual(result.problems, []);
-  assert.equal(result.warnings.length, 9);
+  // 9 API warnings, plus the 2 adoption warnings (apiRateLimit, setInt8Parser) because this app.ts calls neither (#1035).
+  assert.equal(result.warnings.length, 11);
   assert.ok(!result.warnings.some((w) => w.includes('app.test.ts')));
 });
 
@@ -368,7 +369,7 @@ const src = (file, text) => ({ file, text });
 const managedAll = { 'backend/src/standard/auth.ts': {}, 'backend/src/standard/db.ts': {}, 'backend/src/standard/tools.ts': {} };
 
 test('adoption rules: the export names each helper, its managed file and its repo-owned file', () => {
-  assert.deepEqual(ADOPTION_RULES.map((r) => [r.id, r.helper]), [['listen-host', 'listenHost'], ['create-pool', 'createPool'], ['tool-routes', 'registerToolRoutes']]);
+  assert.deepEqual(ADOPTION_RULES.map((r) => [r.id, r.helper]), [['listen-host', 'listenHost'], ['create-pool', 'createPool'], ['tool-routes', 'registerToolRoutes'], ['api-rate-limit', 'apiRateLimit'], ['int8-parser', 'setInt8Parser']]);
   for (const rule of ADOPTION_RULES) {
     assert.ok(rule.managedFile.startsWith('backend/src/standard/') && rule.ownedFile && typeof rule.check === 'function' && typeof rule.applies === 'function', rule.id);
   }
@@ -380,7 +381,7 @@ test('adoption rules: listenHost must be used by server.ts (#866, #898)', () => 
   const adopted = [src('backend/src/server.ts', 'const auth = sharedAuth();\ncreateApp(pool, { auth }).listen(port, listenHost(auth !== undefined), () => {});\n')];
   assert.deepEqual(checkAdoption(adopted, managedAll), []);
   assert.deepEqual(checkAdoption(literal, {}), [], 'without the managed auth.ts the helper does not exist, so nothing is asked');
-  assert.deepEqual(checkAdoption([src('backend/src/app.ts', '')], managedAll), [], 'no server.ts, nothing to check');
+  assert.deepEqual(checkAdoption([src('backend/src/app.ts', '')], { 'backend/src/standard/auth.ts': {} }), [], 'no server.ts, nothing to check');
 });
 
 test('adoption rules: a pool created with new Pool must go through createPool (ADR-0025)', () => {
@@ -403,6 +404,28 @@ test('adoption rules: an app with ai-tools.ts must register the tool routes with
   const ok = [src('backend/src/ai-tools.ts', ''), src('backend/src/app.ts', 'registerToolRoutes(app, { app: "x", tools, pool, publicKey, requireBinding: true });\n'), src('backend/src/server.ts', 'toolsPublicKey: process.env.AI_TOOLS_PUBLIC_KEY')];
   assert.deepEqual(checkAdoption(ok, only), []);
   assert.deepEqual(checkAdoption([src('backend/src/app.ts', 'app.use(x);\n')], only), [], 'no ai-tools.ts, no tools to register');
+});
+
+test('adoption rules: apiRateLimit must be called in app.ts before express.json (#678, #1035)', () => {
+  const managed = { 'backend/src/standard/rate-limit.ts': {} };
+  const missing = [src('backend/src/app.ts', "app.use(requestLog);\napp.use(express.json({ limit: '256kb' }));\n")];
+  assert.match(checkAdoption(missing, managed).join('\n'), /app\.ts: call apiRateLimit\(app\)/);
+  const late = [src('backend/src/app.ts', 'app.use(express.json());\napiRateLimit(app);\n')];
+  assert.match(checkAdoption(late, managed).join('\n'), /apiRateLimit\(app\) must run before express\.json\(\)/);
+  const ok = [src('backend/src/app.ts', 'app.use(requestLog);\napiRateLimit(app);\napp.use(express.json());\n')];
+  assert.deepEqual(checkAdoption(ok, managed), []);
+  assert.deepEqual(checkAdoption(missing, {}), [], 'without the managed rate-limit.ts nothing is asked');
+  assert.deepEqual(checkAdoption([src('backend/src/server.ts', '')], managed), [], 'no app.ts, nothing to check');
+});
+
+test('adoption rules: setInt8Parser must be called once outside standard/ (ADR-0025, #778, #1035)', () => {
+  const managed = { 'backend/src/standard/db.ts': {} };
+  const none = [src('backend/src/app.ts', 'const app = express();\n'), src('backend/src/standard/db.ts', 'export function setInt8Parser(types) {}\n')];
+  assert.match(checkAdoption(none, managed).join('\n'), /app\.ts: call setInt8Parser\(types\)/);
+  assert.deepEqual(checkAdoption([src('backend/src/app.ts', 'setInt8Parser(types);\n')], managed), []);
+  const inPool = [src('backend/src/app.ts', 'const app = express();\n'), src('backend/src/pool.ts', 'setInt8Parser(types);\n')];
+  assert.deepEqual(checkAdoption(inPool, managed), [], 'life-journal calls it in pool.ts');
+  assert.deepEqual(checkAdoption(none, {}), []);
 });
 
 test('adoption warnings reach runCheck without failing it', () => {
