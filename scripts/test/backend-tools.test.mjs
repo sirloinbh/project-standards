@@ -264,6 +264,22 @@ test('a broken audit table does not change a 403, a 400 or a read answer; each f
   assert.equal(logged.length, 3);
 });
 
+test('the default log writes one JSON line with level error and no stack, so the daily report counts it (#1036)', async (t) => {
+  const lines = [];
+  t.mock.method(console, 'error', (line) => lines.push(line));
+  const { call } = setup(publicPem, {}, { failAudit: true });
+  const denied = await call(POST, { auth: bound('add_item', 'd-1', { scope: 'demo:read' }), name: 'add_item', body: { title: 'x' } });
+  assert.equal(denied.status, 403);
+  assert.equal(lines.length, 1);
+  assert.doesNotMatch(lines[0], /\n/);
+  assert.ok(lines[0].includes('"level":"error"'));
+  const entry = JSON.parse(lines[0]);
+  assert.deepEqual(Object.keys(entry), ['time', 'level', 'event', 'message', 'error']);
+  assert.equal(entry.event, 'audit_write_failed');
+  assert.equal(entry.message, 'Tool audit row could not be written');
+  assert.equal(entry.error, 'relation audit_log does not exist');
+});
+
 test('a write whose audit row cannot be written rolls back and fails, it is never done unaudited', async () => {
   const { call, pool } = setup();
   const original = pool.connect;
