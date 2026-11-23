@@ -93,6 +93,7 @@ A repo where the token cannot read issues shows `unknown` in the column and the 
 | Column | API | App permission | Without it |
 |---|---|---|---|
 | CI on main | `GET .../actions/runs?branch=main&status=completed&per_page=1` | Actions: read-only (**not granted yet**, see below) | `?` |
+| Sync wave, held by wave (#1075) | `GET .../commits/{sync PR head}/check-runs` | Checks: read-only (**not granted yet**) | The wave is shown; "held by wave" never appears (the CI state is unknown) |
 | Alerts, Dependabot | `GET .../dependabot/alerts?state=open` | Dependabot alerts: read-only (**not granted yet**) | `?` |
 | Alerts, code scanning | `GET .../code-scanning/alerts?state=open` | Code scanning alerts: read-only (granted, #260) | `?` (also on a private Free repo, where code scanning is not available) |
 | Last deploy | `GET .../deployments?environment=production` and its statuses (#1086); fallback `GET .../commits/main` | Deployments: read-only (**not granted yet**); Contents (granted) for the fallback | The main head commit time, labelled "main merge, no deploy record" |

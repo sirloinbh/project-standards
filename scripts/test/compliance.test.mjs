@@ -59,7 +59,7 @@ test('repository status covers manifest files, packages, and the sync PR age', (
   assert.equal(status.synced, true);
   assert.deepEqual(status.problems, ['.editorconfig: changed']);
   assert.deepEqual(status.packages, [{ name: '@sirloinbh/tsconfig', expected: '1.0.0', actual: '1.0.0', ok: true }]);
-  assert.deepEqual(status.syncPr, { number: 7, url: pulls[0].html_url, ageDays: 10 });
+  assert.deepEqual(status.syncPr, { number: 7, url: pulls[0].html_url, sha: null, checks: null, ageDays: 10 });
   assert.equal(status.envProblems.length, 2);
   const unsynced = repoStatus({ target: studyTarget, project: study, read: () => null });
   assert.equal(unsynced.synced, false);
