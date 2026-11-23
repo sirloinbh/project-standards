@@ -18,6 +18,9 @@ export function createAppJwt({ appId, privateKey, now = Math.floor(Date.now() / 
 export const MAX_CONCURRENT_REQUESTS = 4;
 const MAX_RETRIES = 3;
 const MAX_WAIT_MS = 15 * 60_000;
+// A request that gets no answer within this time is cancelled (#1032); a stalled connection would otherwise hold the job until the 6-hour limit.
+export const REQUEST_TIMEOUT_MS = 30_000;
+const SERVER_ERROR_BACKOFF_MS = 1000;
 const sleepFor = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Runs fn over items with at most `limit` calls in flight, keeping the result order. */
@@ -49,23 +52,41 @@ export function retryDelay(response, message, attempt, now = Date.now()) {
   return null;
 }
 
-/** Calls the GitHub REST API. Error messages include status and path, never the token. */
-export function createClient({ token, fetchImpl = fetch, baseUrl = 'https://api.github.com', sleep = sleepFor, maxRetries = MAX_RETRIES }) {
+/**
+ * Calls the GitHub REST API. Error messages include status and path, never the token. Every request times out after
+ * `timeoutMs`. A GET that fails with a 5xx answer or a network error or timeout is retried after 1 s, 2 s, 4 s (#1032);
+ * a write is never retried that way, because it may already have been applied.
+ */
+export function createClient({ token, fetchImpl = fetch, baseUrl = 'https://api.github.com', sleep = sleepFor, maxRetries = MAX_RETRIES, timeoutMs = REQUEST_TIMEOUT_MS }) {
   return async function api(method, path, body) {
     for (let attempt = 0; ; attempt++) {
-      const response = await fetchImpl(`${baseUrl}${path}`, {
-        method,
-        headers: {
-          Accept: 'application/vnd.github+json',
-          Authorization: `Bearer ${token}`,
-          'X-GitHub-Api-Version': '2022-11-28',
-          'User-Agent': 'project-standards-sync',
-          ...(body ? { 'Content-Type': 'application/json' } : {}),
-        },
-        body: body ? JSON.stringify(body) : undefined,
-      });
-      if (response.status === 404 && method === 'GET') return null;
-      const text = await response.text();
+      let response;
+      let text;
+      try {
+        response = await fetchImpl(`${baseUrl}${path}`, {
+          method,
+          headers: {
+            Accept: 'application/vnd.github+json',
+            Authorization: `Bearer ${token}`,
+            'X-GitHub-Api-Version': '2022-11-28',
+            'User-Agent': 'project-standards-sync',
+            ...(body ? { 'Content-Type': 'application/json' } : {}),
+          },
+          body: body ? JSON.stringify(body) : undefined,
+          signal: AbortSignal.timeout(timeoutMs),
+        });
+        if (response.status === 404 && method === 'GET') return null;
+        text = await response.text();
+      } catch (error) {
+        const reason = error?.name === 'TimeoutError' ? `no answer within ${Math.round(timeoutMs / 1000)}s` : (error?.cause?.code ?? error?.message ?? String(error));
+        if (method === 'GET' && attempt < maxRetries) {
+          const wait = SERVER_ERROR_BACKOFF_MS * 2 ** attempt;
+          console.warn(`GitHub API ${method} ${path}: ${reason}, retrying in ${wait / 1000}s`);
+          await sleep(wait);
+          continue;
+        }
+        throw new Error(`GitHub API ${method} ${path} failed: ${reason}`);
+      }
       if (response.ok) return parseBody(method, text);
       let message = text;
       try {
@@ -75,6 +96,12 @@ export function createClient({ token, fetchImpl = fetch, baseUrl = 'https://api.
       if (wait !== null && attempt < maxRetries && wait <= MAX_WAIT_MS) {
         console.warn(`GitHub API ${method} ${path}: rate limited (${response.status}), retrying in ${Math.round(wait / 1000)}s`);
         await sleep(wait);
+        continue;
+      }
+      if (method === 'GET' && response.status >= 500 && attempt < maxRetries) {
+        const backoff = SERVER_ERROR_BACKOFF_MS * 2 ** attempt;
+        console.warn(`GitHub API ${method} ${path}: server error (${response.status}), retrying in ${backoff / 1000}s`);
+        await sleep(backoff);
         continue;
       }
       throw new Error(`GitHub API ${method} ${path} failed: ${response.status} ${message}`);
