@@ -85,17 +85,6 @@ The commands in "Local branch management (git CLI)" of [std-git-writing](../temp
 - Pushing a work branch, `git add`, and `git commit` are not in these rules. They follow each PC's settings.
 - If the global instructions (`~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`) still have a Fork rule section, the Claude Code `SessionStart` hook (`.claude/hooks/pc-setup-notice.mjs`) tells the user how to fix it at session start (#368). It only reads, and an error does not block the session. It does not appear in clones from before they received the repo's hook, or in Codex sessions.
 
-### No permission prompts in a normal session (#1063)
-
-The user decided on 2026-11-23: "I always choose yes at the permission prompt, and it is too tedious." The managed `.claude/settings.json` now allows the tools an issue cycle uses (`Bash`, `PowerShell`, `Edit`, `Write`, `NotebookEdit`, `WebFetch`, `WebSearch`), so a session in the default mode runs edit, test, commit, push, PR and merge without a prompt.
-
-| Option | Result |
-|---|---|
-| Broad allow rules (chosen) | Works from project settings, so it reaches every synced repo and every PC. Deny rules and the `PreToolUse` hooks still apply: deny has priority over allow, and the hooks run before the permission check. A new tool name (for example an MCP tool) can still prompt until it is allowed |
-| `permissions.defaultMode: "bypassPermissions"` in the project settings | Not possible. Since Claude Code 2.1.257 the value is ignored in `.claude/settings.json` and `.claude/settings.local.json`; the session starts in manual mode. It works only in `~/.claude/settings.json`, with `--settings`, or with `--permission-mode` / `--dangerously-skip-permissions` |
-
-Safety net that stays: the package-install and forbidden-command hooks (force push, push to main, secrets, `--delete-branch`, the company `gh`), the `permissions.deny` list, and new deny rules for `rm -rf` of `/` and `~`. The deny rules for `rm` match the plain forms only; they reduce mistakes and are not a security boundary. `scripts/test/permission-settings.test.mjs` checks the allow list, the deny list and the hook registration. Lane sessions still start with `--dangerously-skip-permissions`; the allow list is for sessions that do not.
-
 ### Why destructive git commands run without asking (#418)
 
 The user decided on 2026-11-08: "always yes". `git reset --hard`, `git branch -D`, `git clean`, `git stash`, `git rebase`, and the forced forms of `git switch` and `git branch` moved from `permissions.ask` to `permissions.allow` (Bash and PowerShell), and from `prompt` to `allow` in `.codex/rules/git-branch.rules`. Reasons:
