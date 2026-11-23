@@ -9,6 +9,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { renderCompliance, renderEnvMatrix, repoStatus } from './lib/compliance.mjs';
 import { closeFinishedEpics, collectEpicState } from './lib/epics.mjs';
+import { collectOps, countItems, HISTORY_PATH, updateHistory } from './lib/ops.mjs';
 import { createClient, getInstallationToken, mapLimit } from './lib/github-app.mjs';
 import { koreanStats, scannable } from './lib/korean-text.mjs';
 import { MANIFEST_PATH } from './lib/manifest.mjs';
@@ -19,13 +20,20 @@ import { collectSettings, evaluateSettings } from './lib/repo-settings.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const CENTRAL = 'sirloinbh/project-standards';
 const REPORT_BRANCH = 'chore/compliance-report';
-const OUTPUTS = ['docs/compliance.md', 'docs/env-matrix.md'];
 
 // The generated-at comment changes every run; compare reports without it.
 export const withoutStamp = (text) => text.replace(/<!-- Generated file[^>]*-->/g, '');
 
+// With `meta.previousHistory` (the text of docs/compliance-history.csv, '' when absent) the reports also carry today's line
+// of the history and the trend table (#1057); local previews leave it out.
 export function renderReports(statuses, meta) {
-  return { 'docs/compliance.md': renderCompliance(statuses, meta), 'docs/env-matrix.md': renderEnvMatrix(statuses, meta) };
+  const reports = {};
+  let history = null;
+  if (meta.previousHistory !== undefined) {
+    history = updateHistory(meta.previousHistory, (meta.now ?? new Date()).toISOString().slice(0, 10), countItems(statuses));
+    reports[HISTORY_PATH] = history;
+  }
+  return { 'docs/compliance.md': renderCompliance(statuses, { ...meta, history }), 'docs/env-matrix.md': renderEnvMatrix(statuses, meta), ...reports };
 }
 
 // A status lost to a GitHub rate limit even after retries says nothing about the repo, so the report is not
@@ -91,6 +99,8 @@ export async function remoteStatuses({ data, getClient, now = new Date() }) {
         status.epicsError = error.message;
         status.rateLimited ||= RATE_LIMITED.test(error.message);
       }
+      // Operations values are read one by one inside collectOps, so a missing permission blanks only that value (#1057).
+      status.ops = await collectOps(api, target.repo, { pulls, now });
       statuses.push(status);
     } catch (error) {
       statuses.push({ repo: target.repo, profile: target.profile, unknown: error.message, rateLimited: RATE_LIMITED.test(error.message) });
@@ -114,8 +124,9 @@ export async function closeFinished({ statuses, getClient }) {
 /** Opens or updates the report PR in the central repository when the reports changed. */
 export async function publishReports({ api, reports, centralSha }) {
   const repo = await openRemote(api, CENTRAL);
-  await mapLimit(OUTPUTS, repo.fetchText);
-  const changed = OUTPUTS.filter((p) => withoutStamp(repo.read(p) ?? '') !== withoutStamp(reports[p]));
+  const outputs = Object.keys(reports);
+  await mapLimit(outputs, repo.fetchText);
+  const changed = outputs.filter((p) => withoutStamp(repo.read(p) ?? '') !== withoutStamp(reports[p]));
   if (!changed.length) return { status: 'unchanged' };
   const tree = await api('POST', `/repos/${CENTRAL}/git/trees`, { base_tree: repo.treeSha, tree: changed.map((p) => ({ path: p, mode: '100644', type: 'blob', content: reports[p] })) });
   const commit = await api('POST', `/repos/${CENTRAL}/git/commits`, {
@@ -163,7 +174,7 @@ if (isMain) {
   const { data } = loadAll(root);
   const now = new Date();
   const centralSha = process.env.GITHUB_SHA ?? 'local';
-  const meta = { generatedAt: now.toISOString().slice(0, 16).replace('T', ' ') + ' UTC', centralSha };
+  const meta = { generatedAt: now.toISOString().slice(0, 16).replace('T', ' ') + ' UTC', centralSha, now };
   const write = (reports) => {
     for (const [rel, text] of Object.entries(reports)) fs.writeFileSync(path.join(root, rel), text);
     console.log(`wrote ${Object.keys(reports).join(', ')}`);
@@ -174,7 +185,9 @@ if (isMain) {
     remoteStatuses({ data, getClient, now })
       .then(async (statuses) => {
         await closeFinished({ statuses, getClient });
-        const reports = renderReports(statuses, meta);
+        const central = await openRemote(await getClient(CENTRAL), CENTRAL);
+        const previousHistory = (await central.fetchText(HISTORY_PATH)) ?? '';
+        const reports = renderReports(statuses, { ...meta, previousHistory });
         write(reports);
         const limited = rateLimitedRepos(statuses);
         if (limited.length) {

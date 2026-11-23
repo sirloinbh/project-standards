@@ -4,6 +4,7 @@
 import { checkManifest, MANIFEST_PATH } from './manifest.mjs';
 import { parseEnvExample, ssmProblems } from './env-tags.mjs';
 import { BRANCH_PREFIX } from './sync-pr.mjs';
+import { opsCells, renderTrend } from './ops.mjs';
 
 export { parseEnvExample };
 
@@ -85,25 +86,26 @@ export function epicsCell(s) {
   return s.epics.orphans.length ? `✗ ${s.epics.orphans.length}` : '✓';
 }
 
-export function renderCompliance(statuses, { generatedAt, centralSha }) {
+export function renderCompliance(statuses, { generatedAt, centralSha, history = null, now = null }) {
   const lines = [
     '# Compliance status',
     '',
     `<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: ${generatedAt}, central ${centralSha.slice(0, 7)} -->`,
     '',
-    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text | Work issues without epic |',
-    '|---|---|---|---|---|---|---|---|---|---|',
+    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text | Work issues without epic | CI on main | Alerts (Dependabot / code scanning) | Last main merge | Oldest open PR |',
+    '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const s of statuses) {
     if (s.unknown) {
-      lines.push(`| ${s.repo} | unknown (${s.unknown}) | — | — | — | — | — | — | — |`);
+      lines.push(`| ${s.repo} | unknown (${s.unknown}) | — | — | — | — | — | — | — | — | — | — | — | — |`);
       continue;
     }
     const files = !s.synced ? '—' : s.problems.length ? `✗ ${s.problems.length} differ` : '✓ match';
     const pkgs = !s.packages.length ? '—' : s.packages.every((p) => p.ok) ? '✓' : `✗ ${s.packages.filter((p) => !p.ok).map((p) => `${p.name} ${p.actual ?? 'none'}≠${p.expected}`).join(', ')}`;
     const pr = s.syncPr ? `[#${s.syncPr.number}](${s.syncPr.url}) ${s.syncPr.ageDays} days old` : 'none';
     const env = s.profile !== 'app' ? '—' : s.envProblems.length ? `✗ ${s.envProblems.length} differ` : '✓';
-    lines.push(`| ${s.repo} | ${s.synced ? '✓' : 'not yet'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} | ${koreanCell(s.korean)} | ${epicsCell(s)} |`);
+    const ops = opsCells(s.ops, now ?? new Date());
+    lines.push(`| ${s.repo} | ${s.synced ? '✓' : 'not yet'} | ${s.centralSha ? `\`${s.centralSha.slice(0, 7)}\`` : '—'} | ${files} | ${pkgs} | ${pr} | ${env} | ${settingsCell(s)} | ${koreanCell(s.korean)} | ${epicsCell(s)} | ${ops.ci} | ${ops.alerts} | ${ops.merge} | ${ops.pr} |`);
   }
   const details = statuses.filter((s) => !s.unknown && (s.problems.length || s.envProblems.length));
   if (details.length) {
@@ -143,6 +145,7 @@ export function renderCompliance(statuses, { generatedAt, centralSha }) {
       lines.push('');
     }
   }
+  lines.push(...renderTrend(history));
   lines.push('', 'To fix, follow "When standards-check fails in a sub-repo" in the [README](../README.md).', '');
   return lines.join('\n');
 }
