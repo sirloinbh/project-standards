@@ -10,7 +10,7 @@ const { allow, deny } = settings.permissions;
 
 // #1063: a session in the default mode runs an issue cycle without a prompt, while the deny list and the hooks stay.
 test('the managed settings allow the tools an issue cycle uses without a prompt', () => {
-  for (const tool of ['Bash', 'PowerShell', 'Edit', 'Write', 'NotebookEdit', 'WebFetch', 'WebSearch']) assert.ok(allow.includes(tool), tool);
+  for (const tool of ['Bash', 'PowerShell', 'Edit', 'Write', 'NotebookEdit', 'WebFetch', 'WebSearch', 'SendMessage', 'ListAgents']) assert.ok(allow.includes(tool), tool);
 });
 
 test('bypassPermissions is not set in the managed settings: Claude Code ignores it in project settings', () => {
