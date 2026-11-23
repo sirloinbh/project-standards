@@ -20,12 +20,16 @@ function trimSlashes(url) {
   return url.slice(0, end);
 }
 
+// Same pattern as requestLog in the managed standard/http.ts: a request ID that does not match is never forwarded.
+const REQUEST_ID_PATTERN = /^[\w.-]{1,128}$/;
+
 const tokenOf = (cookies) => /(?:^|; )(?:__Secure-)?sirloinbh\.session_token=([^;]+)/.exec(cookies)?.[1] ?? null;
 
 /**
  * Express middleware: checks the shared session with the auth service and sets req.user.
  * No session → 401. Auth service unreachable or failing → 503 (never lets the request through).
- * Only successful checks are cached, for cacheMs.
+ * Only successful checks are cached, for cacheMs. The request's ID (res.locals.requestId from requestLog) goes to the
+ * auth service as X-Request-Id, so a failed check can be matched to its log (#1082).
  */
 export function createAuthMiddleware({ authUrl, fetch = globalThis.fetch, cacheMs = 30_000, timeoutMs = 3_000, publicPaths = ['/api/health'], maxCached = 100, now = Date.now } = {}) {
   if (!authUrl) throw new Error('createAuthMiddleware: authUrl is required (the auth service on the shared-auth network)');
@@ -49,7 +53,9 @@ export function createAuthMiddleware({ authUrl, fetch = globalThis.fetch, cacheM
 
     let body;
     try {
-      const response = await fetch(sessionUrl, { headers: { cookie: cookies }, signal: AbortSignal.timeout(timeoutMs) });
+      const requestId = res.locals?.requestId;
+      const headers = typeof requestId === 'string' && REQUEST_ID_PATTERN.test(requestId) ? { cookie: cookies, 'x-request-id': requestId } : { cookie: cookies };
+      const response = await fetch(sessionUrl, { headers, signal: AbortSignal.timeout(timeoutMs) });
       if (!response.ok) return res.status(503).json({ error: 'auth_unavailable' });
       body = await response.json();
     } catch {
