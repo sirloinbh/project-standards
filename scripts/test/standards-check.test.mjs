@@ -329,6 +329,14 @@ test('@ssm= tags must name a shared or own-app parameter on an empty secret key 
   ]);
 });
 
+test('a bare line in .env.example fails the check (#969)', () => {
+  const bad = check(({ write, read }) => write('.env.example', `${read('.env.example')}# one line with\n escapes). Set: x\nA_KEY=\n`));
+  assert.deepEqual(bad.problems.filter((p) => p.group === 'env example').map((p) => p.message), [
+    'line 5 is not blank, a # comment, or KEY=value (a comment split by a real line break?): escapes). Set: x',
+  ]);
+  assert.deepEqual(check().problems.filter((p) => p.group === 'env example'), []);
+});
+
 test('compose deploy contract: image tags, WEB_BIND/WEB_PORT, no initdb mount, $$ healthcheck, root db:migrate (#695)', () => {
   const edit = (from, to) => ({ write, read }) => write('compose.yaml', read('compose.yaml').replace(from, to));
   const messages = (result) => result.problems.filter((p) => p.group === 'deploy contract').map((p) => p.message);
