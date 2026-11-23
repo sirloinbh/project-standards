@@ -279,6 +279,7 @@ It succeeded if the last line shows `All decisions match.`. Leave the output as 
 3. In the server's `/opt/<app>/.env`, put the URL for each check, like `HEALTHCHECK_URL_HEALTH=...`.
 4. Install the health timer with `sudo bash /opt/<app>/deploy/install-backup.sh` (after the sync PR is applied).
 5. Stop it briefly with `docker compose stop web`, see whether an email arrives within 10–15 minutes, and restore it with `docker compose start web`. Leave the result as a comment on #286 (do not write the URLs).
+6. Public URL probe (#1076): create one more check named `public` (period 5 minutes, grace 10 minutes) and put its URL in the shared `/opt/project-standards/.env` as `HEALTHCHECK_URL_PUBLIC=...`. It covers all apps with one check. Then install it as in "Public URL probe" of `docs/server-proxy.md` (`sudo bash public-check.sh install`, after copying the regenerated proxy files) and leave the first `public-check.sh full` result on #1076.
 
 ## 12. Fix the lockfiles of the 8 sync PRs (#328)
 

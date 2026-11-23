@@ -1,6 +1,7 @@
 // Builds the server reverse proxy from the registry (ADR-0012, #251): one nginx takes 443 for every
 // active app and forwards to 127.0.0.1:<ports.web>, with one Let's Encrypt wildcard certificate that
 // certbot renews through Route 53 DNS validation. The output is copied to PROXY_DIR on the server.
+import { publicCheckScript, publicCheckService, publicCheckTimer } from './public-check.mjs';
 import { serviceHost } from './registry.mjs';
 
 export const PROXY_DIR = '/opt/project-standards/proxy';
@@ -204,5 +205,8 @@ export function renderProxy(data, { domain = data.platform.rootDomain } = {}) {
     { path: 'cert.sh', content: certScript(domain) },
     { path: 'cert-renew.service', content: service },
     { path: 'cert-renew.timer', content: timer },
+    { path: 'public-check.sh', content: publicCheckScript(apps.map((a) => a.host), { sharedEnv: SHARED_ENV }) },
+    { path: 'public-check.service', content: publicCheckService(PROXY_DIR) },
+    { path: 'public-check.timer', content: publicCheckTimer() },
   ];
 }
