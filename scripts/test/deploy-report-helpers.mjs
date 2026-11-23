@@ -7,7 +7,7 @@ import { root, rendered, has } from './deploy-helpers.mjs';
 
 // Runs the rendered report.sh with fake free, df and docker and a recording deploy/notify.sh (#285).
 // source and name pick another target's rendered report.sh, e.g. a shared service's (#967).
-export function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, failed = null, logs = '', saved = null, lastSent = null, source = rendered['study-log']['deploy/report.sh'], name = 'study-log' } = {}) {
+export function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, failed = null, logs = '', saved = null, lastSent = null, source = rendered['study-log']['deploy/report.sh'], name = 'study-log', notifyExit = 0 } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'report-'));
   const bin = path.join(dir, 'bin');
   const app = path.join(dir, 'app');
@@ -19,7 +19,7 @@ export function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, fail
   tool('df', ['echo "Filesystem     1024-blocks    Used Available Capacity Mounted on"', `echo "/dev/root         40000000 1600000  2400000      ${diskPercent}% /"`]);
   // docker ps answers by label filter (the api container is "api-id"), and records its arguments.
   tool('docker', ['case "$1 $2" in', '  "ps "*) echo "$@" >> "$FAKE_LOG.ps"; case "$*" in *service=api*) echo api-id ;; *) echo api-id; echo db-id ;; esac ;;', '  "logs "*) echo "$@" >> "$FAKE_LOG.args"; cat "$FAKE_LOG.logs" 2> /dev/null ;;', '  "compose "*) echo "docker compose must not be used: a compose.yaml may require SSM secrets" >&2; exit 1 ;;', '  "stats --no-stream") echo "study-log-api-1 120.5MiB / 1.9GiB"; echo "study-log-db-1 45MiB / 1.9GiB" ;;', 'esac']);
-  fs.writeFileSync(path.join(app, 'deploy/notify.sh'), 'printf "%s|" "$@" >> "$FAKE_LOG.notify"; echo >> "$FAKE_LOG.notify"\n');
+  fs.writeFileSync(path.join(app, 'deploy/notify.sh'), 'printf "%s|" "$@" >> "$FAKE_LOG.notify"; echo >> "$FAKE_LOG.notify"; exit "$NOTIFY_EXIT"\n');
   fs.writeFileSync(path.join(app, '.env'), env);
   fs.writeFileSync(path.join(app, '.deployed'), 'abc123def456');
   if (failed) fs.writeFileSync(path.join(app, '.autodeploy-failed'), failed);
@@ -30,7 +30,7 @@ export function reportRun(args, { env = '', usedMb = 900, diskPercent = 41, fail
   const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
   const log = path.join(dir, 'log');
   fs.writeFileSync(log + '.logs', logs);
-  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'report.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log) } });
+  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'report.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log), NOTIFY_EXIT: String(notifyExit) } });
   const notify = fs.existsSync(log + '.notify') ? fs.readFileSync(log + '.notify', 'utf8') : '';
   const savedFile = path.join(app, '.errors-before-deploy.log');
   const savedAfter = fs.existsSync(savedFile) ? fs.readFileSync(savedFile, 'utf8') : null;
