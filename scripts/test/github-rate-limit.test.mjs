@@ -44,6 +44,47 @@ test('the client gives up after the retry cap and on waits that are too long, wi
   assert.equal(once, 1);
 });
 
+// A stalled request and a server error must not fail a whole sync target on one blip (#1032).
+test('a GET that gets a 503 or a network error is retried with a growing wait, then succeeds', async () => {
+  const waits = [];
+  let calls = 0;
+  const fetchImpl = async () => {
+    if (++calls === 1) return json(503, { message: 'Service Unavailable' });
+    if (calls === 2) throw Object.assign(new TypeError('fetch failed'), { cause: { code: 'ECONNRESET' } });
+    return json(200, { ok: true });
+  };
+  const api = createClient({ token: 't', fetchImpl, sleep: async (ms) => waits.push(ms) });
+  assert.deepEqual(await api('GET', '/repos/a/b'), { ok: true });
+  assert.equal(calls, 3);
+  assert.deepEqual(waits, [1000, 2000]);
+});
+
+test('a GET gives up after the retry cap with the last status or reason, and a write is not retried', async () => {
+  let calls = 0;
+  const down = createClient({ token: 'ghs_secret', fetchImpl: async () => (calls++, json(502, { message: 'Bad Gateway' })), sleep: async () => {} });
+  await assert.rejects(down('GET', '/x'), (e) => /failed: 502 Bad Gateway/.test(e.message) && !e.message.includes('ghs_secret'));
+  assert.equal(calls, 4, 'one call and three retries');
+  let writes = 0;
+  const post = createClient({ token: 't', fetchImpl: async () => (writes++, json(503, {})), sleep: async () => assert.fail('no retry') });
+  await assert.rejects(post('POST', '/x', { a: 1 }), /failed: 503/);
+  const reset = createClient({ token: 't', fetchImpl: async () => (writes++, Promise.reject(new Error('socket hang up'))), sleep: async () => assert.fail('no retry') });
+  await assert.rejects(reset('PUT', '/x', { a: 1 }), /PUT \/x failed: socket hang up/);
+  assert.equal(writes, 2);
+});
+
+test('a hung request is cancelled after the timeout and a GET is tried again', async () => {
+  let calls = 0;
+  const fetchImpl = (_url, { signal }) => {
+    if (++calls === 1) return new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason)));
+    return Promise.resolve(json(200, { ok: true }));
+  };
+  const api = createClient({ token: 't', fetchImpl, timeoutMs: 20, sleep: async () => {} });
+  assert.deepEqual(await api('GET', '/x'), { ok: true });
+  assert.equal(calls, 2);
+  const hung = createClient({ token: 't', fetchImpl: (_url, { signal }) => new Promise((_r, reject) => signal.addEventListener('abort', () => reject(signal.reason))), timeoutMs: 20, sleep: async () => {} });
+  await assert.rejects(hung('POST', '/x', {}), /POST \/x failed: no answer within \ds/);
+});
+
 test('mapLimit keeps the order and never runs more than the limit at once', async () => {
   let running = 0;
   let peak = 0;
