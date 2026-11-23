@@ -59,6 +59,11 @@ const BLOCKED = {
   // Merging with --delete-branch, through gh or the personal wrapper.
   '& $g pr merge 12 --repo sirloinbh/x --merge --delete-branch': 'pr merge --delete-branch',
   'ghp pr merge 12 --merge -d': 'pr merge --delete-branch',
+  'ghp pr merge 12 -md': 'pr merge --delete-branch',
+  'ghp pr merge 12 -dm': 'pr merge --delete-branch',
+  // A wrapper option that takes a value (#1045).
+  'env -u FOO git push -f origin feat/1': 'force push',
+  'sudo -u bob git push origin main': 'push to main',
   // Remote changes through the default gh on Windows.
   'gh pr create --title x --body y': 'default gh pr create',
   'gh pr merge 12 --merge': 'default gh pr merge',
@@ -72,6 +77,9 @@ const BLOCKED = {
 
 const ALLOWED = [
   'git push -u origin feat/1-x',
+  'env -u FOO git status',
+  'sudo -u bob ls -la',
+  '& $g pr merge 12 --repo sirloinbh/x -m',
   'git push origin feat/1-x',
   'git push -u origin feat/450-forbidden-command-hook',
   'git push origin docs/12-v2-notes',
