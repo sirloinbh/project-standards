@@ -1,4 +1,4 @@
-# When central main changes, opens or updates a sync PR for each target in sync.config.json that is not paused (`enabled: false`).
+# When central main changes, opens or updates a sync PR for each target in sync.config.json that is not paused (`enabled: false`), wave by wave (`wave` in sync.config.json, #1055).
 # Skipped before the GitHub App (project-standards-sync) exists (no vars.SYNC_APP_ID) (docs/github-app.md).
 name: sync
 
@@ -6,6 +6,11 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+    inputs:
+      all_waves:
+        description: 'Sync every wave at once, without waiting for CI between waves (urgent fixes)'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -20,6 +25,7 @@ jobs:
   sync:
     if: vars.SYNC_APP_ID != ''
     runs-on: ubuntu-24.04
+    timeout-minutes: 120 # up to 3 waves, each waits up to 20 minutes for CI
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -34,5 +40,6 @@ jobs:
         env:
           SYNC_APP_ID: ${{ vars.SYNC_APP_ID }}
           SYNC_APP_PRIVATE_KEY: ${{ secrets.SYNC_APP_PRIVATE_KEY }}
+          SYNC_ALL_WAVES: ${{ inputs.all_waves }}
           GITHUB_TOKEN: ${{ github.token }} # read-only access to the central repo (Release, publish run)
         run: node scripts/sync.mjs --apply

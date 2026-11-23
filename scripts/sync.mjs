@@ -18,6 +18,7 @@ import { describeLabelPlan, loadLabels, planLabels, syncLabels } from './lib/lab
 import { loadAll } from './lib/registry.mjs';
 import { planTarget } from './lib/sync-plan.mjs';
 import { syncTarget } from './lib/sync-pr.mjs';
+import { DEFAULT_WAIT, describeHold, groupWaves, waitForChecks } from './lib/sync-waves.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -74,6 +75,7 @@ export function dryRun({ data, targets, local, labelsFrom = {}, out, centralSha,
     summary.push({
       repo: target.repo,
       profile: target.profile,
+      wave: target.wave ?? null,
       enabled: plan.enabled,
       localCheckout: Boolean(local[name]),
       files: plan.files.map((f) => ({ path: f.path, mode: f.mode, source: f.source })),
@@ -94,7 +96,7 @@ export function dryRun({ data, targets, local, labelsFrom = {}, out, centralSha,
  * `centralToken` reads the central repo's releases and publish runs. The workflow passes its own
  * GITHUB_TOKEN (actions: read) because the App has no Actions permission (#205).
  */
-export async function apply({ data, targets, centralSha, workflowSha = centralSha, getToken, makeClient, centralToken, labels = loadLabels(root), log = console.log }) {
+export async function apply({ data, targets, centralSha, workflowSha = centralSha, getToken, makeClient, centralToken, labels = loadLabels(root), log = console.log, allWaves = false, wait = {}, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), syncTargetFn = syncTarget, centralPr = () => centralPrNumber(centralSha) }) {
   const enabled = targets.filter((t) => t.enabled !== false);
   if (!enabled.length) {
     await getToken('sirloinbh/project-standards');
@@ -102,12 +104,14 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
     return [];
   }
   const centralApi = makeClient(centralToken ?? (await getToken('sirloinbh/project-standards')));
+  const opts = { ...DEFAULT_WAIT, ...wait };
   const results = [];
-  for (const target of enabled) {
+
+  async function syncOne(target) {
     let api;
     try {
       api = makeClient(await getToken(target.repo));
-      const result = await syncTarget({ root, data, target, centralSha, workflowSha, api, centralApi });
+      const result = await syncTargetFn({ root, data, target, centralSha, workflowSha, api, centralApi });
       log(`${target.repo}: ${result.status}${result.pr ? ` ${result.pr}` : ''} (changed ${result.changes.length}, deleted ${result.deletions.length})`);
       if (result.status === 'kept') log(`::warning::${target.repo}: The sync PR has a commit added by hand, so it was not updated. ${result.pr}`);
       results.push({ target: target.repo, ...result });
@@ -115,7 +119,7 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
       log(`${target.repo}: failed: ${error.message}`);
       results.push({ target: target.repo, status: 'failed', error: error.message });
     }
-    if (!api) continue;
+    if (!api) return { api: null, result: results.at(-1) };
     // Labels are independent of the sync PR, so they are applied even when the PR step failed.
     const result = results.at(-1);
     try {
@@ -125,8 +129,72 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
       log(`${target.repo}: label failure: ${error.message}`);
       result.labelsError = error.message;
     }
+    return { api, result };
+  }
+
+  // All waves at once for an urgent fix; otherwise one wave after another (#1055).
+  const waves = allWaves ? [{ wave: 0, label: 'all', targets: enabled }] : groupWaves(enabled);
+  for (const [index, wave] of waves.entries()) {
+    if (waves.length > 1) log(`Wave ${wave.label}: ${wave.targets.map((t) => t.repo).join(', ')}`);
+    const synced = [];
+    for (const target of wave.targets) synced.push({ target, ...(await syncOne(target)) });
+    if (index === waves.length - 1) break;
+
+    // The next wave starts only when every sync PR of this wave is green.
+    const failures = synced.filter((s) => s.result.status === 'failed').map((s) => ({ target: s.target.repo, reason: `sync failed: ${s.result.error}` }));
+    const deadline = Date.now() + opts.timeoutMs;
+    for (const s of synced.filter((x) => ['opened', 'updated'].includes(x.result.status))) {
+      try {
+        const checked = await waitForChecks({ api: s.api, repo: s.target.repo, branch: s.result.branch, sleep, deadline, pollMs: opts.pollMs, noChecksGraceMs: opts.noChecksGraceMs, log });
+        s.result.checks = checked.state;
+        log(`${s.target.repo}: checks ${checked.state} (${checked.detail})`);
+        if (checked.state !== 'green') failures.push({ target: s.target.repo, reason: `CI ${checked.state}: ${checked.detail}` });
+      } catch (error) {
+        // Until the App has Checks: Read, the gate cannot work. Keep syncing as before and say so loudly (no regression).
+        if (/ 403 /.test(error.message)) {
+          s.result.checks = 'unverified';
+          log(`::warning::${s.target.repo}: the sync App cannot read check runs (grant Checks: Read, docs/github-app.md), so wave ${wave.label} was not verified and the next wave is not held`);
+          continue;
+        }
+        s.result.checks = 'error';
+        log(`${s.target.repo}: could not read checks: ${error.message}`);
+        failures.push({ target: s.target.repo, reason: `could not read checks: ${error.message}` });
+      }
+    }
+    if (!failures.length) continue;
+
+    const held = waves.slice(index + 1).flatMap((w) => w.targets.map((t) => t.repo));
+    for (const repo of held) results.push({ target: repo, status: 'held', heldByWave: wave.label, changes: [], deletions: [] });
+    const message = describeHold({ wave: wave.label, failures, held });
+    log(`::warning::${message}`);
+    await commentOnCentral({ centralApi: makeClient(await getToken('sirloinbh/project-standards')), centralSha, number: centralPr(), message, log });
+    results.push({ target: 'waves', status: 'failed', error: message });
+    break;
   }
   return results;
+}
+
+/** The PR number when the central commit is a merge commit of a PR; null otherwise. */
+export function centralPrNumber(sha) {
+  try {
+    const subject = execFileSync('git', ['log', '-1', '--format=%s', sha], { cwd: root, encoding: 'utf8' });
+    const number = subject.match(/^Merge pull request #(\d+) from /)?.[1];
+    return number ? Number(number) : null;
+  } catch {
+    return null;
+  }
+}
+
+// Best effort: the workflow warning above is the main report. Uses the App's Issues permission, which also covers PR comments.
+async function commentOnCentral({ centralApi, centralSha, number, message, log }) {
+  if (!number) return;
+  try {
+    await centralApi('POST', `/repos/sirloinbh/project-standards/issues/${number}/comments`, { body: `Sync of \`${centralSha.slice(0, 7)}\` to the downstream repos was held.
+
+${message}` });
+  } catch (error) {
+    log(`could not comment on project-standards#${number}: ${error.message}`);
+  }
 }
 
 const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
@@ -146,6 +214,7 @@ if (isMain && process.argv.includes('--apply')) {
     getToken: async (repo) => (await getInstallationToken({ ...credentials, repo })).token,
     makeClient: (token) => createClient({ token }),
     centralToken: process.env.GITHUB_TOKEN,
+    allWaves: process.env.SYNC_ALL_WAVES === 'true',
   })
     .then((results) => process.exit(results.some((r) => r.status === 'failed' || r.labelsError) ? 1 : 0))
     .catch((error) => {
@@ -159,15 +228,16 @@ if (isMain && process.argv.includes('--apply')) {
     if (!args.out) throw new Error('--dry-run needs --out <folder>');
     const { data } = loadAll(root);
     const targets = args.targets.length ? data.sync.targets.filter((t) => args.targets.includes(t.repo)) : data.sync.targets;
+    const ordered = groupWaves(targets).flatMap((w) => w.targets);
     if (args.targets.length && targets.length !== args.targets.length) throw new Error(`unknown target in ${args.targets.join(', ')}`);
     const centralSha = args.sha ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
     fs.mkdirSync(args.out, { recursive: true });
     for (const name of Object.keys(args.labelsFrom)) {
       if (!targets.some((t) => t.repo.split('/')[1] === name)) throw new Error(`--labels-from: unknown target ${name}`);
     }
-    for (const t of dryRun({ data, targets, local: args.local, labelsFrom: args.labelsFrom, out: path.resolve(args.out), centralSha, workflowSha: args.sha ? args.sha : lastWorkflowCommit(centralSha) })) {
+    for (const t of dryRun({ data, targets: ordered, local: args.local, labelsFrom: args.labelsFrom, out: path.resolve(args.out), centralSha, workflowSha: args.sha ? args.sha : lastWorkflowCommit(centralSha) })) {
       const note = [t.enabled ? 'enabled' : 'disabled', t.skipped.length && `skipped ${t.skipped.length}`, t.fieldsPending.length && `fields not merged ${t.fieldsPending.length}`, t.labels && describeLabelPlan(t.labels)].filter(Boolean).join(', ');
-      console.log(`${t.repo}: ${t.files.length} file(s) — ${note}`);
+      console.log(`wave ${t.wave ?? 'last'}: ${t.repo}: ${t.files.length} file(s) — ${note}`);
     }
     console.log(`Result: ${path.resolve(args.out)}`);
   } catch (error) {

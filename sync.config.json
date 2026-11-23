@@ -28,18 +28,18 @@
     }
   },
   "targets": [
-    { "repo": "sirloinbh/workout-memo", "profile": "app", "project": "workout-memo" },
-    { "repo": "sirloinbh/study-log", "profile": "app", "project": "study-log" },
-    { "repo": "sirloinbh/health-log", "profile": "app", "project": "health-log" },
-    { "repo": "sirloinbh/life-journal", "profile": "app", "project": "life-journal" },
-    { "repo": "sirloinbh/money-ledger", "profile": "app", "project": "money-ledger" },
-    { "repo": "sirloinbh/cert-manager", "profile": "app", "project": "cert-manager" },
-    { "repo": "sirloinbh/plan-routine", "profile": "app", "project": "plan-routine" },
-    { "repo": "sirloinbh/dev-career-portfolio", "profile": "app", "project": "dev-career-portfolio" },
+    { "repo": "sirloinbh/workout-memo", "wave": 1, "profile": "app", "project": "workout-memo" },
+    { "repo": "sirloinbh/study-log", "wave": 2, "profile": "app", "project": "study-log" },
+    { "repo": "sirloinbh/health-log", "wave": 2, "profile": "app", "project": "health-log" },
+    { "repo": "sirloinbh/life-journal", "wave": 2, "profile": "app", "project": "life-journal" },
+    { "repo": "sirloinbh/money-ledger", "wave": 2, "profile": "app", "project": "money-ledger" },
+    { "repo": "sirloinbh/cert-manager", "wave": 2, "profile": "app", "project": "cert-manager" },
+    { "repo": "sirloinbh/plan-routine", "wave": 2, "profile": "app", "project": "plan-routine" },
+    { "repo": "sirloinbh/dev-career-portfolio", "wave": 2, "profile": "app", "project": "dev-career-portfolio" },
     { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null, "generatedFiles": { "apps.json": "apps-json" } },
     { "repo": "sirloinbh/shared-auth", "profile": "service", "project": null },
     { "repo": "sirloinbh/shared-ai", "profile": "service", "project": null, "generatedFiles": { "backend/src/apps.generated.ts": "apps-ts" } },
-    { "repo": "sirloinbh/develop-skill", "profile": "utility", "project": null },
-    { "repo": "sirloinbh/file-control", "profile": "utility", "project": null }
+    { "repo": "sirloinbh/develop-skill", "wave": 2, "profile": "utility", "project": null },
+    { "repo": "sirloinbh/file-control", "wave": 1, "profile": "utility", "project": null }
   ]
 }
