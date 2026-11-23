@@ -29,7 +29,9 @@ These go into the shared file `/opt/project-standards/.env` (ADR-0010). Write on
 | `HEALTHCHECK_URL_CERT` | [User] from healthchecks.io | Ping URL for the renewal timer. Set the period to 12 hours and the grace to 1 day. If renewal or the nginx reload fails, a failure ping is sent; if the timer stops, pings stop. Either way an email arrives. Secret value |
 | `HEALTHCHECK_URL_PUBLIC` | [User] from healthchecks.io | Ping URL of the server-wide `public` check (#1076, see "Public URL probe" below). Period 5 minutes, grace 10 minutes. Secret value |
 | `PUBLIC_CHECK_SERVER_IP` | [User] optional | The server's public address for the hourly DNS comparison. When empty, `public-check.sh` reads it from `checkip.amazonaws.com` |
-| `PUBLIC_CHECK_RESOLVER`, `PUBLIC_CHECK_DIG`, `PUBLIC_CHECK_SINK` | [User] optional | The DNS server for the comparison (default `1.1.1.1`), and where the result goes (default and only value today: `healthchecks`) |
+| `PUBLIC_CHECK_RESOLVER`, `PUBLIC_CHECK_DIG` | [User] optional | The DNS server for the comparison (default `1.1.1.1`) and the name of the dig command (default `dig`) |
+| `NOTIFY_SINK` | [User] optional | Where signals go: `healthchecks` (default), `aws` or `both` (#1091, see "AWS alert path" below). `notify.sh` also reads it from an app's own `.env` |
+| `AWS_ALERT_ACCESS_KEY_ID`, `AWS_ALERT_SECRET_ACCESS_KEY`, `AWS_ALERT_TOPIC_ARN`, `AWS_ALERT_REGION`, `AWS_ALERT_NAMESPACE` | [User] from shared-aws-infrastructure#105 | The alert IAM user (secret values), the SNS topic, the region (default `ap-northeast-2`) and the metric namespace (default `ProjectStandards/Uptime`; it must equal the alarms' namespace) |
 
 ## Public URL probe (#1076)
 
@@ -37,9 +39,20 @@ The `health` timer of each app only calls `127.0.0.1:<web port>`, so DNS, the ce
 
 - **Every 5 minutes** (`public-check.timer`): `curl --resolve <host>:443:127.0.0.1 https://<host>/api/health` for each host: HTTP 200 within 10 seconds, through the real nginx, certificate, proxy and app. `--resolve` makes the request go to the server itself, so the firewall (which admits only `allowed_cidrs`) does not matter.
 - **Once an hour** (the run in the first 5 minutes of the hour, or `public-check.sh full`): `dig +short <host> @1.1.1.1` must return the server address, and the served certificate must have at least 14 days left (`openssl x509 -checkend`), a second line behind the `cert` check. A missing `dig` or an unknown server address skips the DNS part and says so in the ping body; it never fails the check.
-- **One signal** to `HEALTHCHECK_URL_PUBLIC`: ok with the host count, or fail with each failing host and the reason (no secret in the body). A missing URL sends nothing; a failed send never changes the result. The send is one function, `send_signal`; the target is chosen by `PUBLIC_CHECK_SINK`, so a different sink (for example CloudWatch) is a new case there and nothing else changes.
+- **One signal** to `HEALTHCHECK_URL_PUBLIC`: ok with the host count, or fail with each failing host and the reason (no secret in the body). A missing URL sends nothing; a failed send never changes the result. The send is one function, `send_signal`; the target is chosen by `NOTIFY_SINK` (below).
 - **Install and use** [User]: copy the files as in "First install", then `sudo bash public-check.sh install`, then `sudo bash public-check.sh full` once to see the result. `dnsutils` must be installed for `dig` (`sudo apt-get install -y dnsutils`).
 - **To record after the first run** [User]: whether `--resolve ... 127.0.0.1` works on the server (it should: nginx listens on 443 on the host), and whether a direct probe through the public address (without `--resolve`) also works from the server. The firewall may not allow the server to reach its own public address, which is why the probe does not depend on it. Write the result on #1076.
+
+## AWS alert path (#1091)
+
+The user chose AWS to judge the server signals (research addendum in [uptime-gaps.md](research/uptime-gaps.md)): no limit of 20 checks, no firewall change. `NOTIFY_SINK=healthchecks|aws|both` in the shared `.env` (or an app's own `.env`) switches every signal at once; the default `healthchecks` changes nothing. Run `both` for a few weeks, then retire healthchecks.io in a later issue.
+
+- **`notify.sh`** (per app) and **`public-check.sh`** write the latest state of each signal with `signals.sh record <app> <check> ok|fail` into `/var/lib/project-standards/signals/`. The message text is not stored or sent.
+- **`signals.sh evaluate`** runs at the end of every `public-check.sh` run (every 5 minutes). It counts the failing signals: a last record of `fail`, or no record within the limit (health and public 15 minutes, deploy 30 minutes, backup and report 26 hours, restore 8 days: stale). It sends two CloudWatch metrics in one call, `HeartbeatOk` (always 1) and `FailingSignals`, and publishes to SNS once when the failing set changes (and once on recovery), with signal names only. A failed publish is retried on the next run.
+- **No AWS CLI.** The requests are signed by curl itself (`--aws-sigv4`), and the key pair goes to curl on standard input, like the S3 upload in `backup.sh`.
+- **The alarms** (in shared-aws-infrastructure#105): `HeartbeatOk` with missing data counted as breaching (dead server, stopped timer, network or revoked key), and `FailingSignals` above 0. The metric namespace must match `AWS_ALERT_NAMESPACE`.
+- **Reusable helper.** `signals.sh call <service> <Field=value>...` sends one signed AWS query request (`monitoring`, `sns`, or `ses` on host `email`) with the same credentials, region and curl signing; a later SES mail sits next to `PutMetricData` and `Publish` without a second AWS path.
+- **Check it** [User]: put the five `AWS_ALERT_*` keys in `/opt/project-standards/.env`, copy the regenerated proxy files (`signals.sh` is new), set `NOTIFY_SINK=both`, wait 5 minutes, and run `sudo bash /opt/project-standards/proxy/signals.sh status` and look at the metrics in CloudWatch. Stopping `public-check.timer` for 15 minutes should send the alarm email, and starting it again the OK email.
 
 ## First install [User] (#253)
 

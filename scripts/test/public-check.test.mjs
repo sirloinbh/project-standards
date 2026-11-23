@@ -120,16 +120,16 @@ test('without dig the DNS check is skipped with a note instead of failing', { sk
   assert.match(r.curlStdin, /dns skipped: dig is not installed/);
 });
 
-test('without a ping URL nothing is sent; a failed ping does not change the result; an unknown sink only warns', { skip }, () => {
+test('without a ping URL nothing is sent; a failed ping does not change the result; an unknown sink only warns (NOTIFY_SINK)', { skip }, () => {
   const none = run(['quick']);
   assert.equal(none.status, 0);
   assert.doesNotMatch(none.curlArgs, /--data-binary/);
   const failedPing = run(['quick'], { env: `HEALTHCHECK_URL_PUBLIC=${HC}\n`, pingOk: false });
   assert.equal(failedPing.status, 0);
   assert.match(failedPing.stderr, /healthchecks\.io ping failed/);
-  const sink = run(['quick'], { env: `HEALTHCHECK_URL_PUBLIC=${HC}\nPUBLIC_CHECK_SINK=cloudwatch\n` });
+  const sink = run(['quick'], { env: `HEALTHCHECK_URL_PUBLIC=${HC}\nNOTIFY_SINK=cloudwatch\n` });
   assert.equal(sink.status, 0);
-  assert.match(sink.stderr, /unknown PUBLIC_CHECK_SINK: cloudwatch/);
+  assert.match(sink.stderr, /unknown NOTIFY_SINK: cloudwatch/);
   assert.doesNotMatch(sink.curlArgs, /--data-binary/);
 });
 
