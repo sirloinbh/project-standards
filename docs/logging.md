@@ -58,6 +58,8 @@ docker compose logs api --since 1h | grep '"level":"error"'
 docker compose logs api --since 1h | grep '"status":5'
 ```
 
+The session check of `@sirloinbh/auth-client` (1.1.0 and later) sends the same ID to the auth service as `X-Request-Id`, so a 503 from a failed check can be matched to the auth service's log. The auth service, and `shared-ai` for its calls, have to keep a valid incoming ID in their own request log for the match to work (#1082).
+
 In the browser, the request ID is the `X-Request-Id` response header in the network panel; quote it in an issue to find the matching lines.
 
 ## Daily error alert (#636)

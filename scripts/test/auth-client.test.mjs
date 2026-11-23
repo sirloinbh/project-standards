@@ -8,7 +8,7 @@ const USER = { id: 'u1', email: 'owner@example.com', name: 'Owner', image: null 
 function fakeAuth(sessions = { good: USER }) {
   const calls = [];
   const fetch = async (url, init) => {
-    calls.push({ url, cookie: init.headers.cookie });
+    calls.push({ url, cookie: init.headers.cookie, ...(init.headers['x-request-id'] ? { requestId: init.headers['x-request-id'] } : {}) });
     if (fetch.down) throw new Error('connect ECONNREFUSED');
     if (fetch.status) return { ok: false, status: fetch.status, json: async () => ({}) };
     const token = /session_token=([^;]+)/.exec(init.headers.cookie)?.[1];
@@ -18,10 +18,11 @@ function fakeAuth(sessions = { good: USER }) {
 }
 
 // Runs the middleware once and reports what it did.
-async function call(middleware, { url = '/api/sets', cookie } = {}) {
+async function call(middleware, { url = '/api/sets', cookie, requestId } = {}) {
   const req = { originalUrl: url, headers: cookie ? { cookie } : {} };
   const out = { next: false, status: null, body: null, user: undefined };
   const res = {
+    locals: requestId === undefined ? {} : { requestId },
     status(code) {
       out.status = code;
       return res;
@@ -134,4 +135,20 @@ test('useUser starts loading, then shows the fetched state; a late answer after 
   gone.unmount();
   await new Promise((r) => setTimeout(r, 0));
   assert.deepEqual(gone.read(), { status: 'loading', user: null });
+});
+
+test('the request ID goes to the auth service as X-Request-Id when it is valid (#1082)', async () => {
+  const { fetch, calls } = fakeAuth();
+  const auth = createAuthMiddleware({ authUrl: 'http://auth', fetch, cacheMs: 0 });
+  await call(auth, { cookie: 'sirloinbh.session_token=good', requestId: '5f0c-ab.1_x' });
+  assert.equal(calls[0].requestId, '5f0c-ab.1_x');
+});
+
+test('no X-Request-Id without an ID, and an invalid ID is not forwarded (#1082)', async () => {
+  const { fetch, calls } = fakeAuth();
+  const auth = createAuthMiddleware({ authUrl: 'http://auth', fetch, cacheMs: 0 });
+  await call(auth, { cookie: 'sirloinbh.session_token=good' });
+  await call(auth, { cookie: 'sirloinbh.session_token=good', requestId: 'bad id\r\nx: y' });
+  await call(auth, { cookie: 'sirloinbh.session_token=good', requestId: 'a'.repeat(129) });
+  assert.deepEqual(calls.map((c) => c.requestId), [undefined, undefined, undefined]);
 });
