@@ -11,6 +11,7 @@
       ".standards/lib/env-tags.mjs": "scripts/lib/env-tags.mjs",
       ".standards/ioc-scan.mjs": "scripts/ioc-scan.mjs",
       ".standards/secret-scan.mjs": "scripts/secret-scan.mjs",
+      ".standards/license-check.mjs": { "from": "scripts/license-check.mjs", "profiles": ["app"] },
       ".standards/blocked-packages.json": "security/blocked-packages.json",
       ".standards/ci-migrate.sh": { "from": "scripts/ci-migrate.sh", "profiles": ["app"] },
       "backend/test/standard/tools.ts": { "from": "templates/app/backend/src/standard/tools.ts", "profiles": ["service"], "repos": ["sirloinbh/shared-ai"] },

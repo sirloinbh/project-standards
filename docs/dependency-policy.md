@@ -41,6 +41,15 @@ Why each shared dependency's major version was chosen: tailwindcss 4, lucide-rea
 
 Exception: own packages (`@sirloinbh/*`) are verified by provenance checks instead of the 14-day rule ([ADR-0004](adr/0004-own-packages-provenance-instead-of-14-days.md)). External peerDependencies of own packages follow the procedure above as is.
 
+## Licenses
+
+An app may depend on a package only when its license is on this allow list (#1062): `MIT`, `ISC`, `BSD-2-Clause`, `BSD-3-Clause`, `Apache-2.0`, `0BSD`, `BlueOak-1.0.0`, `CC0-1.0`, `Unlicense`, `Python-2.0`, `CC-BY-4.0`. The list lives in `scripts/license-check.mjs` (`ALLOWED`); a test keeps it equal to this paragraph.
+
+- An SPDX expression passes when it is covered: `A OR B` needs one allowed side, `A AND B` needs both, `X WITH exception` counts as `X`.
+- App CI runs `node .standards/license-check.mjs` after `npm ci`. For now it only **warns** (a `::warning` line per package) and never fails CI; `--strict` makes it fail, to be switched on later once the apps are clean. Own `@sirloinbh/*` packages are skipped.
+- A package outside the list (copyleft such as GPL or AGPL, no license declared, or a license not listed): do not add it. If it is already there, record it in the app repo's issue with the reason and the alternative. To allow a new license, change the list in the central repo in one PR (script, this paragraph, and the test together).
+- CI also keeps a CycloneDX SBOM of the lockfile as the workflow artifact `sbom` (`npm sbom --sbom-format cyclonedx`, built into npm 10, 30 days).
+
 ## One lockfile
 
 An app repo has one lockfile, the root `package-lock.json`. CI and both production Docker builds install from it (`docker build -f frontend/Dockerfile .` and `-f backend/Dockerfile .` use the repo root as the context, with `npm ci -w <workspace>`), so the versions CI checked are the versions in the production image (ADR-0022, #770). The earlier `frontend/` and `backend/` sub-lockfiles and `npm run lockfiles:sync` are gone.
