@@ -1,6 +1,6 @@
 # Environment variables at a glance
 
-<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: 2026-11-20 22:10 UTC -->
+<!-- Generated file (scripts/compliance.mjs). The source is each repo's .env.example. Secret values are not shown. Generated: 2026-11-23 04:51 UTC -->
 
 Rules: [env-conventions.md](env-conventions.md)
 
@@ -55,6 +55,7 @@ Rules: [env-conventions.md](env-conventions.md)
 | `POSTGRES_PASSWORD` | (no description) |  | yes | (secret) |  |  | central |
 | `DATABASE_URL` | (no description) |  | yes | (secret) |  |  | central |
 | `PORT` | (no description) |  |  | `3104` |  |  | central |
+| `AUTH_DISABLED` | (no description) |  |  | `1` |  |  | central |
 | `AI_TOOLS_PUBLIC_KEY` | (no description) |  | yes | (secret) |  | `/sirloinbh/shared/ai-tools-public-key` | central |
 
 ## sirloinbh/money-ledger

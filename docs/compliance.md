@@ -1,22 +1,22 @@
 # Compliance status
 
-<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: 2026-11-22 20:57 UTC, central 6d9f613 -->
+<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: 2026-11-23 04:51 UTC, central 1d8a0b5 -->
 
 | Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text |
 |---|---|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | ✓ | `4fb146f` | ✓ match | ✓ | [#468](https://github.com/sirloinbh/workout-memo/pull/468) 0 days old | ✓ | ✓ | △ 46 md, 0 comments (partial scan) |
-| sirloinbh/study-log | ✓ | `4fb146f` | ✓ match | ✓ | [#310](https://github.com/sirloinbh/study-log/pull/310) 0 days old | ✓ | ✓ | △ 39 md, 0 comments (partial scan) |
-| sirloinbh/health-log | ✓ | `7638be2` | ✓ match | ✓ | [#316](https://github.com/sirloinbh/health-log/pull/316) 0 days old | ✓ | ✓ | △ 21 md, 0 comments (partial scan) |
-| sirloinbh/life-journal | ✓ | `4fb146f` | ✓ match | ✓ | [#181](https://github.com/sirloinbh/life-journal/pull/181) 0 days old | ✓ | ✓ | △ 12 md, 0 comments (partial scan) |
-| sirloinbh/money-ledger | ✓ | `6d9f613` | ✓ match | ✓ | none | ✓ | ✓ | △ 30 md, 0 comments (partial scan) |
-| sirloinbh/cert-manager | ✓ | `4fb146f` | ✓ match | ✓ | [#204](https://github.com/sirloinbh/cert-manager/pull/204) 0 days old | ✓ | ✓ | △ 18 md, 0 comments (partial scan) |
-| sirloinbh/plan-routine | ✓ | `6d9f613` | ✓ match | ✓ | none | ✓ | ✓ | △ 9 md, 0 comments (partial scan) |
-| sirloinbh/dev-career-portfolio | ✓ | `845dbce` | ✓ match | ✓ | none | ✓ | ✓ | △ 22 md, 0 comments (partial scan) |
-| sirloinbh/shared-aws-infrastructure | ✓ | `4c11008` | ✓ match | — | none | — | ✓ | ✓ |
-| sirloinbh/shared-auth | unknown (GitHub API GET /repos/sirloinbh/shared-auth/git/blobs/fefd0e9e0d9044d510eb26549774ff1b20a0271e failed: 502 Server Error) | — | — | — | — | — | — | — |
-| sirloinbh/shared-ai | ✓ | `b205088` | ✓ match | — | none | — | ✓ | ✓ |
-| sirloinbh/develop-skill | ✓ | `686734e` | ✓ match | — | none | — | ✗ 2 △ 4 | △ 39 md, 0 comments (partial scan) |
-| sirloinbh/file-control | ✓ | `686734e` | ✓ match | — | none | — | ✗ 2 △ 3 | △ 4 md, 15 comments (partial scan) |
+| sirloinbh/workout-memo | ✓ | `740b5e1` | ✓ match | ✓ | [#469](https://github.com/sirloinbh/workout-memo/pull/469) 0 days old | ✓ | ✓ | △ 46 md, 0 comments (partial scan) |
+| sirloinbh/study-log | ✓ | `e10aa76` | ✓ match | ✓ | [#350](https://github.com/sirloinbh/study-log/pull/350) 0 days old | ✓ | ✓ | △ 32 md, 0 comments (partial scan) |
+| sirloinbh/health-log | ✓ | `28d9e3b` | ✓ match | ✓ | [#319](https://github.com/sirloinbh/health-log/pull/319) 0 days old | ✓ | ✓ | △ 21 md, 0 comments (partial scan) |
+| sirloinbh/life-journal | ✓ | `28d9e3b` | ✓ match | ✓ | [#202](https://github.com/sirloinbh/life-journal/pull/202) 0 days old | ✓ | ✓ | △ 13 md, 0 comments (partial scan) |
+| sirloinbh/money-ledger | ✓ | `23edc98` | ✓ match | ✓ | [#285](https://github.com/sirloinbh/money-ledger/pull/285) 0 days old | ✓ | ✓ | △ 30 md, 0 comments (partial scan) |
+| sirloinbh/cert-manager | ✓ | `28d9e3b` | ✓ match | ✓ | [#206](https://github.com/sirloinbh/cert-manager/pull/206) 0 days old | ✓ | ✓ | △ 18 md, 0 comments (partial scan) |
+| sirloinbh/plan-routine | ✓ | `740b5e1` | ✓ match | ✓ | [#238](https://github.com/sirloinbh/plan-routine/pull/238) 0 days old | ✓ | ✓ | △ 9 md, 0 comments (partial scan) |
+| sirloinbh/dev-career-portfolio | ✓ | `138e626` | ✓ match | ✓ | [#219](https://github.com/sirloinbh/dev-career-portfolio/pull/219) 0 days old | ✓ | ✓ | △ 22 md, 0 comments (partial scan) |
+| sirloinbh/shared-aws-infrastructure | ✓ | `138e626` | ✓ match | — | none | — | ✓ | ✓ |
+| sirloinbh/shared-auth | ✓ | `138e626` | ✓ match | — | [#30](https://github.com/sirloinbh/shared-auth/pull/30) 0 days old | — | ✓ | ✓ |
+| sirloinbh/shared-ai | ✓ | `138e626` | ✓ match | — | [#46](https://github.com/sirloinbh/shared-ai/pull/46) 0 days old | — | ✓ | ✓ |
+| sirloinbh/develop-skill | ✓ | `138e626` | ✓ match | — | none | — | △ 1 | △ 39 md, 0 comments (partial scan) |
+| sirloinbh/file-control | ✓ | `23edc98` | ✓ match | — | none | — | ✓ | △ 4 md, 15 comments (partial scan) |
 
 ## Repo settings
 
@@ -26,26 +26,11 @@ The standards and reasons are in [repo-settings.md](repo-settings.md). Secrets a
 
 | Status | Item | Current | Expected |
 |---|---|---|---|
-| △ recommended | Squash merge | on | off (recommended) |
-| △ recommended | Rebase merge | on | off (recommended) |
-| △ recommended | Auto-delete branch after merge | off | on (recommended) |
 | — plan | main branch protection | not available for private repos on the Free plan | on |
 | — plan | secret scanning | not available for private repos on the Free plan | enabled |
 | — plan | push protection (secret blocking) | not available for private repos on the Free plan | enabled |
 | — plan | CodeQL code scanning (default setup) | not available for private repos on the Free plan | configured |
-| ✗ | Dependabot vulnerability alerts | off | on |
-| ✗ | Dependabot security updates | off | on |
 | △ recommended | Actions variable names | not in the list: WIKI_BUCKET, WIKI_DEPLOY_ROLE_ARN, WIKI_DISTRIBUTION_ID | none |
-
-### sirloinbh/file-control
-
-| Status | Item | Current | Expected |
-|---|---|---|---|
-| △ recommended | Squash merge | on | off (recommended) |
-| △ recommended | Rebase merge | on | off (recommended) |
-| △ recommended | Auto-delete branch after merge | off | on (recommended) |
-| ✗ | Dependabot vulnerability alerts | off | on |
-| ✗ | Dependabot security updates | off | on |
 
 
 ## Korean text
@@ -78,7 +63,7 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/134-migrate-entry.md`
 - `docs/changes/14-study-log-textbook.md`
 - `docs/changes/146-compose-rollback.md`
-- and 29 more
+- and 22 more
 
 ### sirloinbh/health-log
 
@@ -96,6 +81,7 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 
 ### sirloinbh/life-journal
 
+- `docs/changes/153-count-reopen-wording.md`
 - `docs/changes/23-bucket-list.md`
 - `docs/changes/41-item-link.md`
 - `docs/changes/69-terms-screen.md`
@@ -105,12 +91,12 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/73-stage-screen-terms.md`
 - `docs/changes/74-coffee-category.md`
 - `docs/changes/83-migrate-command.md`
-- `docs/changes/96-english-records.md`
-- and 2 more
+- and 3 more
 
 ### sirloinbh/money-ledger
 
 - `docs/ai-classification.md`
+- `docs/changes/102-halted-missing-days.md`
 - `docs/changes/110-reserve-uncategorized.md`
 - `docs/changes/123-english-comments.md`
 - `docs/changes/125-english-docs.md`
@@ -119,7 +105,6 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/199-classify-mixed-kinds.md`
 - `docs/changes/201-fixed-costs-hidden-month.md`
 - `docs/changes/202-chart-guards.md`
-- `docs/changes/34-area-navigation.md`
 - and 20 more
 
 ### sirloinbh/cert-manager
