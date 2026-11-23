@@ -35,6 +35,35 @@ test('createPool listens on the pool quietly and on every connected client, whic
   assert.deepEqual(seen, [['Database connection failed', 'lost']]);
 });
 
+test('the default log writes one parseable JSON line for a pool and a client error, and the process keeps running (#1003)', (t) => {
+  const lines = [];
+  t.mock.method(console, 'error', (line) => lines.push(line));
+  const pool = fakePool();
+  createPool(pool);
+  // Idle client: the pool-level listener stays quiet, the client listener logs once.
+  pool.listeners[0][1](Object.assign(new Error('idle'), { code: 'ECONNRESET' }));
+  assert.deepEqual(lines, []);
+  const clientListeners = [];
+  pool.listeners[1][1]({ on: (event, fn) => clientListeners.push([event, fn]) });
+  clientListeners[0][1](Object.assign(new Error('lost\nsecond line'), { code: 'ECONNRESET' }));
+  assert.equal(lines.length, 1);
+  assert.doesNotMatch(lines[0], /\n/);
+  const entry = JSON.parse(lines[0]);
+  assert.deepEqual(Object.keys(entry), ['time', 'level', 'message', 'error', 'code']);
+  assert.equal(entry.level, 'error');
+  assert.equal(entry.message, 'Database connection failed');
+  assert.equal(entry.error, 'lost\nsecond line');
+  assert.equal(entry.code, 'ECONNRESET');
+  assert.ok(!Number.isNaN(Date.parse(entry.time)));
+  // An error without a code has no code key.
+  const plain = fakePool();
+  createPool(plain);
+  const plainListeners = [];
+  plain.listeners[1][1]({ on: (event, fn) => plainListeners.push([event, fn]) });
+  plainListeners[0][1](new Error('plain'));
+  assert.ok(!('code' in JSON.parse(lines[1])));
+});
+
 test('withTransaction commits and returns the result', async () => {
   const pool = fakePool();
   assert.equal(await withTransaction(pool, async (client) => (await client.query('SELECT 1'), 'ok')), 'ok');
