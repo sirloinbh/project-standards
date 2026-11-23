@@ -1,0 +1,41 @@
+# Opens the quarterly restore-drill checklist issue (#1059) on the first day of January, April, July and October.
+# The drill itself is a user step (personal AWS profile); see docs/runbooks/backup-restore.md, "Quarterly drill".
+# A second run in the same quarter finds the issue by its title and does nothing. Run it by hand with "Run workflow" for a dry run
+# (dry-run input true, the default) or to open the issue early.
+name: restore-drill
+
+on:
+  schedule:
+    - cron: '0 0 1 1,4,7,10 *' # 09:00 KST on the first day of each quarter
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: Only print the issue body in the job log
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  drill:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false # there is no lockfile
+      - name: Open the drill issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry-run }}
+        run: |
+          if [ "$DRY_RUN" = true ]; then
+            node scripts/restore-drill.mjs --dry-run
+          else
+            node scripts/restore-drill.mjs --apply --repo "$GITHUB_REPOSITORY"
+          fi
