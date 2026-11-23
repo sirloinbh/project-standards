@@ -92,7 +92,7 @@ export function renderCompliance(statuses, { generatedAt, centralSha, history = 
     '',
     `<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: ${generatedAt}, central ${centralSha.slice(0, 7)} -->`,
     '',
-    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text | Work issues without epic | CI on main | Alerts (Dependabot / code scanning) | Last main merge | Oldest open PR |',
+    '| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text | Work issues without epic | CI on main | Alerts (Dependabot / code scanning) | Last deploy | Oldest open PR |',
     '|---|---|---|---|---|---|---|---|---|---|---|---|---|---|',
   ];
   for (const s of statuses) {

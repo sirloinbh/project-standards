@@ -15,8 +15,10 @@ test('the oldest open PR skips PRs marked do not merge', () => {
   assert.equal(oldestOpenPr([], now).number, null);
 });
 
-function fakeApi({ ci, dependabot, scanning, commit } = {}) {
+function fakeApi({ ci, dependabot, scanning, commit, deployments, statuses } = {}) {
   return async (method, path) => {
+    if (path.includes('/deployments/') && path.includes('/statuses')) return statuses ?? [];
+    if (path.includes('/deployments?')) return deployments ?? [];
     if (path.includes('/actions/runs')) return ci;
     if (path.includes('/dependabot/alerts')) { if (dependabot instanceof Error) throw dependabot; return dependabot; }
     if (path.includes('/code-scanning/alerts')) { if (scanning instanceof Error) throw scanning; return scanning; }
@@ -40,7 +42,7 @@ test('every ops value is read on its own and an unreadable one is null', async (
   const cells = opsCells(ops, now);
   assert.equal(cells.ci, '✗ failure 2d ago');
   assert.equal(cells.alerts, '✗ 3 / ?');
-  assert.equal(cells.merge, '1d ago');
+  assert.equal(cells.merge, '1d ago (main merge, no deploy record)');
   assert.match(cells.pr, /\[#7\].* 3d/);
   assert.deepEqual(opsCells(null), { ci: '—', alerts: '—', merge: '—', pr: '—' });
 });
@@ -86,11 +88,23 @@ test('the reports carry the new columns, the trend, and the history file when a 
   const meta = { generatedAt: 'x', centralSha: 'abcdef1234567', now };
   const plain = renderReports([status], meta);
   assert.deepEqual(Object.keys(plain), ['docs/compliance.md', 'docs/env-matrix.md']);
-  assert.match(plain['docs/compliance.md'], /\| CI on main \| Alerts \(Dependabot \/ code scanning\) \| Last main merge \| Oldest open PR \|/);
-  assert.match(plain['docs/compliance.md'], /\| ✓ today \| 0 \/ \? \| 3d ago \| none \|/);
+  assert.match(plain['docs/compliance.md'], /\| CI on main \| Alerts \(Dependabot \/ code scanning\) \| Last deploy \| Oldest open PR \|/);
+  assert.match(plain['docs/compliance.md'], /\| ✓ today \| 0 \/ \? \| 3d ago \(main merge, no deploy record\) \| none \|/);
   assert.doesNotMatch(plain['docs/compliance.md'], /## Trend/);
   const withHistory = renderReports([status], { ...meta, previousHistory: 'date,fail,warn\n2026-11-22,2,0\n' });
   assert.equal(withHistory['docs/compliance-history.csv'], 'date,fail,warn\n2026-11-22,2,0\n2026-11-23,0,0\n');
   assert.match(withHistory['docs/compliance.md'], /## Trend \(last 14 days\)[\s\S]*\| 2026-11-23 \| 0 ↓ \| 0 → \|/);
   assert.equal(renderCompliance([status], { ...meta }).includes('## Trend'), false);
+});
+
+test('a deployment record wins over the main commit time, and a repo without a success status falls back and says so (#1086)', async () => {
+  const commit = { commit: { committer: { date: '2026-11-22T00:00:00Z' } } };
+  const withRecord = await collectOps(fakeApi({ commit, deployments: [{ id: 1 }, { id: 2 }], statuses: [{ state: 'success', created_at: '2026-11-23T06:00:00Z' }] }), 'o/r', { now });
+  assert.equal(withRecord.deployedAt, '2026-11-23T06:00:00Z');
+  assert.equal(opsCells(withRecord, now).merge, 'today');
+  const onlyFailed = await collectOps(fakeApi({ commit, deployments: [{ id: 1 }], statuses: [{ state: 'failure', created_at: '2026-11-23T06:00:00Z' }] }), 'o/r', { now });
+  assert.equal(onlyFailed.deployedAt, null);
+  assert.equal(opsCells(onlyFailed, now).merge, '1d ago (main merge, no deploy record)');
+  const unreadable = await collectOps(async (m, path) => { if (path.includes('/deployments')) throw new Error('403'); return commit; }, 'o/r', { now });
+  assert.equal(opsCells(unreadable, now).merge, '1d ago (main merge, no deploy record)');
 });
