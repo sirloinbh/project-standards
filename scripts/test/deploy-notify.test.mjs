@@ -8,7 +8,7 @@ import test from 'node:test';
 import { data, rendered, project, has } from './deploy-helpers.mjs';
 
 // Runs the rendered notify.sh with a fake curl (#284). HEALTH_OK=0 makes the health endpoint fail.
-function notifyRun(args, { env = '', healthOk = true } = {}) {
+function notifyRun(args, { env = '', healthOk = true, pingOk = true } = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'notify-'));
   const bin = path.join(dir, 'bin');
   const app = path.join(dir, 'app');
@@ -16,14 +16,14 @@ function notifyRun(args, { env = '', healthOk = true } = {}) {
   const posix = (p) => p.split(path.sep).join('/');
   fs.writeFileSync(
     path.join(bin, 'curl'),
-    ['#!/bin/bash', 'echo "$*" >> "$FAKE_LOG.curl-args"', 'if [[ "$*" == */api/health* ]]; then [ "$HEALTH_OK" = 1 ]; exit $?; fi', 'cat >> "$FAKE_LOG.curl-stdin"', ''].join('\n'),
+    ['#!/bin/bash', 'echo "$*" >> "$FAKE_LOG.curl-args"', 'if [[ "$*" == */api/health* ]]; then [ "$HEALTH_OK" = 1 ]; exit $?; fi', 'cat >> "$FAKE_LOG.curl-stdin"', '[ "$PING_OK" = 1 ]', ''].join('\n'),
     { mode: 0o755 },
   );
   fs.writeFileSync(path.join(app, '.env'), env);
   const script = rendered['study-log']['deploy/notify.sh'].replace('cd /opt/study-log', `cd '${posix(app)}'`).replace(/^#!.*\n/, '');
   const pathVar = process.platform === 'win32' ? `${posix(bin).replace(/^([A-Za-z]):/, (_, d) => `/${d.toLowerCase()}`)}:$PATH` : `${bin}:$PATH`;
   const log = path.join(dir, 'log');
-  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'notify.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log), HEALTH_OK: healthOk ? '1' : '0' } });
+  const r = spawnSync('bash', ['-c', `export PATH="${pathVar}"; ${script}`, 'notify.sh', ...args], { encoding: 'utf8', env: { ...process.env, FAKE_LOG: posix(log), HEALTH_OK: healthOk ? '1' : '0', PING_OK: pingOk ? '1' : '0' } });
   const read = (suffix) => (fs.existsSync(log + suffix) ? fs.readFileSync(log + suffix, 'utf8') : '');
   const result = { status: r.status, stdout: r.stdout, stderr: r.stderr, curlArgs: read('.curl-args'), curlStdin: read('.curl-stdin') };
   fs.rmSync(dir, { recursive: true, force: true });
@@ -61,4 +61,18 @@ test('notify health pings ok or fail from /api/health on the web port', { skip: 
   assert.match(down.curlArgs, new RegExp(`${HC}/fail$`, 'm'));
   const registryPort = notifyRun(['health'], { env: `HEALTHCHECK_URL_HEALTH=${HC}\n` });
   assert.match(registryPort.curlArgs, new RegExp(`127\\.0\\.0\\.1:${project('study-log').ports.web}/api/health`));
+});
+
+test('a failed ping makes notify ping exit 1, but never changes the health result (#1030)', { skip: !has('bash') && 'bash not found' }, () => {
+  const env = `WEB_PORT=8102
+HEALTHCHECK_URL_HEALTH=${HC}
+HEALTHCHECK_URL_REPORT=${HC}
+`;
+  const sent = notifyRun(['ping', 'report', 'ok', 'x'], { env, pingOk: false });
+  assert.equal(sent.status, 1);
+  assert.match(sent.stderr, /could not send the report signal/);
+  assert.equal(notifyRun(['ping', 'report', 'ok', 'x'], { env }).status, 0);
+  assert.equal(notifyRun(['ping', 'report', 'ok', 'x'], { pingOk: false }).status, 0, 'no URL, nothing to send');
+  assert.equal(notifyRun(['health'], { env, pingOk: false }).status, 0, 'health is up; only the ping failed');
+  assert.equal(notifyRun(['health'], { env, healthOk: false, pingOk: false }).status, 1);
 });

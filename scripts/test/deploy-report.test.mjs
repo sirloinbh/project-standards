@@ -50,3 +50,13 @@ test('the report records its send time and the next window starts there, so a sa
   assert.match(lineOnly.logArgs, /--since 2026-11-17T19:00:00Z --until \S+ api/, 'line uses the same window');
   assert.equal(lineOnly.lastSentAfter, stamp + '\n', 'line does not record a send');
 });
+
+test('report keeps the saved error lines and the window start when the ping fails (#1030)', { skip: !has('bash') && 'bash not found' }, () => {
+  const saved = errLine('old', 500, '/api/old') + '\n';
+  const failed = reportRun([], { saved, lastSent: '2026-11-17T00:00:00Z', notifyExit: 1 });
+  assert.equal(failed.savedAfter, saved);
+  assert.equal(failed.lastSentAfter, '2026-11-17T00:00:00Z');
+  const sent = reportRun([], { saved, lastSent: '2026-11-17T00:00:00Z' });
+  assert.equal(sent.savedAfter, '');
+  assert.notEqual(sent.lastSentAfter, '2026-11-17T00:00:00Z');
+});
