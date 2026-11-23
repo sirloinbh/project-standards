@@ -1,4 +1,4 @@
-# Checks of the central repo itself: tests, registry conflicts, generated docs and token CSS up to date, package rules, workflow pinning.
+# Checks of the central repo itself: tests, registry conflicts, generated docs and token CSS up to date, package rules, workflow pinning, and a PR comment with the downstream file changes (#1056).
 name: ci
 
 on:
@@ -52,3 +52,29 @@ jobs:
         working-directory: ${{ runner.temp }}/scaffold
       - run: npm run test -w backend
         working-directory: ${{ runner.temp }}/scaffold
+
+  # Comments on the pull request which files each downstream repo would receive, change or lose (#1056).
+  # Only this job may write to the PR, and it never runs for a pull request from a fork.
+  downstream-diff:
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: head
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          path: base
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Compare the downstream files and comment
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          POST_TARGET: ${{ github.repository }}#${{ github.event.pull_request.number }}
+        run: node head/scripts/downstream-diff.mjs --base base --head head --work "$RUNNER_TEMP/downstream-diff" --post "$POST_TARGET"
