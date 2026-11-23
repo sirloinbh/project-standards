@@ -11,3 +11,7 @@
 ## Verification
 
 - `npm run check:docs`
+
+## Addendum — 2026-11-23
+
+Added the section "Can AWS do the judging instead of healthchecks.io?" to `docs/research/uptime-gaps.md`: CloudWatch heartbeats with a missing-data alarm, Route 53 health checks, and Lightsail alarms, compared on cost, server permission, replacing healthchecks.io, and fit with shared-aws-infrastructure #98 and #99. The user's choice of option (A) is recorded in the status line.
