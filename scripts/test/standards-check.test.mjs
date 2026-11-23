@@ -355,6 +355,13 @@ test('checkComposeDeploy accepts the ${VAR:-default} forms', () => {
   assert.deepEqual(checkComposeDeploy(ok, { dbName: 'x', scripts: { 'db:migrate': 'x' } }), []);
 });
 
+test('a compose healthcheck interval under 30 s is a warning (#1096)', () => {
+  const base = 'services:\n  api:\n    healthcheck:\n      test: x\n      interval: INTERVAL\n';
+  for (const bad of ['5s', '2s', '10s', '29s', '500ms']) assert.match(checkComposeWarnings(base.replace('INTERVAL', bad)).join('\n'), /more often than every 30 s/, bad);
+  for (const ok of ['30s', '60s', '1m', '5m']) assert.deepEqual(checkComposeWarnings(base.replace('INTERVAL', ok)), [], ok);
+  assert.deepEqual(checkComposeWarnings('services:\n  api:\n    healthcheck:\n      test: x\n      start_interval: 2s\n'), [], 'start_interval may be short');
+});
+
 test('a compose api service without a healthcheck is a warning, not a failure (#875)', () => {
   const without = 'services:\n  db:\n    healthcheck:\n      test: x\n  api:\n    image: x-backend:${IMAGE_TAG}\n    restart: unless-stopped\n  web:\n    depends_on: [api]\n';
   assert.match(checkComposeWarnings(without).join('\n'), /the api service has no healthcheck/);
