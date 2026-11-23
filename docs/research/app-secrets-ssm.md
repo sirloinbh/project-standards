@@ -1,6 +1,6 @@
 # User-step key and OAuth issuance, and SSM storage (#422)
 
-- Survey date: 2026-11-08. Issuance conditions and limits can change, so check the official guidance again right before issuing.
+- Survey date: 2026-11-08; re-checked and extended on 2026-11-23 (#1066, see "Update 2026-11-23"). Issuance conditions and limits can change, so check the official guidance again right before issuing.
 - User decision (2026-11-08): environment variables and API keys are managed in AWS SSM Parameter Store.
 - Adopted in [ADR-0014](../adr/0014-app-secrets-ssm-paths.md) and implemented in #424 (2026-11-14): `set <parameter>`, `check <app>`, `pull <app>` in `tools/app-secrets.mjs`, the `@ssm=` tag, and the deploy script.
 - Evidence level: **official** is a value read directly from the provider's page, **secondary** is a value seen only in blogs or search results, and **unconfirmed** is a value I could not find.
@@ -118,6 +118,47 @@ A value passed with `--value` does not stay in that PowerShell window's command 
 4. `tools/app-secrets.mjs`: `set <path>`, `check`, `pull <app>`
 5. `standards-check`, `docs/env-matrix.md`: check and display `@ssm=`
 
+## Update 2026-11-23 (#1066): held cards, re-check, and user steps
+
+Re-checked on the official pages on 2026-11-23 and extended to the held cards below. "Official" means read on the provider page today. Where a page could not be read (KOPIS, the KRX header name, the Korea Eximbank key steps: the sites render with JavaScript or loop on redirects) the value stays "secondary" or "unconfirmed". No secret value appears here.
+
+### What changed since 2026-11-08
+
+| Item | Now |
+|---|---|
+| Korea Eximbank request URL | Moved to `oapi.koreaexim.go.kr` on 2025-06-25; the old `www.koreaexim.go.kr` API address closed on 2026-04-30. Use the new host. The limit (1,000 per day) and the 2-year re-consent are unchanged (secondary) |
+| KRX | Unchanged (10,000 per key per day, 1 year, extension before expiry, non-commercial only, attribution, no giving data to third parties; official terms). Each API needs its own approval. The header name is not on the pages read: take it from the spec document when issuing |
+| data.go.kr | Food nutrition DB 15127578 and special days 15012690: development account 10,000 (the page does not say per day), automatic approval. TourAPI 15101578: development 1,000, production needs review. Error 31 means the key period expired and can be renewed on the portal. The key validity period is still unconfirmed |
+| KOPIS | Key by email right after applying; valid 1 year; cancelled after 3 months without use; renewal by email; the service must state that it uses KOPIS data (secondary). Limit, cost and approval time unconfirmed |
+| TMDB | The old 40 requests per 10 seconds limit is gone (2019); now about 40 per second. Commercial use and AI training count as commercial (official terms) |
+| YES24, Tiingo | Unchanged. Tiingo Starter also caps 500 symbols and 1 GB per month, and its license is internal use only |
+| Google OAuth | Unchanged: a Testing-status refresh token lasts 7 days (basic sign-in scopes excepted). New: 100 live refresh tokens per account and client; a token unused for 6 months stops working |
+| Garmin | Unchanged: expiry 30, 90, 180 days or 1 year; Garmin emails about a week before. The access token lasts 24 hours, with no refresh token |
+| healthchecks.io | Unchanged: 20 checks on the free plan, 100 log entries per check |
+| Google Play | New personal accounts: 12 testers for 14 days before production (unchanged). Internal track: up to 100 testers by email, and an internal-only app is exempt from the Data safety form (official). The health apps declaration page names closed, open and production tracks and does not mention internal; an exemption for internal-only is an inference |
+| Anthropic | A key's expiry is chosen at creation and cannot change. Images are billed as plain input tokens (about `ceil(w/28) x ceil(h/28)`, at most 1,568 tokens at standard size): a label photo on Haiku 5.5 ($0.10 per million input tokens) costs about $0.0001 |
+
+### Rows for the held cards
+
+"Agent" is what the agent can do; "User" is what only the account owner can do. SSM names follow [ADR-0014](../adr/0014-app-secrets-ssm-paths.md). The command for every row is `Get-Clipboard | node tools/app-secrets.mjs set <parameter> --profile <personal profile>`.
+
+| Card | Needs a key or account? | User | Agent | SSM parameter, variable | Cost, approval, expiry |
+|---|---|---|---|---|---|
+| money-ledger#56 (Woori Card, Coupang, Kakao Pay history) | **No key.** File import stays the method. No official consumer export or API exists for Coupang or Kakao Pay, MyData needs a license that a person cannot get, and aggregators such as Codef want bank credentials or certificates held by a third party | Download the Woori Bank account history as Excel (web banking, per date range) and give one sample; ask Coupang and Kakao Pay support whether a personal data export exists; do not hand over passwords or certificates | Parse the files already described on the card; no scraping, no cookies | None | Free; no approval |
+| health-log#47 (nutrition label photos) | **Yes, if the Claude API reads the photo.** Reuse the shared Anthropic key, no new key | In the Console workspace `byunghk-tool` set the spend limit (a few cents is enough); put the key in SSM if #266 has not done it | Turn on `features.claude` for health-log in the registry so the deploy reads the shared parameter; build the upload and confirmation screen | `/sirloinbh/shared/anthropic-api-key`, `ANTHROPIC_API_KEY` | About $0.0001 per photo (Haiku 5.5); immediate; the expiry chosen at creation. If recognition runs through shared-ai instead, health-log needs no key |
+| health-log#118 (MFDS food DB) | **Yes: the shared data.go.kr key** (one per account) | Apply for use of 15127578 only (automatic approval for development), read the "General auth key (Decoding)" from My Page, and put it in SSM | Read it in the backend; hide the feature when the variable is empty | `/sirloinbh/shared/data-go-kr-service-key`, `FOOD_NTR_SERVICE_KEY` (proposed; same value as the other apps) | Free; 1 hour to half a day after approval before first use; period unconfirmed, renew on the portal when error 31 appears |
+| workout-memo#111 (Play Store) | **No key; an account.** Internal test track only (#108) | Create the personal Play Console account (18+, US$25 one time, government ID, card in your legal name, device check with the Play Console app); give the account email for the internal tester list | Privacy policy page, minimal listing, app content, AAB upload | None | US$25; approval time not published. Caveat: the account-type page says organization accounts are required for "certain services, including health apps"; the exact scope could not be read. Check it at sign-up before paying, and tell the coordinator if a workout app is affected |
+| workout-memo#120 (Nike Run Club) | **No key now.** Nike data request first | Request the data (Nike account: Privacy > Download Your Data > Request Data; the link arrives within about 7 days and is confirmed with a code); open the ZIP and say whether it holds runs and in which format; send one sample without personal data | Parse the format once known | None. Fallback only: a Strava app needs a Strava subscription (official getting-started page) and gives `/sirloinbh/workout-memo/strava-client-id` and `strava-client-secret`, `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`; the refresh token stays in the app DB | Request: free, about 7 days. Strava: subscription fee, 100 read requests per 15 minutes and 1,000 per day by default; whether NRC still syncs to Strava in this country is unconfirmed |
+| develop-skill#34 (deploy the wiki) | **No SSM secret.** GitHub Actions assumes an AWS role by OIDC; the three values (`WIKI_DEPLOY_ROLE_ARN`, `WIKI_BUCKET`, `WIKI_DISTRIBUTION_ID`) are repository variables, not secrets | Follow section 12 of shared-aws-infrastructure `docs/operations.md`: attach `terraform-wiki-site`, compute the password hash (the password stays in the password manager), put `wiki_auth_sha256` in `terraform.tfvars`, plan, apply, set the three variables, run the workflow once | Already merged (develop-skill#40) | None | AWS cost only; the password hash is in the Terraform state, so use a long random password |
+
+### Sittings
+
+1. **Browser sitting, about 30 minutes, no payment:** data.go.kr (apply for 15127578; 15012690 and 15101578 if study-log and life-journal have not), the Anthropic workspace spend limit, the Nike data request (then wait about 7 days), the Garmin personal key (choose 1 year).
+2. **Identity and payment sitting:** Play Console account (check the health-app account-type caveat first), then the Woori Bank Excel sample.
+3. **AWS sitting:** attach the `sirloinbh-ssm-write` policy if not yet done, put the collected keys with `set`, then the wiki apply in shared-aws-infrastructure.
+
+Not worth doing: MyData, Codef or other credential-holding aggregators, Coupang or Kakao Pay scraping, and Gmail statement parsing (a restricted scope that needs verification, and card statements are often password-encrypted).
+
 ## Sources
 
 - Google OAuth: https://developers.google.com/identity/protocols/oauth2 , https://support.google.com/cloud/answer/13464323 , https://developers.google.com/identity/protocols/oauth2/web-server
@@ -131,6 +172,7 @@ A value passed with `--value` does not stay in that PowerShell window's command 
 - KOPIS: https://www.kopis.or.kr/por/cs/openapi/openApiInfo.do?menuId=MNU_00074
 - KRX: https://openapi.krx.co.kr/contents/OPP/INFO/OPPINFO003.jsp , terms https://openapi.krx.co.kr/contents/OPP/INFO/OPPINFO002.jsp
 - Korea Eximbank: https://www.koreaexim.go.kr/ir/HPHKIR020M01?apino=2&viewtype=C
+- Added 2026-11-23 (#1066): Play Console https://support.google.com/googleplay/android-developer/answer/14151465 , https://support.google.com/googleplay/android-developer/answer/9845334 , https://support.google.com/googleplay/android-developer/answer/10787469 , https://support.google.com/googleplay/android-developer/answer/14738291 ; Google OAuth https://developers.google.com/identity/protocols/oauth2#expiration ; Garmin https://developer.garmin.com/gc-developer-program/personal/personal-faq/ ; Claude vision and pricing https://platform.claude.com/docs/en/build-with-claude/vision , https://platform.claude.com/docs/en/about-claude/pricing ; Strava https://developers.strava.com/docs/getting-started/ , https://developers.strava.com/docs/rate-limits/ ; data.go.kr https://www.data.go.kr/en/data/3068846/openapi.do ; TMDB https://developer.themoviedb.org/docs/rate-limiting ; Gmail scopes https://developers.google.com/workspace/gmail/api/auth/scopes
 
 ## How to store in SSM (proposed)
 
