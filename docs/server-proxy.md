@@ -29,7 +29,7 @@ These go into the shared file `/opt/project-standards/.env` (ADR-0010). Write on
 | `HEALTHCHECK_URL_CERT` | [User] from healthchecks.io | Ping URL for the renewal timer. Set the period to 12 hours and the grace to 1 day. If renewal or the nginx reload fails, a failure ping is sent; if the timer stops, pings stop. Either way an email arrives. Secret value |
 | `HEALTHCHECK_URL_PUBLIC` | [User] from healthchecks.io | Ping URL of the server-wide `public` check (#1076, see "Public URL probe" below). Period 5 minutes, grace 10 minutes. Secret value |
 | `PUBLIC_CHECK_SERVER_IP` | [User] optional | The server's public address for the hourly DNS comparison. When empty, `public-check.sh` reads it from `checkip.amazonaws.com` |
-| `PUBLIC_CHECK_RESOLVER`, `PUBLIC_CHECK_SINK` | [User] optional | The DNS server for the comparison (default `1.1.1.1`), and where the result goes (default and only value today: `healthchecks`) |
+| `PUBLIC_CHECK_RESOLVER`, `PUBLIC_CHECK_DIG`, `PUBLIC_CHECK_SINK` | [User] optional | The DNS server for the comparison (default `1.1.1.1`), and where the result goes (default and only value today: `healthchecks`) |
 
 ## Public URL probe (#1076)
 
