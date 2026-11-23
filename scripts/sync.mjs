@@ -129,7 +129,7 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
   return results;
 }
 
-const isMain = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
 if (isMain && process.argv.includes('--apply')) {
   const { data } = loadAll(root);
   const centralSha = process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
