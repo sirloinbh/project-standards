@@ -135,9 +135,45 @@ test('migrate keeps the failing file and cause when the connection is lost', asy
   );
 });
 
-test('migrate reports an unlock failure after success', async () => {
+test('migrate still returns the applied files when the final unlock fails, and logs one line (#1002)', async (t) => {
+  const lines = [];
+  t.mock.method(console, 'error', (line) => lines.push(line));
   const unlockFails = fakeDb((sql) => (sql.includes('pg_advisory_unlock') ? new Error('unlock failed') : undefined));
-  await assert.rejects(migrate(unlockFails.db, [file('001_a.sql')], 1), /unlock failed/);
+  assert.deepEqual(await migrate(unlockFails.db, [file('001_a.sql')], 1), ['001_a.sql']);
+  assert.equal(lines.length, 1);
+  assert.match(lines[0], /unlock failed/);
+  assert.doesNotMatch(lines[0], /\n/);
+});
+
+// Runs the rendered CLI (migrate.ts.tmpl) against a stub `pg` whose connect() rejects, as a stopped database does.
+test('the migration CLI prints one line and exits 1 when it cannot connect (#1002)', async () => {
+  const { readFile, mkdir, copyFile } = await import('node:fs/promises');
+  const { spawnSync } = await import('node:child_process');
+  const src = new URL('../../templates/app/backend/src/standard/', import.meta.url);
+  const dir = await mkdtemp(join(tmpdir(), 'migrate-cli-'));
+  try {
+    await mkdir(join(dir, 'node_modules', 'pg'), { recursive: true });
+    await writeFile(join(dir, 'node_modules', 'pg', 'package.json'), '{"name":"pg","main":"index.js"}');
+    await writeFile(
+      join(dir, 'node_modules', 'pg', 'index.js'),
+      `exports.Client = class { async connect() { throw new Error('connect ECONNREFUSED 127.0.0.1:5432', { cause: new Error('refused by the stub') }); } async end() { throw new Error('Client was closed and is not queryable'); } };`,
+    );
+    await mkdir(join(dir, 'standard'));
+    await copyFile(new URL('migrations.ts', src), join(dir, 'standard', 'migrations.ts'));
+    const cli = (await readFile(new URL('migrate.ts.tmpl', src), 'utf8')).replace('{{project.slot}}', '4').replace("'./migrations.js'", "'./migrations.ts'");
+    await writeFile(join(dir, 'standard', 'migrate.ts'), cli);
+    const run = spawnSync(process.execPath, [join(dir, 'standard', 'migrate.ts')], {
+      env: { ...process.env, DATABASE_URL: 'postgres://nobody@127.0.0.1:1/none' },
+      encoding: 'utf8',
+    });
+    assert.equal(run.status, 1, run.stderr);
+    assert.equal(run.stdout, '');
+    const lines = run.stderr.split('\n').filter((line) => line && !line.includes('ExperimentalWarning'));
+    assert.equal(lines.length, 1, run.stderr);
+    assert.equal(lines[0], 'connect ECONNREFUSED 127.0.0.1:5432 (refused by the stub)');
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 test('the managed files contain no irregular whitespace, which the apps lint rejects (#739)', async () => {
