@@ -120,7 +120,11 @@ export async function migrate(db: MigrationDb, files: Migration[], lockKey: numb
     await unlock(db, lockKey).catch(() => undefined);
     throw e;
   }
-  await unlock(db, lockKey);
+  // Every file is committed. The server releases a session lock when the session ends, so a failed unlock here (for
+  // example the connection dropped right after the last COMMIT) must not turn a finished run into a failed one (#1002).
+  await unlock(db, lockKey).catch((e: unknown) =>
+    console.error(`Could not release the migration lock after applying all files: ${(e as Error).message}`),
+  );
   return applied;
 }
 
