@@ -19,7 +19,8 @@
     "packages:check": "node scripts/package-guard.mjs",
     "workflows:check": "node scripts/check-workflows.mjs",
     "secrets:check": "node scripts/secret-scan.mjs",
-    "check:docs": "npm run registry:check && npm run docs:check && npm run self:check && npm run workflows:check && npm run secrets:check",
-    "check": "npm run test && npm run registry:check && npm run docs:check && npm run tokens:check && npm run self:check && npm run packages:check && npm run workflows:check && npm run secrets:check"
+    "links:check": "node scripts/check-doc-links.mjs",
+    "check:docs": "npm run registry:check && npm run docs:check && npm run self:check && npm run workflows:check && npm run secrets:check && npm run links:check",
+    "check": "npm run test && npm run registry:check && npm run docs:check && npm run tokens:check && npm run self:check && npm run packages:check && npm run workflows:check && npm run secrets:check && npm run links:check"
   }
 }
