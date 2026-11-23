@@ -125,6 +125,7 @@ The firewall is open only to allowed IPs, so an outside monitoring service canno
 | backup | `HEALTHCHECK_URL_BACKUP` | Daily dump (an S3 copy failure is also fail) | 1 day / 2 hours |
 | restore | `HEALTHCHECK_URL_RESTORE` | Weekly restore check | 7 days / 1 day |
 | report | `HEALTHCHECK_URL_REPORT` | Daily server status report (#285) | 1 day / 2 hours |
+| public | `HEALTHCHECK_URL_PUBLIC` in the **shared** `/opt/project-standards/.env` | One server-wide timer (`public-check.timer`, [server-proxy.md](../server-proxy.md#public-url-probe-1076)) every 5 minutes: `/api/health` of every app and shared service through the host nginx, plus hourly DNS and certificate checks | 5 minutes / 10 minutes |
 
 - Install: `sudo bash /opt/{{project.name}}/deploy/install-backup.sh` (backup, restore check, and health timers). You do not need to run it again if you add the URLs to `.env` later.
 - Manual check: `bash /opt/{{project.name}}/deploy/notify.sh health` (the URL is not printed)
