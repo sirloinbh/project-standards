@@ -76,7 +76,7 @@ export function anchorsOf(text) {
       counts.set(slug, n + 1);
       anchors.add(n === 0 ? slug : `${slug}-${n}`);
     }
-    for (const m of line.matchAll(/<a\s[^>]*?(?:id|name)=["']([^"']+)["']/gi)) anchors.add(m[1]);
+    for (const m of line.matchAll(/<a\s[^>]*?(?:id|name)=["']([^"']+)["']/gi)) anchors.add(m[1].toLowerCase());
   }
   return anchors;
 }

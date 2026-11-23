@@ -27,7 +27,7 @@ test('slugify follows the GitHub rules', () => {
 });
 
 test('anchorsOf numbers duplicate headings and reads explicit ids', () => {
-  const anchors = anchorsOf('# Intro\n\n## Setup\n\n## Setup\n\n<a name="custom"></a>\n\n```\n# not a heading\n```\n');
+  const anchors = anchorsOf('# Intro\n\n## Setup\n\n## Setup\n\n<a name="Custom"></a>\n\n```\n# not a heading\n```\n');
   assert.deepEqual([...anchors].sort(), ['custom', 'intro', 'setup', 'setup-1']);
 });
 
