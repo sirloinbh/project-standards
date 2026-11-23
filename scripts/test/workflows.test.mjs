@@ -87,6 +87,17 @@ test('publish.yml triggers on package tags and checks the tag before publishing'
   assert.match(text, /RUN_URL: .*actions\/runs\/\$\{\{ github\.run_id \}\}/, 'release notes link the publish run');
 });
 
+test('publish.yml can be rerun after a failed Release step (#1031)', () => {
+  const text = fs.readFileSync(path.join(root, '.github/workflows/publish.yml'), 'utf8');
+  const view = text.indexOf('npm view "@sirloinbh/$PACKAGE@$VERSION" version');
+  const publish = text.indexOf('npm publish --ignore-scripts');
+  assert.ok(view > 0 && view < publish, 'npm publish runs only after looking for the version');
+  const exists = text.indexOf('gh release view "$TAG"');
+  const create = text.indexOf('gh release create');
+  assert.ok(exists > 0 && exists < create, 'gh release create runs only after looking for the Release');
+  assert.match(text, /exit 0/, 'an existing Release ends the step without an error');
+});
+
 test('changelogSection returns one version section', () => {
   const text = '# 변경 기록\n\n## 1.1.0\n\n- 새 규칙\n\n## 1.0.0\n\n- 첫 버전\n';
   assert.equal(changelogSection(text, '1.1.0'), '- 새 규칙');
