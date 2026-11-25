@@ -128,6 +128,7 @@ The firewall is open only to allowed IPs, so an outside monitoring service canno
 | report | `HEALTHCHECK_URL_REPORT` | Daily server status report (#285) | 1 day / 2 hours |
 | public | `HEALTHCHECK_URL_PUBLIC` in the **shared** `/opt/project-standards/.env` | One server-wide timer (`public-check.timer`, [server-proxy.md](../server-proxy.md#public-url-probe-1076)) every 5 minutes: `/api/health` of every app and shared service through the host nginx, plus hourly DNS and certificate checks | 5 minutes / 10 minutes |
 
+- The `public` healthchecks.io check is no longer created (#1077): the AWS path (`NOTIFY_SINK=aws`) carries the signal, and an outage also opens a GitHub issue when the operations token is stored ([server-proxy.md](../server-proxy.md#operations-token-and-uptime-issues-1077)).
 - Sink (#1091): `NOTIFY_SINK=healthchecks|aws|both` in this `.env` or in the shared `/opt/project-standards/.env` decides where `notify.sh` sends a signal. `aws` records the state for the server-wide `signals.sh`, which sends the CloudWatch metrics and the SNS alert (see "AWS alert path" in [server-proxy.md](../server-proxy.md)); `both` runs both and one failing sink does not stop the other. The default is `healthchecks`.
 - Install: `sudo bash /opt/{{project.name}}/deploy/install-backup.sh` (backup, restore check, and health timers). You do not need to run it again if you add the URLs to `.env` later.
 - Manual check: `bash /opt/{{project.name}}/deploy/notify.sh health` (the URL is not printed)
