@@ -21,6 +21,14 @@ The default setup that lets the 8 apps be installed on a phone's home screen and
 - **`/api/`, non-GET requests, other origins:** The service worker does not get involved.
 - **Updates:** nginx serves `sw.js` as `no-cache`, so the browser checks for a new version every time. A new version is installed on the next visit and replaces the old one immediately (`skipWaiting`, `clients.claim`), and the caches of the previous version are deleted. When changing the cache format, raise `VERSION` in `sw.js`.
 
+## Web Push handlers (sw.js, #1110)
+
+`sw.js` also handles `push` and `notificationclick`, for apps that subscribe to Web Push. An app that never subscribes is not affected.
+
+- **`push`:** shows a notification from the JSON payload `{ title, body, url }`. A missing or broken payload still shows a notification titled "Notification". The notification carries the `url` (same origin only; another origin or an invalid value becomes `/`) and the 192 px icon.
+- **`notificationclick`:** closes the notification and focuses a window that is already on that URL; otherwise it opens the URL in a new window. Other open windows are left alone, because they may hold unsaved input.
+- The subscription itself (permission, `PushManager.subscribe`, the server keys and sender) is the app's own code and is not in this file.
+
 ## nginx cache headers
 
 | Path | `Cache-Control` |
