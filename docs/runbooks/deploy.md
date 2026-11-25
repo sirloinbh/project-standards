@@ -106,6 +106,8 @@ Install the timer (once, on the server):
 sudo bash /opt/{{project.name}}/deploy/install-autodeploy.sh
 ```
 
+**Deployment record (#1087).** After a successful deploy, `autodeploy.sh` creates a GitHub deployment (`environment: production`, `ref` = the deployed commit) and a `success` status, so the repo's Deployments page and the compliance report show the real deploy time. It reads the fine-grained operations token from SSM `/sirloinbh/shared/github-ops-token` (Deployments: write on the app repos, Issues: write on project-standards; [server-proxy.md](../server-proxy.md#operations-token-and-uptime-issues-1077) has the creation and rotation steps). The record is best effort: without the token, or when SSM or GitHub fail, the deploy still succeeds and the journal says so in one line (`could not create the GitHub deployment record ...`) or nothing at all when there is no token.
+
 ```bash
 systemctl list-timers {{project.db.name}}-autodeploy.timer        # next run time
 journalctl -u {{project.db.name}}-autodeploy -n 50 --no-pager     # recent log
