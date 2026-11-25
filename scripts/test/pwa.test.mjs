@@ -63,6 +63,65 @@ test('the service worker parses and never caches the API or pages', () => {
   assert.match(sw, /cache\.add\(OFFLINE\)/);
 });
 
+test('the service worker shows a push notification and opens or focuses the app on click, same origin only', async () => {
+  const origin = 'https://app.example';
+  const listeners = {};
+  const shown = [];
+  const opened = [];
+  const focused = [];
+  let windows = [];
+  const self = {
+    location: { origin },
+    registration: { showNotification: async (title, options) => shown.push({ title, options }) },
+    clients: {
+      matchAll: async () => windows,
+      openWindow: async (url) => opened.push(url),
+      claim: async () => {},
+    },
+    skipWaiting: async () => {},
+    addEventListener: (type, fn) => (listeners[type] = fn),
+  };
+  vm.runInNewContext(study['frontend/public/sw.js'], { self, caches: {}, URL, Response, fetch: async () => {} });
+  const push = async (data) => {
+    let wait;
+    const event = { data: data === undefined ? null : { json: () => (typeof data === 'function' ? data() : data) }, waitUntil: (p) => (wait = p) };
+    listeners.push(event);
+    await wait;
+  };
+  const click = async (data) => {
+    let wait;
+    let closed = false;
+    listeners.notificationclick({ notification: { data, close: () => (closed = true) }, waitUntil: (p) => (wait = p) });
+    await wait;
+    assert.ok(closed);
+  };
+
+  await push({ title: 'Evening check', body: 'Two routines left', url: '/today' });
+  assert.deepEqual(shown[0].title, 'Evening check');
+  assert.equal(shown[0].options.body, 'Two routines left');
+  assert.equal(shown[0].options.data.url, `${origin}/today`);
+
+  await push(undefined); // no payload
+  await push(() => { throw new Error('not json'); }); // broken payload
+  assert.equal(shown[1].title, 'Notification');
+  assert.equal(shown[2].title, 'Notification');
+  assert.equal(shown[1].options.body, undefined);
+
+  await push({ title: 'x', url: 'https://evil.example/phish' }); // another origin goes to the start page
+  assert.equal(shown[3].options.data.url, `${origin}/`);
+
+  await click({ url: `${origin}/today` }); // no window: open it
+  assert.deepEqual(opened, [`${origin}/today`]);
+  windows = [{ url: `${origin}/today`, focus: async () => focused.push('today') }, { url: `${origin}/other`, focus: async () => focused.push('other') }];
+  await click({ url: `${origin}/today` }); // a window is already there: focus only that one
+  assert.deepEqual(focused, ['today']);
+  assert.equal(opened.length, 1);
+  await click(undefined); // no data: the start page
+  assert.equal(opened.at(-1), `${origin}/`);
+  await click({ url: 'https://evil.example/' });
+  assert.equal(opened.at(-1), `${origin}/`);
+});
+
 test('nginx revalidates the service worker, manifest and pages, keeps hashed assets, and keeps security headers everywhere', () => {
   const conf = study['frontend/nginx.conf'];
   assert.match(conf, /location \/assets\/ \{\s*add_header Cache-Control "public, max-age=31536000, immutable" always;/);
