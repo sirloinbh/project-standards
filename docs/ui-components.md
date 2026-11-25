@@ -78,6 +78,11 @@ Components are synced only to apps whose `features.ui` is `true` in the registry
 
 A new project is registered with `features.ui: true` from the start. The scaffold's `package.json` includes the dependencies above.
 
+## Touch targets
+
+- Touch screens (`pointer-coarse`) get at least 44×44px (`--touch-target`) on every control: Button, Input, NativeSelect, SegmentedControl segments (`pointer-coarse:min-h-11`), the Dialog, Sheet and Drawer close buttons (`pointer-coarse:size-11`), and Checkbox and Switch (an invisible `::after` area: 44px and 46×62px).
+- A narrow desktop window with a mouse pointer keeps 36px on Button, Input and NativeSelect. There is no `max-md:` rule; the 44px rule follows the pointer, not the viewport width (user decision, 2026-11-26, #1103).
+
 ## Verification results (2026-10-22)
 
 We connected workout-memo's installed copy and the packages above (installed in a temporary working folder with `--ignore-scripts`) to a virtual slot 99 app and verified.
