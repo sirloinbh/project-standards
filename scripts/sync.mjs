@@ -18,6 +18,7 @@ import { describeLabelPlan, loadLabels, planLabels, syncLabels } from './lib/lab
 import { loadAll } from './lib/registry.mjs';
 import { planTarget } from './lib/sync-plan.mjs';
 import { syncTarget } from './lib/sync-pr.mjs';
+import { autoMergeSyncPr } from './lib/sync-merge.mjs';
 import { DEFAULT_WAIT, describeHold, groupWaves, waitForChecks } from './lib/sync-waves.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -96,7 +97,7 @@ export function dryRun({ data, targets, local, labelsFrom = {}, out, centralSha,
  * `centralToken` reads the central repo's releases and publish runs. The workflow passes its own
  * GITHUB_TOKEN (actions: read) because the App has no Actions permission (#205).
  */
-export async function apply({ data, targets, centralSha, workflowSha = centralSha, getToken, makeClient, centralToken, labels = loadLabels(root), log = console.log, allWaves = false, wait = {}, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), syncTargetFn = syncTarget, centralPr = () => centralPrNumber(centralSha) }) {
+export async function apply({ data, targets, centralSha, workflowSha = centralSha, getToken, makeClient, centralToken, labels = loadLabels(root), log = console.log, allWaves = false, wait = {}, sleep = (ms) => new Promise((r) => setTimeout(r, ms)), syncTargetFn = syncTarget, autoMergeFn = autoMergeSyncPr, centralPr = () => centralPrNumber(centralSha) }) {
   const enabled = targets.filter((t) => t.enabled !== false);
   if (!enabled.length) {
     await getToken('sirloinbh/project-standards');
@@ -170,6 +171,23 @@ export async function apply({ data, targets, centralSha, workflowSha = centralSh
     await commentOnCentral({ centralApi: makeClient(await getToken('sirloinbh/project-standards')), centralSha, number: centralPr(), message, log });
     results.push({ target: 'waves', status: 'failed', error: message });
     break;
+  }
+
+  // Targets with `autoMergeSync` merge their own sync PR once its checks are green (#1105). Others stay open for review.
+  const deadline = Date.now() + opts.timeoutMs;
+  for (const target of enabled.filter((t) => t.autoMergeSync)) {
+    const result = results.find((r) => r.target === target.repo);
+    if (!result || !['opened', 'updated'].includes(result.status)) continue;
+    try {
+      const api = makeClient(await getToken(target.repo));
+      const merge = await autoMergeFn({ api, repo: target.repo, result, sleep, deadline, pollMs: opts.pollMs, noChecksGraceMs: opts.noChecksGraceMs, log });
+      result.merged = merge.merged;
+      if (!merge.merged) result.mergeSkipped = merge.reason;
+    } catch (error) {
+      log(`::warning::${target.repo}: automatic merge failed: ${error.message}. The sync PR stays open for review.`);
+      result.merged = false;
+      result.mergeSkipped = error.message;
+    }
   }
   return results;
 }

@@ -29,7 +29,7 @@ Reviewing PRs follows the [std-code-review](../templates/common/skills/std-code-
 | shared-aws-infrastructure | The agent, after the review loop and green CI | User decision (2026-11-15, #591). Merging is not applying: `terraform apply` still needs the user |
 
 - The review loop is [std-code-review](../templates/common/skills/std-code-review/SKILL.md) section 8: 1 or 2 rounds (more only while blocking findings remain), fixes on the same branch, a new issue for big problems outside the PR, then `pr merge --merge` and the local cleanup ([ADR-0016](adr/0016-agent-reviews-and-merges-own-prs.md)).
-- Sync PRs (`chore/standards-sync-*`) are reviewed and merged by the agent the same way.
+- Sync PRs (`chore/standards-sync-*`) are reviewed and merged by the agent the same way, **except** in the 4 repos with `autoMergeSync: true` in `sync.config.json` (`shared-auth`, `shared-aws-infrastructure`, `file-control`, `develop-skill`). `scripts/sync.mjs` merges their sync PRs itself (merge commit) once CI is green, with no agent review ([ADR-0030](adr/0030-sync-prs-merge-themselves.md), #1105). It leaves the PR open for the agent when the branch has a commit that does not start with `chore: sync central standards (project-standards@`, when "Check before merging" has an item, or when CI is red or unreadable. This is the only exception to "no auto-merge"; shared-ai and the 8 apps stay on agent review.
 - The agent does not merge while a check fails, when "Check before merging" has an item for the user, or in place of a review. It never force-pushes or pushes to main.
 
 ## Branch protection checklist
