@@ -143,7 +143,7 @@ test('a bad argument exits 2', { skip }, () => {
 });
 
 // Issue per outage (#1077). One state dir lives across the runs of a scenario, like /var/lib/project-standards/public-check.
-const ghCalls = (r) => r.curlArgs.split('\n').filter((l) => l.includes('api.github.com'));
+const ghCalls = (r) => r.curlArgs.split('\n').filter((l) => /https:\/\/api\.github\.com\/repos\//.test(l));
 const withState = (fn) => {
   const stateDir = fs.mkdtempSync(path.join(os.tmpdir(), 'public-check-state-'));
   try {
