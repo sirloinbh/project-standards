@@ -207,7 +207,7 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
   const pr = existing
     ? await api('PATCH', `${repoPath}/pulls/${existing.number}`, { title, body })
     : await api('POST', `${repoPath}/pulls`, { title, head: branch, base: repo.default_branch, body });
-  return { status: existing ? 'updated' : 'opened', pr: pr.html_url, branch, changes: meaningful, deletions };
+  return { status: existing ? 'updated' : 'opened', pr: pr.html_url, number: pr.number ?? existing?.number, branch, changes: meaningful, deletions };
 }
 
 /** ADR-0004: a shared package version is trusted only if publish.yml released it from a tag. */

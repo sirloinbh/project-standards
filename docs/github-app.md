@@ -19,7 +19,7 @@ Repos to install on: `project-standards`, `workout-memo`, `study-log`, `health-l
 | Permission | Level | Where it is used |
 |---|---|---|
 | Contents | Read and write | Commit to the sync branch |
-| Pull requests | Read and write | Create and update sync PRs |
+| Pull requests | Read and write | Create and update sync PRs, and merge them in the repos with `autoMergeSync` (#1105, ADR-0030) |
 | Workflows | Read and write | Sync `.github/workflows/ci.yml`. Without this permission, GitHub rejects the push |
 | Metadata | Read-only | Default (required) |
 | Administration | Read-only | Check branch protection and merge settings in the compliance report (#22) |
@@ -27,7 +27,7 @@ Repos to install on: `project-standards`, `workout-memo`, `study-log`, `health-l
 | Variables | Read-only | Check variable names in the compliance report (#22) |
 | Code scanning alerts | Read-only | Check in the compliance report that the CodeQL default setup is on (#260). It does not read the alert contents |
 | Issues | Read and write | Create and update issue labels (`templates/common/labels.json`). It does not delete labels (#40). The compliance run also reads issues and closes finished epics (#1065) |
-| Checks | Read-only | CI state of the sync PRs: the sync wave gate waits for it (#1055) and the compliance report shows a repo held by a wave (#1075). Until it is granted the gate only warns and syncs on. **Not granted yet** |
+| Checks | Read-only | CI state of the sync PRs: the sync wave gate waits for it (#1055) and the compliance report shows a repo held by a wave (#1075). Until it is granted the gate only warns and syncs on, and automatic sync PR merging (#1105) never merges. **Not granted yet** |
 | Actions | Read-only | Last CI result on `main` in the compliance report (#1057). **Not granted yet** |
 | Dependabot alerts | Read-only | Open Dependabot alert counts in the compliance report (#1057). **Not granted yet** |
 | Deployments | Read-only | Latest GitHub deployment record per repo in the compliance report (#1086). **Not granted yet** |
