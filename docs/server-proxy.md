@@ -10,13 +10,13 @@ The config is generated from the registry, so nothing is edited by hand on the s
 
 | File | Content |
 |---|---|
-| `nginx/apps.conf` | One `server` block per active app: `server_name <name>.<root domain>`, `proxy_pass http://127.0.0.1:<ports.web>`, HSTS. An app with `service.apiTimeoutSec` in the registry also gets a `location /api/` with `proxy_read_timeout` and `proxy_send_timeout` of that many seconds (study-log: 300, #1114) and, with `service.apiBodyMb`, a `client_max_body_size` of that many MB (study-log: 21, #1117); the others keep nginx's defaults (60 s, 1 MB). HTTP redirects app names to HTTPS. Any other name gets no response (80) or no TLS handshake (443) |
+| `nginx/apps.conf` | One `server` block per active app: `server_name <name>.<root domain>`, `proxy_pass http://127.0.0.1:<ports.web>`, HSTS. An app with `service.apiTimeoutSec` in the registry also gets a `location /api/` with `proxy_read_timeout` and `proxy_send_timeout` of that many seconds (study-log: 300, #1114) and, with `service.apiBodyMb`, a `client_max_body_size` of that many MB (study-log: 21, #1117); the others keep nginx's defaults (60 s, 1 MB). An app with `service.publicOrigin` (money-ledger: port 8443, `POST /kakao/skill`, money-ledger#314) also gets its own `listen <port> ssl` server that passes exactly that path and method, with a 16k body limit, straight to `127.0.0.1:<ports.api>` (the app publishes its API on loopback only) and answers 404 for everything else; each such port also gets a `default_server` that rejects the TLS handshake of any other name. HTTP redirects app names to HTTPS. Any other name gets no response (80) or no TLS handshake (443) |
 | `compose.yaml` | `nginx` (`versions.images.nginx`, host network) and `certbot` (`versions.images.certbot`, run only by `cert.sh`) |
 | `cert.sh` | `issue`, `renew`, `dry-run`, `reload`, `install` |
 | `cert-renew.service`, `cert-renew.timer` | Runs `cert.sh renew` at 03:17 and 15:17 Seoul time. certbot renews only when the certificate is within 30 days of expiry |
 
 - The script refuses to run while `rootDomain` in `registry/platform.json` is `null` (#539). To look at the output before that, run `node scripts/proxy-config.mjs --domain example.com`.
-- Access is still limited to allowed IPs by the Lightsail firewall (443 and 80 open to `allowed_cidrs` only, #252), so nginx has no allow list of its own.
+- Access is still limited to allowed IPs by the Lightsail firewall (443 and 80 open to `allowed_cidrs` only, #252), so nginx has no allow list of its own. The one exception is a `service.publicOrigin` port (8443 for money-ledger, opened to everyone in shared-aws-infrastructure#118 and #129): anyone can reach it, so the generated block passes only the exact path and method and never the app's web port. Setting the field in the registry does not open the port; the firewall rule is separate.
 - Security headers other than HSTS (`X-Content-Type-Options`, `Referrer-Policy`) come from each app's own nginx.
 
 ## Shared server `.env` keys
@@ -100,6 +100,7 @@ Prerequisites: the domain is bought (#249), `rootDomain` is filled (#539), and t
 ## Changes later
 
 - **App added or web port changed:** regenerate, copy `nginx/apps.conf` to the server as in step 1, then `sudo bash cert.sh reload` (it runs `nginx -t` first and does not reload a broken config). Copy `public-check.sh` too, so the new host is probed.
+- **`service.publicOrigin` added or changed:** regenerate and copy `nginx/apps.conf` and run `sudo bash cert.sh reload`; nothing else. The compose file needs no change: nginx already uses the host network, so a new `listen` port opens by itself once the config is reloaded (the firewall rule must already allow it). The app's API container must be published on `127.0.0.1:<ports.api>`. Check from outside: `curl -i -X POST https://<app host>:<port><path>` reaches the API, and a `GET`, another path, or another name does not.
 - **Image version changed in `versions.json`:** regenerate and copy `compose.yaml`, then `sudo docker compose pull nginx && sudo docker compose up -d nginx`.
 - **Renewal check:** `systemctl list-timers cert-renew.timer`, `journalctl -u cert-renew.service --since -2d`.
 

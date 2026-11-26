@@ -292,7 +292,8 @@
       },
       "service": {
         "domain": null,
-        "subdomain": "money-ledger"
+        "subdomain": "money-ledger",
+        "publicOrigin": { "port": 8443, "path": "/kakao/skill", "method": "POST" }
       },
       "aws": {
         "prefix": null

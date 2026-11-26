@@ -17,7 +17,7 @@ export function proxyApps(data, domain) {
     .map((p) => {
       // The one wildcard certificate covers only names directly under the root domain.
       if (p.service.domain && p.service.domain !== domain) throw new Error(`${p.name}: service.domain "${p.service.domain}" is not covered by the *.${domain} certificate`);
-      return { name: p.name, slot: p.slot, host: serviceHost(p, { rootDomain: domain }), port: p.ports.web, apiTimeoutSec: p.service.apiTimeoutSec, apiBodyMb: p.service.apiBodyMb };
+      return { name: p.name, slot: p.slot, host: serviceHost(p, { rootDomain: domain }), port: p.ports.web, apiPort: p.ports.api, apiTimeoutSec: p.service.apiTimeoutSec, apiBodyMb: p.service.apiBodyMb, publicOrigin: p.service.publicOrigin };
     });
   const services = (data.projects.sharedServices ?? []).map((s) => ({ name: s.name, slot: s.slot, host: `${s.subdomain}.${domain}`, port: s.ports.web }));
   return [...apps, ...services].sort((a, b) => a.slot - b.slot);
@@ -42,7 +42,62 @@ const apiLocation = (app) => {
   return limits.length ? `\n  location /api/ {\n${proxyHeaders(app)}\n${limits.join('\n')}\n  }\n` : '';
 };
 
-function nginxConf(domain, apps) {
+// An app that sets service.publicOrigin gets its own TLS port that anyone may reach, for a webhook a
+// third party calls (money-ledger's Kakao skill, money-ledger#314). The firewall opens that port to
+// everyone, so only the one exact path and method is passed, straight to the app's API port
+// (ports.api, published on 127.0.0.1 only); everything else is a 404.
+const publicOriginServer = (app) => {
+  const o = app.publicOrigin;
+  return `# ${app.name} public origin (slot ${app.slot}): ${o.method} ${o.path} only
+server {
+  listen ${o.port} ssl;
+  http2 on;
+  server_name ${app.host};
+  add_header Strict-Transport-Security "max-age=31536000" always;
+
+  location = ${o.path} {
+    limit_except ${o.method} { deny all; }
+    client_max_body_size 16k;
+${proxyHeaders({ ...app, port: app.apiPort })}
+  }
+
+  location / {
+    return 404;
+  }
+}`;
+};
+
+/** The extra public ports of the apps that opt in (registry service.publicOrigin), checked and in port order. */
+function publicOrigins(apps, data) {
+  const origins = apps.filter((a) => a.publicOrigin);
+  const taken = new Set(data.projects.projects.flatMap((p) => Object.values(p.ports)).concat((data.projects.sharedServices ?? []).flatMap((s) => Object.values(s.ports ?? {}))));
+  for (const a of origins) if (taken.has(a.publicOrigin.port)) throw new Error(`${a.name}: service.publicOrigin.port ${a.publicOrigin.port} is already a registry port`);
+  const seen = new Set();
+  for (const a of origins) {
+    if (seen.has(a.publicOrigin.port)) throw new Error(`service.publicOrigin.port ${a.publicOrigin.port} is used by two apps; give each app its own port`);
+    seen.add(a.publicOrigin.port);
+  }
+  return origins.sort((a, b) => a.publicOrigin.port - b.publicOrigin.port);
+}
+
+function publicOriginSection(origins) {
+  if (!origins.length) return '';
+  const rejects = origins.map((a) => a.publicOrigin.port).map((port) => `server {
+  listen ${port} ssl default_server;
+  ssl_reject_handshake on;
+}`);
+  return `
+# Extra public ports (service.publicOrigin). Unlike 80 and 443, these are open to everyone at the
+# Lightsail firewall, so each serves one exact path and method of one app and nothing else; the app's
+# API container is published on loopback only (ports.api), so this goes straight to it, not through
+# the app's web nginx. Any other name gets no TLS handshake, as on 443.
+${rejects.join('\n')}
+
+${origins.map(publicOriginServer).join('\n\n')}
+`;
+}
+
+function nginxConf(domain, apps, origins = []) {
   const server = (app) => `# ${app.name} (slot ${app.slot})
 server {
   listen 443 ssl;
@@ -57,6 +112,7 @@ ${proxyHeaders(app)}
 ${apiLocation(app)}}`;
   return `${HEADER}
 # Only allowed IPs reach 80 and 443 (Lightsail firewall, ADR-0012), so nginx has no allow list.
+# The one exception is a service.publicOrigin port, open to everyone (see the end of this file).
 
 ssl_certificate /etc/letsencrypt/live/${domain}/fullchain.pem;
 ssl_certificate_key /etc/letsencrypt/live/${domain}/privkey.pem;
@@ -82,7 +138,7 @@ server {
 }
 
 ${apps.map(server).join('\n\n')}
-`;
+${publicOriginSection(origins)}`;
 }
 
 function compose(versions) {
@@ -215,9 +271,10 @@ WantedBy=timers.target
 export function renderProxy(data, { domain = data.platform.rootDomain } = {}) {
   if (!domain) throw new Error('platform.rootDomain is not set yet (#539). Pass --domain <name> to preview.');
   const apps = proxyApps(data, domain);
+  const origins = publicOrigins(apps, data);
   return [
     { path: 'compose.yaml', content: compose(data.versions) },
-    { path: 'nginx/apps.conf', content: nginxConf(domain, apps) },
+    { path: 'nginx/apps.conf', content: nginxConf(domain, apps, origins) },
     { path: 'cert.sh', content: certScript(domain) },
     { path: 'cert-renew.service', content: service },
     { path: 'cert-renew.timer', content: timer },
