@@ -46,6 +46,8 @@ The mobile size is the default, and from `md` (768px) up it grows to the size on
 | `caption` | `p` | 14px | 14px | 400 | 0 | `muted-foreground` | Secondary and caption text, input descriptions |
 | `meta` | `span` | 12px | 12px | 400 | 0 | `muted-foreground` | Meta information such as dates, times, and counts |
 
+**12px floor (user decision, 2026-11-26, #1127).** No text on any screen is smaller than 12px: `text-xs` and `meta` are the smallest sizes, and arbitrary values such as `text-[10px]`, inline `fontSize` under 12, and SVG label sizes under 12 are not allowed. `standards-check` warns about them (`text under 12px`); the `std-ux-audit` skill checks the computed size in the browser.
+
 ## Spacing
 
 - Use spacing only in 4px units (Tailwind spacing 1 = 4px). Common values: 1 (4px), 2 (8px), 3 (12px), 4 (16px), 6 (24px), 8 (32px), 12 (48px).
