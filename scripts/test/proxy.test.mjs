@@ -127,3 +127,40 @@ test('cert.sh is valid bash', { skip: spawnSync('bash', ['--version']).status !=
   const result = spawnSync('bash', ['-n'], { input: files.get('cert.sh'), encoding: 'utf8' });
   assert.equal(result.status, 0, result.stderr);
 });
+
+test('only money-ledger gets a public origin: its own port, one exact path and method, straight to the API port', () => {
+  const ml = data.projects.projects.find((p) => p.name === 'money-ledger');
+  assert.deepEqual(ml.service.publicOrigin, { port: 8443, path: '/kakao/skill', method: 'POST' });
+  assert.deepEqual(active.filter((p) => p.service.publicOrigin).map((p) => p.name), ['money-ledger']);
+  const blocks = conf.split(/\n\n(?=# |server \{)/);
+  const block = blocks.find((b) => b.includes('listen 8443 ssl;'));
+  assert.ok(block);
+  assert.match(block, new RegExp(`server_name money-ledger\.${domain.replace('.', '\.')};`));
+  assert.match(block, /location = \/kakao\/skill \{\n {4}limit_except POST \{ deny all; \}\n {4}client_max_body_size 16k;/);
+  assert.match(block, new RegExp(`proxy_pass http://127\.0\.0\.1:${ml.ports.api};`), 'goes to the API port, not the web port');
+  assert.doesNotMatch(block, new RegExp(`:${ml.ports.web}\b`));
+  assert.match(block, /proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;/);
+  assert.match(block, /location \/ \{\n {4}return 404;/);
+  assert.match(block, /Strict-Transport-Security/);
+  assert.match(conf, /listen 8443 ssl default_server;\n {2}ssl_reject_handshake on;/);
+  assert.equal(conf.split('listen 8443').length - 1, 2, 'one reject server and one app server');
+  assert.equal(conf.split(/listen (?!80|443)\d+ /).length, 3, 'no other extra port');
+});
+
+test('without a publicOrigin the config has no extra port and is the same as before', () => {
+  const plain = structuredClone(data);
+  for (const p of plain.projects.projects) delete p.service.publicOrigin;
+  const out = renderProxy(plain, { domain }).find((f) => f.path === 'nginx/apps.conf').content;
+  assert.doesNotMatch(out, /listen (?!80|443)\d+/);
+  assert.doesNotMatch(out, /Extra public ports/);
+  assert.ok(out.endsWith('}\n'));
+});
+
+test('a public origin port that is a registry port or used twice is refused', () => {
+  const clash = structuredClone(data);
+  clash.projects.projects.find((p) => p.name === 'money-ledger').service.publicOrigin.port = 8101;
+  assert.throws(() => renderProxy(clash, { domain }), /already a registry port/);
+  const twice = structuredClone(data);
+  twice.projects.projects.find((p) => p.name === 'study-log').service.publicOrigin = { port: 8443, path: '/x', method: 'GET' };
+  assert.throws(() => renderProxy(twice, { domain }), /used by two apps/);
+});
