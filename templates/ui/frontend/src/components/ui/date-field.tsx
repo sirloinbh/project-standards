@@ -28,7 +28,7 @@ import {
 import { Input } from './input';
 
 // An English date and time field (#1138). The browser's own date and time inputs write their parts
-// and calendar in the browser's language ("연도 / 월 / 일"), and `lang` does not change that. These
+// and calendar in the browser's language (the year / month / day labels follow it), and `lang` does not change that. These
 // are a text field (type `2026-11-27`, paste, or clear) plus a popover to pick. The value is a
 // string like the kit's other fields: a full `YYYY-MM-DD` / `HH:MM`, or whatever is typed so far,
 // or "" when cleared. The form and the server still validate it; `min` and `max` only limit what
