@@ -102,7 +102,8 @@
       "service": {
         "domain": null,
         "subdomain": "study-log",
-        "apiBodyMb": 21
+        "apiBodyMb": 21,
+        "apiTimeoutSec": 300
       },
       "aws": {
         "prefix": null
