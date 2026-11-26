@@ -135,10 +135,10 @@ test('only money-ledger gets a public origin: its own port, one exact path and m
   const blocks = conf.split(/\n\n(?=# |server \{)/);
   const block = blocks.find((b) => b.includes('listen 8443 ssl;'));
   assert.ok(block);
-  assert.match(block, new RegExp(`server_name money-ledger\.${domain.replace('.', '\.')};`));
+  assert.ok(block.includes(`server_name money-ledger.${domain};`));
   assert.match(block, /location = \/kakao\/skill \{\n {4}limit_except POST \{ deny all; \}\n {4}client_max_body_size 16k;/);
-  assert.match(block, new RegExp(`proxy_pass http://127\.0\.0\.1:${ml.ports.api};`), 'goes to the API port, not the web port');
-  assert.doesNotMatch(block, new RegExp(`:${ml.ports.web}\b`));
+  assert.ok(block.includes(`proxy_pass http://127.0.0.1:${ml.ports.api};`), 'goes to the API port, not the web port');
+  assert.ok(!block.includes(`127.0.0.1:${ml.ports.web};`));
   assert.match(block, /proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;/);
   assert.match(block, /location \/ \{\n {4}return 404;/);
   assert.match(block, /Strict-Transport-Security/);
