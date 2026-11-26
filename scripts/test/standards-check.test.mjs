@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll, serviceHost } from '../lib/registry.mjs';
-import { ADOPTION_RULES, checkAdoption, checkApi, checkComposeDeploy, checkComposeWarnings, checkFileNames, checkZodArrays, formatReport, rangeVersions, runCheck } from '../standards-check.mjs';
+import { ADOPTION_RULES, checkAdoption, checkApi, checkComposeDeploy, checkComposeWarnings, checkFileNames, checkMinFontSize, checkZodArrays, formatReport, rangeVersions, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -438,4 +438,17 @@ test('adoption rules: setInt8Parser must be called once outside standard/ (ADR-0
 test('adoption warnings reach runCheck without failing it', () => {
   const result = check(({ write }) => write('backend/src/server.ts', "createApp(pool).listen(3101, '0.0.0.0', () => {});\n"));
   assert.equal(result.problems.length, 0);
+});
+
+test('text under 12px is reported, 12px and larger passes (warning only, #1127)', () => {
+  const src = (file, text) => [{ file, text }];
+  assert.deepEqual(checkMinFontSize(src('frontend/src/a.tsx', '<p className="text-xs text-[12px] text-[0.75rem] text-[13px]" style={{ fontSize: 12 }}>')), []);
+  assert.deepEqual(checkMinFontSize(src('frontend/src/a.tsx', '<p className="text-[10px]" />')), ['frontend/src: text under 12px (docs/design-tokens.md). 1 found: frontend/src/a.tsx:1 text-[10px]']);
+  const svg = checkMinFontSize(src('frontend/src/heatmap.tsx', '<text fontSize="10" /><text fontSize={11} /><div style={{ fontSize: 11 }} /><div style={{ fontSize: "0.7rem" }} />'));
+  assert.match(svg[0], /4 found/);
+  assert.match(checkMinFontSize(src('frontend/src/index.css', '.a {\n font-size: 11px;\n}'))[0], /index\.css:2 font-size: 11px/);
+  assert.deepEqual(checkMinFontSize(src('frontend/src/a.test.tsx', 'text-[10px]')), []);
+  const result = check(({ write }) => write('frontend/src/app.tsx', 'export const A = () => <p className="text-[10px]">x</p>;\n'));
+  assert.deepEqual(result.problems, []);
+  assert.ok(result.warnings.some((w) => w.includes('text under 12px')));
 });
