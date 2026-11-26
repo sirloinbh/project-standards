@@ -10,7 +10,7 @@ The config is generated from the registry, so nothing is edited by hand on the s
 
 | File | Content |
 |---|---|
-| `nginx/apps.conf` | One `server` block per active app: `server_name <name>.<root domain>`, `proxy_pass http://127.0.0.1:<ports.web>`, HSTS. HTTP redirects app names to HTTPS. Any other name gets no response (80) or no TLS handshake (443) |
+| `nginx/apps.conf` | One `server` block per active app: `server_name <name>.<root domain>`, `proxy_pass http://127.0.0.1:<ports.web>`, HSTS. An app with `service.apiTimeoutSec` in the registry also gets a `location /api/` with `proxy_read_timeout` and `proxy_send_timeout` of that many seconds (study-log: 300, #1114); the others keep nginx's 60 s default. HTTP redirects app names to HTTPS. Any other name gets no response (80) or no TLS handshake (443) |
 | `compose.yaml` | `nginx` (`versions.images.nginx`, host network) and `certbot` (`versions.images.certbot`, run only by `cert.sh`) |
 | `cert.sh` | `issue`, `renew`, `dry-run`, `reload`, `install` |
 | `cert-renew.service`, `cert-renew.timer` | Runs `cert.sh renew` at 03:17 and 15:17 Seoul time. certbot renews only when the certificate is within 30 days of expiry |
@@ -104,6 +104,8 @@ Prerequisites: the domain is bought (#249), `rootDomain` is filled (#539), and t
 - **Renewal check:** `systemctl list-timers cert-renew.timer`, `journalctl -u cert-renew.service --since -2d`.
 
 ## Limits
+
+- A call longer than the proxy timeout is cut off even when the app's own nginx allows more (#1011, #1114). Set `service.apiTimeoutSec` for an app whose API has a long time budget, regenerate, copy `nginx/apps.conf`, and run `sudo bash cert.sh reload`.
 
 - If the proxy or the certificate breaks, all subdomains break together, sign-in included. The firewall never opened the app web ports, so the fallback is an SSH tunnel to the app's web port: `server-ssh -L <ports.web>:127.0.0.1:<ports.web>`, then `http://localhost:<ports.web>`.
 - An app that has not synced #254 yet sees every request as coming from the proxy, so its per-IP API rate limit (10 per second, burst 40) is shared by all its clients. With one user per app this does not matter.

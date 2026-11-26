@@ -17,11 +17,31 @@ export function proxyApps(data, domain) {
     .map((p) => {
       // The one wildcard certificate covers only names directly under the root domain.
       if (p.service.domain && p.service.domain !== domain) throw new Error(`${p.name}: service.domain "${p.service.domain}" is not covered by the *.${domain} certificate`);
-      return { name: p.name, slot: p.slot, host: serviceHost(p, { rootDomain: domain }), port: p.ports.web };
+      return { name: p.name, slot: p.slot, host: serviceHost(p, { rootDomain: domain }), port: p.ports.web, apiTimeoutSec: p.service.apiTimeoutSec };
     });
   const services = (data.projects.sharedServices ?? []).map((s) => ({ name: s.name, slot: s.slot, host: `${s.subdomain}.${domain}`, port: s.ports.web }));
   return [...apps, ...services].sort((a, b) => a.slot - b.slot);
 }
+
+// An app that sets service.apiTimeoutSec (#1114) waits that long for a slow /api/ call; every other
+// path and every other app keeps nginx's 60 s default. A location with its own proxy_pass does not
+// inherit the headers of `location /`, so they are written once here and used by both.
+const proxyHeaders = (app) => `    proxy_pass http://127.0.0.1:${app.port};
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto https;`;
+
+const apiLocation = (app) =>
+  app.apiTimeoutSec
+    ? `
+  location /api/ {
+${proxyHeaders(app)}
+    proxy_read_timeout ${app.apiTimeoutSec}s;
+    proxy_send_timeout ${app.apiTimeoutSec}s;
+  }
+`
+    : '';
 
 function nginxConf(domain, apps) {
   const server = (app) => `# ${app.name} (slot ${app.slot})
@@ -33,13 +53,9 @@ server {
   add_header Strict-Transport-Security "max-age=31536000" always;
 
   location / {
-    proxy_pass http://127.0.0.1:${app.port};
-    proxy_set_header Host $host;
-    proxy_set_header X-Real-IP $remote_addr;
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto https;
+${proxyHeaders(app)}
   }
-}`;
+${apiLocation(app)}}`;
   return `${HEADER}
 # Only allowed IPs reach 80 and 443 (Lightsail firewall, ADR-0012), so nginx has no allow list.
 
