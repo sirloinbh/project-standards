@@ -19,10 +19,10 @@ function withSlot99() {
     slot: 99,
     status: 'active',
     name: 'sample-app',
-    title: '샘플',
-    displayName: '샘플 · 스캐폴드 확인용',
-    domain: '샘플',
-    summary: '스캐폴드 렌더링을 확인하는 가상 프로젝트.',
+    title: 'Sample',
+    displayName: 'Sample · Scaffold check',
+    domain: 'Sample',
+    summary: 'A made-up project for checking the scaffold render.',
     tagline: 'A sample app for checking the scaffold.',
     public: false,
     repos: { umbrella: 'sample-app', frontend: 'sample-app-frontend', backend: 'sample-app-backend', db: 'sample-app-db' },
@@ -75,8 +75,8 @@ test('the backend follows the API rules: app.ts, routes/, contract copy, OpenAPI
 
   // docs/openapi.json is what openapi.ts builds: one path per operation, the shared Error schema.
   const spec = JSON.parse(byPath.get('docs/openapi.json'));
-  assert.equal(spec.info.title, '샘플 API');
-  assert.match(byPath.get('backend/src/openapi.ts'), /title: '샘플 API'/);
+  assert.equal(spec.info.title, 'Sample API');
+  assert.match(byPath.get('backend/src/openapi.ts'), /title: 'Sample API'/);
   const operations = [...byPath.get('backend/src/openapi.ts').matchAll(/^ {2}'(GET|POST|PUT|PATCH|DELETE) (\/api\/[^']*)': \{ summary: '([^']+)'/gm)];
   assert.deepEqual(operations.map((m) => `${m[1]} ${m[2]}`), ['GET /api/health', 'GET /api/me']);
   assert.deepEqual(Object.keys(spec.paths), ['/api/health', '/api/me']);

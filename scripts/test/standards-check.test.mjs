@@ -7,7 +7,7 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { buildManifest, MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll, serviceHost } from '../lib/registry.mjs';
-import { ADOPTION_RULES, checkAdoption, checkApi, checkComposeDeploy, checkComposeWarnings, checkFileNames, checkMinFontSize, checkZodArrays, formatReport, rangeVersions, runCheck } from '../standards-check.mjs';
+import { ADOPTION_RULES, checkAdoption, checkApi, checkComposeDeploy, checkComposeWarnings, checkFileNames, checkKoreanScreenText, checkMinFontSize, checkZodArrays, formatReport, rangeVersions, runCheck } from '../standards-check.mjs';
 import { renderProfile } from '../lib/templates.mjs';
 import { buildVars } from '../lib/vars.mjs';
 
@@ -451,4 +451,18 @@ test('text under 12px is reported, 12px and larger passes (warning only, #1127)'
   const result = check(({ write }) => write('frontend/src/app.tsx', 'export const A = () => <p className="text-[10px]">x</p>;\n'));
   assert.deepEqual(result.problems, []);
   assert.ok(result.warnings.some((w) => w.includes('text under 12px')));
+});
+
+test('Korean screen text in frontend sources fails; comments, tests and marked lines pass (#1129)', () => {
+  const src = (file, text) => [{ file, text }];
+  assert.deepEqual(checkKoreanScreenText(src('frontend/src/a.tsx', 'export const A = () => <p>Hello</p>; // 안녕\n/* 설명\n 더 */\nconst url = "https://x.test"; // 주석')), []);
+  assert.match(checkKoreanScreenText(src('frontend/src/a.tsx', '<p>\n  안녕하세요\n</p>'))[0], /1 found: frontend\/src\/a\.tsx:2/);
+  assert.match(checkKoreanScreenText(src('frontend/src/a.ts', "const label = '저장';"))[0], /Korean screen text/);
+  assert.deepEqual(checkKoreanScreenText(src('frontend/src/a.test.tsx', "expect(x).toBe('안녕');")), []);
+  assert.deepEqual(checkKoreanScreenText(src('frontend/src/a.ts', "// korean-ok: matches Korean CSV headers\nconst date = ['날짜'];")), []);
+  assert.deepEqual(checkKoreanScreenText(src('frontend/src/a.ts', "const date = ['날짜']; // korean-ok: CSV header")), []);
+  assert.deepEqual(checkKoreanScreenText(src('frontend/src/a.ts', "// korean-ok-file: parses Korean input\nconst a = '가';\nconst b = '나';")), []);
+  assert.deepEqual(checkKoreanScreenText(src('frontend/src/style.css', '.a { content: "가"; }')), []);
+  const result = check(({ write }) => write('frontend/src/app.tsx', 'export const A = () => <p>안녕</p>;\n'));
+  assert.ok(result.problems.some((p) => p.group === 'screen text'));
 });
