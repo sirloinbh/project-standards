@@ -33,3 +33,8 @@ test('it shares the Input look, reaches 48px on touch screens and can be invalid
   expect(select).toBeInvalid();
   expect(select).toBeDisabled();
 });
+
+test('a native select shows a pointer cursor (#1126)', () => {
+  render(<NativeSelect aria-label="Sort"><option>a</option></NativeSelect>);
+  expect(screen.getByRole('combobox', { name: 'Sort' })).toHaveClass('cursor-pointer');
+});

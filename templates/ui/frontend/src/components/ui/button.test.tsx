@@ -65,3 +65,8 @@ test('asChild leaves the child without a type', () => {
   );
   expect(screen.getByRole('link', { name: 'Journal' })).not.toHaveAttribute('type');
 });
+
+test('a button shows a pointer cursor, and a disabled one shows not-allowed (#1126)', () => {
+  render(<Button>Save</Button>);
+  expect(screen.getByRole('button', { name: 'Save' })).toHaveClass('cursor-pointer', 'disabled:cursor-not-allowed');
+});
