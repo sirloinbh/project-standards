@@ -46,8 +46,8 @@ test('package-guard rejects dependencies, install scripts, ranges, privacy, and 
 });
 
 test('a release tag must match the package version', () => {
-  assert.deepEqual(checkTag(root, 'eslint-config/v1.1.0'), []);
-  assert.deepEqual(checkTag(root, 'eslint-config/v1.0.1'), ['tag eslint-config/v1.0.1: packages/eslint-config is version 1.1.0']);
+  assert.deepEqual(checkTag(root, 'eslint-config/v1.2.0'), []);
+  assert.deepEqual(checkTag(root, 'eslint-config/v1.0.1'), ['tag eslint-config/v1.0.1: packages/eslint-config is version 1.2.0']);
   assert.deepEqual(checkTag(root, 'v1.0.0'), ['tag v1.0.0 must look like <package>/v<x.y.z>']);
 });
 

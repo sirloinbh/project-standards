@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0
+
+- Peer dependencies raised to `eslint` 10.15.0 and `typescript-eslint` 8.73.0, so apps can resolve `minimatch` 11 and clear GHSA-g3hv-75wg-m249 (#985). No rule changes.
+
 ## 1.1.0
 
 - All files: `@typescript-eslint/consistent-type-definitions: type`, and default exports are forbidden (`no-restricted-syntax`). Tool config files (`*.config.*`) use a default export (#243). The 8 apps have 0 violations.
