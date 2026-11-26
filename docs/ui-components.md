@@ -41,6 +41,23 @@ Why this is distributed by sync and not by a shadcn registry: [ADR-0020](adr/002
 
 A `*.test.tsx` (Vitest, Testing Library) for each component is synced along with it and runs in the app's `npm test`.
 
+## Pick a value instead of typing it
+
+User requirement (2026-11-26, #1130): wherever the possible values are known, let the person pick one. Typing is slow on a phone and invites typos. Choose the control by the shape of the values:
+
+| The values are | Use | Example |
+|---|---|---|
+| 2 to 5 fixed options, all visible at once | `SegmentedControl` | Unit (kg / lb), period (week / month) |
+| 6 to about 15 fixed options | `NativeSelect` (short form list) or `Select` (styled list) | Category, weekday, status |
+| A known list that grows, where the person may also add a new value | `Combobox` (known list plus the typed new value) | Exercise name, tag, institution |
+| A date or time | The browser's date or time input, or `DateStepper` for moving a period | Entry date, due date |
+| A number in a small range | `NumberInput` with − and + buttons, or a select when the range is 2 to 15 whole values | Sets, reps, rating 1 to 5 |
+| Yes or no | `Checkbox` (saved with a form) or `Switch` (applies at once) | Done, reminder on |
+
+Free text stays only where the value is open: names, titles, notes and memos, and search. If a free-text field is filled with the same few values again and again, replace it with a `Combobox` that lists the recent values.
+
+Do not turn a long or open list into a plain select: more than about 15 options, or a list the person cannot predict, goes into a `Combobox` so they can type to narrow it. The `std-ux-audit` skill has a row that lists free-text inputs whose values come from a known set.
+
 ## Loading screens
 
 While loading, feature screens do not leave a blank screen or only text ("Loading…"); they use the shared components (#312).
