@@ -36,7 +36,7 @@ import { Input } from './input';
 
 type FieldProps = Omit<
   ComponentProps<typeof Input>,
-  'value' | 'onChange' | 'type' | 'min' | 'max' | 'aria-label' | 'children'
+  'value' | 'onChange' | 'type' | 'min' | 'max' | 'aria-label' | 'children' | 'children'
 >;
 
 const popoverClass =
