@@ -5,7 +5,7 @@ test('the overview page loads, reaches the API and has no accessibility violatio
   page,
 }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: '개요' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Overview' })).toBeVisible();
   await expect(page.getByRole('status')).toHaveText('서버 정상');
   const result = await new AxeBuilder({ page }).analyze();
   expect(result.violations).toEqual([]);

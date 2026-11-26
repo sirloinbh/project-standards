@@ -9,6 +9,6 @@ test('shows the server status from /api/health', async () => {
     vi.fn(() => Promise.resolve(new Response(JSON.stringify({ status: 'ok' }), { status: 200 }))),
   );
   render(<App />);
-  expect(screen.getByRole('heading', { name: '개요' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Overview' })).toBeInTheDocument();
   expect(await screen.findByText('Server connected')).toBeInTheDocument();
 });

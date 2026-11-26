@@ -11,7 +11,7 @@ import { AccountActions, SignInGate } from './sign-in';
 const pages = { overview: '/' } as const;
 
 // Main menu (LNB) items, in display order.
-const nav: NavItem[] = [{ to: pages.overview, label: '개요', icon: HomeIcon }];
+const nav: NavItem[] = [{ to: pages.overview, label: 'Overview', icon: HomeIcon }];
 
 const queryClient = new QueryClient();
 
@@ -19,7 +19,7 @@ function Overview() {
   const health = useHealth();
   return (
     <section aria-labelledby="overview-title" className="flex flex-col gap-2">
-      <h1 id="overview-title">개요</h1>
+      <h1 id="overview-title">Overview</h1>
       <p className="text-body text-muted-foreground">{{project.summary}}</p>
       <p role="status" className="text-caption">
         {healthText(health)}

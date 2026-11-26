@@ -24,3 +24,12 @@ Literals that code matches on must stay Korean. `DEFAULT_ALLOW` in `scripts/lib/
 - The pre-#455 sync commit prefix `chore: 중앙 표준 동기화 (project-standards@`.
 
 To allow another literal, add it to `DEFAULT_ALLOW` and note why in the PR.
+
+## Screen text fails the check (#1129)
+
+The column above is a report. The app-side `npm run standards:check` (`scripts/standards-check.mjs`) also **fails** (group `screen text`) when a frontend source holds Korean outside a comment, because that text can reach a screen (user requirement of 2026-11-26: no Korean on any screen).
+
+- Scanned: `frontend/src/**/*.{ts,tsx,js,jsx,html}`. Comments (`//`, `/* */`) are removed first.
+- Not scanned: `*.test.*`, `*.spec.*`, `*.stories.*`, and files under `test/`, `tests/`, `__tests__/`, `__mocks__/`, `fixtures/`, `e2e/`. Samples of user data stay Korean there.
+- Code that must recognize Korean input (a CSV header such as `'날짜'`, a label parser for Korean nutrition labels) stays Korean. Mark it with `korean-ok: <reason>` in a comment on the same line or the line above, or put `korean-ok-file: <reason>` anywhere in the file when the whole file does this.
+- Do not use the marker for text a user reads. Translate that text instead.
