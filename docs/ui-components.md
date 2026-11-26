@@ -84,6 +84,11 @@ A new project is registered with `features.ui: true` from the start. The scaffol
 - Touch screens (`pointer-coarse`) get at least 44×44px (`--touch-target`) on every other control: SegmentedControl segments (`pointer-coarse:min-h-11`), the Dialog, Sheet and Drawer close buttons (`pointer-coarse:size-11`), and Checkbox and Switch (an invisible `::after` area: 44px and 46×62px).
 - A narrow desktop window with a mouse pointer keeps 40px on Button, Input and NativeSelect. There is no `max-md:` rule; the 44px rule follows the pointer, not the viewport width (user decision, 2026-11-26, #1103).
 
+## Pointer cursor
+
+- Clickable kit controls show a pointer cursor on hover (`cursor-pointer`): Button, NativeSelect, the Select trigger and items, dropdown menu items, SegmentedControl segments, Checkbox and Switch. Disabled Button, Select trigger, Checkbox and Switch show `cursor-not-allowed` (user decision, 2026-11-26, #1126).
+- It is set per component, not in the shared base CSS, because a utility class such as `cursor-default` beats a base rule and the design-tokens package would need a release.
+
 ## Verification results (2026-10-22)
 
 We connected workout-memo's installed copy and the packages above (installed in a temporary working folder with `--ignore-scripts`) to a virtual slot 99 app and verified.
