@@ -95,7 +95,7 @@ record() {
     return 2
     ;;
   esac
-  mkdir -p "$state" || return 1
+  ensure_state_dir || return 1
   printf '%s %s\n' "$status" "$(now)" > "$state/.$app.$check.tmp" && mv -f "$state/.$app.$check.tmp" "$state/$app.$check"
 }
 
