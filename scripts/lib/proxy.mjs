@@ -17,13 +17,13 @@ export function proxyApps(data, domain) {
     .map((p) => {
       // The one wildcard certificate covers only names directly under the root domain.
       if (p.service.domain && p.service.domain !== domain) throw new Error(`${p.name}: service.domain "${p.service.domain}" is not covered by the *.${domain} certificate`);
-      return { name: p.name, slot: p.slot, host: serviceHost(p, { rootDomain: domain }), port: p.ports.web, apiTimeoutSec: p.service.apiTimeoutSec };
+      return { name: p.name, slot: p.slot, host: serviceHost(p, { rootDomain: domain }), port: p.ports.web, apiTimeoutSec: p.service.apiTimeoutSec, apiBodyMb: p.service.apiBodyMb };
     });
   const services = (data.projects.sharedServices ?? []).map((s) => ({ name: s.name, slot: s.slot, host: `${s.subdomain}.${domain}`, port: s.ports.web }));
   return [...apps, ...services].sort((a, b) => a.slot - b.slot);
 }
 
-// An app that sets service.apiTimeoutSec (#1114) waits that long for a slow /api/ call; every other
+// An app that sets service.apiTimeoutSec (#1114) or service.apiBodyMb (#1117) gets a `location /api/`; one that sets service.apiTimeoutSec waits that long for a slow /api/ call; every other
 // path and every other app keeps nginx's 60 s default. A location with its own proxy_pass does not
 // inherit the headers of `location /`, so they are written once here and used by both.
 const proxyHeaders = (app) => `    proxy_pass http://127.0.0.1:${app.port};
@@ -32,16 +32,15 @@ const proxyHeaders = (app) => `    proxy_pass http://127.0.0.1:${app.port};
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto https;`;
 
-const apiLocation = (app) =>
-  app.apiTimeoutSec
-    ? `
-  location /api/ {
-${proxyHeaders(app)}
-    proxy_read_timeout ${app.apiTimeoutSec}s;
-    proxy_send_timeout ${app.apiTimeoutSec}s;
-  }
-`
-    : '';
+// An app that sets service.apiBodyMb (#589, #1117) gets the same request body limit here as in its
+// own nginx, so the host proxy's 1m default does not answer 413 first.
+const apiLocation = (app) => {
+  const limits = [
+    app.apiBodyMb ? `    client_max_body_size ${app.apiBodyMb}m;` : '',
+    app.apiTimeoutSec ? `    proxy_read_timeout ${app.apiTimeoutSec}s;\n    proxy_send_timeout ${app.apiTimeoutSec}s;` : '',
+  ].filter(Boolean);
+  return limits.length ? `\n  location /api/ {\n${proxyHeaders(app)}\n${limits.join('\n')}\n  }\n` : '';
+};
 
 function nginxConf(domain, apps) {
   const server = (app) => `# ${app.name} (slot ${app.slot})

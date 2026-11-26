@@ -35,9 +35,10 @@ test('study-log waits 300 s for /api/ on the shared proxy and no other app or pa
   assert.match(api, /proxy_set_header X-Forwarded-Proto https;/);
   assert.match(api, /proxy_read_timeout 300s;/);
   assert.match(api, /proxy_send_timeout 300s;/);
+  assert.match(api, /client_max_body_size 21m;/, 'the body limit matches the app (#1117)');
   assert.doesNotMatch(study.replace(api, ''), /proxy_(read|send)_timeout/, 'the main location keeps the default');
-  for (const p of active.filter((a) => a.service.apiTimeoutSec === undefined))
-    assert.doesNotMatch(block(`${p.name}.${domain}`), /proxy_(read|send)_timeout|location \/api\//, p.name);
+  for (const p of active.filter((a) => a.service.apiTimeoutSec === undefined && a.service.apiBodyMb === undefined))
+    assert.doesNotMatch(block(`${p.name}.${domain}`), /proxy_(read|send)_timeout|client_max_body_size|location \/api\//, p.name);
 });
 
 test('the shared sign-in gets auth.<domain> on its registry web port (ADR-0015)', () => {
