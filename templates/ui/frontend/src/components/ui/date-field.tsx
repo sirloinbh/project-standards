@@ -186,7 +186,6 @@ function PickerField({
           <Input
             {...props}
             type="text"
-            inputMode="numeric"
             autoComplete="off"
             placeholder={placeholder}
             maxLength={maxLength}
