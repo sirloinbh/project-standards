@@ -24,7 +24,7 @@ Tool and package versions set centrally. To change them, follow the [dependency 
 
 | Package | Version |
 |---|---|
-| `@sirloinbh/eslint-config` | 1.1.0 |
+| `@sirloinbh/eslint-config` | 1.2.0 |
 | `@sirloinbh/prettier-config` | 1.0.0 |
 | `@sirloinbh/tsconfig` | 1.0.0 |
 | `@sirloinbh/design-tokens` | 1.1.0 |
@@ -37,7 +37,7 @@ External dependencies that the 8 apps and the scaffold use at the same version, 
 | Package | Version | File | Section |
 |---|---|---|---|
 | `@eslint/js` | 10.0.1 | `package.json` | devDependencies |
-| `eslint` | 10.12.0 | `package.json` | devDependencies |
+| `eslint` | 10.15.0 | `package.json` | devDependencies |
 | `eslint-config-prettier` | 10.1.8 | `package.json` | devDependencies |
 | `eslint-plugin-react-hooks` | 7.1.1 | `package.json` | devDependencies |
 | `eslint-plugin-jsx-a11y-x` | 0.2.0 | `package.json` | devDependencies |
@@ -47,7 +47,7 @@ External dependencies that the 8 apps and the scaffold use at the same version, 
 | `knip` | 6.41.0 | `package.json` | devDependencies |
 | `prettier` | 3.9.10 | `package.json` | devDependencies |
 | `prettier-plugin-tailwindcss` | 0.8.1 | `package.json` | devDependencies |
-| `typescript-eslint` | 8.71.2 | `package.json` | devDependencies |
+| `typescript-eslint` | 8.73.0 | `package.json` | devDependencies |
 | `@playwright/test` | 1.63.0 | `package.json` | devDependencies |
 | `@axe-core/playwright` | 4.13.0 | `package.json` | devDependencies |
 | `@lhci/cli` | 0.16.1 | `package.json` | devDependencies |

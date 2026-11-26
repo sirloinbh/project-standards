@@ -87,7 +87,7 @@ test('package.json fields merge into an existing file when the target is readabl
 
 test('shared packages go into devDependencies of the package.json that uses them, at versions.json versions (#97)', () => {
   const existing = {
-    'package.json': JSON.stringify({ name: 'study-log', devDependencies: { eslint: '10.12.0' } }),
+    'package.json': JSON.stringify({ name: 'study-log', devDependencies: { eslint: '10.15.0' } }),
     'frontend/package.json': JSON.stringify({ name: 'frontend' }),
     'backend/package.json': JSON.stringify({ name: 'backend' }),
   };
