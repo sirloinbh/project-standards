@@ -255,3 +255,16 @@ test('public-check.sh: NOTIFY_SINK=aws records the server public signal and runs
     box.done();
   }
 });
+
+test('record makes a new state directory world-writable with the sticky bit, so unprivileged app timers can write (#1121)', { skip: skip || process.platform === 'win32' }, () => {
+  const box = sandbox();
+  try {
+    const fresh = path.join(box.dir, 'fresh', 'signals');
+    const r = aws(box, ['record', 'study-log', 'deploy', 'ok'], { extraEnv: { SIGNALS_STATE_DIR: posix(fresh) } });
+    assert.equal(r.status, 0, r.err);
+    assert.equal((fs.statSync(fresh).mode & 0o7777).toString(8), '1777');
+    assert.ok(fs.existsSync(path.join(fresh, 'study-log.deploy')));
+  } finally {
+    box.done();
+  }
+});

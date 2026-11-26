@@ -25,6 +25,16 @@ read_key() {
   [ -r "$shared_env" ] && sed -n "s/^$1=//p" "$shared_env" | tail -n 1 | tr -d "\"'\r"
 }
 
+# The state directory is shared: the app timers run as an unprivileged user and public-check.sh runs as root. A directory that root
+# created is world-writable with the sticky bit (like /tmp), so every user can add its own signal files but cannot replace another's (#1121).
+ensure_state_dir() {
+  mkdir -p "$state" || return 1
+  chmod 1777 "$state" 2>/dev/null || [ -w "$state" ] || {
+    echo "signals: $state is not writable by $(id -un); as root run: chmod 1777 $state" >&2
+    return 1
+  }
+}
+
 now() { printf '%s' "${SIGNALS_NOW:-$(date +%s)}"; }
 
 # Seconds without a record before a signal counts as stale.
@@ -85,7 +95,7 @@ record() {
     return 2
     ;;
   esac
-  mkdir -p "$state" || return 1
+  ensure_state_dir || return 1
   printf '%s %s\n' "$status" "$(now)" > "$state/.$app.$check.tmp" && mv -f "$state/.$app.$check.tmp" "$state/$app.$check"
 }
 
@@ -105,7 +115,7 @@ evaluate() {
   fi
 
   # One SNS message per change of the failing set. The state file moves only after a successful publish, so a failed one is retried.
-  mkdir -p "$state" || return 1
+  ensure_state_dir || return 1
   current=$(printf '%s' "$list" | paste -sd, - | sed 's/,/, /g')
   current=${current:-none}
   if [ -f "$state/.published" ]; then previous=$(cat "$state/.published"); else previous=none; fi
