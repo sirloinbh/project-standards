@@ -15,7 +15,7 @@
 | Identical files | `.editorconfig`, `.gitattributes`, `prettier.config.mjs`, `eslint.config.mjs`, `frontend/tsconfig.json`, `backend/tsconfig.json` | Hash comparison |
 | Docker images | `node:24.21.0-alpine`, `nginx:1.27-alpine`, `postgres:17-alpine` | Dockerfile, `compose.yaml`, `ci.yml` |
 | Line endings | `* text=auto eol=lf`, `*.ps1 text eol=crlf` | `.gitattributes` |
-| Lint tools | `eslint 10.12.0`, `@eslint/js 10.0.1`, `typescript-eslint 8.71.2`, `globals 16.5.0`, `eslint-plugin-react-hooks 7.1.1`, `eslint-config-prettier 10.1.8`, `prettier 3.9.10` | Root `devDependencies` |
+| Lint tools | `eslint 10.15.0`, `@eslint/js 10.0.1`, `typescript-eslint 8.73.0`, `globals 16.5.0`, `eslint-plugin-react-hooks 7.1.1`, `eslint-config-prettier 10.1.8`, `prettier 3.9.10` | Root `devDependencies` |
 
 ### 1.2 Differences and problems
 

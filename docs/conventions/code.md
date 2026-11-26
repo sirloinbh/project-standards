@@ -5,7 +5,7 @@ This is the code shape all 8 apps follow. Most of it records what all 8 apps wer
 | Convention | Rule | Check |
 |---|---|---|
 | Import paths | Use relative paths only (`./`, `../`). Do not use path aliases (`@/`) | — |
-| Exports | Use only named exports. Use `export default` only in tool config files (`*.config.*`) | ESLint `no-restricted-syntax` (`@sirloinbh/eslint-config` 1.1.0) |
+| Exports | Use only named exports. Use `export default` only in tool config files (`*.config.*`) | ESLint `no-restricted-syntax` (`@sirloinbh/eslint-config` 1.2.0) |
 | Components | Write them as `export function Name()` function declarations. Do not use arrow function components | — |
 | Types | Use only `type`. Do not use `interface` | ESLint `@typescript-eslint/consistent-type-definitions: type` (1.1.0) |
 | Import order | `simple-import-sort` order. `eslint --fix` sorts them | ESLint (after install approval #245, #246) |
