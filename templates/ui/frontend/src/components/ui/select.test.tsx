@@ -49,3 +49,8 @@ test('the keyboard opens the list and picks an option', async () => {
   expect(onValueChange).toHaveBeenCalledWith('month');
   expect(trigger).toHaveTextContent('1 month');
 });
+
+test('the trigger is 40px tall and 48px on touch screens (#1125)', () => {
+  render(<Period />);
+  expect(screen.getByRole('combobox', { name: 'Period' })).toHaveClass('data-[size=default]:h-10', 'pointer-coarse:min-h-12');
+});

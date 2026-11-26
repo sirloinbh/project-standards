@@ -80,8 +80,9 @@ A new project is registered with `features.ui: true` from the start. The scaffol
 
 ## Touch targets
 
-- Touch screens (`pointer-coarse`) get at least 44×44px (`--touch-target`) on every control: Button, Input, NativeSelect, SegmentedControl segments (`pointer-coarse:min-h-11`), the Dialog, Sheet and Drawer close buttons (`pointer-coarse:size-11`), and Checkbox and Switch (an invisible `::after` area: 44px and 46×62px).
-- A narrow desktop window with a mouse pointer keeps 36px on Button, Input and NativeSelect. There is no `max-md:` rule; the 44px rule follows the pointer, not the viewport width (user decision, 2026-11-26, #1103).
+- Button, Input, NativeSelect and the Select trigger are 40px tall on a desktop (`h-10`; Button `sm` is `h-9`, `lg` is `h-12`, `icon` is `size-10`) and at least 48px on touch screens (`pointer-coarse:min-h-12`, icon `size-12`) (user decision, 2026-11-26, #1125).
+- Touch screens (`pointer-coarse`) get at least 44×44px (`--touch-target`) on every other control: SegmentedControl segments (`pointer-coarse:min-h-11`), the Dialog, Sheet and Drawer close buttons (`pointer-coarse:size-11`), and Checkbox and Switch (an invisible `::after` area: 44px and 46×62px).
+- A narrow desktop window with a mouse pointer keeps 40px on Button, Input and NativeSelect. There is no `max-md:` rule; the 44px rule follows the pointer, not the viewport width (user decision, 2026-11-26, #1103).
 
 ## Verification results (2026-10-22)
 
