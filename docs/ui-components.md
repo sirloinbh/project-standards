@@ -18,6 +18,7 @@ These are the shadcn/ui base components all 8 apps use in the same form (#123, [
 | `switch.tsx` | `Switch` | A setting that applies at once. Use `Checkbox` for a value saved with a form. 44px tap area on touch screens (#689) |
 | `segmented-control.tsx` | `SegmentedControl`, `SegmentOption` | One choice out of a few (period tabs). Exactly one stays selected; a click on the current one only calls `onReselect` (#689) |
 | `number-input.tsx`, `number-step.ts` | `NumberInput`, `NumberValueInput`; `stepValue`, `optionalNumber` | A number field with − and + buttons. The value stays text so typing "12." is not rewritten; `NumberValueInput` keeps a stored number, and with `allowEmpty` an emptied field stays `undefined` instead of 0 (#972). `optionalNumber` reads typed text for a form: empty is `null`, text that is not a plain decimal is `NaN` for the schema to report. The limit uses `aria-disabled`, so focus stays on the button (#689) |
+| `date-field.tsx`, `date-fields.ts` | `DateField`, `TimeField`; date helpers (`parseDate`, `addDays`, `monthWeeks`, `seoulToday`, ...) | An English date and time field (#1138). The browser's own date and time inputs write their parts and calendar in the browser's language, and `lang` does not change that, so use these instead. A text field (`YYYY-MM-DD` or `HH:MM`: type, paste or clear) plus a popover: a month calendar (Sunday-first, arrow keys, PageUp/PageDown, Today, Clear unless `required`) or hour and minute lists. The value is a string; it may be partly typed or empty, so the form and the server still validate it. `min` and `max` limit what the calendar picks. Give the field its name with `label` (it becomes `aria-label`) or `id` and a `<label htmlFor>`; do not wrap it in a `<label>`, because the calendar button would join the field's name. No new package: the popover is `radix-ui`'s |
 | `date-stepper.tsx` | `DateStepper`, `RangeSummary` | The anchor date of a period with optional previous and next buttons, and the period's first and last day (#689) |
 | `stat-card.tsx` | `StatCard` | One summary number in a row of cards: label, value with unit, note, icon (#689) |
 | `page-header.tsx` | `PageHeader` | The top of a page: optional eyebrow, h1, optional description and actions. `headingRef` lets the page focus the h1; `id` defaults to `page-title` (#689) |
@@ -50,7 +51,7 @@ User requirement (2026-11-26, #1130): wherever the possible values are known, le
 | 2 to 5 fixed options, all visible at once | `SegmentedControl` | Unit (kg / lb), period (week / month) |
 | 6 to about 15 fixed options | `NativeSelect` (short form list) or `Select` (styled list) | Category, weekday, status |
 | A known list that grows, where the person may also add a new value | `Combobox` (known list plus the typed new value) | Exercise name, tag, institution |
-| A date or time | The browser's date or time input, or `DateStepper` for moving a period | Entry date, due date |
+| A date or time | `DateField` or `TimeField` (not the browser's date or time input, which shows the browser's language), or `DateStepper` for moving a period | Entry date, due date |
 | A number in a small range | `NumberInput` with − and + buttons, or a select when the range is 2 to 15 whole values | Sets, reps, rating 1 to 5 |
 | Yes or no | `Checkbox` (saved with a form) or `Switch` (applies at once) | Done, reminder on |
 
