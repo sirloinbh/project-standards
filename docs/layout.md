@@ -30,6 +30,24 @@ All 8 apps use the same screen skeleton and menu (#124). The only things that di
 - **Notch safe area:** The top bar is offset by `env(safe-area-inset-top)`, the left and right by `safe-area-inset-left/right`, and the footer and Sheet/Drawer by `safe-area-inset-bottom` only. This takes effect only when `viewport-fit=cover` is in `index.html`.
 - The top bar holds only the app name (a link to the home screen), app-specific actions (`actions`), the app switcher, and the display mode menu. The switcher is a dropdown of links (`https://<subdomain>.<rootDomain>/`) that marks the current app; the sign-in account and sign-out stay in `actions` (`AccountActions`), so there is no separate user menu yet. Each page writes its own page title (`h1`).
 
+## Menu order (every app)
+
+The `nav` list given to `AppShell` has the same order in every app (user requirement, 2026-11-26, #1128):
+
+| Position | Item | Notes |
+|---|---|---|
+| 1 | Day log | The start page `/`. For an app with no natural day log, the app card picks the start page with the user |
+| 2 | Week | The week view |
+| 3 | 12 weeks | The 12-week view |
+| 4 to n-2 | The app's other pages | In the app's own order |
+| n-1 | Dashboard | |
+| n | Settings | Always last (bottom of the menu) |
+
+- An app that has no Week or 12-week view yet leaves that item out. The app card decides with the user whether to build the view or keep it out; do not add an empty page to fill the slot.
+- An app without a Dashboard or Settings page leaves it out; the order of the remaining items does not change.
+- The first item points to `/` and the last item is Settings. No automatic check exists: an app's `nav` is plain code and parsing it would be fragile, so the order is checked in the app card and in review.
+- Each app has a card for this order (#1128 lists them); the card also updates the app's tests and e2e that click menu items by position.
+
 ## What was decided and why
 
 - **`AppShell` instead of the shadcn/ui Sidebar:** The Sidebar has many features, such as collapsing, icon mode, and cookie persistence, and is about 700 lines. The apps need only a fixed sidebar and a mobile Sheet, so it was built short with the same tokens (`sidebar-*`) and the Sheet component.
@@ -49,8 +67,10 @@ The scaffold creates all of this for a new app. For an existing app, do the foll
 3. At the app root, wrap the pages with `AppShell`. Menu items use the paths from the `pages` object ([directory and routing rules](directory-rules.md)).
    ```tsx
    const nav: NavItem[] = [
-     { to: pages.overview, label: 'Overview', icon: HomeIcon },
-     { to: pages.journal, label: 'Journal', icon: NotebookPenIcon },
+     { to: pages.today, label: 'Today', icon: NotebookPenIcon }, // the day log, path `/`
+     { to: pages.week, label: 'Week', icon: CalendarDaysIcon },
+     { to: pages.dashboard, label: 'Dashboard', icon: LayoutDashboardIcon },
+     { to: pages.settings, label: 'Settings', icon: SettingsIcon }, // always last
    ];
    <AppShell appName="<registry displayName>" nav={nav}>
      <Routes>…</Routes>
