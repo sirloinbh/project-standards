@@ -24,7 +24,7 @@ Showcase: a small hand-written Vite app (A) or Storybook (B).
 
 ## Decision
 
-1. **Repository.** `sirloinbh/design-system`, private like the app repositories, unless the user changes it when creating it (#1161).
+1. **Repository.** `sirloinbh/design-system`, **public** like the app repositories (user decision 2026-11-27, #1161: branch protection needs a public repository on the free plan). It exists.
 2. **Delivery: option A.** design-system is the source of the UI files, the tokens, and the UX audit skill. project-standards sync keeps delivering them to the apps from a **pinned design-system release**, with the same per-app values and the same hash drift check. The apps get no new package install and no `npx`. design-system never opens PRs in app repositories.
 3. **Pin.** `versions.json` records the design-system release that sync delivers. Changing the pin is a normal PR here and opens the sync PRs.
 4. **Tokens package.** `@sirloinbh/design-tokens` keeps its name and registry (GitHub Packages), so apps import it as today. Its source and release move to design-system.
@@ -48,7 +48,7 @@ Design-system releases use semantic versions, tagged `v<major>.<minor>.<patch>` 
 ## Consequences
 
 - Positive: UI work gets its own history, review, and release. The path to the apps does not change, so the hash check, per-app values, and the compliance report keep working.
-- Cost: sync needs read access to the private design-system repository (the GitHub App installation must include it; a user step). Each UI change is two merges (design-system, then the pin here). The per-app tests that render the UI files here need a copy of the pinned release.
+- Cost: sync reads the public design-system repository without a token; adding design-system as a sync target (agent files, #1163) needs the GitHub App installation to include it (a user step). Each UI change is two merges (design-system, then the pin here). The per-app tests that render the UI files here need a copy of the pinned release.
 - ADR-0020 stays accepted for delivery (no shadcn registry, no `packages/ui`). Only the location of the source changes. Its "Revisit when" still applies, now to design-system.
 - Not decided here: how sync fetches a release (clone at the tag, release asset, or the GitHub API), and the order of the move cards. The inventory proposes the order.
 
