@@ -95,7 +95,7 @@ export function sharedDependencyFields(index, profile, versions, readPackage = (
  * readExisting(path) returns the target's current text or null (needed to keep project sections).
  * Returns manifest-ready entries: [{ path, mode, content } | { path, mode: "fields", fields }].
  */
-export function renderProfile({ root, profile, folders, vars, readExisting = () => null, external = {} }) {
+export function renderProfile({ root, profile, folders, vars, readExisting = () => null, external = {}, vendored = {} }) {
   const index = loadIndex(root);
   const section = new Set(index.section);
   // Data files such as labels.json are read by the sync script, not copied to the target.
@@ -112,8 +112,10 @@ export function renderProfile({ root, profile, folders, vars, readExisting = () 
     const source = typeof entry === 'string' ? entry : entry.from;
     if (typeof entry !== 'string' && (!entry.profiles?.includes(profile) || (entry.repos && !entry.repos.includes(vars.target?.repo)))) continue;
     if (files.some((f) => f.path === target)) throw new Error(`${target} is both a template and a vendored file`);
-    const text = fs.readFileSync(path.join(root, source), 'utf8').replace(/\r\n/g, '\n');
-    files.push({ path: target, source, mode: 'full', content: addHeader(text, target, source) });
+    // A source in `vendored` ({ file, label }) is read from the pinned design-system release; the header still names `source` (#1169).
+    const ext = vendored[source];
+    const text = fs.readFileSync(ext ? ext.file : path.join(root, source), 'utf8').replace(/\r\n/g, '\n');
+    files.push({ path: target, source: ext ? ext.label : source, mode: 'full', content: addHeader(text, target, source) });
   }
   // Copies such as .claude/skills/ get exactly the same content as their source path.
   for (const { from, to } of index.mirror ?? []) {

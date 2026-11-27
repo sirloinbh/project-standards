@@ -1,5 +1,5 @@
 // Computes what a sync would write into one target repository, without any network access.
-import { externalFolders } from './design-system.mjs';
+import { externalFolders, externalVendored } from './design-system.mjs';
 import { renderGeneratedFiles } from './generated.mjs';
 import { APP_CI, inlineAppCi, REUSABLE_APP_CI } from './inline-ci.mjs';
 import { buildManifest, MANIFEST_PATH } from './manifest.mjs';
@@ -52,7 +52,7 @@ export function planTarget({ root, data, target, centralSha, workflowSha = centr
   const project = vars.project;
   // Feature folders (e.g. templates/ui) join only when the project turns the feature on in the registry.
   const featureFolders = Object.entries(profile.featureTemplates ?? {}).filter(([feature]) => project?.features?.[feature]).map(([, folder]) => folder);
-  const rendered = renderProfile({ root, profile: target.profile, folders: [...profile.templates, ...featureFolders], vars, readExisting, external: externalFolders(data.designSystemRelease) });
+  const rendered = renderProfile({ root, profile: target.profile, folders: [...profile.templates, ...featureFolders], vars, readExisting, external: externalFolders(data.designSystemRelease), vendored: externalVendored(data.designSystemRelease) });
   // A public app cannot call the private central reusable workflow, so its ci.yml gets the workflow itself (#209).
   if (project?.public) {
     const ci = rendered.find((f) => f.path === APP_CI);
