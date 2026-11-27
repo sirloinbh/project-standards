@@ -1,6 +1,6 @@
 # 0020. Shared UI stays on sync PRs; no shadcn registry for now
 
-- Status: Accepted (issue #562, parent #546)
+- Status: Accepted (issue #562, parent #546); partly superseded by [ADR-0031](0031-design-system-repository.md) (the source of the shared UI moves to its own repository; delivery by sync PRs stays)
 - Date: 2026-11-17
 - Builds on: [ADR-0007](0007-shadcn-ui-icons-emoji.md) (shadcn/ui sources kept in the repo, no `npx shadcn`) and design.md 4.4 (hash-checked managed files).
 

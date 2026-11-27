@@ -2,6 +2,8 @@
 
 These are the screen rules all 8 apps follow. Values are in [design-tokens.md](design-tokens.md), and the reasoning behind decisions is in [ADR-0007](adr/0007-shadcn-ui-icons-emoji.md), [ADR-0008](adr/0008-neutral-light-dark.md), and [ADR-0011](adr/0011-dark-only-option.md). The only things that differ per app are the **display name and the dark-only option (`features.darkOnly`)**. All 8 apps use the same black and white colors, and every app except those with dark-only turned on supports both light and dark modes.
 
+The design system is moving to its own repository ([ADR-0031](adr/0031-design-system-repository.md), plan in [design-system-move.md](design-system-move.md)). Until each item moves, this page stays the reference.
+
 ## How to use tokens
 
 - Import `@sirloinbh/design-tokens/tailwind.css` in the app's main CSS. Apps without Tailwind import only `tokens.css`. Usage examples are in the package README.
