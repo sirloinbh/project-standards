@@ -65,7 +65,7 @@ Legend for **Destination**: **Move** = the source goes to design-system and the 
 
 | Id | Item | Destination | Notes |
 |---|---|---|---|
-| D1 | `templates/app/skills/std-ux-audit/SKILL.md` | **Move** to design-system, still **delivered by sync** | A UX audit skill is design knowledge, but apps run it, so it must keep arriving through `templates/app/skills/`. Source in design-system, delivery by sync (model A). |
+| D1 | `templates/ui/skills/std-ux-audit/SKILL.md` (was `templates/app/skills/`, #1168) | **Move** to design-system, still **delivered by sync** | A UX audit skill is design knowledge, but apps run it, so it must keep arriving through `templates/app/skills/`. Source in design-system, delivery by sync (model A). |
 | D2 | Frontend rules in `templates/app/AGENTS.md.tmpl` (links to design-system.md, 12px rule) and `templates/app/skills/std-foundation/SKILL.md` | **Stay**, update links | These are agent instructions for apps; they point to the design docs. After C1 moves they need an app-readable copy of the rules (delivered with the UI files as `docs/design-system.md`, or a link to the showcase). Open choice for the move card. |
 | D3 | Frontend lint and knip settings tied to the UI kit: `eslint.config.mjs.tmpl` (labelled Input), `knip.json` (`components/ui/**`), `.prettierignore.tmpl` (`components/ui/`) | **Stay** | App tooling that treats the managed UI folder specially. The path does not change. |
 | D4 | `.claude/rules/sources-and-copies.md`, `docs/design.md` 5.1 | **Stay**, update | Add design-system as the source of `templates/ui/` (via the pin). |
