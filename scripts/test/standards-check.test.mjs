@@ -440,7 +440,7 @@ test('adoption warnings reach runCheck without failing it', () => {
   assert.equal(result.problems.length, 0);
 });
 
-test('text under 12px is reported, 12px and larger passes (warning only, #1127)', () => {
+test('text under 12px is reported, 12px and larger passes (a failure, #1135)', () => {
   const src = (file, text) => [{ file, text }];
   assert.deepEqual(checkMinFontSize(src('frontend/src/a.tsx', '<p className="text-xs text-[12px] text-[0.75rem] text-[13px]" style={{ fontSize: 12 }}>')), []);
   assert.deepEqual(checkMinFontSize(src('frontend/src/a.tsx', '<p className="text-[10px]" />')), ['frontend/src: text under 12px (docs/design-tokens.md). 1 found: frontend/src/a.tsx:1 text-[10px]']);
@@ -449,8 +449,8 @@ test('text under 12px is reported, 12px and larger passes (warning only, #1127)'
   assert.match(checkMinFontSize(src('frontend/src/index.css', '.a {\n font-size: 11px;\n}'))[0], /index\.css:2 font-size: 11px/);
   assert.deepEqual(checkMinFontSize(src('frontend/src/a.test.tsx', 'text-[10px]')), []);
   const result = check(({ write }) => write('frontend/src/app.tsx', 'export const A = () => <p className="text-[10px]">x</p>;\n'));
-  assert.deepEqual(result.problems, []);
-  assert.ok(result.warnings.some((w) => w.includes('text under 12px')));
+  assert.deepEqual(result.warnings.filter((w) => w.includes('text under 12px')), []);
+  assert.ok(result.problems.some((p) => p.group === 'text size' && p.message.includes('text under 12px')));
 });
 
 test('Korean screen text in frontend sources fails; comments, tests and marked lines pass (#1129)', () => {
