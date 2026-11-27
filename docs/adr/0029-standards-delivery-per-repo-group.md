@@ -47,7 +47,7 @@ Cells: **Sync** (arrives through the group's channel: self-copy for the hub, syn
 |---|---|---|---|---|
 | General skills (`templates/common/skills/`: `std-backlog`, `std-code-review`, `std-communication`, `std-feature-overview`, `std-git-writing`, `std-session-notes`, `orca-lanes`) | Sync: self-copy to `.claude/skills/` | Sync: same issue, PR, and review procedure | ***Sync*** (today plugin only, and without `orca-lanes`): the user wants them synced | Sync |
 | `std-implementation` (rendered with the repo name) | No: the hub's procedure is its own `AGENTS.md` | Sync | ***Sync*** (today nothing): it only names the repo and points at the repo's own instructions | Sync |
-| App skills (`templates/app/skills/`: `std-foundation`, `std-testing`, `std-ux-audit`), `scripts/claude-skills.mjs` | No: they describe the app stack | No: same reason | No: same reason | Sync |
+| App skills (`templates/app/skills/`: `std-foundation`, `std-testing`; `std-ux-audit` is in `templates/ui/skills/` and comes from design-system, #1168), `scripts/claude-skills.mjs` | No: they describe the app stack | No: same reason | No: same reason | Sync |
 | `AGENTS.md`, `CLAUDE.md` | No: own files, the source of the procedure | Sync (`templates/service/`, `templates/infra/`). Infra was a hand-written copy until #949 (gap G1) | No: each has a single-purpose `CLAUDE.md` that a shared procedure would dilute | Sync (`templates/app/`) |
 | `.claude/rules/` (path rules) | No: own rules about sources and copies | No: the rules are about the app's `frontend/`, `backend/`, `database/` | No: same reason | Sync |
 | Guard hooks (`.claude/hooks/`) | Sync: self-copy | Sync | ***Sync*** (today plugin only): a committed hook cannot be silently missing | Sync |
