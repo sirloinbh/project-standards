@@ -1,6 +1,6 @@
 # 0011. Add an option to lock dark mode per app
 
-- Status: Accepted (issue #354)
+- Status: Accepted; moved to design-system as [ADR-0003](https://github.com/sirloinbh/design-system/blob/main/docs/adr/0003-dark-only-option.md) (#1167, still the text of record there) (issue #354)
 - Date: 2026-10-31
 - Changes a decision: "all apps support both light and dark modes" in [ADR-0008](0008-neutral-light-dark.md)
 

@@ -1,6 +1,6 @@
 # 0007. shadcn/ui for UI components, lucide for icons, Fluent Emoji Flat for emoji
 
-- Status: Accepted (issue #120)
+- Status: Accepted; moved to design-system as [ADR-0001](https://github.com/sirloinbh/design-system/blob/main/docs/adr/0001-shadcn-ui-icons-emoji.md) (#1167, still the text of record there) (issue #120)
 - Date: 2026-10-22
 
 ## Context

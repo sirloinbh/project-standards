@@ -1,0 +1,82 @@
+# Checks a design-system release against every app before the pin moves (#1178, ADR-0031). It runs on pull requests that change the
+# `design-system` pin in versions.json (the PR the design-system release workflow opens, #1173): the pinned release is rendered into a
+# clean clone of each app, then the app's frontend installs, typechecks and runs its tests. A broken app fails this PR, not the app sync PRs.
+# Other pull requests skip every job except the final `design-system-release-check`, which then passes (a skipped job counts as passed).
+name: design-system-release-check
+
+on:
+  pull_request:
+    paths: [versions.json]
+
+permissions:
+  contents: read
+  packages: read # install the @sirloinbh shared packages in the apps
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  detect:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    outputs:
+      changed: ${{ steps.pin.outputs.changed }}
+      matrix: ${{ steps.pin.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - id: pin
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          git show "$BASE_SHA:versions.json" > "$RUNNER_TEMP/base-versions.json"
+          changed=$(node scripts/release-app-check.mjs --pin-changed "$RUNNER_TEMP/base-versions.json" versions.json)
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(node scripts/release-app-check.mjs --matrix)" >> "$GITHUB_OUTPUT"
+      - name: The pinned release passed its own checks
+        if: steps.pin.outputs.changed == 'true'
+        run: node scripts/release-app-check.mjs --verify-release
+
+  app:
+    needs: detect
+    if: needs.detect.outputs.changed == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false # report every failing app, not only the first
+      matrix:
+        include: ${{ fromJSON(needs.detect.outputs.matrix) }}
+    name: app (${{ matrix.app }})
+    env:
+      NODE_AUTH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24.21.0'
+          package-manager-cache: false
+      - name: Render the release into a clean clone of the app and test its frontend
+        env:
+          APP: ${{ matrix.app }}
+        run: node scripts/release-app-check.mjs --app "$APP" --work "$RUNNER_TEMP/apps"
+
+  # One stable name for branch protection. It passes when the pin did not change (the jobs above were skipped) and fails when an app failed.
+  design-system-release-check:
+    needs: [detect, app]
+    if: always()
+    runs-on: ubuntu-24.04
+    steps:
+      - env:
+          DETECT: ${{ needs.detect.result }}
+          APP: ${{ needs.app.result }}
+        run: |
+          if [ "$DETECT" = failure ] || [ "$APP" = failure ] || [ "$APP" = cancelled ]; then
+            echo "The design-system release did not pass (detect: $DETECT, apps: $APP). See the app jobs." >&2
+            exit 1
+          fi

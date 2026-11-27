@@ -15,6 +15,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createClient, getInstallationToken } from './lib/github-app.mjs';
 import { describeLabelPlan, loadLabels, planLabels, syncLabels } from './lib/labels.mjs';
+import { resolveDesignSystem } from './lib/design-system.mjs';
 import { loadAll } from './lib/registry.mjs';
 import { planTarget } from './lib/sync-plan.mjs';
 import { syncTarget } from './lib/sync-pr.mjs';
@@ -216,8 +217,15 @@ ${message}` });
 }
 
 const isMain = process.argv[1] && fs.realpathSync(process.argv[1]) === fs.realpathSync(fileURLToPath(import.meta.url));
+/** Adds the pinned design-system release (or null before the first release) to the loaded data; fails when the pin cannot be fetched. */
+export function withDesignSystem(data) {
+  data.designSystemRelease = resolveDesignSystem({ pin: data.versions['design-system'], cacheDir: path.join(root, '.local/design-system') });
+  return data;
+}
+
 if (isMain && process.argv.includes('--apply')) {
   const { data } = loadAll(root);
+  withDesignSystem(data);
   const centralSha = process.env.GITHUB_SHA ?? execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
   const credentials = { appId: process.env.SYNC_APP_ID, privateKey: process.env.SYNC_APP_PRIVATE_KEY };
   if (!process.env.GITHUB_TOKEN) {
@@ -245,6 +253,7 @@ if (isMain && process.argv.includes('--apply')) {
     if (!args.dryRun) throw new Error('use --dry-run --out <folder> to preview, or --apply in the sync workflow');
     if (!args.out) throw new Error('--dry-run needs --out <folder>');
     const { data } = loadAll(root);
+    withDesignSystem(data);
     const targets = args.targets.length ? data.sync.targets.filter((t) => args.targets.includes(t.repo)) : data.sync.targets;
     const ordered = groupWaves(targets).flatMap((w) => w.targets);
     if (args.targets.length && targets.length !== args.targets.length) throw new Error(`unknown target in ${args.targets.join(', ')}`);
