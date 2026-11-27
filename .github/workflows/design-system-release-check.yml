@@ -4,9 +4,10 @@
 # Other pull requests skip every job except the final `design-system-release-check`, which then passes (a skipped job counts as passed).
 name: design-system-release-check
 
+# No `paths` filter: a required check must report on every pull request, or it stays "Expected" and blocks the PRs that do not touch versions.json.
+# The detect job decides whether the pin changed.
 on:
   pull_request:
-    paths: [versions.json]
 
 permissions:
   contents: read
