@@ -10,7 +10,7 @@ A read-only survey of the 8 apps (shallow clones of `main` on 2026-11-27) for co
 
 ## What is already shared (no work)
 
-The shell is identical in all 8 apps (checked by hash): `sign-in.tsx`, `session-watch.ts`, `service-worker.ts`, `auth-origin.ts`, `theme-toggle.tsx`, `components/layout/*` (`app-shell`, `app-switcher`, `ai-shell`) and `lib/*` (`api`, `query`, `use-notice`, `use-ai-chat`). The 30 `components/ui/` files are the same everywhere. `health.ts` is identical in 7 apps (not workout-memo) and `live.ts` in 6 (not cert-manager or study-log). They need no component work; the design-system repository only has to keep delivering them.
+The shell is identical in all 8 apps (checked by hash): `sign-in.tsx`, `session-watch.ts`, `service-worker.ts`, `auth-origin.ts`, `theme-toggle.tsx`, `components/layout/*` (`app-shell`, `app-switcher`, `ai-shell`) and `lib/*` (`api`, `query`, `use-notice`, `use-ai-chat`). The 34 non-test `components/ui/` files are byte-identical in all 8 apps. `health.ts` is identical in 7 apps (not workout-memo) and `live.ts` in 6 (not cert-manager or study-log). They need no component work; the design-system repository only has to keep delivering them.
 
 ## Candidates
 
