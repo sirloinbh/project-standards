@@ -190,7 +190,7 @@ function PickerField({
             placeholder={placeholder}
             maxLength={maxLength}
             aria-label={label}
-            className="min-w-0 flex-1"
+            className="min-w-0 flex-1 md:pointer-coarse:text-base"
             value={value}
             onChange={(event) => onValueChange(event.target.value)}
           />
