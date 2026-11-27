@@ -152,6 +152,8 @@ packages/<pkg> change PR (with version and CHANGELOG) → user merges
 
 ### 5.1 File classification
 
+The source of common UI and the design tokens is moving to the design-system repository, which sync keeps delivering from a pinned release ([ADR-0031](adr/0031-design-system-repository.md), [design-system-move.md](design-system-move.md)).
+
 | Class | Files | If edited downstream |
 |---|---|---|
 | Option A package | ESLint, Prettier, tsconfig, and design token contents | Fails if the installed version differs from the manifest |
