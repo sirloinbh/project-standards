@@ -27,6 +27,8 @@ To allow another literal, add it to `DEFAULT_ALLOW` and note why in the PR.
 
 ## Screen text fails the check (#1129)
 
+The wording of this rule moved to design-system ([screen-text-check.md](https://github.com/sirloinbh/design-system/blob/main/docs/screen-text-check.md), #1167). The check code stays here because it runs inside each app.
+
 The column above is a report. The app-side `npm run standards:check` (`scripts/standards-check.mjs`) also **fails** (group `screen text`) when a frontend source holds Korean outside a comment, because that text can reach a screen (user requirement of 2026-11-26: no Korean on any screen).
 
 - Scanned: `frontend/src/**/*.{ts,tsx,js,jsx,html}`. Comments (`//`, `/* */`) are removed first.

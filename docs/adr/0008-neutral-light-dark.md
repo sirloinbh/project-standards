@@ -1,6 +1,6 @@
 # 0008. Unify on black-and-white light and dark modes with no per-app theme color
 
-- Status: Accepted (issue #122)
+- Status: Accepted; moved to design-system as [ADR-0002](https://github.com/sirloinbh/design-system/blob/main/docs/adr/0002-neutral-light-dark.md) (#1167, still the text of record there) (issue #122)
 - Date: 2026-10-22
 - Changes a decision: the theme color part of original requirement 4-1 ("distinguish only by website name and theme color, with no duplicates")
 
