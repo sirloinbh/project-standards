@@ -104,7 +104,7 @@ export function renderTokens(t) {
       t.textStyles.map((s) => [`\`${s.name}\``, `\`${s.element}\``, `${size[s.size].px}px`, `${size[s.sizeMd].px}px`, weight[s.weight].value, s.tracking, `\`${s.color}\``, s.use]),
     ),
     '',
-    '**12px floor (user decision, 2026-11-26, #1127).** No text on any screen is smaller than 12px: `text-xs` and `meta` are the smallest sizes, and arbitrary values such as `text-[10px]`, inline `fontSize` under 12, and SVG label sizes under 12 are not allowed. `standards-check` warns about them (`text under 12px`); the `std-ux-audit` skill checks the computed size in the browser.',
+    '**12px floor (user decision, 2026-11-26, #1127).** No text on any screen is smaller than 12px: `text-xs` and `meta` are the smallest sizes, and arbitrary values such as `text-[10px]`, inline `fontSize` under 12, and SVG label sizes under 12 are not allowed. `standards-check` fails on them (`text under 12px`, #1135); the `std-ux-audit` skill checks the computed size in the browser.',
     '',
     '## Spacing',
     '',
