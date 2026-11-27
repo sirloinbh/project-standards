@@ -39,6 +39,7 @@
       "devDependencies": { "@testing-library/user-event": "14.6.8" }
     }
   },
+  "design-system": { "repo": "sirloinbh/design-system", "version": null, "sha": null },
   "packages": {
     "@sirloinbh/eslint-config": "1.2.0",
     "@sirloinbh/prettier-config": "1.0.0",

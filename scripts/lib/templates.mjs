@@ -23,17 +23,20 @@ export const loadIndex = (root) => JSON.parse(fs.readFileSync(path.join(root, 't
  * Lists { path, source } for every template in the given folders (e.g. ["common", "app"]).
  * `path` is the target path (".tmpl" removed); two folders may not produce the same path.
  */
-export function collectTemplates(root, folders) {
+export function collectTemplates(root, folders, external = {}) {
   const seen = new Map();
   for (const folder of folders) {
-    for (const rel of walk(path.join(root, 'templates', folder))) {
+    // A folder in `external` ({ dir, label }) is read from the pinned design-system release instead of templates/ (#1171).
+    const ext = external[folder];
+    for (const rel of walk(ext ? ext.dir : path.join(root, 'templates', folder))) {
       const target = rel.endsWith(TEMPLATE_SUFFIX) ? rel.slice(0, -TEMPLATE_SUFFIX.length) : rel;
-      const source = `templates/${folder}/${rel}`;
-      if (seen.has(target)) throw new Error(`${target} comes from both ${seen.get(target)} and ${source}`);
-      seen.set(target, source);
+      const source = ext ? `${ext.label}/${rel}` : `templates/${folder}/${rel}`;
+      if (seen.has(target)) throw new Error(`${target} comes from both ${seen.get(target).source} and ${source}`);
+      // The managed header keeps naming templates/<folder>/, so delivered files are byte-identical to the pre-move ones.
+      seen.set(target, { source, file: ext ? path.join(ext.dir, rel) : path.join(root, source), headerSource: `templates/${folder}/${rel}` });
     }
   }
-  return [...seen].map(([target, source]) => ({ path: target, source }));
+  return [...seen].map(([target, entry]) => ({ path: target, ...entry }));
 }
 
 // Fills {{variables}} inside the field values of templates/index.json.
@@ -92,16 +95,16 @@ export function sharedDependencyFields(index, profile, versions, readPackage = (
  * readExisting(path) returns the target's current text or null (needed to keep project sections).
  * Returns manifest-ready entries: [{ path, mode, content } | { path, mode: "fields", fields }].
  */
-export function renderProfile({ root, profile, folders, vars, readExisting = () => null }) {
+export function renderProfile({ root, profile, folders, vars, readExisting = () => null, external = {} }) {
   const index = loadIndex(root);
   const section = new Set(index.section);
   // Data files such as labels.json are read by the sync script, not copied to the target.
   const data = new Set((index.data?.files ?? []).map((f) => `templates/${f}`));
-  const files = collectTemplates(root, folders).filter(({ source }) => !data.has(source)).map(({ path: target, source }) => {
+  const files = collectTemplates(root, folders, external).filter(({ source }) => !data.has(source)).map(({ path: target, source, file, headerSource }) => {
     const mode = section.has(target) ? 'section' : 'full';
-    const text = fs.readFileSync(path.join(root, source), 'utf8');
+    const text = fs.readFileSync(file, 'utf8');
     const existing = mode === 'section' ? readExisting(target) : null;
-    return { path: target, source, mode, content: renderFile({ text, file: target, source, vars, mode, existing }) };
+    return { path: target, source, mode, content: renderFile({ text, file: target, source: headerSource, vars, mode, existing }) };
   });
   // Vendored code is copied verbatim (no variable rendering) with only the managed header added.
   // An entry is a source path (every profile) or { from, profiles, repos? } (only those profiles, and only those repos when listed, #672).

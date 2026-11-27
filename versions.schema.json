@@ -3,7 +3,7 @@
   "title": "도구 버전 원본",
   "description": "템플릿에 주입하는 도구 버전. 범위 버전(^, ~)은 쓰지 않는다. 외부 Action은 커밋 SHA로 고정한다.",
   "type": "object",
-  "required": ["node", "npm", "postgres", "terraform", "images", "runner", "actions", "dependencies", "packages"],
+  "required": ["node", "npm", "postgres", "terraform", "images", "runner", "actions", "dependencies", "packages", "design-system"],
   "additionalProperties": false,
   "properties": {
     "$schema": { "type": "string" },
@@ -74,6 +74,17 @@
         "root": { "$ref": "#/$defs/dependencySections" },
         "frontend": { "$ref": "#/$defs/dependencySections" },
         "backend": { "$ref": "#/$defs/dependencySections" }
+      }
+    },
+    "design-system": {
+      "type": "object",
+      "description": "The design-system release that sync delivers to the apps (ADR-0031, #1171). version null means no release exists yet: sync keeps using templates/ui/. With a version, sync clones tag v<version>, checks that it points at sha, and reads delivery/ui/ from it.",
+      "required": ["repo", "version", "sha"],
+      "additionalProperties": false,
+      "properties": {
+        "repo": { "type": "string", "pattern": "^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$" },
+        "version": { "type": ["string", "null"], "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+        "sha": { "type": ["string", "null"], "pattern": "^[0-9a-f]{40}$", "description": "Commit the tag must point at. Required when version is set" }
       }
     },
     "packages": {
