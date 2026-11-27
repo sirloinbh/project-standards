@@ -7,7 +7,7 @@ This file is a plan, not a record of work done. Each later move card links to it
 ## Decisions this plan relies on
 
 - **Delivery model A (#1158).** design-system is the source. project-standards sync keeps delivering the UI files to the apps from a pinned design-system release, with per-app values (`DARK_ONLY`, `apps.ts`, and the other rendered `.tmpl` files) and the hash drift check unchanged. The apps get no new package install and no `npx`.
-- **Name, visibility, hosting.** `sirloinbh/design-system`, private, showcase at `design.daysofme.com` behind the shared sign-in, unless the user changes them when creating the repository (#1161).
+- **Name, visibility, hosting.** `sirloinbh/design-system`, **public** (user decision 2026-11-27, #1161: branch protection needs a public repository on the free plan), showcase at `design.daysofme.com` behind the shared sign-in. The repository exists.
 - **Showcase is Storybook (#1179).** A dev dependency of design-system only, after a dependency-policy review in the PR.
 - **Not decided here.** The version scheme and what counts as a breaking change (#1160), how sync fetches a release (a later card), and the order of the move cards.
 
@@ -105,7 +105,7 @@ Each step keeps `npm run check` green and every app syncing. Items may be merged
 
 ## Risks to settle in the move cards
 
-- **Sync needs the files at run time.** `sync.yml` runs in project-standards with a token. It needs read access to the private design-system repository (the GitHub App installation must include it, a user step).
+- **Sync needs the files at run time.** `sync.yml` runs in project-standards with a token. The repository is public, so reading it needs no token. Only adding it as a sync target (#1163) needs the GitHub App installation to include it (a user step).
 - **Snapshot of files apps receive.** `scripts/test/fixtures/sync-snapshot.json` must not change when the source moves; a changed snapshot means a behaviour change and needs a review.
 - **Per-app tests.** E2 tests render per-app values against the UI folder; they must keep a real copy to run against.
 - **Two writers.** Only sync writes to the apps. design-system never opens PRs in app repositories (model A).
