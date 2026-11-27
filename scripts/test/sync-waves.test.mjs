@@ -47,9 +47,9 @@ test('groupWaves orders by wave and puts targets without a wave last', () => {
   assert.deepEqual(groups.map((g) => [g.label, g.targets.map((x) => x.repo.split('/')[1])]), [['1', ['a', 'd']], ['2', ['b']], ['last', ['c']]]);
 });
 
-test('the config puts workout-memo and file-control in wave 1 and the infra repo last', () => {
+test('the config puts workout-memo, design-system and file-control in wave 1 and the infra repo last', () => {
   const first = groupWaves(data.sync.targets);
-  assert.deepEqual(first[0].targets.map((x) => x.repo), ['sirloinbh/workout-memo', 'sirloinbh/file-control']);
+  assert.deepEqual(first[0].targets.map((x) => x.repo), ['sirloinbh/workout-memo', 'sirloinbh/design-system', 'sirloinbh/file-control']);
   assert.ok(first.at(-1).targets.some((x) => x.profile === 'infra'));
 });
 

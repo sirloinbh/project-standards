@@ -35,6 +35,7 @@ Not apps: no deploy, DB, or sync. They hold a slot so their ports never collide 
 | Slot | Tool | Repository | Ports | Summary |
 |---|---|---|---|---|
 | 09 | file-control | file-control | web 8109 | Windows file cleanup CLI (fctl). Its local screen fctl ui serves on 127.0.0.1 only and fails instead of moving when the port is busy. |
+| 12 | design-system | design-system | web 8112 | Shared design system repository: tokens, UI kit, guidelines and the Storybook showcase. Its showcase dev server uses web 8112. No subdomain until #1187. |
 
 ## Shared services
 
