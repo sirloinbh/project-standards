@@ -1,6 +1,6 @@
 {
   "name": "@sirloinbh/design-tokens",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "sirloinbh 앱 공통 디자인 토큰 (CSS 변수, Tailwind CSS 4 테마, Pretendard 글꼴)",
   "license": "SEE LICENSE IN LICENSE.md",
   "exports": {

@@ -27,7 +27,7 @@ Tool and package versions set centrally. To change them, follow the [dependency 
 | `@sirloinbh/eslint-config` | 1.2.0 |
 | `@sirloinbh/prettier-config` | 1.0.0 |
 | `@sirloinbh/tsconfig` | 1.0.0 |
-| `@sirloinbh/design-tokens` | 1.1.0 |
+| `@sirloinbh/design-tokens` | 1.1.1 |
 | `@sirloinbh/auth-client` | 1.1.0 |
 
 ## Common app dependencies
