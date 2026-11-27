@@ -21,6 +21,11 @@
       "neverTouchExcept": ["backend/src/apps.generated.ts", "backend/test/standard/*.ts", "backend/Dockerfile", "backend/.npmrc", "backend/.dockerignore", "backend/package.json"],
       "neverTouch": ["backend/**", "compose.yaml", "README.md", ".env.example", "AGENTS.project.md"]
     },
+    "design-system": {
+      "templates": ["common"],
+      "packages": ["@sirloinbh/eslint-config", "@sirloinbh/prettier-config", "@sirloinbh/tsconfig"],
+      "neverTouch": []
+    },
     "utility": {
       "templates": ["common"],
       "packages": [],
@@ -36,6 +41,7 @@
     { "repo": "sirloinbh/cert-manager", "wave": 2, "profile": "app", "project": "cert-manager" },
     { "repo": "sirloinbh/plan-routine", "wave": 2, "profile": "app", "project": "plan-routine" },
     { "repo": "sirloinbh/dev-career-portfolio", "wave": 2, "profile": "app", "project": "dev-career-portfolio" },
+    { "repo": "sirloinbh/design-system", "wave": 1, "profile": "design-system", "project": null },
     { "repo": "sirloinbh/shared-aws-infrastructure", "profile": "infra", "project": null, "autoMergeSync": true, "generatedFiles": { "apps.json": "apps-json" } },
     { "repo": "sirloinbh/shared-auth", "profile": "service", "project": null, "autoMergeSync": true },
     { "repo": "sirloinbh/shared-ai", "profile": "service", "project": null, "generatedFiles": { "backend/src/apps.generated.ts": "apps-ts" } },

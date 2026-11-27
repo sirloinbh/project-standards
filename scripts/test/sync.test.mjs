@@ -122,9 +122,9 @@ test('a template that would write a protected path fails', () => {
   assert.throws(() => planTarget({ root, data: copy.data, target: targetOf(copy.data, 'study-log'), centralSha: 'x' }), /would write protected path/);
 });
 
-// What each of the 13 repositories receives. When templates change on purpose, update the snapshot:
+// What each of the 14 repositories receives. When templates change on purpose, update the snapshot:
 //   UPDATE_SNAPSHOT=1 npm test
-test('the file list for all 13 targets matches the reviewed snapshot', () => {
+test('the file list for all 14 targets matches the reviewed snapshot', () => {
   const actual = Object.fromEntries(
     original.data.sync.targets.map((target) => {
       const { manifest } = planTarget({ root, data: original.data, target, centralSha: 'snapshot' });
@@ -141,7 +141,7 @@ test('the dry-run CLI writes every target and plan.json', () => {
     const run = spawnSync(process.execPath, [path.join(root, 'scripts/sync.mjs'), '--dry-run', '--out', out, '--sha', 'cli0001'], { encoding: 'utf8' });
     assert.equal(run.status, 0, run.stderr);
     const plan = JSON.parse(fs.readFileSync(path.join(out, 'plan.json'), 'utf8'));
-    assert.equal(plan.targets.length, 13);
+    assert.equal(plan.targets.length, 14);
     assert.ok(fs.existsSync(path.join(out, 'study-log', 'AGENTS.md')));
     assert.ok(fs.existsSync(path.join(out, 'shared-aws-infrastructure', MANIFEST_PATH)));
     assert.ok(fs.existsSync(path.join(out, 'shared-aws-infrastructure', 'AGENTS.md')), 'the infra profile ships AGENTS.md since #949');

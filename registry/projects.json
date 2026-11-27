@@ -521,6 +521,15 @@
       "ports": {
         "web": 8109
       }
+    },
+    {
+      "slot": 12,
+      "name": "design-system",
+      "repo": "design-system",
+      "summary": "Shared design system repository: tokens, UI kit, guidelines and the Storybook showcase. Its showcase dev server uses web 8112. No subdomain until #1187.",
+      "ports": {
+        "web": 8112
+      }
     }
   ],
   "sharedServices": [

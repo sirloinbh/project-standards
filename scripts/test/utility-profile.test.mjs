@@ -75,3 +75,25 @@ test('the first sync PR asks about Claude settings the repo already had', () => 
   assert.doesNotMatch(renderBody({ ...base, changes: [{ ...replaced[0], isNew: true }], firstSync: true }), /existed before this first sync/);
   assert.doesNotMatch(renderBody({ ...base, changes: replaced, firstSync: true }), /deploys to production|terraform/);
 });
+
+// #1163: design-system is a sync target with the common folder and the three shared lint and TypeScript packages.
+test('design-system receives the common files and the three shared config packages, no app files', () => {
+  assert.deepEqual(data.sync.profiles['design-system'], {
+    templates: ['common'],
+    packages: ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig'],
+    neverTouch: [],
+  });
+  const dsTarget = data.sync.targets.find((t) => t.repo === 'sirloinbh/design-system');
+  assert.deepEqual([dsTarget.profile, dsTarget.project, dsTarget.wave], ['design-system', null, 1]);
+  const dsPlan = planTarget({ root, data, target: dsTarget, centralSha: 'b'.repeat(40) });
+  const dsPaths = dsPlan.files.map((f) => f.path);
+  assert.ok(dsPaths.includes('skills/std-git-writing/SKILL.md'));
+  assert.ok(dsPaths.includes('.standards/check.mjs'));
+  for (const p of dsPaths) for (const re of [/^AGENTS\.md$/, /^frontend\//, /^backend\//, /^deploy\//]) assert.doesNotMatch(p, re);
+  assert.deepEqual(Object.keys(dsPlan.manifest.packages), ['@sirloinbh/eslint-config', '@sirloinbh/prettier-config', '@sirloinbh/tsconfig']);
+});
+
+test('design-system holds registry slot 12 as a local repo with web 8112 and no subdomain', () => {
+  const tool = data.projects.localTools.find((t) => t.name === 'design-system');
+  assert.deepEqual([tool.slot, tool.ports], [12, { web: 8112 }]);
+});
