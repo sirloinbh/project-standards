@@ -89,7 +89,9 @@ test('a broken typecheck stops that app and names the step and the end of the ou
 
 test('the workflow runs on pin changes, reports every app, and keeps one always-passing gate job', () => {
   const text = fs.readFileSync(path.join(root, '.github/workflows/design-system-release-check.yml'), 'utf8');
-  assert.match(text, /paths: \[versions\.json\]/);
+  // A path filter would stop the workflow from starting, and a required check would stay "Expected" on every other PR.
+  assert.ok(!/^\s+paths:/m.test(text), 'no paths filter');
+  assert.match(text, /on:\n\s+pull_request:\n\s+permissions:/);
   assert.match(text, /fail-fast: false/);
   assert.match(text, /design-system-release-check:\n\s+needs: \[detect, app\]\n\s+if: always\(\)/);
   assert.ok(!text.includes('pull-requests: write'), 'the check never writes to the PR');

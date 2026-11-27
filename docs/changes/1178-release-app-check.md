@@ -6,7 +6,7 @@ Epic #1156. A pin-raise PR (opened by the design-system release workflow, #1173)
 
 | File | Content |
 |---|---|
-| `.github/workflows/design-system-release-check.yml` | Runs on pull requests that change `versions.json`. `detect` decides whether the `design-system` pin changed and that the pinned commit has a green design-system `check`; `app (<name>)` matrix jobs (one per app, `fail-fast: false`) run the check; `design-system-release-check` is one always-present gate job for branch protection (skipped jobs count as passed) |
+| `.github/workflows/design-system-release-check.yml` | Runs on every pull request (no `paths` filter, so the required check always reports). `detect` decides whether the `design-system` pin changed and that the pinned commit has a green design-system `check`; `app (<name>)` matrix jobs (one per app, `fail-fast: false`) run the check; `design-system-release-check` is one always-present gate job for branch protection (skipped jobs count as passed) |
 | `scripts/release-app-check.mjs` | `--pin-changed`, `--matrix`, `--verify-release`, and `--app <name> --work <folder>`: clones the app, renders this PR's sync files into it (the pinned release, same planner as the sync), then `npm install --ignore-scripts`, `typecheck -w frontend`, `test -w frontend`. A failure names the step and the last 40 lines in the job summary |
 | `scripts/test/release-app-check.test.mjs` | Pin change detection, matrix, green-check gate, app steps, failure report, workflow shape |
 
