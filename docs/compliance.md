@@ -1,26 +1,36 @@
 # Compliance status
 
-<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: 2026-11-23 04:51 UTC, central 1d8a0b5 -->
+<!-- Generated file (scripts/compliance.mjs). Do not edit by hand. Generated: 2026-11-27 23:17 UTC, central c789cca -->
 
-| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | .env.example | Repo settings | Korean text |
-|---|---|---|---|---|---|---|---|---|
-| sirloinbh/workout-memo | ✓ | `740b5e1` | ✓ match | ✓ | [#469](https://github.com/sirloinbh/workout-memo/pull/469) 0 days old | ✓ | ✓ | △ 46 md, 0 comments (partial scan) |
-| sirloinbh/study-log | ✓ | `e10aa76` | ✓ match | ✓ | [#350](https://github.com/sirloinbh/study-log/pull/350) 0 days old | ✓ | ✓ | △ 32 md, 0 comments (partial scan) |
-| sirloinbh/health-log | ✓ | `28d9e3b` | ✓ match | ✓ | [#319](https://github.com/sirloinbh/health-log/pull/319) 0 days old | ✓ | ✓ | △ 21 md, 0 comments (partial scan) |
-| sirloinbh/life-journal | ✓ | `28d9e3b` | ✓ match | ✓ | [#202](https://github.com/sirloinbh/life-journal/pull/202) 0 days old | ✓ | ✓ | △ 13 md, 0 comments (partial scan) |
-| sirloinbh/money-ledger | ✓ | `23edc98` | ✓ match | ✓ | [#285](https://github.com/sirloinbh/money-ledger/pull/285) 0 days old | ✓ | ✓ | △ 30 md, 0 comments (partial scan) |
-| sirloinbh/cert-manager | ✓ | `28d9e3b` | ✓ match | ✓ | [#206](https://github.com/sirloinbh/cert-manager/pull/206) 0 days old | ✓ | ✓ | △ 18 md, 0 comments (partial scan) |
-| sirloinbh/plan-routine | ✓ | `740b5e1` | ✓ match | ✓ | [#238](https://github.com/sirloinbh/plan-routine/pull/238) 0 days old | ✓ | ✓ | △ 9 md, 0 comments (partial scan) |
-| sirloinbh/dev-career-portfolio | ✓ | `138e626` | ✓ match | ✓ | [#219](https://github.com/sirloinbh/dev-career-portfolio/pull/219) 0 days old | ✓ | ✓ | △ 22 md, 0 comments (partial scan) |
-| sirloinbh/shared-aws-infrastructure | ✓ | `138e626` | ✓ match | — | none | — | ✓ | ✓ |
-| sirloinbh/shared-auth | ✓ | `138e626` | ✓ match | — | [#30](https://github.com/sirloinbh/shared-auth/pull/30) 0 days old | — | ✓ | ✓ |
-| sirloinbh/shared-ai | ✓ | `138e626` | ✓ match | — | [#46](https://github.com/sirloinbh/shared-ai/pull/46) 0 days old | — | ✓ | ✓ |
-| sirloinbh/develop-skill | ✓ | `138e626` | ✓ match | — | none | — | △ 1 | △ 39 md, 0 comments (partial scan) |
-| sirloinbh/file-control | ✓ | `23edc98` | ✓ match | — | none | — | ✓ | △ 4 md, 15 comments (partial scan) |
+| Repo | Synced | Central commit synced from | Managed files | Shared packages | Open sync PR | Sync wave | .env.example | Repo settings | Korean text | Work issues without epic | CI on main | Alerts (Dependabot / code scanning) | Last deploy | Oldest open PR |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| sirloinbh/workout-memo | ✓ | `5fde9f5` | ✓ match | ✓ | [#522](https://github.com/sirloinbh/workout-memo/pull/522) 0 days old | 1 | ✓ | ✓ | △ 46 md, 0 comments (partial scan) | ✗ 1 | ✓ today | ✗ 1 / 0 | today | [#522](https://github.com/sirloinbh/workout-memo/pull/522) 0d |
+| sirloinbh/study-log | ✓ | `5fde9f5` | ✓ match | ✓ | none | 2 (held by wave 1) | ✓ | ✓ | △ 32 md, 0 comments (partial scan) | ✓ | ✓ today | ✗ 1 / 0 | today | none |
+| sirloinbh/health-log | ✓ | `5fde9f5` | ✓ match | ✓ | none | 2 (held by wave 1) | ✓ | ✓ | △ 20 md, 0 comments (partial scan) | ✓ | ✓ today | 0 / 0 | today | none |
+| sirloinbh/life-journal | ✓ | `5fde9f5` | ✓ match | ✓ | none | 2 (held by wave 1) | ✓ | ✓ | △ 13 md, 0 comments (partial scan) | ✓ | ✓ today | 0 / 0 | today | none |
+| sirloinbh/money-ledger | ✓ | `5fde9f5` | ✓ match | ✓ | none | 2 (held by wave 1) | ✓ | ✓ | △ 17 md, 0 comments (partial scan) | ✓ | ✓ today | ✗ 0 / 1 | today | none |
+| sirloinbh/cert-manager | ✓ | `5fde9f5` | ✓ match | ✓ | none | 2 (held by wave 1) | ✓ | ✓ | △ 18 md, 0 comments (partial scan) | ✓ | ✓ today | ✗ 1 / 0 | today | none |
+| sirloinbh/plan-routine | ✓ | `5fde9f5` | ✓ match | ✓ | none | 2 (held by wave 1) | ✓ | ✓ | △ 3 md, 0 comments (partial scan) | ✓ | ✓ today | 0 / 0 | today | none |
+| sirloinbh/dev-career-portfolio | ✓ | `5fde9f5` | ✓ match | ✓ | none | 2 (held by wave 1) | ✓ | ✓ | △ 11 md, 0 comments (partial scan) | ✓ | ✓ today | 0 / 0 | today | none |
+| sirloinbh/design-system | not yet | — | — | — | [#25](https://github.com/sirloinbh/design-system/pull/25) 0 days old, CI red | 1 | — | ✗ 3 △ 1 | △ 1 md, 0 comments (partial scan) | ✓ | ✓ today | ? / ? | today (main merge, no deploy record) | [#25](https://github.com/sirloinbh/design-system/pull/25) 0d |
+| sirloinbh/shared-aws-infrastructure | ✓ | `5fde9f5` | ✓ match | — | none | last (held by wave 1) | — | ✓ | ✓ | ✓ | ✓ today | 0 / 0 | today (main merge, no deploy record) | none |
+| sirloinbh/shared-auth | ✓ | `5fde9f5` | ✓ match | — | none | last (held by wave 1) | — | ✓ | ✓ | ✓ | ✓ today | 0 / 0 | today | none |
+| sirloinbh/shared-ai | ✓ | `5fde9f5` | ✓ match | — | none | last (held by wave 1) | — | ✓ | ✓ | ✓ | ✓ today | ✗ 0 / 4 | today | none |
+| sirloinbh/develop-skill | ✓ | `5fde9f5` | ✓ match | — | none | 2 (held by wave 1) | — | △ 1 | △ 39 md, 0 comments (partial scan) | ✓ | ✓ today | 0 / ? | today (main merge, no deploy record) | none |
+| sirloinbh/file-control | ✓ | `051729a` | ✓ match | — | none | 1 | — | ✓ | △ 4 md, 16 comments (partial scan) | ✓ | ✓ today | ✗ 0 / 1 | today (main merge, no deploy record) | none |
 
 ## Repo settings
 
 The standards and reasons are in [repo-settings.md](repo-settings.md). Secrets and variables are compared by name only.
+
+### sirloinbh/design-system
+
+| Status | Item | Current | Expected |
+|---|---|---|---|
+| ✗ | CodeQL code scanning (default setup) | not-configured | configured |
+| ✗ | Dependabot vulnerability alerts | off | on |
+| ✗ | Dependabot security updates | off | on |
+| △ recommended | Actions variable names | not in the list: PIN_APP_ID | none |
 
 ### sirloinbh/develop-skill
 
@@ -31,6 +41,15 @@ The standards and reasons are in [repo-settings.md](repo-settings.md). Secrets a
 | — plan | push protection (secret blocking) | not available for private repos on the Free plan | enabled |
 | — plan | CodeQL code scanning (default setup) | not available for private repos on the Free plan | configured |
 | △ recommended | Actions variable names | not in the list: WIKI_BUCKET, WIKI_DEPLOY_ROLE_ARN, WIKI_DISTRIBUTION_ID | none |
+
+
+## Epic structure
+
+Every open work issue belongs under an epic, and an epic whose sub-issues are all closed is closed by this run (#1065, std-backlog section 6). Link each issue below as a sub-issue of a fitting epic.
+
+### sirloinbh/workout-memo
+
+- No epic: [#453](https://github.com/sirloinbh/workout-memo/issues/453) Read only the needed sets in GET /api/analysis
 
 
 ## Korean text
@@ -77,11 +96,12 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/122-paste-more-shapes.md`
 - `docs/changes/126-card-save-focus.md`
 - `docs/changes/127-list-retry.md`
-- and 11 more
+- and 10 more
 
 ### sirloinbh/life-journal
 
 - `docs/changes/153-count-reopen-wording.md`
+- `docs/changes/215-item-tags-companions.md`
 - `docs/changes/23-bucket-list.md`
 - `docs/changes/41-item-link.md`
 - `docs/changes/69-terms-screen.md`
@@ -90,12 +110,12 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/72-literature-terms.md`
 - `docs/changes/73-stage-screen-terms.md`
 - `docs/changes/74-coffee-category.md`
-- `docs/changes/83-migrate-command.md`
 - and 3 more
 
 ### sirloinbh/money-ledger
 
 - `docs/ai-classification.md`
+- `docs/card-deduction.md`
 - `docs/changes/102-halted-missing-days.md`
 - `docs/changes/110-reserve-uncategorized.md`
 - `docs/changes/123-english-comments.md`
@@ -104,8 +124,7 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/198-entries-reload-filters.md`
 - `docs/changes/199-classify-mixed-kinds.md`
 - `docs/changes/201-fixed-costs-hidden-month.md`
-- `docs/changes/202-chart-guards.md`
-- and 20 more
+- and 7 more
 
 ### sirloinbh/cert-manager
 
@@ -126,15 +145,10 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/110-english-records.md`
 - `docs/changes/111-english-docs.md`
 - `docs/changes/15-next-steps-issue-cards.md`
-- `docs/changes/47-request-body-errors.md`
-- `docs/changes/68-zod4-syntax.md`
-- `docs/changes/70-error-message-limit.md`
-- `docs/changes/73-broken-json-routes.md`
-- `docs/changes/75-migration-runner.md`
-- `docs/changes/8-twelve-week-goals.md`
 
 ### sirloinbh/dev-career-portfolio
 
+- `docs/changes/246-english-screen-text.md`
 - `docs/changes/32-career-api.md`
 - `docs/changes/33-project-api.md`
 - `docs/changes/34-skill-api.md`
@@ -144,8 +158,11 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `docs/changes/38-education-list.md`
 - `docs/changes/39-education-form.md`
 - `docs/changes/40-career-list.md`
-- `docs/changes/41-career-form.md`
-- and 12 more
+- and 1 more
+
+### sirloinbh/design-system
+
+- `docs/screen-text-check.md`
 
 ### sirloinbh/develop-skill
 
@@ -171,7 +188,17 @@ Warning only for now (#493). Markdown files and code-comment lines that still co
 - `src/flattenNames.js`
 - `src/product.js`
 - `src/recycle.js`
+- `src/sortPhotos.js`
 - `src/ui/folders.js`
+
+
+## Trend (last 14 days)
+
+Items over time from [compliance-history.csv](compliance-history.csv): ✗ = failing items, △ = recommended items, all repos together.
+
+| Date | ✗ | △ |
+|---|---|---|
+| 2026-11-27 | 10 | 13 |
 
 
 To fix, follow "When standards-check fails in a sub-repo" in the [README](../README.md).
