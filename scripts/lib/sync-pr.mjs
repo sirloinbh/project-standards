@@ -210,17 +210,22 @@ export async function syncTarget({ root, data, target, centralSha, workflowSha =
   return { status: existing ? 'updated' : 'opened', pr: pr.html_url, number: pr.number ?? existing?.number, branch, changes: meaningful, deletions };
 }
 
-/** ADR-0004: a shared package version is trusted only if publish.yml released it from a tag. */
+/** Packages released from another repository (ADR-0031); every other package is released from the central repo. */
+export const PACKAGE_SOURCE_REPOS = { 'design-tokens': 'sirloinbh/design-system' };
+
+/** ADR-0004: a shared package version is trusted only if publish.yml released it from a tag in its source repo. */
 export async function verifyPackages(packages, centralApi) {
   const notes = [];
   for (const [pkg, version] of Object.entries(packages ?? {})) {
     if (!version) continue;
-    const tag = `${pkg.replace('@sirloinbh/', '')}/v${version}`;
-    const release = await centralApi('GET', `/repos/${CENTRAL}/releases/tags/${encodeURIComponent(tag)}`);
-    if (!release) throw new Error(`${pkg}@${version}: no release for tag ${tag}; publish it with publish.yml first`);
+    const name = pkg.replace('@sirloinbh/', '');
+    const tag = `${name}/v${version}`;
+    const source = PACKAGE_SOURCE_REPOS[name] ?? CENTRAL;
+    const release = await centralApi('GET', `/repos/${source}/releases/tags/${encodeURIComponent(tag)}`);
+    if (!release) throw new Error(`${pkg}@${version}: no release for tag ${tag} in ${source}; publish it with publish.yml first`);
     const runId = /actions\/runs\/(\d+)/.exec(release.body ?? '')?.[1];
     if (!runId) throw new Error(`${pkg}@${version}: release ${tag} has no publish run link`);
-    const run = await centralApi('GET', `/repos/${CENTRAL}/actions/runs/${runId}`);
+    const run = await centralApi('GET', `/repos/${source}/actions/runs/${runId}`);
     if (run?.path !== '.github/workflows/publish.yml' || run?.conclusion !== 'success') throw new Error(`${pkg}@${version}: run ${runId} is not a successful publish.yml run`);
     notes.push(`${pkg}@${version}: tag \`${tag}\`, publish run ${run.html_url} (success)`);
   }

@@ -202,6 +202,17 @@ test('shared package versions are trusted only with a successful publish.yml rel
   await assert.rejects(verifyPackages({ '@sirloinbh/tsconfig': '1.0.0' }, central(release, { ...run, path: '.github/workflows/other.yml' })), /not a successful publish\.yml run/);
 });
 
+test('design-tokens is verified against the design-system release and run', async () => {
+  const seen = [];
+  const run = { path: '.github/workflows/publish.yml', conclusion: 'success', html_url: 'https://github.com/sirloinbh/design-system/actions/runs/9' };
+  const api = async (method, p) => { seen.push(p); return p.includes('/releases/tags/') ? { body: '- Deploy run: https://github.com/sirloinbh/design-system/actions/runs/9' } : run; };
+  assert.deepEqual(await verifyPackages({ '@sirloinbh/design-tokens': '1.1.1' }, api), [
+    '@sirloinbh/design-tokens@1.1.1: tag `design-tokens/v1.1.1`, publish run https://github.com/sirloinbh/design-system/actions/runs/9 (success)',
+  ]);
+  assert.deepEqual(seen, ['/repos/sirloinbh/design-system/releases/tags/design-tokens%2Fv1.1.1', '/repos/sirloinbh/design-system/actions/runs/9']);
+  await assert.rejects(verifyPackages({ '@sirloinbh/design-tokens': '1.1.1' }, async () => null), /in sirloinbh\/design-system/);
+});
+
 test('apply only checks the token while every target is disabled, then syncs enabled targets', async () => {
   const tokens = [];
   const logs = [];
