@@ -13,6 +13,11 @@
       "type": "array",
       "items": { "$ref": "#/$defs/localTool" }
     },
+    "switcherLinks": {
+      "description": "Web links listed in every app's switcher after the apps (#1214): tools that have a web page but are not apps, such as develop-skill and file-control. Rendered into lib/apps.ts in this order.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/switcherLink" }
+    },
     "sharedServices": {
       "description": "Services every app uses, such as the shared sign-in (ADR-0015). Not apps: not counted among the 8 apps and not synced as one. They share the slot sequence and port formula with apps (ADR-0006) and may use a reserved subdomain.",
       "type": "array",
@@ -20,6 +25,16 @@
     }
   },
   "$defs": {
+    "switcherLink": {
+      "type": "object",
+      "required": ["name", "label", "href"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/slug" },
+        "label": { "type": "string", "minLength": 1, "description": "Text shown in the switcher" },
+        "href": { "type": "string", "pattern": "^https://[^\\s']+$", "description": "The page the link opens (https only)" }
+      }
+    },
     "localTool": {
       "type": "object",
       "required": ["slot", "name", "repo", "summary", "ports"],
