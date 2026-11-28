@@ -1,6 +1,6 @@
 # #1169 Move the screen checks to design-system
 
-Epic #1155. The text size (12px) and Korean screen text checks that every app runs through `.standards/check.mjs` are owned by `sirloinbh/design-system` (`delivery/standards/screen-checks.mjs`, design-system PR for #1169). The apps still run the same groups (`text size`, `screen text`) with the same messages.
+Epic #1155. The text size (12px) and Korean screen text checks that every app runs through `.standards/check.mjs` are owned by `sirloinbh/design-system` (`delivery/standards/screen-checks.mjs`, design-system#40). The apps still run the same groups (`text size`, `screen text`) with the same messages.
 
 ## Change
 
