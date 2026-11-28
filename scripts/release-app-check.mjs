@@ -4,7 +4,7 @@
 //   node scripts/release-app-check.mjs --matrix                                                  prints the app list as JSON for the job matrix
 //   node scripts/release-app-check.mjs --verify-release                                          the pinned commit must have a green design-system `check`
 //   node scripts/release-app-check.mjs --app <name> --work <folder>                              clones the app, renders this PR's sync files into it, then
-//                                                                                                installs, checks the format, lints, typechecks and tests
+//                                                                                                installs, checks the format, lints, typechecks and tests (and knip where strict)
 // A failing app fails the pin PR, not the app sync PRs later. The reason (step and the end of its output) goes to the job summary.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -47,6 +47,12 @@ const STEPS = [
   ['frontend typecheck', ['npm', ['run', 'typecheck', '-w', 'frontend']]],
   ['frontend tests', ['npm', ['run', 'test', '-w', 'frontend']]],
 ];
+const KNIP_STEP = ['knip', ['npm', ['run', 'knip']]];
+
+/** The steps for one app: knip only where it fails the app's CI (features.knipStrict, #1233). */
+export function appSteps(project) {
+  return project?.features?.knipStrict ? [...STEPS, KNIP_STEP] : STEPS;
+}
 
 function defaultRun(command, args, cwd) {
   const out = spawnSync(command, args, { cwd, encoding: 'utf8', shell: process.platform === 'win32', maxBuffer: 64 * 1024 * 1024 });
@@ -59,7 +65,8 @@ function defaultClone(repo, dir) {
 }
 
 /**
- * Renders this checkout's sync files for one app into a fresh clone and runs the app steps (install, format check, lint, frontend typecheck and tests).
+ * Renders this checkout's sync files for one app into a fresh clone and runs the app steps (install, format check, lint, frontend typecheck and tests,
+ * and knip where the app makes it strict).
  * Returns { app, ok, step?, tail? }; `step` and `tail` (the end of the output) name why it failed.
  */
 export function checkApp({ data, app, work, clone = defaultClone, run = defaultRun, centralSha = '0'.repeat(40) }) {
@@ -73,7 +80,8 @@ export function checkApp({ data, app, work, clone = defaultClone, run = defaultR
     fs.mkdirSync(path.dirname(path.join(dir, file.path)), { recursive: true });
     fs.writeFileSync(path.join(dir, file.path), file.content);
   }
-  for (const [step, [command, args]] of STEPS) {
+  const project = data.projects.projects.find((p) => p.name === app);
+  for (const [step, [command, args]] of appSteps(project)) {
     const result = run(command, args, dir);
     if (!result.ok) return { app, ok: false, step, tail: result.output.trim().split('\n').slice(-TAIL_LINES).join('\n') };
   }
@@ -83,7 +91,7 @@ export function checkApp({ data, app, work, clone = defaultClone, run = defaultR
 /** Markdown for the job summary. */
 export function summary({ pin, result }) {
   const head = `### design-system v${pin.version} on ${result.app}: ${result.ok ? 'passed' : 'failed'}`;
-  if (result.ok) return `${head}\n\nThe app installs, passes its format check and lint, typechecks, and passes its frontend tests with this release.\n`;
+  if (result.ok) return `${head}\n\nThe app installs, passes its format check and lint, typechecks, and passes its frontend tests (and knip where strict) with this release.\n`;
   return `${head}\n\nFailed at **${result.step}**. The end of its output:\n\n\`\`\`\n${result.tail}\n\`\`\`\n\nFix the release in design-system (or add the app change a major release needs) before the pin moves.\n`;
 }
 
