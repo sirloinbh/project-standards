@@ -90,6 +90,22 @@ All 8 apps use Express 5 + Zod. Production code is not distributed as a package;
 - If the DB responds, it returns `200`; otherwise it goes through the error handler and returns `500 { error }`. Health check tools (Docker healthcheck, deploy verification) look only at the status code.
 - The success body is `{ "status": "ok" }` per the scaffold. The existing apps' `{ ok, service, today }` is also allowed (see the differences table below).
 
+### Content search `GET /api/search`
+
+The top bar search dialog (design-system `src/components/search`) finds menus and pages by itself. Records come from the app through one endpoint with the same shape in every app (#1217).
+
+- Request: `GET /api/search?q=<text>`. `q` is validated with a Zod schema on the first line of the handler: trimmed, 1 to 100 characters. A missing or blank `q` is `400 { error }` like any invalid input.
+- Response `200`: `{ "results": SearchResult[] }` (a named list, see "Success response shape"). `SearchResult` is the design-system type `{ title: string; href: string; kind: 'content'; snippet?: string }`. The app's `searchContent(query, signal)` passes `signal` to `fetch`, calls this endpoint with the query and returns `results`.
+  - `title`: the record's name or first line, plain text, at most 80 characters.
+  - `href`: a screen path that starts with `/` and shows the record (`/journal/12`). An app without a detail screen links to the list screen that contains it. It is never an absolute URL.
+  - `kind` is always `'content'`; the dialog groups menus and pages itself.
+  - `snippet`: optional plain text of at most 120 characters (a note, a date, an amount) that helps tell two records apart. No HTML, and nothing the list route does not already return to the owner.
+- Matching follows the dialog's `matchesQuery`: split `q` on whitespace; a record matches when every word appears, ignoring case, in one of its searched text columns (titles, names, notes). Query with `ILIKE` and a parameter per word (PostgreSQL's default escape character is the backslash); escape `\`, `%` and `_` in the word first, and never build SQL from `q`.
+- At most 20 results in total, newest records first. There is no paging: the owner narrows the query instead.
+- Owner-only like the rest of the API: the route sits behind the shared sign-in and the standard rate limit, and returns only the signed-in owner's rows. Archived or deleted records are left out.
+- An error uses the normal `{ error }` shape; the dialog shows its own "could not search" state, so the endpoint adds no special error body.
+- The route is listed in the app's OpenAPI table (`openapi.ts`) and has an API test (a word from a saved record finds it, a blank `q` is `400`, `%` is matched literally) and a screen test (the result opens the record).
+
 ### Error responses
 
 - Every error response body is a single `{ "error": "<English message>" }`. Its type is `ApiError` in `shared/contract.ts`. The screen must be able to show `error` as is.
