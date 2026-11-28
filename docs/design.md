@@ -63,19 +63,19 @@ project-standards/
 ├─ packages/
 │  ├─ eslint-config/              # each package: package.json, CHANGELOG.md, README.md, source
 │  ├─ prettier-config/
-│  ├─ tsconfig/
-│  └─ design-tokens/
+│  └─ tsconfig/                   # design-tokens moved to sirloinbh/design-system (#1170)
 ├─ templates/
 │  ├─ common/                     # shared by app and infra
 │  ├─ app/
-│  └─ infra/
+│  ├─ infra/
+│  └─ ui/                         # only sign-in and the service worker; the UI kit comes from the pinned design-system release (ADR-0031)
 ├─ scaffold/app/                  # skeleton for new projects only
 ├─ scripts/
 │  ├─ lib/                        # render, hash, manifest, registry, github-app (JWT, installation token), github-api
 │  ├─ sync.mjs
 │  ├─ standards-check.mjs         # source of the downstream repos' .standards/check.mjs
 │  ├─ registry-check.mjs
-│  ├─ gen-docs.mjs                # docs/projects.md, versions.md, design-tokens.md (--check)
+│  ├─ gen-docs.mjs                # docs/projects.md, versions.md (--check)
 │  ├─ compliance.mjs              # docs/compliance.md, docs/env-matrix.md
 │  ├─ package-guard.mjs
 │  ├─ ioc-scan.mjs

@@ -51,7 +51,7 @@ export function packageVars(centralRoot) {
 export function renderScaffold({ root: centralRoot = root, data, project, centralSha, workflowSha = centralSha }) {
   const target = data.sync.targets.find((t) => t.project === project && t.profile === 'app');
   if (!target) throw new Error(`${project}: no app target in sync.config.json. Add the project to the registry and sync.config.json first (docs/design.md 6.6).`);
-  const vars = { ...buildVars(data, target, { centralSha, workflowSha }), packages: packageVars(centralRoot) };
+  const vars = { ...buildVars(data, target, { centralSha, workflowSha }), packages: { ...packageVars(centralRoot), designTokens: data.versions.packages['@sirloinbh/design-tokens'] } };
 
   const withContract = Boolean(data.projects.projects.find((p) => p.name === project)?.features?.contract);
   const own = new Map();

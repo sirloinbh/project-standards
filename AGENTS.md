@@ -40,7 +40,7 @@ This works with Node built-in modules only, with no external npm packages. Do no
 | `npm run links:check` | After renaming a file or heading in the docs: a second. Part of `check` and `check:docs` |
 | `npm run check:docs` | Docs-only changes (no change under `scripts/`, `templates/`, `packages/`, `registry/`, `versions.json`, or `sync.config.json`): a few seconds. CI still runs `npm run check` |
 | `UPDATE_SNAPSHOT=1 npm test` | When the list of files downstream repos receive changed. Review the snapshot change in the PR |
-| `npm run docs`, `npm run tokens` | To regenerate the generated docs after changing the registry or tokens |
+| `npm run docs` | To regenerate the generated docs after changing the registry or versions |
 | `npm run sync:preview` | To preview the files downstream repos will receive in `.local/sync-preview/` |
 
 ## Path-specific rules
@@ -48,7 +48,7 @@ This works with Node built-in modules only, with no external npm packages. Do no
 These live in `.claude/rules/`. Claude Code loads each one when it works on matching files; other agents read the matching file before changing those paths.
 
 - [sources-and-copies.md](.claude/rules/sources-and-copies.md): which file is the source and which are copies (`templates/`, `.claude/`, `.codex/`, `.github/`, `versions.json`, `registry/`, `sync.config.json`). Edit the source and copy it in the same PR.
-- [sync-and-deploy.md](.claude/rules/sync-and-deploy.md): how sync, package releases, the compliance report, and app deploys work (`sync.config.json`, `packages/`, workflows, sync and compliance scripts).
+- [sync-and-deploy.md](.claude/rules/sync-and-deploy.md): how sync, package releases, the compliance report, and app deploys work (`sync.config.json`, `packages/` (design-tokens now lives in design-system), workflows, sync and compliance scripts).
 
 ## Prohibited actions
 

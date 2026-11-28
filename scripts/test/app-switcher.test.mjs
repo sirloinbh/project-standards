@@ -1,5 +1,6 @@
 // The app switcher list (#561): lib/apps.ts is rendered from the registry for every ui app.
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -25,9 +26,14 @@ test('each ui app gets all active apps with their addresses and its own name', (
   }
 });
 
+// The template now comes from the pinned design-system release (#1170). Releases before the one that reads {{project.icon}}
+// do not render the icon, so the render check starts with that release; the registry check always runs.
+const releaseUsesIcon = fs.readFileSync(path.join(data.designSystemRelease.dir, 'delivery/ui/frontend/src/lib/apps.ts.tmpl'), 'utf8').includes('{{project.icon}}');
+
 test('each ui app gets its registry icon as CurrentAppIcon (#1213)', () => {
   for (const project of uiApps) {
     assert.match(project.icon, /^[A-Z][A-Za-z0-9]*$/, `${project.name} has a lucide icon name`);
+    if (!releaseUsesIcon) continue;
     const target = data.sync.targets.find((t) => t.project === project.name);
     const file = planTarget({ root, data, target, centralSha: 'a'.repeat(40) }).files.find((f) => f.path === 'frontend/src/lib/apps.ts');
     assert.ok(file.content.includes(`import { ${project.icon} as CurrentAppIcon } from 'lucide-react';`), project.name);

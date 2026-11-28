@@ -17,7 +17,7 @@ Edit the source, never the copy.
 
 | What to change | Source | Copies (do not edit) |
 |---|---|---|
-| Files copied into downstream repos | `templates/common/`, `templates/app/`, `templates/infra/`, feature folders `templates/ui/`, `e2e/`, `vitest/` | Centrally managed files in downstream repos (arrive through sync PRs) |
+| Files copied into downstream repos | `templates/common/`, `templates/app/`, `templates/infra/`, feature folders `templates/ui/` (only `sign-in.tsx` and the service worker files; the UI kit, tokens and design docs have their source in the pinned `sirloinbh/design-system` release, ADR-0031), `e2e/`, `vitest/` | Centrally managed files in downstream repos (arrive through sync PRs) |
 | Shared skills | `templates/common/skills/` | This repo's `.claude/skills/` |
 | Issue and PR templates | `templates/common/.github/` | This repo's `.github/` templates |
 | Agent blocking settings and hooks | `templates/common/.claude/`, `templates/common/.codex/` | This repo's `.claude/settings.json`, `.claude/hooks/`, `.codex/` |

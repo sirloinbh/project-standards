@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { externalFolders } from '../lib/design-system.mjs';
 import { loadAll } from '../lib/registry.mjs';
 import { HEADER_TEXT } from '../lib/render.mjs';
 import { renderProfile } from '../lib/templates.mjs';
@@ -18,7 +19,7 @@ const rendered = data.sync.targets.map((target) => {
   // The ui feature folder carries the std-ux-audit skill (#1168), so it joins like it does in planTarget.
   const featureFolders = Object.entries(profile.featureTemplates ?? {}).filter(([feature]) => project?.features?.[feature]).map(([, folder]) => folder);
   const folders = [...profile.templates, ...featureFolders];
-  const files = renderProfile({ root, profile: target.profile, folders, vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
+  const files = renderProfile({ root, profile: target.profile, folders, vars: buildVars(data, target, { centralSha: 'abcdef1234567' }), external: externalFolders(data.designSystemRelease) });
   return { target, files: Object.fromEntries(files.map((f) => [f.path, f])) };
 });
 const apps = rendered.filter((r) => r.target.profile === 'app');

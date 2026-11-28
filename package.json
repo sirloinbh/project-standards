@@ -11,8 +11,6 @@
     "docs": "node scripts/gen-docs.mjs",
     "docs:check": "node scripts/gen-docs.mjs --check",
     "sync:preview": "node scripts/sync.mjs --dry-run --out .local/sync-preview",
-    "tokens": "node scripts/build-tokens.mjs",
-    "tokens:check": "node scripts/build-tokens.mjs --check",
     "self": "node scripts/build-self.mjs",
     "self:check": "node scripts/build-self.mjs --check",
     "proxy": "node scripts/proxy-config.mjs",
@@ -21,6 +19,6 @@
     "secrets:check": "node scripts/secret-scan.mjs",
     "links:check": "node scripts/check-doc-links.mjs",
     "check:docs": "npm run registry:check && npm run docs:check && npm run self:check && npm run workflows:check && npm run secrets:check && npm run links:check",
-    "check": "npm run test && npm run registry:check && npm run docs:check && npm run tokens:check && npm run self:check && npm run packages:check && npm run workflows:check && npm run secrets:check && npm run links:check"
+    "check": "npm run test && npm run registry:check && npm run docs:check && npm run self:check && npm run packages:check && npm run workflows:check && npm run secrets:check && npm run links:check"
   }
 }

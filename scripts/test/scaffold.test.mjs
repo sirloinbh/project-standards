@@ -48,8 +48,8 @@ test('the slot 99 project is a valid registry entry', () => {
 });
 
 test('renders without leftover template variables (GitHub ${{ }} expressions stay)', () => {
-  // .standards/ holds vendored central scripts, copied without rendering; their source mentions {{ }}.
-  for (const { path: file, content } of files.filter((f) => typeof f.content === 'string' && !f.path.startsWith('.standards/'))) assert.doesNotMatch(content, /(?<!\$)\{\{/, file);
+  // .standards/ holds vendored central scripts, copied without rendering; their source mentions {{ }}. The delivered UI kit is plain TSX (JSX style={{ }}).
+  for (const { path: file, content } of files.filter((f) => typeof f.content === 'string' && !f.path.startsWith('.standards/') && !f.path.startsWith('frontend/src/components/'))) assert.doesNotMatch(content, /(?<!\$)\{\{/, file);
   assert.ok(!files.some((f) => f.path.endsWith('.tmpl')));
 });
 
@@ -146,8 +146,9 @@ test('the rendered repository passes standards-check with no problems or warning
 
 test('dependencies are exact and match versions.json (shared app dependencies) and own packages', () => {
   const shared = loadAll(root).data.versions.dependencies;
+  const ownVersions = loadAll(root).data.versions.packages;
   const policy = new Map(Object.values(shared).flatMap((sections) => Object.values(sections).flatMap((deps) => Object.entries(deps))));
-  const own = packageVars(root);
+  const own = { ...packageVars(root), designTokens: ownVersions['@sirloinbh/design-tokens'] };
   const checked = [];
   for (const file of ['package.json', 'frontend/package.json', 'backend/package.json']) {
     const pkg = JSON.parse(byPath.get(file));
