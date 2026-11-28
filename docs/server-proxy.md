@@ -16,7 +16,7 @@ The config is generated from the registry, so nothing is edited by hand on the s
 | `cert-renew.service`, `cert-renew.timer` | Runs `cert.sh renew` at 03:17 and 15:17 Seoul time. certbot renews only when the certificate is within 30 days of expiry |
 
 - The script refuses to run while `rootDomain` in `registry/platform.json` is `null` (#539). To look at the output before that, run `node scripts/proxy-config.mjs --domain example.com`.
-- Access is still limited to allowed IPs by the Lightsail firewall (443 and 80 open to `allowed_cidrs` only, #252), so nginx has no allow list of its own. The one exception is a `service.publicOrigin` port (8443 for money-ledger, opened to everyone in shared-aws-infrastructure#118 and #129): anyone can reach it, so the generated block passes only the exact path and method and never the app's web port. Setting the field in the registry does not open the port; the firewall rule is separate.
+- **Port 443 is open to everyone** (shared-aws-infrastructure#132, applied 2026-11-28, for the Android app in workout-memo#110). The IP allow list no longer protects HTTPS, and nginx has no allow list of its own, so the shared sign-in ([ADR-0015](adr/0015-shared-sign-in.md)) and each app's own auth are the only protection: an app must register auth before its `/api` routes (see "Adding an app to the proxy"). Port 80 stays limited to `allowed_cidrs`. A `service.publicOrigin` port (8443 for money-ledger, opened to everyone in shared-aws-infrastructure#118 and #129): anyone can reach it, so the generated block passes only the exact path and method and never the app's web port. Setting the field in the registry does not open the port; the firewall rule is separate.
 - Security headers other than HSTS (`X-Content-Type-Options`, `Referrer-Policy`) come from each app's own nginx.
 
 ## Shared server `.env` keys
@@ -110,3 +110,11 @@ Prerequisites: the domain is bought (#249), `rootDomain` is filled (#539), and t
 
 - If the proxy or the certificate breaks, all subdomains break together, sign-in included. The firewall never opened the app web ports, so the fallback is an SSH tunnel to the app's web port: `server-ssh -L <ports.web>:127.0.0.1:<ports.web>`, then `http://localhost:<ports.web>`.
 - An app that has not synced #254 yet sees every request as coming from the proxy, so its per-IP API rate limit (10 per second, burst 40) is shared by all its clients. With one user per app this does not matter.
+
+## Adding an app to the proxy
+
+Port 443 is public, so the registry entry is a public route. Check these before an app is added to the proxy registry (#1201):
+
+- The app has working auth: every `/api` route (and `/mcp` if present) sits behind the shared sign-in or the app's own check, registered before the routes. An app without auth (english-study before it became cert-manager) must not be added.
+- A route that must stay open (a webhook, a health check) is listed on purpose and checks its own secret or signature.
+- Do not rely on the firewall or `allowed_cidrs` for HTTPS; they no longer apply to 443.

@@ -111,8 +111,9 @@ ${proxyHeaders(app)}
   }
 ${apiLocation(app)}}`;
   return `${HEADER}
-# Only allowed IPs reach 80 and 443 (Lightsail firewall, ADR-0012), so nginx has no allow list.
-# The one exception is a service.publicOrigin port, open to everyone (see the end of this file).
+# Port 443 is open to everyone (shared-aws-infrastructure#132, ADR-0012), so nothing here limits who can
+# connect: every app must register its own auth before its /api routes. nginx has no allow list.
+# Port 80 and the service.publicOrigin ports are set by the firewall rules (see the end of this file).
 
 ssl_certificate /etc/letsencrypt/live/${domain}/fullchain.pem;
 ssl_certificate_key /etc/letsencrypt/live/${domain}/privkey.pem;

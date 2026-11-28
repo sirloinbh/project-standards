@@ -20,7 +20,7 @@
 | Subdomain | The registry `name` as is (`workout-memo.<domain>`) |
 | Proxy | One nginx on the server takes 443 and forwards to each app's web port. The config is generated from the registry |
 | Certificate | One Let's Encrypt wildcard (`*.<domain>`). DNS validation with certbot `dns-route53` |
-| Access | 443 is also opened only to allowed IPs. When app login exists, decide public access per app |
+| Access | 443 was first opened only to allowed IPs. **Update (2026-11-28, #1201): 443 is now open to everyone** (shared-aws-infrastructure#132, for workout-memo#110). Every app must register auth before its `/api` routes; the IP allow list no longer protects HTTPS. Port 80 stays limited to allowed IPs |
 
 Lightsail DNS is also inside AWS, but it is not used because certbot has no official plugin for it, which makes automatic certificate renewal hard.
 
