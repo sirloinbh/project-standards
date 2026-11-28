@@ -46,7 +46,7 @@ test('the manifest makes every app installable with its registry name', () => {
 });
 
 test('manifest and theme colours are the light background token (ADR-0008)', () => {
-  const tokens = fs.readFileSync(path.join(root, 'packages/design-tokens/tokens.css'), 'utf8');
+  const tokens = fs.readFileSync(path.join(data.designSystemRelease.dir, 'packages/design-tokens/tokens.css'), 'utf8');
   assert.match(tokens, /:root \{[^}]*--background: oklch\(1 0 0\);/);
   assert.match(tokens, /\.dark \{[^}]*--background: oklch\(0\.145 0 0\);/);
   const manifest = JSON.parse(study['frontend/public/manifest.webmanifest']);

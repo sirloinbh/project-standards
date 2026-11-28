@@ -2,6 +2,7 @@
 // against each other (duplicates, port formula, reserved ports, sync targets).
 import fs from 'node:fs';
 import path from 'node:path';
+import { resolveDesignSystem } from './design-system.mjs';
 import { validate } from './schema.mjs';
 
 export const FILES = {
@@ -21,6 +22,15 @@ export function loadAll(root) {
     data[key] = readJson(path.join(root, dataFile));
     schemas[key] = readJson(path.join(root, schemaFile));
   }
+  // The pinned design-system release that carries the UI kit (#1170). It is fetched on first use only, so commands that
+  // never render the kit (registry-check, gen-docs) need no network. Enumerable, so a copy of the data (spread, structuredClone) keeps the release.
+  let release;
+  Object.defineProperty(data, 'designSystemRelease', {
+    configurable: true,
+    enumerable: true,
+    get: () => (release === undefined ? (release = resolveDesignSystem({ pin: data.versions['design-system'], cacheDir: path.join(root, '.local/design-system') })) : release),
+    set: (value) => { release = value; },
+  });
   return { data, schemas };
 }
 

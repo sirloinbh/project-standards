@@ -24,7 +24,7 @@ test('the ui components join a plan only when the project turns features.ui on (
   data.projects.projects.find((p) => p.name === 'study-log').features.ui = true;
   const on = planTarget({ root, data, target: targetOf(data, 'study-log'), centralSha: 'a'.repeat(40) });
   assert.ok(ui(on).includes('frontend/src/components/ui/button.tsx'));
-  assert.ok(on.files.some((f) => f.path === 'frontend/src/lib/utils.ts' && f.source === 'templates/ui/frontend/src/lib/utils.ts'));
+  assert.ok(on.files.some((f) => f.path === 'frontend/src/lib/utils.ts' && f.source === 'design-system/delivery/ui/frontend/src/lib/utils.ts'));
   assert.ok(on.manifest.files['frontend/src/components/ui/select.tsx']);
 });
 

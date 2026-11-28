@@ -1,4 +1,4 @@
-// Sync delivers the pinned design-system release and falls back to templates/ui before the first release (#1171).
+// Sync delivers the pinned design-system release and delivers the UI kit and the screen checks from it (#1171, #1170).
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -19,13 +19,12 @@ const git = (cwd, ...args) => execFileSync('git', ['-c', 'user.name=test', '-c',
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'ds-release-'));
 test.after(() => fs.rmSync(tmp, { recursive: true, force: true }));
 
-// A fixture design-system repository whose release folder delivery/ui/ holds a copy of templates/ui/.
+// A fixture design-system repository that holds a copy of the delivery folder of the pinned release (data.designSystemRelease).
+const delivery = path.join(data.designSystemRelease.dir, 'delivery');
 const origin = path.join(tmp, 'origin');
 fs.mkdirSync(origin);
 git(origin, 'init', '--quiet');
-fs.cpSync(path.join(root, 'templates/ui'), path.join(origin, 'delivery/ui'), { recursive: true });
-fs.mkdirSync(path.join(origin, 'delivery/standards'), { recursive: true });
-fs.copyFileSync(path.join(root, 'scripts/lib/screen-checks.mjs'), path.join(origin, 'delivery/standards/screen-checks.mjs'));
+fs.cpSync(delivery, path.join(origin, 'delivery'), { recursive: true });
 git(origin, 'add', '-A');
 git(origin, 'commit', '--quiet', '-m', 'release');
 git(origin, 'tag', 'v1.0.0');
@@ -65,7 +64,7 @@ test('a release is cloned once per tag and reused from the cache', () => {
   }
 });
 
-test('with the release the apps get the same files as from templates/ui', () => {
+test('a copy of the release delivers the same files as the pinned release', () => {
   const target = data.sync.targets.find((t) => t.repo === 'sirloinbh/workout-memo');
   const before = planTarget({ root, data, target, centralSha: 'c'.repeat(40) });
   const release = resolve({}, 'plan');
@@ -75,7 +74,7 @@ test('with the release the apps get the same files as from templates/ui', () => 
   assert.deepEqual(Object.entries(after.manifest.files).map(([p, e]) => [p, e.mode, e.sha256]), Object.entries(before.manifest.files).map(([p, e]) => [p, e.mode, e.sha256]), 'hashes are unchanged; only the source note of the delivered files differs');
   const button = after.files.find((f) => f.path === 'frontend/src/components/ui/button.tsx');
   assert.equal(button.source, 'design-system/delivery/ui/frontend/src/components/ui/button.tsx');
-  assert.equal(before.files.find((f) => f.path === button.path).source, 'templates/ui/frontend/src/components/ui/button.tsx');
+  assert.equal(before.files.find((f) => f.path === button.path).source, button.source);
 });
 
 test('files that stay in project-standards are still delivered next to a release; the release wins on the same path (#1207)', () => {
@@ -100,12 +99,12 @@ test('an app that turned the ui feature off gets no delivered files', () => {
   assert.ok(!plan.files.some((f) => f.source.startsWith('design-system/delivery/ui/')));
 });
 
-test('the screen checks come from the release when one is pinned, and from the local copy before', () => {
+test('the screen checks come from the pinned release', () => {
   const target = data.sync.targets.find((t) => t.repo === 'sirloinbh/workout-memo');
   const before = planTarget({ root, data, target, centralSha: 'e'.repeat(40) });
   const after = planTarget({ root, data: { ...data, designSystemRelease: resolve({}, 'screen') }, target, centralSha: 'e'.repeat(40) });
   const find = (plan) => plan.files.find((f) => f.path === '.standards/lib/screen-checks.mjs');
-  assert.equal(find(before).source, 'scripts/lib/screen-checks.mjs');
+  assert.equal(find(before).source, 'design-system/delivery/standards/screen-checks.mjs');
   assert.equal(find(after).source, 'design-system/delivery/standards/screen-checks.mjs');
   assert.equal(find(after).content, find(before).content);
   // A release that changes the module changes what the apps receive.
@@ -120,7 +119,7 @@ test('a release without the screen checks module fails clearly', () => {
   const bare = path.join(tmp, 'bare');
   fs.mkdirSync(bare);
   git(bare, 'init', '--quiet');
-  fs.cpSync(path.join(root, 'templates/ui'), path.join(bare, 'delivery/ui'), { recursive: true });
+  fs.cpSync(path.join(delivery, 'ui'), path.join(bare, 'delivery/ui'), { recursive: true });
   git(bare, 'add', '-A');
   git(bare, 'commit', '--quiet', '-m', 'release');
   git(bare, 'tag', 'v3.0.0');
