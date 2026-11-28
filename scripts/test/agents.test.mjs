@@ -13,7 +13,11 @@ const { data } = loadAll(root);
 
 // Renders every sync target once; a missing template variable throws here.
 const rendered = data.sync.targets.map((target) => {
-  const folders = data.sync.profiles[target.profile].templates;
+  const profile = data.sync.profiles[target.profile];
+  const project = data.projects.projects.find((p) => p.name === target.project);
+  // The ui feature folder carries the std-ux-audit skill (#1168), so it joins like it does in planTarget.
+  const featureFolders = Object.entries(profile.featureTemplates ?? {}).filter(([feature]) => project?.features?.[feature]).map(([, folder]) => folder);
+  const folders = [...profile.templates, ...featureFolders];
   const files = renderProfile({ root, profile: target.profile, folders, vars: buildVars(data, target, { centralSha: 'abcdef1234567' }) });
   return { target, files: Object.fromEntries(files.map((f) => [f.path, f])) };
 });
