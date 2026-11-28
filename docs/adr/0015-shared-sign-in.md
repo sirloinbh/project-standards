@@ -41,7 +41,7 @@
 | Secrets | SSM under ADR-0014: `/sirloinbh/shared-auth/better-auth-secret`, `github-client-id`, `github-client-secret`, `google-client-id`, `google-client-secret`, `allowed-emails` |
 | Versions | `better-auth` and its plugins are pinned to exact versions that are at least 14 days old ([dependency-policy.md](../dependency-policy.md)). It releases several patches a week, and 1.8 changes the OAuth provider, so upgrades go through workout-memo first |
 | Server | Resize to 2 GB as a user step right before the auth service is first deployed (#550; user decision, 2026-11-15) |
-| Network access | Unchanged: 80 and 443 stay open only to the allowed IPs. Opening `/mcp` or a whole app to the internet is decided per app later (#558) |
+| Network access | At the time of this decision, 80 and 443 were open only to the allowed IPs. Since 2026-11-28 (#1201), 443 is open to everyone, so sign-in is the protection for HTTPS and every app must register auth before its `/api` routes. Opening `/mcp` or a whole app to the internet is decided per app later (#558) |
 
 ## Consequences
 
