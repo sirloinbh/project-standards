@@ -25,6 +25,16 @@ test('each ui app gets all active apps with their addresses and its own name', (
   }
 });
 
+test('each ui app gets its registry icon as CurrentAppIcon (#1213)', () => {
+  for (const project of uiApps) {
+    assert.match(project.icon, /^[A-Z][A-Za-z0-9]*$/, `${project.name} has a lucide icon name`);
+    const target = data.sync.targets.find((t) => t.project === project.name);
+    const file = planTarget({ root, data, target, centralSha: 'a'.repeat(40) }).files.find((f) => f.path === 'frontend/src/lib/apps.ts');
+    assert.ok(file.content.includes(`import { ${project.icon} as CurrentAppIcon } from 'lucide-react';`), project.name);
+  }
+  assert.equal(new Set(data.projects.projects.map((p) => p.icon)).size, data.projects.projects.length, 'icons are unique');
+});
+
 test('the list is empty while there is no root domain, and names with quotes are escaped', () => {
   const noDomain = { projects: data.projects, platform: { ...data.platform, rootDomain: null } };
   assert.equal(appsList(noDomain), '');

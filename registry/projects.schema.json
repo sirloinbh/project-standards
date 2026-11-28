@@ -83,12 +83,13 @@
     },
     "project": {
       "type": "object",
-      "required": ["slot", "status", "name", "title", "displayName", "domain", "summary", "tagline", "repos", "public", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
+      "required": ["slot", "status", "name", "icon", "title", "displayName", "domain", "summary", "tagline", "repos", "public", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
       "additionalProperties": false,
       "properties": {
         "slot": { "type": "integer", "minimum": 1, "maximum": 99, "description": "Never reassigned, even after retirement" },
         "status": { "enum": ["active", "retired"] },
         "name": { "$ref": "#/$defs/slug" },
+        "icon": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$", "description": "A lucide-react icon name (PascalCase, e.g. Dumbbell). Rendered into lib/apps.ts as CurrentAppIcon; the top bar shows it instead of the app name (#1213)" },
         "title": { "type": "string", "minLength": 1, "description": "Name used in docs and instructions (e.g. Study Log)" },
         "displayName": { "type": "string", "minLength": 1, "description": "App display name used in the screen header, tab title, and PWA name. Apps are told apart only by this name, so it must not overlap (ADR-0008)" },
         "domain": { "type": "string", "minLength": 1, "description": "Description of the service area (e.g. exercise)" },

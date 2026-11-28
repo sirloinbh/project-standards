@@ -1,8 +1,13 @@
+import { {{project.icon}} as CurrentAppIcon } from 'lucide-react';
+
 // Filled in from the registry (registry/projects.json and platform.json rootDomain, #561).
 // The apps the top bar switcher links to. The list is empty while no root domain exists.
 export type AppLink = { name: string; label: string; href: string };
 
 export const CURRENT_APP: string = '{{project.name}}';
+
+// The current app's icon (a lucide-react icon from the registry `icon` value). The top bar shows it instead of the name.
+export { CurrentAppIcon };
 
 export const APPS: AppLink[] = [
 {{apps.list}}
