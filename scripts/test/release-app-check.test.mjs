@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { appMatrix, checkApp, pinChanged, summary, verifyRelease } from '../release-app-check.mjs';
+import { appMatrix, appSteps, checkApp, pinChanged, summary, verifyRelease } from '../release-app-check.mjs';
 import { loadAll } from '../lib/registry.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -104,6 +104,25 @@ test('a failing Prettier or lint check stops that app and names the step (#1220)
     } finally {
       fs.rmSync(work, { recursive: true, force: true });
     }
+  }
+});
+
+test('an app that makes knip strict also runs knip last; the others do not (#1233)', () => {
+  assert.deepEqual(appSteps({ features: { knipStrict: true } }).map(([step]) => step).at(-1), 'knip');
+  assert.ok(!appSteps({ features: { knipStrict: false } }).some(([step]) => step === 'knip'));
+  const { work, calls, clone } = fixture();
+  try {
+    const run = (command, args) => {
+      calls.push([command, ...args].join(' '));
+      return args.includes('knip') ? { ok: false, output: 'Unused exports (1)\nChartTable  frontend/src/components/chart/chart.tsx' } : { ok: true, output: '' };
+    };
+    const result = checkApp({ data, app: 'health-log', work, clone, run });
+    assert.equal(result.ok, false);
+    assert.equal(result.step, 'knip');
+    assert.match(result.tail, /ChartTable/);
+    assert.equal(calls.at(-1), 'npm run knip');
+  } finally {
+    fs.rmSync(work, { recursive: true, force: true });
   }
 });
 

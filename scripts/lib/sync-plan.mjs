@@ -29,6 +29,41 @@ export function globToRegExp(pattern) {
 
 export const matchesAny = (file, patterns) => patterns.some((p) => globToRegExp(p).test(file));
 
+export const KNIP_CONFIG = 'knip.json';
+/** Sources of the shared UI kit: the feature folder templates/ui, or the same folder of the pinned design-system release. */
+const KIT_SOURCE = /^(?:templates\/ui\/|design-system\/delivery\/ui\/)/;
+
+/**
+ * knip `ignore` patterns for the kit code files among the rendered files (#1233): one `frontend/src/components/<name>/**`
+ * per kit component folder, and the exact path for other kit code files. Sorted, without duplicates.
+ */
+export function kitKnipIgnores(files) {
+  const patterns = new Set();
+  for (const file of files) {
+    if (!KIT_SOURCE.test(file.source) || !/^frontend\/src\/.+\.tsx?$/.test(file.path)) continue;
+    const folder = file.path.match(/^frontend\/src\/components\/[^/]+\//)?.[0];
+    patterns.add(folder ? `${folder}**` : file.path);
+  }
+  return [...patterns].sort();
+}
+
+/**
+ * Adds patterns to the `ignore` array of a knip.json text, one per line after its last entry, so the template's formatting
+ * (and the apps' Prettier check) is kept. Patterns the array already covers are left out.
+ */
+export function addKnipIgnores(text, patterns) {
+  const { ignore = [] } = JSON.parse(text);
+  const covered = (p) => ignore.includes(p) || matchesAny(p.endsWith('/**') ? `${p.slice(0, -2)}x.ts` : p, ignore);
+  const extra = patterns.filter((p) => !covered(p));
+  if (extra.length === 0) return text;
+  const match = text.match(/("ignore": \[\n(?:\s*"[^"\n]*",\n)*(\s*)"[^"\n]*")\n/);
+  if (!match) throw new Error(`${KNIP_CONFIG}: the "ignore" array is not one string per line`);
+  const added = extra.map((p) => `,\n${match[2]}${JSON.stringify(p)}`).join('');
+  const out = text.replace(match[1], () => `${match[1]}${added}`);
+  JSON.parse(out);
+  return out;
+}
+
 /** Sets dotted fields in a package.json text, keeping other fields and 2-space formatting. */
 export function applyFields(text, fields) {
   const json = JSON.parse(text);
@@ -58,6 +93,9 @@ export function planTarget({ root, data, target, centralSha, workflowSha = centr
     const ci = rendered.find((f) => f.path === APP_CI);
     if (ci) Object.assign(ci, { source: REUSABLE_APP_CI, content: inlineAppCi(root, ci.content) });
   }
+  // The shared UI kit is central code with a public API, so knip skips it like components/ui/** (#1233).
+  const knip = rendered.find((f) => f.path === KNIP_CONFIG);
+  if (knip) knip.content = addKnipIgnores(knip.content, kitKnipIgnores(rendered));
 
   // Files generated from registry data, such as the app list shared-ai and Terraform read (#705).
   rendered.push(...renderGeneratedFiles(target, data));
