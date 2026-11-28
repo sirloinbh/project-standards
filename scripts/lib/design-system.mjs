@@ -9,6 +9,11 @@ import path from 'node:path';
 export const DELIVERY_FOLDER = 'delivery';
 /** Feature folders (sync.config.json featureTemplates values) that design-system delivers once a release is pinned. */
 export const DELIVERED_FOLDERS = ['ui'];
+/**
+ * Vendored central files (templates/index.json vendor.files sources) that the release delivers instead of the local copy (#1169):
+ * source path in this repository -> path in the release. The local file is the fallback until the first release is pinned.
+ */
+export const DELIVERED_VENDORED = { 'scripts/lib/screen-checks.mjs': `${DELIVERY_FOLDER}/standards/screen-checks.mjs` };
 
 const defaultCloneUrl = (repo) => `https://github.com/${repo}.git`;
 const run = (args, cwd) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
@@ -41,6 +46,9 @@ export function resolveDesignSystem({ pin, cacheDir, cloneUrl = defaultCloneUrl,
   for (const folder of DELIVERED_FOLDERS) {
     if (!fs.existsSync(path.join(dir, DELIVERY_FOLDER, folder))) throw new Error(`${pin.repo} ${tag} has no ${DELIVERY_FOLDER}/${folder}/ folder`);
   }
+  for (const file of Object.values(DELIVERED_VENDORED)) {
+    if (!fs.existsSync(path.join(dir, file))) throw new Error(`${pin.repo} ${tag} has no ${file}`);
+  }
   return { version: pin.version, tag, sha: actual, dir };
 }
 
@@ -48,4 +56,10 @@ export function resolveDesignSystem({ pin, cacheDir, cloneUrl = defaultCloneUrl,
 export function externalFolders(release) {
   if (!release) return {};
   return Object.fromEntries(DELIVERED_FOLDERS.map((folder) => [folder, { dir: path.join(release.dir, DELIVERY_FOLDER, folder), label: `design-system/${DELIVERY_FOLDER}/${folder}` }]));
+}
+
+/** { source path: { file, label } } for renderProfile's vendored files; empty without a release (fallback to the local copies). */
+export function externalVendored(release) {
+  if (!release) return {};
+  return Object.fromEntries(Object.entries(DELIVERED_VENDORED).map(([source, rel]) => [source, { file: path.join(release.dir, rel), label: `design-system/${rel}` }]));
 }

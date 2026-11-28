@@ -23,6 +23,8 @@ const origin = path.join(tmp, 'origin');
 fs.mkdirSync(origin);
 git(origin, 'init', '--quiet');
 fs.cpSync(path.join(root, 'templates/ui'), path.join(origin, 'delivery/ui'), { recursive: true });
+fs.mkdirSync(path.join(origin, 'delivery/standards'), { recursive: true });
+fs.copyFileSync(path.join(root, 'scripts/lib/screen-checks.mjs'), path.join(origin, 'delivery/standards/screen-checks.mjs'));
 git(origin, 'add', '-A');
 git(origin, 'commit', '--quiet', '-m', 'release');
 git(origin, 'tag', 'v1.0.0');
@@ -81,5 +83,32 @@ test('an app that turned the ui feature off gets no delivered files', () => {
   project.features.ui = false;
   const target = copy.sync.targets.find((t) => t.repo === 'sirloinbh/workout-memo');
   const plan = planTarget({ root, data: { ...copy, designSystemRelease: resolve({}, 'plan2') }, target, centralSha: 'd'.repeat(40) });
-  assert.ok(!plan.files.some((f) => f.source.startsWith('design-system/')));
+  assert.ok(!plan.files.some((f) => f.source.startsWith('design-system/delivery/ui/')));
+});
+
+test('the screen checks come from the release when one is pinned, and from the local copy before', () => {
+  const target = data.sync.targets.find((t) => t.repo === 'sirloinbh/workout-memo');
+  const before = planTarget({ root, data, target, centralSha: 'e'.repeat(40) });
+  const after = planTarget({ root, data: { ...data, designSystemRelease: resolve({}, 'screen') }, target, centralSha: 'e'.repeat(40) });
+  const find = (plan) => plan.files.find((f) => f.path === '.standards/lib/screen-checks.mjs');
+  assert.equal(find(before).source, 'scripts/lib/screen-checks.mjs');
+  assert.equal(find(after).source, 'design-system/delivery/standards/screen-checks.mjs');
+  assert.equal(find(after).content, find(before).content);
+  // A release that changes the module changes what the apps receive.
+  const changed = path.join(tmp, 'screen-release');
+  fs.cpSync(path.join(tmp, 'screen'), changed, { recursive: true });
+  fs.appendFileSync(path.join(changed, '1.0.0/delivery/standards/screen-checks.mjs'), '// changed in the release');
+  const next = planTarget({ root, data: { ...data, designSystemRelease: { ...resolve({}, 'screen'), dir: path.join(changed, '1.0.0') } }, target, centralSha: 'e'.repeat(40) });
+  assert.match(find(next).content, /changed in the release/);
+});
+
+test('a release without the screen checks module fails clearly', () => {
+  const bare = path.join(tmp, 'bare');
+  fs.mkdirSync(bare);
+  git(bare, 'init', '--quiet');
+  fs.cpSync(path.join(root, 'templates/ui'), path.join(bare, 'delivery/ui'), { recursive: true });
+  git(bare, 'add', '-A');
+  git(bare, 'commit', '--quiet', '-m', 'release');
+  git(bare, 'tag', 'v3.0.0');
+  assert.throws(() => resolveDesignSystem({ pin: { ...pin, version: '3.0.0', sha: git(bare, 'rev-parse', 'HEAD') }, cacheDir: path.join(tmp, 'c-bare'), cloneUrl: () => bare }), /has no delivery.standards.screen-checks.mjs/);
 });
