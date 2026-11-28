@@ -1,6 +1,6 @@
 # Deployment and operations ({{project.title}})
 
-It runs on a single personal-account Lightsail server with Docker Compose (web, API, PostgreSQL). All 8 apps run on the same server, each with its own compose ([ADR-0009](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0009-multi-app-single-lightsail.md)). Access is possible only from allowed IPs, through the app's own address `https://{{service.host}}` ([ADR-0012](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0012-shared-domain-subdomains.md)).
+It runs on a single personal-account Lightsail server with Docker Compose (web, API, PostgreSQL). All 8 apps run on the same server, each with its own compose ([ADR-0009](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0009-multi-app-single-lightsail.md)). Port 443 is open to everyone, so the app's own auth protects it (SSH and port 80 stay limited to allowed IPs); the app is reached through the app's own address `https://{{service.host}}` ([ADR-0012](https://github.com/sirloinbh/project-standards/blob/main/docs/adr/0012-shared-domain-subdomains.md)).
 
 ## Value summary
 
@@ -146,7 +146,7 @@ The nginx in the web container (`frontend/nginx.conf`, a centrally managed file)
 
 ## 5. Access
 
-- **Browser:** `https://{{service.host}}` (from allowed IPs only)
+- **Browser:** `https://{{service.host}}` (public; protected by sign-in)
 - **SSH:** `server-ssh` (a shell) or `server-ssh "<command>"`. The address comes from SSM through `server-ip`, with a DNS fallback; install the tools with `tools/install.ps1` and open a new terminal (project-standards `docs/tools.md`)
 - **SSH tunnel (if the proxy is down):** `server-ssh -L {{project.ports.web}}:127.0.0.1:<WEB_PORT>`, then `http://localhost:{{project.ports.web}}`
 - **Logs:** on the server, `cd /opt/{{project.name}} && docker compose logs --tail 100 api`

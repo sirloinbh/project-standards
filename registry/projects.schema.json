@@ -13,6 +13,11 @@
       "type": "array",
       "items": { "$ref": "#/$defs/localTool" }
     },
+    "switcherLinks": {
+      "description": "Web links listed in every app's switcher after the apps (#1214): tools that have a web page but are not apps, such as develop-skill and file-control. Rendered into lib/apps.ts in this order.",
+      "type": "array",
+      "items": { "$ref": "#/$defs/switcherLink" }
+    },
     "sharedServices": {
       "description": "Services every app uses, such as the shared sign-in (ADR-0015). Not apps: not counted among the 8 apps and not synced as one. They share the slot sequence and port formula with apps (ADR-0006) and may use a reserved subdomain.",
       "type": "array",
@@ -20,6 +25,16 @@
     }
   },
   "$defs": {
+    "switcherLink": {
+      "type": "object",
+      "required": ["name", "label", "href"],
+      "additionalProperties": false,
+      "properties": {
+        "name": { "$ref": "#/$defs/slug" },
+        "label": { "type": "string", "minLength": 1, "description": "Text shown in the switcher" },
+        "href": { "type": "string", "pattern": "^https://[^\\s']+$", "description": "The page the link opens (https only)" }
+      }
+    },
     "localTool": {
       "type": "object",
       "required": ["slot", "name", "repo", "summary", "ports"],
@@ -83,12 +98,13 @@
     },
     "project": {
       "type": "object",
-      "required": ["slot", "status", "name", "title", "displayName", "domain", "summary", "tagline", "repos", "public", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
+      "required": ["slot", "status", "name", "icon", "title", "displayName", "domain", "summary", "tagline", "repos", "public", "ports", "db", "service", "aws", "features", "skills", "allowedDifferences"],
       "additionalProperties": false,
       "properties": {
         "slot": { "type": "integer", "minimum": 1, "maximum": 99, "description": "Never reassigned, even after retirement" },
         "status": { "enum": ["active", "retired"] },
         "name": { "$ref": "#/$defs/slug" },
+        "icon": { "type": "string", "pattern": "^[A-Z][A-Za-z0-9]*$", "description": "A lucide-react icon name (PascalCase, e.g. Dumbbell). Rendered into lib/apps.ts as CurrentAppIcon; the top bar shows it instead of the app name (#1213)" },
         "title": { "type": "string", "minLength": 1, "description": "Name used in docs and instructions (e.g. Study Log)" },
         "displayName": { "type": "string", "minLength": 1, "description": "App display name used in the screen header, tab title, and PWA name. Apps are told apart only by this name, so it must not overlap (ADR-0008)" },
         "domain": { "type": "string", "minLength": 1, "description": "Description of the service area (e.g. exercise)" },

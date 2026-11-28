@@ -1,5 +1,6 @@
 // The app switcher list (#561): lib/apps.ts is rendered from the registry for every ui app.
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
@@ -25,9 +26,41 @@ test('each ui app gets all active apps with their addresses and its own name', (
   }
 });
 
+// The template now comes from the pinned design-system release (#1170). Releases before the one that reads {{project.icon}}
+// do not render the icon, so the render check starts with that release; the registry check always runs.
+const releaseUsesIcon = fs.readFileSync(path.join(data.designSystemRelease.dir, 'delivery/ui/frontend/src/lib/apps.ts.tmpl'), 'utf8').includes('{{project.icon}}');
+
+test('each ui app gets its registry icon as CurrentAppIcon (#1213)', () => {
+  for (const project of uiApps) {
+    assert.match(project.icon, /^[A-Z][A-Za-z0-9]*$/, `${project.name} has a lucide icon name`);
+    if (!releaseUsesIcon) continue;
+    const target = data.sync.targets.find((t) => t.project === project.name);
+    const file = planTarget({ root, data, target, centralSha: 'a'.repeat(40) }).files.find((f) => f.path === 'frontend/src/lib/apps.ts');
+    assert.ok(file.content.includes(`import { ${project.icon} as CurrentAppIcon } from 'lucide-react';`), project.name);
+  }
+  assert.equal(new Set(data.projects.projects.map((p) => p.icon)).size, data.projects.projects.length, 'icons are unique');
+});
+
 test('the list is empty while there is no root domain, and names with quotes are escaped', () => {
   const noDomain = { projects: data.projects, platform: { ...data.platform, rootDomain: null } };
   assert.equal(appsList(noDomain), '');
   const quoted = { projects: { projects: [{ ...data.projects.projects[0], displayName: "Tom's \\ app" }] }, platform: data.platform };
   assert.ok(appsList(quoted).includes("label: 'Tom\\'s \\\\ app'"));
+});
+
+test('the registry switcherLinks follow the apps in every rendered apps.ts (#1214)', () => {
+  const links = data.projects.switcherLinks;
+  assert.deepEqual(links.map((l) => l.name), ['file-control', 'develop-skill']);
+  for (const project of uiApps) {
+    const target = data.sync.targets.find((t) => t.project === project.name);
+    const file = planTarget({ root, data, target, centralSha: 'a'.repeat(40) }).files.find((f) => f.path === 'frontend/src/lib/apps.ts');
+    const entries = file.content.split('\n').filter((line) => line.startsWith('  { name:'));
+    const active = data.projects.projects.filter((p) => p.status === 'active');
+    assert.equal(entries.length, active.length + links.length, project.name);
+    links.forEach((l, i) => assert.equal(entries[active.length + i], `  { name: '${l.name}', label: '${l.label}', href: '${l.href}' },`, `${project.name} lists ${l.name} last`));
+  }
+});
+
+test('switcherLinks are not rendered while there is no root domain', () => {
+  assert.equal(appsList({ projects: data.projects, platform: { ...data.platform, rootDomain: null } }), '');
 });

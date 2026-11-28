@@ -19,6 +19,7 @@ function withSlot99() {
     slot: 99,
     status: 'active',
     name: 'sample-app',
+    icon: 'Box',
     title: 'Sample',
     displayName: 'Sample · Scaffold check',
     domain: 'Sample',
