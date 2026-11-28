@@ -55,6 +55,12 @@ test('keeps shebangs, Dockerfile directives, and Markdown frontmatter first', ()
   assert.match(skill, /^---\nname: std-x\n---\n\n<!-- Managed file\. Edit it in sirloinbh\/project-standards templates\/common\/skills\/std-x\/ -->\n\n# Title/);
 });
 
+test('a delivered UI kit Markdown file gets a blank line after the header, other Markdown files do not (#1219)', () => {
+  const kit = addHeader('# Markdown\n\nText\n', 'frontend/src/components/markdown/markdown.md', 'templates/ui/frontend/src/components/markdown/markdown.md');
+  assert.equal(kit, '<!-- Managed file. Edit it in sirloinbh/project-standards templates/ui/frontend/src/components/markdown/ -->\n\n# Markdown\n\nText\n');
+  assert.match(addHeader('# Doc\n', 'docs/x.md', 'templates/common/docs/x.md'), /-->\n# Doc\n$/);
+});
+
 test('does not add a second header or a header to JSON', () => {
   const once = addHeader('root = true\n', '.editorconfig', 'templates/common/.editorconfig');
   assert.equal(addHeader(once, '.editorconfig', 'templates/common/.editorconfig'), once);
