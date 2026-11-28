@@ -50,7 +50,7 @@ const fixture = () => {
   return { work, calls, clone };
 };
 
-test('an app gets this checkout\'s sync files, then installs, typechecks and tests its frontend', () => {
+test('an app gets this checkout\'s sync files, then installs, checks the format, lints, typechecks and tests', () => {
   const { work, calls, clone } = fixture();
   try {
     const run = (command, args) => {
@@ -59,7 +59,7 @@ test('an app gets this checkout\'s sync files, then installs, typechecks and tes
     };
     const result = checkApp({ data, app: 'workout-memo', work, clone, run });
     assert.deepEqual(result, { app: 'workout-memo', ok: true });
-    assert.deepEqual(calls, ['clone sirloinbh/workout-memo', 'npm install --ignore-scripts --no-audit --no-fund', 'npm run typecheck -w frontend', 'npm run test -w frontend']);
+    assert.deepEqual(calls, ['clone sirloinbh/workout-memo', 'npm install --ignore-scripts --no-audit --no-fund', 'npm run format:check', 'npm run lint', 'npm run typecheck -w frontend', 'npm run test -w frontend']);
     assert.ok(fs.existsSync(path.join(work, 'workout-memo', '.standards/manifest.json')));
     assert.ok(fs.existsSync(path.join(work, 'workout-memo', 'frontend/src/components/ui/button.tsx')));
     assert.match(summary({ pin: { version: '1.0.0' }, result }), /passed/);
@@ -85,6 +85,26 @@ test('a broken typecheck stops that app and names the step and the end of the ou
     fs.rmSync(work, { recursive: true, force: true });
   }
   assert.throws(() => checkApp({ data, app: 'nope', work: os.tmpdir(), clone: () => {} }), /unknown app/);
+});
+
+test('a failing Prettier or lint check stops that app and names the step (#1220)', () => {
+  for (const [script, step] of [['format:check', 'format check'], ['lint', 'lint']]) {
+    const { work, clone } = fixture();
+    try {
+      const calls = [];
+      const run = (command, args) => {
+        calls.push(args.join(' '));
+        return args.includes(script) ? { ok: false, output: `[warn] frontend/src/components/nav-tabs/nav-tabs.tsx` } : { ok: true, output: '' };
+      };
+      const result = checkApp({ data, app: 'workout-memo', work, clone, run });
+      assert.equal(result.ok, false);
+      assert.equal(result.step, step);
+      assert.match(result.tail, /nav-tabs\.tsx/);
+      assert.ok(!calls.some((c) => c.includes('typecheck')), 'later steps do not run');
+    } finally {
+      fs.rmSync(work, { recursive: true, force: true });
+    }
+  }
 });
 
 test('the workflow runs on pin changes, reports every app, and keeps one always-passing gate job', () => {

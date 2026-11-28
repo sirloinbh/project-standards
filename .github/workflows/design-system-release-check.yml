@@ -1,6 +1,6 @@
 # Checks a design-system release against every app before the pin moves (#1178, ADR-0031). It runs on pull requests that change the
 # `design-system` pin in versions.json (the PR the design-system release workflow opens, #1173): the pinned release is rendered into a
-# clean clone of each app, then the app's frontend installs, typechecks and runs its tests. A broken app fails this PR, not the app sync PRs.
+# clean clone of each app, then the app installs, passes its format check (Prettier) and lint, and its frontend typechecks and runs its tests (#1220). A broken app fails this PR, not the app sync PRs.
 # Other pull requests skip every job except the final `design-system-release-check`, which then passes (a skipped job counts as passed).
 name: design-system-release-check
 

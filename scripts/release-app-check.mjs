@@ -4,7 +4,7 @@
 //   node scripts/release-app-check.mjs --matrix                                                  prints the app list as JSON for the job matrix
 //   node scripts/release-app-check.mjs --verify-release                                          the pinned commit must have a green design-system `check`
 //   node scripts/release-app-check.mjs --app <name> --work <folder>                              clones the app, renders this PR's sync files into it, then
-//                                                                                                installs, typechecks and tests the frontend
+//                                                                                                installs, checks the format, lints, typechecks and tests
 // A failing app fails the pin PR, not the app sync PRs later. The reason (step and the end of its output) goes to the job summary.
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -42,6 +42,8 @@ export async function verifyRelease({ pin, fetchImpl = fetch }) {
 
 const STEPS = [
   ['install', ['npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund']]],
+  ['format check', ['npm', ['run', 'format:check']]],
+  ['lint', ['npm', ['run', 'lint']]],
   ['frontend typecheck', ['npm', ['run', 'typecheck', '-w', 'frontend']]],
   ['frontend tests', ['npm', ['run', 'test', '-w', 'frontend']]],
 ];
@@ -57,7 +59,7 @@ function defaultClone(repo, dir) {
 }
 
 /**
- * Renders this checkout's sync files for one app into a fresh clone and runs the frontend steps.
+ * Renders this checkout's sync files for one app into a fresh clone and runs the app steps (install, format check, lint, frontend typecheck and tests).
  * Returns { app, ok, step?, tail? }; `step` and `tail` (the end of the output) name why it failed.
  */
 export function checkApp({ data, app, work, clone = defaultClone, run = defaultRun, centralSha = '0'.repeat(40) }) {
@@ -81,7 +83,7 @@ export function checkApp({ data, app, work, clone = defaultClone, run = defaultR
 /** Markdown for the job summary. */
 export function summary({ pin, result }) {
   const head = `### design-system v${pin.version} on ${result.app}: ${result.ok ? 'passed' : 'failed'}`;
-  if (result.ok) return `${head}\n\nThe frontend installs, typechecks and passes its tests with this release.\n`;
+  if (result.ok) return `${head}\n\nThe app installs, passes its format check and lint, typechecks, and passes its frontend tests with this release.\n`;
   return `${head}\n\nFailed at **${result.step}**. The end of its output:\n\n\`\`\`\n${result.tail}\n\`\`\`\n\nFix the release in design-system (or add the app change a major release needs) before the pin moves.\n`;
 }
 
