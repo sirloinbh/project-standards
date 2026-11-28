@@ -41,3 +41,20 @@ test('the list is empty while there is no root domain, and names with quotes are
   const quoted = { projects: { projects: [{ ...data.projects.projects[0], displayName: "Tom's \\ app" }] }, platform: data.platform };
   assert.ok(appsList(quoted).includes("label: 'Tom\\'s \\\\ app'"));
 });
+
+test('the registry switcherLinks follow the apps in every rendered apps.ts (#1214)', () => {
+  const links = data.projects.switcherLinks;
+  assert.deepEqual(links.map((l) => l.name), ['file-control', 'develop-skill']);
+  for (const project of uiApps) {
+    const target = data.sync.targets.find((t) => t.project === project.name);
+    const file = planTarget({ root, data, target, centralSha: 'a'.repeat(40) }).files.find((f) => f.path === 'frontend/src/lib/apps.ts');
+    const entries = file.content.split('\n').filter((line) => line.startsWith('  { name:'));
+    const active = data.projects.projects.filter((p) => p.status === 'active');
+    assert.equal(entries.length, active.length + links.length, project.name);
+    links.forEach((l, i) => assert.equal(entries[active.length + i], `  { name: '${l.name}', label: '${l.label}', href: '${l.href}' },`, `${project.name} lists ${l.name} last`));
+  }
+});
+
+test('switcherLinks are not rendered while there is no root domain', () => {
+  assert.equal(appsList({ projects: data.projects, platform: { ...data.platform, rootDomain: null } }), '');
+});

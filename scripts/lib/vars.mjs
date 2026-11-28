@@ -23,10 +23,14 @@ const OFFLINE_THEME = {
 export function appsList(data) {
   // Display names are registry data; escape what a single-quoted string cannot hold.
   const quote = (v) => `'${String(v).replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`;
-  return data.projects.projects
+  const entry = (name, label, href) => `  { name: ${quote(name)}, label: ${quote(label)}, href: ${quote(href)} },`;
+  const apps = data.projects.projects
     .filter((p) => p.status === 'active' && serviceHost(p, data.platform))
-    .map((p) => `  { name: ${quote(p.name)}, label: ${quote(p.displayName)}, href: ${quote(`https://${serviceHost(p, data.platform)}/`)} },`)
-    .join('\n');
+    .map((p) => entry(p.name, p.displayName, `https://${serviceHost(p, data.platform)}/`));
+  if (!apps.length) return '';
+  // Tools with a web page but no app (#1214) follow the apps.
+  const links = (data.projects.switcherLinks ?? []).map((l) => entry(l.name, l.label, l.href));
+  return [...apps, ...links].join('\n');
 }
 
 // What the shared deploy files read as project.deploy (#696). Apps and services differ only in these values:
