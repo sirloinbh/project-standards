@@ -28,12 +28,18 @@ export function collectTemplates(root, folders, external = {}) {
   for (const folder of folders) {
     // A folder in `external` ({ dir, label }) is read from the pinned design-system release instead of templates/ (#1171).
     const ext = external[folder];
-    for (const rel of walk(ext ? ext.dir : path.join(root, 'templates', folder))) {
+    const add = (rel, fromRelease) => {
       const target = rel.endsWith(TEMPLATE_SUFFIX) ? rel.slice(0, -TEMPLATE_SUFFIX.length) : rel;
-      const source = ext ? `${ext.label}/${rel}` : `templates/${folder}/${rel}`;
+      const source = fromRelease ? `${ext.label}/${rel}` : `templates/${folder}/${rel}`;
       if (seen.has(target)) throw new Error(`${target} comes from both ${seen.get(target).source} and ${source}`);
       // The managed header keeps naming templates/<folder>/, so delivered files are byte-identical to the pre-move ones.
-      seen.set(target, { source, file: ext ? path.join(ext.dir, rel) : path.join(root, source), headerSource: `templates/${folder}/${rel}` });
+      seen.set(target, { source, file: fromRelease ? path.join(ext.dir, rel) : path.join(root, source), headerSource: `templates/${folder}/${rel}` });
+    };
+    for (const rel of walk(ext ? ext.dir : path.join(root, 'templates', folder))) add(rel, Boolean(ext));
+    if (ext) {
+      // Files that stay in project-standards (sign-in, service worker; #1207) are still delivered; the release wins on the same path.
+      const delivered = new Set(walk(ext.dir));
+      for (const rel of walk(path.join(root, 'templates', folder))) if (!delivered.has(rel)) add(rel, false);
     }
   }
   return [...seen].map(([target, entry]) => ({ path: target, ...entry }));

@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
+import { collectTemplates } from '../lib/templates.mjs';
 import { externalFolders, resolveDesignSystem } from '../lib/design-system.mjs';
 import { MANIFEST_PATH } from '../lib/manifest.mjs';
 import { loadAll } from '../lib/registry.mjs';
@@ -75,6 +76,19 @@ test('with the release the apps get the same files as from templates/ui', () => 
   const button = after.files.find((f) => f.path === 'frontend/src/components/ui/button.tsx');
   assert.equal(button.source, 'design-system/delivery/ui/frontend/src/components/ui/button.tsx');
   assert.equal(before.files.find((f) => f.path === button.path).source, 'templates/ui/frontend/src/components/ui/button.tsx');
+});
+
+test('files that stay in project-standards are still delivered next to a release; the release wins on the same path (#1207)', () => {
+  const dir = fs.mkdtempSync(path.join(tmp, 'overlay-'));
+  const write = (p, text) => { fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, text); };
+  write(path.join(dir, 'central/templates/ui/frontend/src/sign-in.tsx'), 'local sign-in');
+  write(path.join(dir, 'central/templates/ui/frontend/src/button.tsx'), 'old button');
+  write(path.join(dir, 'release/frontend/src/button.tsx'), 'new button');
+  const files = collectTemplates(path.join(dir, 'central'), ['ui'], { ui: { dir: path.join(dir, 'release'), label: 'design-system/delivery/ui' } });
+  const byPath = Object.fromEntries(files.map((f) => [f.path, f]));
+  assert.deepEqual(Object.keys(byPath).sort(), ['frontend/src/button.tsx', 'frontend/src/sign-in.tsx']);
+  assert.equal(fs.readFileSync(byPath['frontend/src/button.tsx'].file, 'utf8'), 'new button');
+  assert.equal(byPath['frontend/src/sign-in.tsx'].source, 'templates/ui/frontend/src/sign-in.tsx');
 });
 
 test('an app that turned the ui feature off gets no delivered files', () => {
