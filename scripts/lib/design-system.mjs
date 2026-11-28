@@ -30,13 +30,21 @@ export function resolveDesignSystem({ pin, cacheDir, cloneUrl = defaultCloneUrl,
   const tag = `v${pin.version}`;
   const dir = path.join(cacheDir, pin.version);
   if (!fs.existsSync(path.join(dir, '.git'))) {
+    // Clone beside the target and rename, so parallel test processes that need the same release never share a half-made folder.
     fs.rmSync(dir, { recursive: true, force: true });
     fs.mkdirSync(cacheDir, { recursive: true });
+    const temp = `${dir}.tmp-${process.pid}-${Date.now()}`;
     try {
-      git(['clone', '--quiet', '--depth', '1', '--branch', tag, cloneUrl(pin.repo), dir]);
+      git(['clone', '--quiet', '--depth', '1', '--branch', tag, cloneUrl(pin.repo), temp]);
     } catch (error) {
-      fs.rmSync(dir, { recursive: true, force: true });
+      fs.rmSync(temp, { recursive: true, force: true });
       throw new Error(`could not fetch ${pin.repo} ${tag}: ${String(error.stderr || error.message).trim()}`);
+    }
+    try {
+      fs.renameSync(temp, dir);
+    } catch (error) {
+      fs.rmSync(temp, { recursive: true, force: true });
+      if (!fs.existsSync(path.join(dir, '.git'))) throw error; // another process won the race: use its copy
     }
   }
   const actual = git(['rev-parse', 'HEAD'], dir);
